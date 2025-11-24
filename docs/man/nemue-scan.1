@@ -1,0 +1,275 @@
+.TH NEMUE-SCAN 1 "November 2025" "Nemue 0.1.0" "User Commands"
+.SH NAME
+nemue-scan \- Network port scanner
+.SH SYNOPSIS
+.B nemue scan
+[\fIOPTIONS\fR]
+.I TARGET
+
+.SH DESCRIPTION
+Scan network targets for open ports, detect services, and fingerprint operating systems. Supports multiple scan types, timing templates, and stealth techniques.
+
+.SH ARGUMENTS
+.TP
+.I TARGET
+Target IP address, hostname, or CIDR range (e.g., 192.168.1.1 or 192.168.1.0/24)
+
+.SH OPTIONS
+.SS Port Specification
+.TP
+.BR \-p ", " \-\-ports " " \fIPORTS\fR
+Ports to scan. Can be: single (80), list (80,443), range (1-1000), or preset (common, top100, top1000). Default: 1-1000
+.TP
+.BR \-e ", " \-\-exclude " " \fIPORTS\fR
+Exclude specific ports from scan
+.TP
+.BR \-F
+Fast mode (scan top 100 ports only)
+
+.SS Scan Types
+.TP
+.BR \-s ", " \-\-scan-type " " \fITYPE\fR
+Scan type: syn (default), connect, udp, ack, window, null, fin, xmas, maimon
+.TP
+.BR \-A ", " \-\-aggressive
+Aggressive scan (enables SYN scan, service detection, OS detection, top1000 ports)
+.TP
+.B \-\-raw
+Enable true SYN stealth scanning using raw sockets (requires root)
+
+.SS Detection
+.TP
+.BR \-V ", " \-\-version-detect
+Detect service versions
+.TP
+.BR \-O ", " \-\-os-detect
+Detect operating system
+.TP
+.B \-\-version-intensity " " \fI0-9\fR
+Set version detection intensity (0=light, 9=all probes)
+.TP
+.B \-\-version-light
+Quick version detection (intensity 2)
+.TP
+.B \-\-version-all
+Try all probes (intensity 9)
+
+.SS Timing & Performance
+.TP
+.BR \-r ", " \-\-rate " " \fINUM\fR
+Maximum packets per second (default: 1000)
+.TP
+.BR \-T " " \fI0-5\fR
+Timing template: 0=Paranoid, 1=Sneaky, 2=Polite, 3=Normal, 4=Aggressive, 5=Insane
+.TP
+.B \-\-timeout " " \fIMILLIS\fR
+Timeout for each port in milliseconds (default: 1000)
+.TP
+.B \-\-min-rate " " \fINUM\fR
+Minimum packets per second
+.TP
+.B \-\-max-rate " " \fINUM\fR
+Maximum packets per second
+.TP
+.B \-\-min-rtt-timeout " " \fITIME\fR
+Minimum RTT timeout (e.g., 100ms, 1s)
+.TP
+.B \-\-max-rtt-timeout " " \fITIME\fR
+Maximum RTT timeout
+.TP
+.B \-\-max-retries " " \fINUM\fR
+Maximum probe retransmissions
+.TP
+.B \-\-host-timeout " " \fITIME\fR
+Give up on target after this long
+.TP
+.B \-\-scan-delay " " \fITIME\fR
+Delay between probes
+.TP
+.B \-\-max-parallelism " " \fINUM\fR
+Maximum parallel port scan probes
+
+.SS Host Discovery
+.TP
+.B \-sn
+Ping scan only (no port scan)
+.TP
+.B \-Pn
+Skip host discovery (assume all hosts up)
+.TP
+.B \-PS " " \fI[portlist]\fR
+TCP SYN ping
+.TP
+.B \-PA " " \fI[portlist]\fR
+TCP ACK ping
+.TP
+.B \-PU " " \fI[portlist]\fR
+UDP ping
+.TP
+.B \-PE
+ICMP echo request ping
+.TP
+.B \-sL
+List scan (just list targets, no scan)
+
+.SS Target Specification
+.TP
+.B \-iL " " \fIFILE\fR
+Read targets from file
+.TP
+.B \-iR " " \fINUM\fR
+Generate random targets
+.TP
+.B \-\-exclude " " \fIHOSTS\fR
+Exclude specific hosts
+.TP
+.B \-\-excludefile " " \fIFILE\fR
+Exclude hosts from file
+.TP
+.B \-\-resolve-all
+Scan all resolved addresses
+.TP
+.B \-\-unique
+Scan each IP only once
+
+.SS DNS Resolution
+.TP
+.B \-n
+Never do DNS resolution
+.TP
+.B \-R
+Always resolve (even for IPs)
+.TP
+.B \-\-dns-servers " " \fISERVERS\fR
+Custom DNS server list
+.TP
+.B \-\-system-dns
+Use OS resolver instead of built-in
+
+.SS Stealth & Evasion
+.TP
+.B \-D " " \fIDECOYS\fR
+Decoy scan with specified decoy list
+.TP
+.B \-S " " \fIIP\fR
+Spoof source IP address
+.TP
+.B \-g " " \fIPORT\fR
+Use specific source port
+.TP
+.B \-e " " \fIINTERFACE\fR
+Specify network interface
+.TP
+.B \-\-spoof-mac " " \fIMAC\fR
+Spoof MAC address
+.TP
+.B \-f
+Fragment packets (8-byte fragments)
+.TP
+.B \-\-mtu " " \fISIZE\fR
+Custom MTU for fragmentation
+.TP
+.B \-\-ttl " " \fIVAL\fR
+Set IP TTL field
+.TP
+.B \-\-badsum
+Send packets with incorrect checksums
+.TP
+.B \-\-proxies " " \fIURLs\fR
+HTTP/SOCKS proxy chain
+
+.SS Output
+.TP
+.BR \-o ", " \-\-output " " \fIFILE\fR
+Save results to file
+.TP
+.B \-\-format " " \fIFORMAT\fR
+Output format: json, xml, csv
+.TP
+.B \-\-show-closed
+Show closed ports in output
+.TP
+.B \-\-show-filtered
+Show filtered ports in output
+.TP
+.BR \-v ", " \-\-verbose
+Verbose output
+.TP
+.BR \-q ", " \-\-quiet
+Quiet mode (no banner)
+.TP
+.B \-\-reason
+Display port state reasons
+.TP
+.B \-\-stats-every " " \fITIME\fR
+Periodic statistics output
+
+.SS Scripting
+.TP
+.B \-\-script-args " " \fIARGS\fR
+Pass arguments to scripts
+.TP
+.B \-\-script-args-file " " \fIFILE\fR
+Load script arguments from file
+.TP
+.B \-\-script-trace
+Debug script execution
+.TP
+.B \-\-script-help " " \fISCRIPT\fR
+Show script documentation
+
+.SH EXAMPLES
+.TP
+Basic scan:
+.B nemue scan 192.168.1.1
+
+.TP
+Scan specific ports:
+.B nemue scan 192.168.1.1 -p 22,80,443
+
+.TP
+Fast aggressive scan:
+.B sudo nemue scan target.com -A -T4
+
+.TP
+Stealth SYN scan:
+.B sudo nemue scan target.com \-\-raw -T1
+
+.TP
+Service and OS detection:
+.B nemue scan target.com -p common -V -O
+
+.TP
+Scan network range:
+.B nemue scan 192.168.1.0/24 -p top100
+
+.TP
+UDP scan:
+.B sudo nemue scan target.com -p 53,123,161 -s udp
+
+.TP
+Scan with decoys:
+.B sudo nemue scan target.com -D RND:10
+
+.TP
+Discovery only:
+.B nemue scan 192.168.1.0/24 -sn
+
+.SH EXIT STATUS
+.TP
+.B 0
+Scan completed successfully
+.TP
+.B 1
+Error during scan
+.TP
+.B 2
+Invalid arguments
+
+.SH SEE ALSO
+.BR nemue (1),
+.BR nemue\-fuzz (1),
+.BR nmap (1)
+
+.SH AUTHOR
+Nemue Project

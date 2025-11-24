@@ -11,3 +11,5 @@ pub mod distributed;
 pub mod report;
 pub mod vuln;
 pub mod web;
+pub mod fuzzer;
+pub mod topology;

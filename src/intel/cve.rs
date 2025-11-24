@@ -197,6 +197,258 @@ impl CveDatabase {
             }
         }
 
+        // Log4j vulnerabilities (Log4Shell)
+        if service.to_lowercase().contains("log4j") || service.to_lowercase().contains("java") {
+            if version.contains("2.") {
+                let ver = self.parse_version(version);
+                if let Some(v) = ver {
+                    if v.major == 2 && v.minor < 17 {
+                        results.push(CveInfo {
+                            cve_id: "CVE-2021-44228".to_string(),
+                            description: "Apache Log4j2 JNDI features do not protect against attacker controlled LDAP (Log4Shell)".to_string(),
+                            severity: CveSeverity::Critical,
+                            cvss_score: 10.0,
+                            published_date: "2021-12-10".to_string(),
+                            references: vec![
+                                "https://nvd.nist.gov/vuln/detail/CVE-2021-44228".to_string(),
+                                "https://logging.apache.org/log4j/2.x/security.html".to_string(),
+                            ],
+                        });
+                    }
+                    if v.major == 2 && v.minor < 16 {
+                        results.push(CveInfo {
+                            cve_id: "CVE-2021-45046".to_string(),
+                            description: "Apache Log4j2 DoS via crafted data in ThreadContext (incomplete fix for Log4Shell)".to_string(),
+                            severity: CveSeverity::Critical,
+                            cvss_score: 9.0,
+                            published_date: "2021-12-14".to_string(),
+                            references: vec![
+                                "https://nvd.nist.gov/vuln/detail/CVE-2021-45046".to_string(),
+                            ],
+                        });
+                    }
+                }
+            }
+        }
+
+        // Microsoft Exchange Server vulnerabilities (ProxyShell)
+        if service.to_lowercase().contains("exchange") || service.to_lowercase().contains("smtp") {
+            results.push(CveInfo {
+                cve_id: "CVE-2021-34473".to_string(),
+                description: "Microsoft Exchange Server Remote Code Execution (ProxyShell)".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 9.8,
+                published_date: "2021-08-12".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2021-34473".to_string(),
+                    "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2021-34473".to_string(),
+                ],
+            });
+            results.push(CveInfo {
+                cve_id: "CVE-2021-34523".to_string(),
+                description: "Microsoft Exchange Server Elevation of Privilege (ProxyShell)".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 9.8,
+                published_date: "2021-08-12".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2021-34523".to_string(),
+                ],
+            });
+        }
+
+        // Windows Print Spooler (PrintNightmare)
+        if service.to_lowercase().contains("print") || service.to_lowercase().contains("spooler") {
+            results.push(CveInfo {
+                cve_id: "CVE-2021-34527".to_string(),
+                description: "Windows Print Spooler Remote Code Execution (PrintNightmare)".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 8.8,
+                published_date: "2021-07-02".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2021-34527".to_string(),
+                    "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2021-34527".to_string(),
+                ],
+            });
+        }
+
+        // Active Directory (Zerologon)
+        if service.to_lowercase().contains("netlogon") || service.to_lowercase().contains("domain") {
+            results.push(CveInfo {
+                cve_id: "CVE-2020-1472".to_string(),
+                description: "Netlogon Elevation of Privilege Vulnerability (Zerologon)".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 10.0,
+                published_date: "2020-08-17".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2020-1472".to_string(),
+                ],
+            });
+        }
+
+        // VMware vCenter (CVE-2021-21985)
+        if service.to_lowercase().contains("vmware") || service.to_lowercase().contains("vcenter") {
+            results.push(CveInfo {
+                cve_id: "CVE-2021-21985".to_string(),
+                description: "VMware vCenter Server RCE via vSphere Client (Virtual SAN Health Check)".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 9.8,
+                published_date: "2021-05-25".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2021-21985".to_string(),
+                    "https://www.vmware.com/security/advisories/VMSA-2021-0010.html".to_string(),
+                ],
+            });
+        }
+
+        // Atlassian Confluence (CVE-2021-26084)
+        if service.to_lowercase().contains("confluence") {
+            results.push(CveInfo {
+                cve_id: "CVE-2021-26084".to_string(),
+                description: "Atlassian Confluence Server OGNL injection RCE".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 9.8,
+                published_date: "2021-08-30".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2021-26084".to_string(),
+                    "https://confluence.atlassian.com/doc/confluence-security-advisory-2021-08-25-1077906215.html".to_string(),
+                ],
+            });
+        }
+
+        // Spring Framework (Spring4Shell)
+        if service.to_lowercase().contains("spring") || service.to_lowercase().contains("tomcat") {
+            results.push(CveInfo {
+                cve_id: "CVE-2022-22965".to_string(),
+                description: "Spring Framework RCE via Data Binding on JDK 9+ (Spring4Shell)".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 9.8,
+                published_date: "2022-04-01".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2022-22965".to_string(),
+                    "https://spring.io/blog/2022/03/31/spring-framework-rce-early-announcement".to_string(),
+                ],
+            });
+        }
+
+        // Apache Struts2 (CVE-2021-31805)
+        if service.to_lowercase().contains("struts") {
+            results.push(CveInfo {
+                cve_id: "CVE-2021-31805".to_string(),
+                description: "Apache Struts2 forced OGNL evaluation when evaluated raw attribute".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 9.8,
+                published_date: "2021-04-13".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2021-31805".to_string(),
+                ],
+            });
+        }
+
+        // GitLab RCE (CVE-2021-22205)
+        if service.to_lowercase().contains("gitlab") {
+            results.push(CveInfo {
+                cve_id: "CVE-2021-22205".to_string(),
+                description: "GitLab CE/EE unauthenticated RCE via ExifTool".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 10.0,
+                published_date: "2021-04-01".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2021-22205".to_string(),
+                    "https://about.gitlab.com/releases/2021/04/14/security-release-gitlab-13-10-3-released/".to_string(),
+                ],
+            });
+        }
+
+        // Fortinet FortiOS (CVE-2022-40684)
+        if service.to_lowercase().contains("fortinet") || service.to_lowercase().contains("fortios") {
+            results.push(CveInfo {
+                cve_id: "CVE-2022-40684".to_string(),
+                description: "Fortinet FortiOS & FortiProxy authentication bypass vulnerability".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 9.6,
+                published_date: "2022-10-18".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2022-40684".to_string(),
+                    "https://www.fortiguard.com/psirt/FG-IR-22-377".to_string(),
+                ],
+            });
+        }
+
+        // Citrix ADC/Gateway (CVE-2023-3519)
+        if service.to_lowercase().contains("citrix") || service.to_lowercase().contains("netscaler") {
+            results.push(CveInfo {
+                cve_id: "CVE-2023-3519".to_string(),
+                description: "Citrix ADC & Gateway unauthenticated remote code execution".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 9.8,
+                published_date: "2023-07-18".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2023-3519".to_string(),
+                    "https://support.citrix.com/article/CTX561482".to_string(),
+                ],
+            });
+        }
+
+        // MOVEit Transfer SQL Injection (CVE-2023-34362)
+        if service.to_lowercase().contains("moveit") {
+            results.push(CveInfo {
+                cve_id: "CVE-2023-34362".to_string(),
+                description: "Progress MOVEit Transfer SQL injection vulnerability".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 9.8,
+                published_date: "2023-06-02".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2023-34362".to_string(),
+                    "https://www.progress.com/moveit-transfer".to_string(),
+                ],
+            });
+        }
+
+        // Atlassian Jira (CVE-2022-0540)
+        if service.to_lowercase().contains("jira") {
+            results.push(CveInfo {
+                cve_id: "CVE-2022-0540".to_string(),
+                description: "Atlassian Jira Seraph authentication bypass".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 9.9,
+                published_date: "2022-04-20".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2022-0540".to_string(),
+                    "https://jira.atlassian.com/browse/JRASERVER-73465".to_string(),
+                ],
+            });
+        }
+
+        // Apache HTTP Server (CVE-2023-25690)
+        if service.to_lowercase().contains("apache") && service.to_lowercase().contains("http") {
+            results.push(CveInfo {
+                cve_id: "CVE-2023-25690".to_string(),
+                description: "Apache HTTP Server mod_proxy HTTP Response Splitting".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 9.8,
+                published_date: "2023-03-07".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2023-25690".to_string(),
+                    "https://httpd.apache.org/security/vulnerabilities_24.html".to_string(),
+                ],
+            });
+        }
+
+        // Cisco IOS XE Web UI (CVE-2023-20198)
+        if service.to_lowercase().contains("cisco") || service.to_lowercase().contains("ios") {
+            results.push(CveInfo {
+                cve_id: "CVE-2023-20198".to_string(),
+                description: "Cisco IOS XE Web UI privilege escalation vulnerability".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 10.0,
+                published_date: "2023-10-16".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2023-20198".to_string(),
+                    "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-iosxe-webui-privesc-j22SaA4z".to_string(),
+                ],
+            });
+        }
+
         results
     }
 

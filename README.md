@@ -1,33 +1,56 @@
 # Nemue 🌊
 
-A high-performance network scanner built in Rust, designed to surpass Nmap with modern architecture, blazing speed, and powerful features.
+An advanced security testing framework built in Rust, featuring high-performance network scanning, web content discovery, and extensible scripting capabilities.
+
+**Version**: 0.1.0  
+**Stats**: ~24,000 lines | 403 tests (100% pass) | 40 benchmarks
 
 ## Features
+
+### 🔍 **NEW: Web Content Discovery & Fuzzing**
+- 🌐 **Multi-Mode Fuzzing** - Directory, file, extension, vhost, subdomain, cloud storage
+- 📚 **Built-in Wordlists** - 10 comprehensive wordlists (1K-10K+ entries)
+- 🔄 **Wordlist Mutations** - L33t speak, case variations, year suffixes
+- 🚀 **High Performance** - 1000+ requests/second capability
+- 🎯 **Smart Filtering** - Status codes, size, time, regex patterns
+- 🔁 **Recursive Discovery** - Auto-discover and scan subdirectories
+- 💉 **Parameter Fuzzing** - GET/POST/Header injection (Sniper/Clusterbomb/Pitchfork)
+- 🌐 **Subdomain Enumeration** - DNS brute-forcing with wildcard detection
+- ☁️ **Cloud Storage** - AWS S3, Azure Blob, GCP, DigitalOcean Spaces
+- 📊 **Rich Reporting** - Text, JSON, CSV, Markdown, HTML output formats
 
 ### Core Scanning
 - ⚡ **True SYN Stealth Scanning** - Raw socket implementation via pnet datalink layer
 - 🔌 **Multi-Protocol Support** - TCP, UDP, ICMP across IPv4 and IPv6
 - 🎯 **High Performance** - Async/await with Tokio, configurable concurrency
-- 🌐 **Modern Protocols** - Full IPv6 support alongside IPv4
+- 🌐 **Complete IPv6 Support** - All scan types (SYN, ACK, Window, NULL, FIN, Xmas)
+- 🔍 **Advanced Scan Types** - 10+ scan techniques including stealth and firewall detection
 
 ### Advanced Detection
 - 🖥️ **Advanced OS Fingerprinting** - TCP timestamps, window scaling, MSS analysis, 11 OS families
 - 🔍 **Service Detection** - 112+ services (databases, containers, message queues, web frameworks)
 - 📊 **Banner Grabbing** - Automatic version extraction for HTTP, SSH, FTP, SMTP
 - 💡 **Confidence Scoring** - Transparent reliability metrics for detections
+- 🌐 **IPv6 Discovery** - ICMPv6 Echo, Neighbor Discovery Protocol
 
 ### Stealth & Evasion
 - 🥷 **6 Timing Templates** - T0 (Paranoid) to T5 (Insane)
+- ⚙️ **Fine-Grained Timing** - 13 timing parameters (RTT, parallelism, delays, retries)
 - 🎭 **Decoy Scanning** - Confuse IDS/IPS with decoy sources
 - 🎲 **Randomization** - Host and port randomization
 - 🔧 **TTL Manipulation** - Custom TTL values
-- 🎯 **Source Port Spoofing** - Custom source ports (e.g., port 53 to appear as DNS)
+- 🎯 **Source Manipulation** - Custom source ports, IPs, and MAC addresses
+- 📦 **Fragmentation** - IP fragmentation with custom MTU
+- 🔗 **Proxy Support** - HTTP/SOCKS4/SOCKS5 proxy chains
 
 ### Scripting & Extensibility  
 - 🐍 **Lua Script Engine** - Full Lua 5.4 support (vendored)
 - 📜 **NSE-Compatible API** - Write Nmap-style scripts
 - 🔬 **Vulnerability Detection** - Built-in framework with severity scoring
 - 📦 **5 Example Scripts** - HTTP headers, SSL checks, SSH banner, FTP anon, DB defaults
+- 🔧 **Script Arguments** - Pass parameters via --script-args or file
+- 🐛 **Script Tracing** - Debug script execution in real-time
+- 📚 **Script Database** - Auto-indexing and help system
 
 ### Intelligence & Analysis
 - 🛡️ **CVE Database Integration** - Automatic vulnerability lookup for detected services
@@ -47,9 +70,9 @@ A high-performance network scanner built in Rust, designed to surpass Nmap with 
 
 ### User Experience
 - 🎨 **Beautiful Colored Output** - Nmap-style formatting with RGB colors
-- 📊 **Multiple Formats** - JSON, XML export
+- 📊 **Multiple Formats** - JSON, XML, CSV, Markdown, HTML export
 - 💻 **Modern CLI** - Intuitive commands with detailed help
-- ⏱️ **Progress Indicators** - Real-time scan progress
+- ⏱️ **Progress Indicators** - Real-time scan progress with ETA
 
 ## Installation
 
@@ -68,54 +91,169 @@ cargo build --release
 sudo ./target/release/nemue --help
 ```
 
+**📖 Documentation:**
+- **New to Nemue?** → [QUICKSTART.md](QUICKSTART.md) - Beginner-friendly guide with practical examples
+- **Need details?** → [USAGE.md](USAGE.md) - Comprehensive feature documentation  
+- **Development?** → [ROADMAP.md](ROADMAP.md) - Detailed progress tracking (72% nmap parity)
+- **Nmap Parity** → [NMAP_FEATURE_PARITY.md](NMAP_FEATURE_PARITY.md) - Complete nmap feature comparison matrix
+- **Architecture** → [ARCHITECTURE.md](ARCHITECTURE.md) - System design and technical details
+
 ## Usage
+
+### Command Comparison: Nemue vs Nmap
+
+Nemue uses **simpler, shorter commands** than nmap:
+
+| Task | Nmap | Nemue |
+|------|------|-------|
+| **Basic scan** | `nmap 192.168.1.1` | `nemue scan 192.168.1.1` |
+| **Specific ports** | `nmap -p 80,443 target` | `nemue scan target -p 80,443` |
+| **Port range** | `nmap -p 1-1000 target` | `nemue scan target -p 1-1000` |
+| **Aggressive scan** | `sudo nmap -A target` | `sudo nemue scan target -A` |
+| **Service detection** | `nmap -sV target` | `nemue scan target -V` |
+| **OS detection** | `nmap -O target` | `nemue scan target -O` |
+| **Exclude ports** | `nmap -p- --exclude-ports 22,80 target` | `nemue scan target -p 1-65535 -e 22,80` |
+| **UDP scan** | `sudo nmap -sU -p 53,161 target` | `sudo nemue scan target -p 53,161 -s udp` |
+| **Stealth SYN** | `sudo nmap -sS target` | `sudo nemue scan target --raw` |
+| **Verbose output** | `nmap -v target` | `nemue scan target -v` |
+| **Save output** | `nmap -oN file target` | `nemue scan target -o file` |
+| **No banner** | `nmap --no-stylesheet target` | `nemue scan target -q` |
+| **Show closed** | `nmap --open target` (inverse) | `nemue scan target -c` |
+
+**Key advantages**: Shorter flags (`-e` vs `--exclude-ports`, `-V` vs `-sV`, `-q` vs `--no-stylesheet`), cleaner defaults (only shows open ports), modern async architecture.
 
 ### Basic Scanning
 
 ```bash
-# TCP SYN scan (requires root for raw sockets)
-sudo ./target/release/nemue scan 192.168.1.1 -p 80,443 --raw
+# Simple scan (common ports, clean output)
+nemue scan 192.168.1.1
 
-# TCP connect scan (no root required)
-./target/release/nemue scan 192.168.1.1 -p 1-1000
+# Specific ports
+nemue scan 192.168.1.1 -p 80,443
 
-# UDP scanning with service-specific probes
-sudo ./target/release/nemue scan 192.168.1.1 -p 53,123,161 --scan-type udp
+# Port range
+nemue scan 192.168.1.1 -p 1-1000
 
-# IPv6 scanning
-sudo ./target/release/nemue scan fe80::1 -p 80,443 --raw
+# Common ports preset (21 frequently used ports)
+nemue scan 192.168.1.1 -p common
+
+# Aggressive scan (like nmap -A) - requires root
+sudo nemue scan 192.168.1.1 -A
+
+# Exclude ports from scan
+nemue scan 192.168.1.1 -p 1-1000 -e 80,443
+
+# UDP scanning
+sudo nemue scan 192.168.1.1 -p 53,123,161 -s udp
+
+# Quiet mode (no banner)
+nemue scan 192.168.1.1 -p common -q
 ```
+
+### Web Content Discovery & Fuzzing
+
+```bash
+# Directory fuzzing with built-in wordlist
+nemue fuzz https://example.com -b dirs1k
+
+# File discovery with custom wordlist
+nemue fuzz https://example.com -m file -w /path/to/wordlist.txt
+
+# Recursive directory scanning
+nemue fuzz https://example.com -b dirs10k -R --max-depth 3
+
+# Extension fuzzing
+nemue fuzz https://example.com/index -m ext -e php,asp,jsp,html
+
+# Subdomain enumeration
+nemue fuzz example.com -m subdomain -b subdomains
+
+# AWS S3 bucket enumeration
+nemue fuzz company -m s3 -b dirs1k
+
+# With filtering and concurrency
+nemue fuzz https://example.com -b dirs1k -s 200,301,302 -c 100 -r 50
+
+# Parameter fuzzing (GET)
+nemue fuzz "https://api.example.com/users?id=FUZZ" -b params
+
+# Apply wordlist mutations
+nemue fuzz https://example.com -b dirs1k --mutate
+
+# Save results to JSON
+nemue fuzz https://example.com -b dirs10k -o json -O results.json
+
+# HTML report with custom headers
+nemue fuzz https://example.com -b wordpress -o html -H "Cookie: session=abc123" -O report.html
+```
+
+**Available built-in wordlists:**
+- `dirs1k` - 1,000+ common directories
+- `dirs10k` - 10,000+ extended directories  
+- `files` - Common files (backups, configs)
+- `extensions` - 40+ file extensions
+- `subdomains` - Common subdomains
+- `params` - GET/POST parameters
+- `wordpress` - WordPress-specific paths
+- `joomla` - Joomla CMS paths
+- `laravel` - Laravel framework paths
+- `api` - REST/GraphQL endpoints
+```
+
+**Note**: By default, Nemue only displays **open ports** for clean, actionable output. Use `--show-closed` or `--show-filtered` flags to see all port states.
 
 ### Stealth Scanning
 
 ```bash
-# Paranoid timing (5 min between packets)
-sudo ./target/release/nemue scan target.com -p 1-1000 --timing paranoid --raw
+# Raw SYN scan (stealthiest)
+sudo nemue scan target.com -p 1-1000 --raw
 
-# Sneaky scan (15 sec between packets)  
-sudo ./target/release/nemue scan target.com -p 1-65535 --timing sneaky --raw
+# Slower scan to avoid detection
+sudo nemue scan target.com -p 1-1000 --raw -r 100
 
-# Custom source port to evade firewalls
-sudo ./target/release/nemue scan target.com -p 80,443 --source-port 53 --raw
-
-# With decoy addresses
-sudo ./target/release/nemue scan target.com -p 80 --decoys 192.168.1.5,192.168.1.6 --raw
+# Exclude common ports to blend in
+sudo nemue scan target.com -p 1-10000 -e 80,443,22 --raw
 ```
 
 ### Service & OS Detection
 
 ```bash
-# Full scan with service and OS detection
-sudo ./target/release/nemue scan 192.168.1.1 -p 1-1000 -S true -O true --raw
+# Full scan with service and OS detection (aggressive mode)
+sudo nemue scan 192.168.1.1 -A
 
-# Service detection only (faster)
-./target/release/nemue scan 192.168.1.1 -p 22,80,443,3306,5432 -O false
+# Service/version detection only
+nemue scan 192.168.1.1 -p 22,80,443 -V
 
 # OS detection only
-sudo ./target/release/nemue scan 192.168.1.1 -p 22,80,443 -S false --raw
+nemue scan 192.168.1.1 -p 22,80,443 -O
+
+# Both service and OS detection
+nemue scan 192.168.1.1 -p common -V -O
 ```
 
-### Output Options
+### Output & Display
+
+```bash
+# Show closed ports too
+nemue scan 192.168.1.1 -p common -c
+
+# Show filtered ports too
+nemue scan 192.168.1.1 -p 1-1000 -F
+
+# Show everything
+nemue scan 192.168.1.1 -p common -c -F
+
+# Save to file
+nemue scan 192.168.1.1 -p common -o results.json
+
+# Verbose output
+nemue scan 192.168.1.1 -p common -v
+
+# Quiet mode (no banner)
+nemue scan 192.168.1.1 -p common -q
+```
+
+### Advanced Output
 
 ```bash
 # Save to JSON
@@ -311,78 +449,27 @@ See [USAGE.md](USAGE.md) for comprehensive documentation on all features.
 
 ## Development Status
 
-- [x] **Phase 1: Core Scanner** ✅ **COMPLETE**
-  - [x] High-performance async TCP scanning
-  - [x] Rate limiting & concurrency control
-  - [x] Target & port parsing
-  - [x] JSON & XML output
-  - [x] CLI interface
+See [ROADMAP.md](ROADMAP.md) for detailed development progress and feature tracking.
 
-- [x] **Phase 2: Enhanced Discovery** ✅ **COMPLETE**
-  - [x] OS fingerprinting (TTL-based)
-  - [x] Service detection & banner grabbing
-  - [x] Version identification
-  - [x] Beautiful colored output
-
-- [x] **Phase 3: Advanced Protocols** ✅ **COMPLETE**
-  - [x] UDP scanning with service probes
-  - [x] ICMP host discovery
-  - [x] Expanded service database (112+ services)
-
-- [x] **Phase 4: Professional Features** ✅ **COMPLETE**
-  - [x] Advanced OS fingerprinting (TCP timestamps, window scaling, MSS)
-  - [x] Lua scripting engine (NSE-compatible)
-  - [x] True SYN stealth scanning (raw sockets)
-  - [x] IPv6 full support
-  - [x] Stealth techniques (timing, decoys, TTL)
-
-- [x] **Phase 5: Intelligence & Analysis** ✅ **COMPLETE**
-  - [x] CVE database integration with version matching
-  - [x] Threat intelligence feeds (local blacklist, extensible to AbuseIPDB/VirusTotal)
-  - [x] Comprehensive risk scoring engine
-  - [x] Passive reconnaissance framework (Shodan/Censys ready)
-  - [x] Actionable security recommendations
-
-- [x] **Phase 6: Enterprise Features** ✅ **COMPLETE**
-  - [x] REST API server with 7 endpoints
-  - [x] Continuous monitoring with change detection
-  - [x] Distributed scanning coordinator
-  - [x] Report generation (Executive/Technical/Compliance templates)
-  - [x] Session management and alerting
-
-- [x] **Phase 7: Advanced Scripting** ✅ **COMPLETE**
-  - [x] Vulnerability detection framework with 11 categories
-  - [x] 26 vulnerability detection scripts
-  - [x] Critical CVE detection (Log4Shell, EternalBlue, Heartbleed, BlueKeep, Ghostcat)
-  - [x] Web vulnerabilities (SQL injection, XSS, directory traversal, XXE, SSRF)
-  - [x] Information disclosure (Git/SVN exposure, backup files, .env, AWS credentials)
-  - [x] Default credentials database (70+ entries, 25+ services)
-  - [x] Exploit database (10+ critical CVEs)
-  - [x] NVD integration with CVSS v3.1 scoring
-  - [x] Parallel script execution engine
+**Current Phase**: Phase 8 (Web Application Scanning) + Phase 9 Complete (Web Fuzzing)
 
 ## Statistics
 
 | Metric | Value |
 |--------|-------|
-| **Total Code** | 10,041+ lines |
-| **Tests** | 112/112 passing ✅ |
-| **Modules** | 13 (scanner, protocols, intel, api, monitor, distributed, report, vuln, web) |
+| **Total Code** | ~24,000 lines Rust + 724 lines Lua |
+| **Tests** | 403/403 passing ✅ |
+| **Modules** | 14 core modules + fuzzer |
 | **Services Detected** | 112+ |
 | **OS Families** | 11 |
 | **Protocols** | TCP, UDP, ICMP (IPv4 + IPv6) |
-| **NSE Lua Scripts** | 18 (HTTP, SSL, SSH, FTP, MySQL, PostgreSQL, MongoDB, Redis, ElasticSearch, Docker, SMB, DNS, SMTP, RDP, robots.txt, db-creds) |
-| **Vuln Detection Scripts** | 26 (critical CVEs, web vulns, info disclosure) |
-| **Vulnerability Categories** | 11 (RCE, SQLi, XSS, Auth, InfoDisclosure, etc.) |
-| **Default Credentials** | 70+ entries across 25+ services |
-| **Exploit Database** | 10+ critical CVEs with exploit info |
-| **NVD CVE Entries** | 6 with CVSS v3.1 metrics |
-| **Intelligence Modules** | 4 (CVE, Threat, Risk, Passive) |
-| **API Endpoints** | 7 REST endpoints |
-| **Report Templates** | 3 (Executive, Technical, Compliance) |
-| **Binary Size** | 1.4 MB (optimized) |
-| **Build Time** | ~60 seconds |
-| **Current Phase** | Phase 8 - Web Application Scanning 🔄 |
+| **Lua Scripts** | 18 NSE-compatible scripts |
+| **Vulnerability Scripts** | 26 detection scripts |
+| **Default Credentials** | 70+ service credentials |
+| **Fuzzing Modes** | 8 (dir, file, ext, vhost, subdomain, S3, Azure, GCP) |
+| **Built-in Wordlists** | 10 comprehensive lists |
+| **Output Formats** | 5 (Text, JSON, CSV, Markdown, HTML) |
+| **Nmap Parity** | 106/140 features (76%) |
 
 ## License
 

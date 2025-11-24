@@ -33,9 +33,9 @@ impl DisplayFormatter {
         println!("{}", banner.bright_cyan().bold());
         println!(
             "{}",
-            "Nemue - High-Performance Network Scanner v0.1.0".bright_white()
+            "Nemue - Advanced Security Testing Framework v0.1.0".bright_white()
         );
-        println!("{}", "https://github.com/nemue-project/nemue".dimmed());
+        println!("{}", "https://github.com/supunhg/Nemue".dimmed());
         println!();
     }
 
@@ -55,11 +55,29 @@ impl DisplayFormatter {
     }
 
     pub fn print_results(&self, results: &ScanResults) {
+        self.print_results_filtered(results, true, true);
+    }
+
+    pub fn print_results_filtered(&self, results: &ScanResults, show_closed: bool, show_filtered: bool) {
         let mut stdout = io::stdout();
         
         // Group results by target
         let mut targets: std::collections::HashMap<String, Vec<_>> = std::collections::HashMap::new();
         for result in &results.results {
+            // Filter ports based on flags (by default only show open ports)
+            let should_show = match result.state {
+                PortState::Open => true,
+                PortState::Closed => show_closed,
+                PortState::Filtered => show_filtered,
+                PortState::Unfiltered => show_filtered,
+                PortState::OpenFiltered => true,
+                PortState::Unknown => true, // Always show unknown states
+            };
+            
+            if !should_show {
+                continue;
+            }
+            
             targets
                 .entry(result.target.to_string())
                 .or_insert_with(Vec::new)
@@ -120,6 +138,8 @@ impl DisplayFormatter {
                     PortState::Open => "open".bright_green().bold(),
                     PortState::Closed => "closed".bright_red(),
                     PortState::Filtered => "filtered".yellow(),
+                    PortState::Unfiltered => "unfiltered".cyan(),
+                    PortState::OpenFiltered => "open|filtered".yellow(),
                     PortState::Unknown => "unknown".bright_black(),
                 };
 

@@ -1,0 +1,291 @@
+.TH NEMUE-FUZZ 1 "November 2025" "Nemue 0.1.0" "User Commands"
+.SH NAME
+nemue-fuzz \- Web content discovery and fuzzing
+.SH SYNOPSIS
+.B nemue fuzz
+[\fIOPTIONS\fR]
+.I URL
+
+.SH DESCRIPTION
+High-performance web content discovery and fuzzing tool. Supports directory enumeration, file discovery, subdomain enumeration, parameter fuzzing, and cloud storage discovery.
+
+.SH ARGUMENTS
+.TP
+.I URL
+Target URL or domain (e.g., https://example.com or example.com for DNS mode)
+
+.SH OPTIONS
+.SS Fuzzing Modes
+.TP
+.BR \-m ", " \-\-mode " " \fIMODE\fR
+Fuzzing mode: dir, file, ext, vhost, subdomain, s3, azure, gcp. Default: dir
+.IP
+.B dir
+- Directory enumeration
+.IP
+.B file
+- File discovery
+.IP
+.B ext
+- Extension fuzzing
+.IP
+.B vhost
+- Virtual host discovery
+.IP
+.B subdomain
+- DNS subdomain enumeration
+.IP
+.B s3
+- AWS S3 bucket discovery
+.IP
+.B azure
+- Azure Blob storage discovery
+.IP
+.B gcp
+- Google Cloud Storage discovery
+
+.SS Wordlists
+.TP
+.BR \-w ", " \-\-wordlist " " \fIFILE\fR
+Custom wordlist file path
+.TP
+.BR \-b ", " \-\-builtin " " \fINAME\fR
+Built-in wordlist: dirs1k, dirs10k, files, extensions, subdomains, params, wordpress, joomla, laravel, api
+.TP
+.B \-\-mutate
+Apply mutations to wordlist (l33t speak, case variations, year suffixes)
+
+.SS Performance
+.TP
+.BR \-c ", " \-\-concurrency " " \fINUM\fR
+Concurrent requests (default: 50)
+.TP
+.BR \-r ", " \-\-rate-limit " " \fINUM\fR
+Rate limit in requests per second
+.TP
+.B \-\-timeout " " \fISECONDS\fR
+Request timeout in seconds (default: 10)
+
+.SS Filtering
+.TP
+.BR \-s ", " \-\-status-codes " " \fICODES\fR
+Filter by status codes (comma-separated, e.g., 200,301,302)
+.TP
+.B \-\-exclude-status " " \fICODES\fR
+Exclude specific status codes
+.TP
+.B \-\-min-size " " \fISIZE\fR
+Minimum response size in bytes
+.TP
+.B \-\-max-size " " \fISIZE\fR
+Maximum response size in bytes
+.TP
+.B \-\-match-regex " " \fIPATTERN\fR
+Match response body with regex pattern
+.TP
+.B \-\-exclude-regex " " \fIPATTERN\fR
+Exclude responses matching regex
+.TP
+.B \-\-wildcard-detection
+Enable wildcard response detection
+
+.SS Recursive Discovery
+.TP
+.BR \-R ", " \-\-recursive
+Enable recursive directory scanning
+.TP
+.B \-\-max-depth " " \fINUM\fR
+Maximum recursion depth (default: 3)
+
+.SS Extensions & Parameters
+.TP
+.BR \-e ", " \-\-extensions " " \fIEXTS\fR
+File extensions to append (comma-separated, e.g., php,asp,html)
+.TP
+.B \-\-param-mode " " \fIMODE\fR
+Parameter fuzzing mode: sniper, clusterbomb, pitchfork, replace
+
+.SS HTTP Options
+.TP
+.BR \-H ", " \-\-headers " " \fIHEADERS\fR
+Custom headers (key:value pairs, comma-separated)
+.TP
+.BR \-U ", " \-\-user-agent " " \fIUA\fR
+Custom User-Agent string
+.TP
+.B \-\-follow-redirects
+Follow HTTP redirects
+.TP
+.B \-\-max-redirects " " \fINUM\fR
+Maximum redirect hops (default: 5)
+
+.SS Output
+.TP
+.BR \-o ", " \-\-output-format " " \fIFORMAT\fR
+Output format: text, json, csv, markdown, html. Default: text
+.TP
+.BR \-O ", " \-\-output " " \fIFILE\fR
+Save results to file
+
+.SH BUILT-IN WORDLISTS
+.TP
+.B dirs1k
+1,000+ common directories
+.TP
+.B dirs10k
+10,000+ extended directories
+.TP
+.B files
+Common files (backups, configs, sensitive files)
+.TP
+.B extensions
+40+ file extensions (.php, .asp, .jsp, .bak, etc.)
+.TP
+.B subdomains
+Common subdomains (www, mail, api, dev, etc.)
+.TP
+.B params
+GET/POST parameters (id, user, page, etc.)
+.TP
+.B wordpress
+WordPress-specific paths
+.TP
+.B joomla
+Joomla CMS paths
+.TP
+.B laravel
+Laravel framework paths
+.TP
+.B api
+REST/GraphQL API endpoints
+
+.SH FUZZING MODES
+.SS Directory Enumeration
+Discover hidden directories on web servers. Uses FUZZ placeholder in URL path.
+
+.SS File Discovery
+Find sensitive files (backups, configs, source code). Appends filenames to base URL.
+
+.SS Extension Fuzzing
+Test multiple file extensions on a base path (e.g., index.php, index.asp, index.html).
+
+.SS Virtual Host Discovery
+Enumerate virtual hosts by fuzzing the HTTP Host header.
+
+.SS Subdomain Enumeration
+DNS-based subdomain discovery with wildcard detection and multiple resolvers.
+
+.SS Cloud Storage Fuzzing
+Discover publicly accessible cloud storage buckets (S3, Azure Blob, GCP, DigitalOcean Spaces).
+
+.SH EXAMPLES
+.TP
+Basic directory fuzzing:
+.B nemue fuzz https://example.com -b dirs1k
+
+.TP
+Recursive directory scan:
+.B nemue fuzz https://example.com -b dirs10k -R \-\-max-depth 3
+
+.TP
+File discovery with extensions:
+.B nemue fuzz https://example.com/index -m ext -e php,asp,html
+
+.TP
+Subdomain enumeration:
+.B nemue fuzz example.com -m subdomain -b subdomains
+
+.TP
+AWS S3 bucket discovery:
+.B nemue fuzz company-name -m s3 -b dirs1k
+
+.TP
+Filtered fuzzing:
+.B nemue fuzz https://example.com -b dirs1k -s 200,301,302 \-\-min-size 1000
+
+.TP
+Parameter fuzzing:
+.B nemue fuzz "https://api.example.com/users?id=FUZZ" -b params
+
+.TP
+WordPress scan with mutations:
+.B nemue fuzz https://example.com -b wordpress \-\-mutate
+
+.TP
+High-speed fuzzing:
+.B nemue fuzz https://example.com -b dirs10k -c 100 -r 200
+
+.TP
+Save results to JSON:
+.B nemue fuzz https://example.com -b dirs1k -o json -O results.json
+
+.TP
+Custom headers and authentication:
+.B nemue fuzz https://example.com -b dirs1k -H "Authorization:Bearer token123"
+
+.TP
+Vhost discovery:
+.B nemue fuzz https://192.168.1.1 -m vhost -b subdomains
+
+.SH PARAMETER FUZZING MODES
+.TP
+.B sniper
+Fuzz one parameter at a time
+.TP
+.B clusterbomb
+Try all combinations of parameters
+.TP
+.B pitchfork
+Synchronized iteration across parameters
+.TP
+.B replace
+Replace all FUZZ keywords simultaneously
+
+.SH OUTPUT FORMATS
+.TP
+.B text
+Human-readable ASCII art output with colors
+.TP
+.B json
+Structured JSON for programmatic processing
+.TP
+.B csv
+Comma-separated values for spreadsheets
+.TP
+.B markdown
+Markdown tables for documentation
+.TP
+.B html
+Interactive HTML report with CSS styling
+
+.SH PERFORMANCE TIPS
+.IP \(bu 2
+Start with lower concurrency (-c 10-50) to avoid overwhelming servers
+.IP \(bu 2
+Use rate limiting (-r) to respect server capacity
+.IP \(bu 2
+Enable wildcard detection to filter false positives
+.IP \(bu 2
+Use built-in wordlists for faster loading
+.IP \(bu 2
+Filter by status codes to reduce noise
+
+.SH EXIT STATUS
+.TP
+.B 0
+Fuzzing completed successfully
+.TP
+.B 1
+Error during fuzzing
+.TP
+.B 2
+Invalid arguments
+
+.SH SEE ALSO
+.BR nemue (1),
+.BR nemue\-scan (1),
+.BR gobuster (1),
+.BR ffuf (1)
+
+.SH AUTHOR
+Nemue Project

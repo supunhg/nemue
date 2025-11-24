@@ -20,3 +20,7 @@ Thumbs.db
 *.log
 !config/*.json
 !config/*.xml
+
+# Custom
+nmap.man
+scripts.nse

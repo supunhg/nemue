@@ -3,12 +3,51 @@ mod target;
 mod port;
 mod rate_limiter;
 mod stealth;
+mod timing;
+mod discovery;
+mod dns;
+mod scan_types;
+mod fragmentation;
+mod decoy;
+mod spoofing;
+mod payload;
+mod proxy;
 
 pub use engine::ScanEngine;
-pub use target::{Target, TargetParser};
-pub use port::{Port, PortParser};
+pub use target::{Target, TargetParser, TargetConfig};
+pub use port::{Port, PortParser, PortProtocol, PortRange, PortSelectionMode, PortSpec, ProtocolPort};
 pub use rate_limiter::RateLimiter;
-pub use stealth::{StealthOptions, TimingTemplate};
+pub use stealth::StealthOptions;
+pub use timing::{
+    TimingTemplate, TimingConfig, TimingConfigBuilder,
+    parse_duration, parse_parallelism, parse_rate, parse_retries, parse_hostgroup,
+};
+pub use discovery::{HostDiscovery, DiscoveryMethod, DiscoveryConfig, DiscoveryResult};
+pub use dns::{DnsResolver, DnsConfig};
+pub use scan_types::{
+    ScanType, 
+    TcpFlags, 
+    AdvancedScanner, 
+    PortState as ScanPortState, 
+    PortStateReason, 
+    ScanResult as AdvancedScanResult
+};
+pub use fragmentation::{
+    FragmentationConfig, IpFragment, PacketFragmenter, FragmentReassembler,
+};
+pub use decoy::{
+    DecoyConfig, DecoyScanner, RealSourcePosition, DecoyListBuilder,
+};
+pub use spoofing::{
+    MacAddress, SourceConfig, SourceSpoofer, SourceSpooferBuilder, 
+    SourcePortStrategy, NetworkInterface,
+};
+pub use payload::{
+    PayloadConfig, PayloadBuilder, CustomPacketBuilder, IpOption, TtlPresets,
+};
+pub use proxy::{
+    ProxyProtocol, ProxyConfig, ProxyChain, ProxyClient, ProxyConnection, ProxyChainBuilder,
+};
 
 use serde::{Deserialize, Serialize};
 use std::net::IpAddr;
@@ -30,6 +69,8 @@ pub enum PortState {
     Open,
     Closed,
     Filtered,
+    Unfiltered,
+    OpenFiltered,
     Unknown,
 }
 

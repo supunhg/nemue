@@ -2,7 +2,7 @@
 
 Complete guide for using Nemue network scanner with all features.
 
-**Version**: Phase 7 Complete  
+**Version**: Phase 8.5.4 Complete ✅ (IPv6, Script Engine, 74% Nmap Parity)  
 **Last Updated**: November 24, 2025
 
 ---
@@ -66,14 +66,23 @@ nemue --help
 ### Simple TCP Scan
 
 ```bash
-# Scan specific ports
+# Default scan (ports 1-1000, only shows open ports)
+nemue scan 192.168.1.1
+
+# Specific ports
 nemue scan 192.168.1.1 -p 80,443,22
 
-# Scan port range
+# Port range
 nemue scan 192.168.1.1 -p 1-1000
 
-# Scan common ports
+# Common ports preset (21 ports)
 nemue scan 192.168.1.1 -p common
+
+# Top 100 ports
+nemue scan 192.168.1.1 -p top100
+
+# Top 1000 ports
+nemue scan 192.168.1.1 -p top1000
 ```
 
 ### Multiple Targets
@@ -96,11 +105,10 @@ nemue scan -f targets.txt -p 80,443
 
 ```bash
 # UDP scan (requires root)
-sudo nemue scan 192.168.1.1 -p 53,123,161 --scan-type udp
+sudo nemue scan 192.168.1.1 -p 53,123,161 -s udp
 
-# Mixed TCP and UDP
-sudo nemue scan 192.168.1.1 -p 80,443 --scan-type tcp
-sudo nemue scan 192.168.1.1 -p 53,161 --scan-type udp
+# Common UDP ports
+sudo nemue scan 192.168.1.1 -p 53,67,68,123,161,162,500 -s udp
 ```
 
 ### ICMP Host Discovery
@@ -135,19 +143,47 @@ sudo nemue scan 192.168.1.1 -p 1-65535 --raw --timing paranoid
 ### IPv6 Scanning
 
 ```bash
-# IPv6 target
+# IPv6 target (all scan types supported)
 sudo nemue scan fe80::1 -p 80,443 --raw
+
+# IPv6 ACK scan (firewall detection)
+sudo nemue scan 2001:db8::1 -p 1-1000 --scan-type ack --raw
+
+# IPv6 Window scan
+sudo nemue scan fe80::1 -p 22,80,443 --scan-type window --raw
+
+# IPv6 NULL scan (stealth)
+sudo nemue scan 2001:db8::1 -p 1-1000 --scan-type null --raw
+
+# IPv6 FIN scan
+sudo nemue scan fe80::1 -p 80,443 --scan-type fin --raw
+
+# IPv6 Xmas scan (FIN+PSH+URG)
+sudo nemue scan 2001:db8::1 -p 1-1000 --scan-type xmas --raw
 
 # IPv6 CIDR
 sudo nemue scan 2001:db8::/64 -p 22,80,443
 
 # IPv6 with service detection
 nemue scan fe80::1 -p 1-1000 -S true
+
+# ICMPv6 Echo discovery
+sudo nemue scan 2001:db8::/64 --discovery icmpv6-echo
+
+# IPv6 Neighbor Discovery
+sudo nemue scan fe80::/64 --discovery ipv6-nd
 ```
+
+**New Port States for IPv6 Scans**:
+- **Unfiltered**: Port accessible but cannot determine if open/closed (ACK scan)
+- **Open|Filtered**: Cannot distinguish between open and filtered (NULL/FIN/Xmas scans)
 
 ### Custom Port Specifications
 
 ```bash
+# Common ports preset (21 ports)
+nemue scan 192.168.1.1 -p common
+
 # Top 100 ports
 nemue scan 192.168.1.1 -p top100
 
@@ -157,9 +193,64 @@ nemue scan 192.168.1.1 -p top1000
 # All ports
 nemue scan 192.168.1.1 -p 1-65535
 
-# Exclude ports
-nemue scan 192.168.1.1 -p 1-1000 --exclude 80,443
+# Exclude specific ports
+nemue scan 192.168.1.1 -p 1-1000 -e 80,443
+
+# Exclude port ranges
+nemue scan 192.168.1.1 -p 1-1000 -e 1-100,500-600
+
+# Scan common ports but exclude MySQL
+nemue scan 192.168.1.1 -p common -e 3306
 ```
+
+### Output Filtering
+
+By default, Nemue only shows **open ports** for cleaner, actionable output:
+
+```bash
+# Default: Only show open ports (cleanest output)
+nemue scan 192.168.1.1 -p 1-1000
+
+# Show closed ports too
+nemue scan 192.168.1.1 -p 1-1000 -c
+
+# Show filtered ports too
+nemue scan 192.168.1.1 -p 1-1000 -F
+
+# Show everything (all port states)
+nemue scan 192.168.1.1 -p 1-1000 -c -F
+```
+
+**Note**: This prevents terminal flooding when scanning large port ranges. The actual scan still tests all ports; only the display is filtered.
+
+### Aggressive/Comprehensive Scan
+
+The `-A` flag enables a comprehensive scan similar to `nmap -A`:
+
+```bash
+# Aggressive scan (equivalent to nmap -A)
+sudo nemue scan 192.168.1.1 -A
+
+# This automatically enables:
+# - Service detection (-S)
+# - OS detection (-O)  
+# - Raw sockets/SYN scan (--raw)
+# - top1000 ports (if no ports specified)
+
+# Aggressive scan with custom ports
+sudo nemue scan 192.168.1.1 -A -p 1-10000
+
+# Aggressive scan excluding certain ports
+sudo nemue scan 192.168.1.1 -A -e 22,3306
+
+# Aggressive + verbose + save results
+sudo nemue scan 192.168.1.1 -A -v -o results.json
+```
+
+**Comparison with nmap**:
+- `nmap -A target` → `nemue scan target -A` (requires sudo)
+- Enables OS detection, service/version detection, and uses stealth SYN scan
+- Scans top 1000 most common ports by default
 
 ---
 
@@ -167,7 +258,7 @@ nemue scan 192.168.1.1 -p 1-1000 --exclude 80,443
 
 ### Timing Templates
 
-Control scan speed and stealth level:
+Control scan speed and stealth level with fine-grained options:
 
 ```bash
 # T0: Paranoid (5 minutes between packets)
@@ -188,6 +279,57 @@ nemue scan target.com -p 1-65535 --timing aggressive
 # T5: Insane (maximum speed)
 nemue scan target.com -p 1-65535 --timing insane
 ```
+
+### Fine-Grained Timing Control
+
+Override timing templates with specific parameters:
+
+```bash
+# Custom RTT timeouts
+sudo nemue scan target.com -p 1-1000 \
+  --min-rtt-timeout 100ms \
+  --max-rtt-timeout 2s \
+  --initial-rtt-timeout 500ms
+
+# Probe parallelization
+sudo nemue scan target.com -p 1-65535 \
+  --min-parallelism 10 \
+  --max-parallelism 100
+
+# Host group sizes
+sudo nemue scan 192.168.1.0/24 -p 80,443 \
+  --min-hostgroup 16 \
+  --max-hostgroup 256
+
+# Rate limiting
+sudo nemue scan target.com -p 1-1000 \
+  --min-rate 100 \
+  --max-rate 1000
+
+# Scan delays
+sudo nemue scan target.com -p 1-1000 \
+  --scan-delay 100ms \
+  --max-scan-delay 1s
+
+# Per-host timeout
+sudo nemue scan 192.168.1.0/24 -p 1-1000 \
+  --host-timeout 15m
+
+# Max retries
+sudo nemue scan target.com -p 1-65535 \
+  --max-retries 3
+
+# Combined fine-tuning
+sudo nemue scan target.com -p 1-65535 \
+  --timing aggressive \
+  --max-rate 5000 \
+  --min-parallelism 50 \
+  --max-rtt-timeout 500ms \
+  --max-retries 2
+```
+
+**Time Suffixes**: `ms` (milliseconds), `s` (seconds), `m` (minutes), `h` (hours)  
+Examples: `100ms`, `1.5s`, `2m`, `1h`
 
 ### Decoy Scanning
 
@@ -462,6 +604,60 @@ nemue scan 192.168.1.1 -p 1-1000 --passive-first --shodan-key YOUR_KEY
 
 ## Lua Scripting
 
+### Script Management
+
+```bash
+# Update script database (scan for new scripts)
+nemue scan 192.168.1.1 --script-updatedb
+
+# Show help for a specific script
+nemue scan 192.168.1.1 --script-help http-headers
+
+# List all scripts in database
+ls scripts/  # Scripts are stored in ./scripts/ directory
+```
+
+### Running Scripts with Arguments
+
+```bash
+# Pass arguments to scripts
+nemue scan 192.168.1.1 -p 80 --script http-check \\
+  --script-args "url=http://192.168.1.1,timeout=10"
+
+# Multiple arguments (comma or semicolon separated)
+nemue scan 192.168.1.1 -p 3306 --script mysql-check \\
+  --script-args "user=root,pass=toor,database=test"
+
+# Load arguments from file
+nemue scan 192.168.1.1 --script custom-check \\
+  --script-args-file script-config.txt
+
+# Enable script execution tracing (debug mode)
+nemue scan 192.168.1.1 --script http-vuln \\
+  --script-args "target=admin" \\
+  --script-trace
+```
+
+### Script Arguments File Format
+
+Create `script-args.txt`:
+```
+# MySQL connection arguments
+user=root
+password=test123
+database=production
+
+# HTTP check settings
+url=http://example.com
+timeout=30  # seconds
+follow_redirects=true
+```
+
+Use it:
+```bash
+nemue scan 192.168.1.1 -p 3306 --script-args-file script-args.txt
+```
+
 ### Running Scripts
 
 ```bash
@@ -476,6 +672,41 @@ nemue script list
 
 # Get script info
 nemue script info http-headers
+```
+
+### Script Documentation Format
+
+Scripts can include documentation using special comments:
+
+```lua
+name = "http-check"
+description = "Checks HTTP service for vulnerabilities"
+author = "Your Name"
+categories = {"http", "vuln"}
+
+--@usage nemue scan <target> --script http-check --script-args url=http://example.com
+--@arg url required The URL to check
+--@arg timeout optional default=30 Request timeout in seconds
+--@arg user_agent optional default=Nemue/1.0 Custom User-Agent header
+--@example nemue scan 192.168.1.1 --script http-check --script-args url=http://192.168.1.1
+--@output Returns HTTP status code, headers, and detected vulnerabilities
+
+function action(args)
+    local url = args.url or "http://localhost"
+    local timeout = args.timeout or 30
+    
+    -- Script logic here
+    return {
+        output = "HTTP service OK",
+        vulnerability = nil,
+        severity = nil
+    }
+end
+```
+
+View documentation:
+```bash
+nemue scan 192.168.1.1 --script-help http-check
 ```
 
 ### Example Scripts (13 Available)
@@ -1265,4 +1496,4 @@ nemue monitor start \
 ---
 
 **Last Updated**: November 24, 2025  
-**Version**: Phase 7 Complete
+**Version**: Phase 8.5.4 Complete ✅ (IPv6, Script Engine, 74% Nmap Parity)

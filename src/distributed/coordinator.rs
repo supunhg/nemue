@@ -224,6 +224,7 @@ impl ScanCoordinator {
     }
 
     /// Check if node supports the scan type
+    #[allow(dead_code)]
     fn node_supports_scan_type(&self, node: &ScanNode, scan_type: &ScanType) -> bool {
         match scan_type {
             ScanType::Syn => node.capabilities.supports_syn_scan,

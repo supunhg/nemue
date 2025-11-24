@@ -115,6 +115,70 @@ impl ScanEngine {
         })
     }
 
+    /// Scan with port exclusions
+    pub async fn scan_with_exclusions(
+        &self,
+        target: &str,
+        ports: &str,
+        exclude_ports: &str,
+        scan_type: &str,
+    ) -> Result<ScanResults> {
+        let scan_start = chrono::Utc::now();
+
+        // Parse targets
+        let targets = TargetParser::parse(target)?;
+        info!("Parsed {} target(s)", targets.len());
+
+        // Parse ports and exclusions
+        let mut port_list = PortParser::parse(ports)?;
+        let exclude_list = PortParser::parse(exclude_ports)?;
+        
+        // Filter out excluded ports
+        port_list.retain(|port| !exclude_list.contains(port));
+        
+        info!("Parsed {} port(s) ({} excluded)", port_list.len(), exclude_list.len());
+
+        let target_count = targets.len();
+        let mut all_results = Vec::new();
+        let mut os_fingerprints = Vec::new();
+
+        // Scan each target
+        for target_ip in targets {
+            info!("Scanning target: {}", target_ip);
+            let mut results = match scan_type {
+                "syn" => self.syn_scan(target_ip, &port_list).await?,
+                "connect" => self.connect_scan(target_ip, &port_list).await?,
+                "udp" => self.udp_scan(target_ip, &port_list).await?,
+                _ => return Err(anyhow!("Unknown scan type: {}", scan_type)),
+            };
+
+            // Perform service detection on open ports
+            if self.enable_service_detection {
+                results = self.detect_services(target_ip, results).await;
+            }
+
+            // Perform OS detection
+            if self.enable_os_detection {
+                if let Some(os_fp) = self.detect_os(target_ip, &results).await {
+                    os_fingerprints.push(os_fp);
+                }
+            }
+
+            all_results.extend(results);
+        }
+
+        let scan_end = chrono::Utc::now();
+
+        Ok(ScanResults {
+            scan_start,
+            scan_end,
+            target_count,
+            port_count: port_list.len(),
+            results: all_results,
+            os_fingerprints,
+        })
+    }
+
     async fn syn_scan(&self, target: IpAddr, ports: &[Port]) -> Result<Vec<ScanResult>> {
         info!("Performing SYN scan on {} ports", ports.len());
         
@@ -288,9 +352,11 @@ impl ScanEngine {
         let mut fingerprint = os_detector.detect(ttl, window_size, vec![]);
         fingerprint.target = target;
 
-        info!("OS detected: {} (confidence: {}%)", 
-            fingerprint.os_family.as_ref().unwrap().as_str(), 
-            fingerprint.confidence);
+        let os_name = fingerprint.os_family.as_ref()
+            .map(|s| s.as_str())
+            .unwrap_or("Unknown");
+        
+        info!("OS detected: {} (confidence: {}%)", os_name, fingerprint.confidence);
 
         Some(fingerprint)
     }

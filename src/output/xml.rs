@@ -32,6 +32,8 @@ pub fn format(results: &ScanResults) -> Result<String> {
                 PortState::Open => "open",
                 PortState::Closed => "closed",
                 PortState::Filtered => "filtered",
+                PortState::Unfiltered => "unfiltered",
+                PortState::OpenFiltered => "open|filtered",
                 PortState::Unknown => "unknown",
             };
             

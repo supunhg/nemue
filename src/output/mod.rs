@@ -1,11 +1,20 @@
 mod json;
 mod xml;
 pub mod display;
+pub mod nmap_formats;
 
 use anyhow::{anyhow, Result};
 use crate::scanner::ScanResults;
 
 pub use display::DisplayFormatter;
+pub use nmap_formats::{
+    NmapOutputFormat,
+    NormalOutputFormatter,
+    GrepableOutputFormatter,
+    ReasonOutputFormatter,
+    ScanStatistics,
+    OutputManager,
+};
 
 pub enum OutputFormat {
     Json,

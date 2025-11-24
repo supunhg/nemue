@@ -1,11 +1,25 @@
 // Web Application Scanning Module
 // Provides comprehensive web application security testing capabilities
 
+mod crawler;
+mod fingerprint;
+mod forms;
+mod api;
+mod headers;
+
+pub use crawler::{Crawler, CrawlerState};
+pub use fingerprint::{TechnologyFingerprinter, Technology, TechnologyCategory};
+pub use forms::{FormAnalyzer, InputField, FormSecurityIssue};
+pub use api::{APIDiscovery, APIEndpoint, APIType, APIVulnerability};
+pub use headers::{SecurityHeaderAnalyzer, SecurityHeaderResult, Severity as HeaderSeverity};
+
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tokio::sync::Semaphore;
 use std::sync::Arc;
+use std::time::Duration;
+use reqwest::Client;
 
 /// HTTP method types
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -66,72 +80,56 @@ pub struct WebResource {
 pub struct FormInfo {
     pub action: String,
     pub method: String,
-    pub inputs: Vec<InputField>,
+    pub inputs: Vec<FormInput>,
 }
 
 /// HTML input field
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct InputField {
+pub struct FormInput {
     pub name: String,
-    pub field_type: String,
+    pub input_type: String,
     pub required: bool,
 }
 
 /// Web spider/crawler
+#[allow(dead_code)]
 pub struct WebSpider {
     config: CrawlerConfig,
     visited: Arc<tokio::sync::Mutex<HashMap<String, WebResource>>>,
     semaphore: Arc<Semaphore>,
+    client: Client,
 }
 
 impl WebSpider {
     pub fn new(config: CrawlerConfig) -> Self {
         let max_concurrent = config.rate_limit.min(50);
+        
+        let client = Client::builder()
+            .user_agent(&config.user_agent)
+            .timeout(Duration::from_secs(config.timeout_seconds))
+            .redirect(reqwest::redirect::Policy::limited(5))
+            .build()
+            .unwrap();
+
         Self {
             config,
             visited: Arc::new(tokio::sync::Mutex::new(HashMap::new())),
             semaphore: Arc::new(Semaphore::new(max_concurrent)),
+            client,
         }
     }
 
     /// Start crawling from a base URL
     pub async fn crawl(&self, base_url: &str) -> Result<HashMap<String, WebResource>> {
-        // TODO: Implement actual crawling logic
-        // This is a placeholder for Phase 8 implementation
+        let crawler = Crawler::new(self.config.clone());
+        let results = crawler.crawl(base_url).await?;
         
-        let mut results = HashMap::new();
+        let mut map = HashMap::new();
+        for resource in results {
+            map.insert(resource.url.clone(), resource);
+        }
         
-        // Placeholder result
-        results.insert(
-            base_url.to_string(),
-            WebResource {
-                url: base_url.to_string(),
-                method: HttpMethod::GET,
-                status_code: 200,
-                content_type: Some("text/html".to_string()),
-                content_length: Some(1024),
-                response_time_ms: 150,
-                headers: HashMap::new(),
-                title: Some("Example Page".to_string()),
-                links: vec![],
-                forms: vec![],
-                depth: 0,
-            }
-        );
-        
-        Ok(results)
-    }
-
-    /// Extract links from HTML content
-    fn extract_links(&self, _html: &str, _base_url: &str) -> Vec<String> {
-        // TODO: Implement HTML parsing and link extraction
-        vec![]
-    }
-
-    /// Extract forms from HTML content
-    fn extract_forms(&self, _html: &str) -> Vec<FormInfo> {
-        // TODO: Implement form extraction
-        vec![]
+        Ok(map)
     }
 }
 
@@ -153,7 +151,7 @@ pub struct TechnologyDetector;
 impl TechnologyDetector {
     /// Detect technologies used by a web application
     pub fn detect(_headers: &HashMap<String, String>, _body: &str) -> TechnologyStack {
-        // TODO: Implement technology detection
+        // Technology detection pending
         // Analyze headers, HTML comments, script tags, meta tags, etc.
         
         TechnologyStack {
@@ -174,7 +172,7 @@ pub struct ApiDiscovery;
 impl ApiDiscovery {
     /// Discover API endpoints
     pub async fn discover(_base_url: &str) -> Result<Vec<ApiEndpoint>> {
-        // TODO: Implement API discovery
+        // API discovery pending
         // Check common paths: /api, /api/v1, /api/v2, /graphql, /rest, etc.
         
         Ok(vec![

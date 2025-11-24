@@ -1,0 +1,216 @@
+{
+  "scripts": [
+    {
+      "name": "rdp-enum-encryption",
+      "path": "/home/tabea/Main/GitHub/Nemue/scripts/rdp-enum-encryption.lua",
+      "description": "[[",
+      "author": "Nemue Team",
+      "categories": [
+        "discovery",
+        "safe"
+      ],
+      "last_modified": "2025-11-24T11:35:42.837329269Z"
+    },
+    {
+      "name": "dns-zone-transfer",
+      "path": "/home/tabea/Main/GitHub/Nemue/scripts/dns-zone-transfer.lua",
+      "description": "[[",
+      "author": "Nemue Team",
+      "categories": [
+        "intrusive",
+        "vuln",
+        "discovery"
+      ],
+      "last_modified": "2025-11-24T11:35:42.837329269Z"
+    },
+    {
+      "name": "mongodb-info",
+      "path": "/home/tabea/Main/GitHub/Nemue/scripts/mongodb-info.lua",
+      "description": "[[",
+      "author": "Nemue Team",
+      "categories": [
+        "discovery",
+        "safe",
+        "database"
+      ],
+      "last_modified": "2025-11-24T11:35:42.837329269Z"
+    },
+    {
+      "name": "redis-info",
+      "path": "/home/tabea/Main/GitHub/Nemue/scripts/redis-info.lua",
+      "description": "[[",
+      "author": "Nemue Team",
+      "categories": [
+        "discovery",
+        "intrusive",
+        "database"
+      ],
+      "last_modified": "2025-11-24T11:35:42.837329269Z"
+    },
+    {
+      "name": "postgresql-info",
+      "path": "/home/tabea/Main/GitHub/Nemue/scripts/postgresql-info.lua",
+      "description": "[[",
+      "author": "Nemue Team",
+      "categories": [
+        "discovery",
+        "safe",
+        "database"
+      ],
+      "last_modified": "2025-11-24T11:35:42.837329269Z"
+    },
+    {
+      "name": "ssh-banner",
+      "path": "/home/tabea/Main/GitHub/Nemue/scripts/ssh-banner.lua",
+      "description": "Grabs SSH banner and identifies version",
+      "author": "Nemue Team",
+      "categories": [
+        "ssh",
+        "discovery",
+        "banner"
+      ],
+      "last_modified": "2025-11-24T06:14:18.582736053Z"
+    },
+    {
+      "name": "docker-api-enum",
+      "path": "/home/tabea/Main/GitHub/Nemue/scripts/docker-api-enum.lua",
+      "description": "[[",
+      "author": "Nemue Team",
+      "categories": [
+        "discovery",
+        "intrusive"
+      ],
+      "last_modified": "2025-11-24T11:35:42.837329269Z"
+    },
+    {
+      "name": "ssl-cert-info",
+      "path": "/home/tabea/Main/GitHub/Nemue/scripts/ssl-cert-info.lua",
+      "description": "[[",
+      "author": "Nemue Team",
+      "categories": [
+        "discovery",
+        "safe",
+        "ssl"
+      ],
+      "last_modified": "2025-11-24T11:35:42.765327615Z"
+    },
+    {
+      "name": "elasticsearch-info",
+      "path": "/home/tabea/Main/GitHub/Nemue/scripts/elasticsearch-info.lua",
+      "description": "[[",
+      "author": "Nemue Team",
+      "categories": [
+        "discovery",
+        "safe"
+      ],
+      "last_modified": "2025-11-24T11:35:42.837329269Z"
+    },
+    {
+      "name": "ssl-version-check",
+      "path": "/home/tabea/Main/GitHub/Nemue/scripts/ssl-version-check.lua",
+      "description": "Checks for weak SSL/TLS versions (SSLv2, SSLv3, TLSv1.0)",
+      "author": "Nemue Security Team",
+      "categories": [
+        "ssl",
+        "vuln",
+        "crypto"
+      ],
+      "last_modified": "2025-11-24T06:14:18.582736053Z"
+    },
+    {
+      "name": "http-headers",
+      "path": "/home/tabea/Main/GitHub/Nemue/scripts/http-headers.lua",
+      "description": "Analyzes HTTP response headers for security information",
+      "author": "Nemue Team",
+      "categories": [
+        "http",
+        "discovery"
+      ],
+      "last_modified": "2025-11-24T06:14:18.582736053Z"
+    },
+    {
+      "name": "http-robots-txt",
+      "path": "/home/tabea/Main/GitHub/Nemue/scripts/http-robots-txt.lua",
+      "description": "[[",
+      "author": "Nemue Team",
+      "categories": [
+        "discovery",
+        "safe"
+      ],
+      "last_modified": "2025-11-24T11:35:42.837329269Z"
+    },
+    {
+      "name": "db-default-creds",
+      "path": "/home/tabea/Main/GitHub/Nemue/scripts/db-default-creds.lua",
+      "description": "Checks for default database credentials (MySQL, PostgreSQL, MongoDB)",
+      "author": "Nemue Team",
+      "categories": [
+        "database",
+        "auth",
+        "vuln",
+        "brute"
+      ],
+      "last_modified": "2025-11-24T06:14:18.582736053Z"
+    },
+    {
+      "name": "smtp-enum-users",
+      "path": "/home/tabea/Main/GitHub/Nemue/scripts/smtp-enum-users.lua",
+      "description": "[[",
+      "author": "Nemue Team",
+      "categories": [
+        "intrusive",
+        "auth",
+        "discovery"
+      ],
+      "last_modified": "2025-11-24T11:35:42.837329269Z"
+    },
+    {
+      "name": "ftp-anon",
+      "path": "/home/tabea/Main/GitHub/Nemue/scripts/ftp-anon.lua",
+      "description": "Checks if FTP server allows anonymous login",
+      "author": "Nemue Security Team",
+      "categories": [
+        "ftp",
+        "auth",
+        "vuln"
+      ],
+      "last_modified": "2025-11-24T06:14:18.582736053Z"
+    },
+    {
+      "name": "smb-os-discovery",
+      "path": "/home/tabea/Main/GitHub/Nemue/scripts/smb-os-discovery.lua",
+      "description": "[[",
+      "author": "Nemue Team",
+      "categories": [
+        "discovery",
+        "safe"
+      ],
+      "last_modified": "2025-11-24T11:35:42.765327615Z"
+    },
+    {
+      "name": "ssh-auth-methods",
+      "path": "/home/tabea/Main/GitHub/Nemue/scripts/ssh-auth-methods.lua",
+      "description": "[[",
+      "author": "Nemue Team",
+      "categories": [
+        "discovery",
+        "safe",
+        "auth"
+      ],
+      "last_modified": "2025-11-24T11:35:42.765327615Z"
+    },
+    {
+      "name": "mysql-info",
+      "path": "/home/tabea/Main/GitHub/Nemue/scripts/mysql-info.lua",
+      "description": "[[",
+      "author": "Nemue Team",
+      "categories": [
+        "discovery",
+        "safe",
+        "database"
+      ],
+      "last_modified": "2025-11-24T11:35:42.765327615Z"
+    }
+  ],
+  "last_updated": "2025-11-24T17:20:18.211579522Z"
+}

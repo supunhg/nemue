@@ -3,7 +3,7 @@ name = "nemue"
 version = "0.1.0"
 edition = "2021"
 authors = ["Nemue Project"]
-description = "A high-performance network scanner designed to surpass Nmap"
+description = "Advanced security testing framework with network scanning, web fuzzing, and scripting"
 license = "MIT"
 repository = "https://github.com/tabea/Nemue"
 
@@ -31,10 +31,19 @@ mlua = { version = "0.9", features = ["lua54", "async", "send", "vendored"] }  #
 actix-web = "4.4"  # REST API server
 actix-cors = "0.7"  # CORS middleware
 uuid = { version = "1.6", features = ["v4", "serde"] }  # Unique scan IDs
+reqwest = { version = "0.11", features = ["json"] }  # HTTP client for fuzzing
+regex = "1.10"  # Regular expressions
+url = "2.5"  # URL parsing
 
 [dev-dependencies]
 tokio-test = "0.4"
 mockall = "0.12"
+tempfile = "3.8"  # Temporary files for testing
+criterion = { version = "0.5", features = ["html_reports"] }  # Benchmarking framework
+
+[[bench]]
+name = "scanner_benchmarks"
+harness = false
 
 [[bin]]
 name = "nemue"
