@@ -7,10 +7,10 @@
 
 ## 📊 Quick Stats
 
-- **Total Code**: ~27,000 lines Rust + 3,200 lines Lua  
+- **Total Code**: ~28,000 lines Rust + 4,658 lines Lua  
 - **Total Tests**: 421 tests (100% pass rate)
-- **NSE Scripts**: 39 Lua scripts
-- **CVE Patterns**: 22 critical vulnerabilities (2020-2024)
+- **NSE Scripts**: 45 Lua scripts (39 → 45, +6 new)
+- **CVE Patterns**: 29 critical vulnerabilities (2008-2024)
 - **Nmap Parity**: 106/140 features (76%)
 - **Phases Complete**: 9.4/12 (78%)
 - **Current Focus**: Phase 10 - Network Topology Discovery
@@ -111,12 +111,12 @@
 
 ---
 
-### Phase 7: Advanced Scripting & Vulnerability Scanning ✅ **COMPLETE (ENHANCED)**
+### Phase 7: Advanced Scripting & Vulnerability Scanning ✅ **COMPLETE (ENHANCED x2)**
 *Comprehensive vulnerability detection framework*
 
-**Status**: ✅ Enhanced with additional scripts and CVE patterns  
-**NSE Scripts**: 32 Lua scripts (19 → 32, +13 new scripts)  
-**CVE Patterns**: 22 critical vulnerabilities (6 → 22, +16 new CVEs)
+**Status**: ✅ Enhanced with additional scripts and CVE patterns (2nd enhancement)  
+**NSE Scripts**: 45 Lua scripts (19 → 32 → 45, +26 total new)  
+**CVE Patterns**: 29 critical vulnerabilities (6 → 22 → 29, +23 total new)
 
 - [x] **Vulnerability Detection Framework** (490 lines, 5 tests)
   - [x] 11 vulnerability categories (Auth, RCE, SQLi, XSS, InfoDisclosure, DoS, PrivEsc, Misconfiguration, DefaultCredentials, Cryptography, Other)
@@ -165,15 +165,21 @@
   - [x] Maturity levels and PoC availability
   - [x] Metasploit modules and ExploitDB IDs
 
-- [x] **NVD Integration with CVSS v3.1** (519 lines, 6 tests)
+  - [x] **NVD Integration with CVSS v3.1** (519 lines, 6 tests)
   - [x] Full CVSS v3.1 implementation
   - [x] Attack vectors (Network, Adjacent, Local, Physical)
   - [x] Attack complexity, privileges, user interaction
   - [x] Scope and CIA impacts
   - [x] Vector string parser (e.g., "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H")
   - [x] Severity mapping (0.0-10.0 scale)
-  - [x] **22 pre-populated CVE patterns (EXPANDED)**
-  - [x] **Log4Shell (CVE-2021-44228, CVE-2021-45046) - Log4j RCE (NEW)**
+  - [x] **29 pre-populated CVE patterns (EXPANDED x2)**
+  - [x] **MS08-067 (CVE-2008-4250) - Windows Server RCE (NEW)**
+  - [x] **Heartbleed (CVE-2014-0160) - OpenSSL TLS Information Disclosure (NEW)**
+  - [x] **Shellshock (CVE-2014-6271) - Bash RCE (NEW)**
+  - [x] **POODLE (CVE-2014-3566) - SSLv3 Padding Oracle (NEW)**
+  - [x] **vsFTPd Backdoor (CVE-2011-2523) - FTP RCE (NEW)**
+  - [x] **Struts2 RCE (CVE-2017-5638) - Jakarta Multipart Parser (Equifax breach) (NEW)**
+  - [x] **Log4Shell (CVE-2021-44228, CVE-2021-45046) - Log4j RCE**
   - [x] **ProxyShell (CVE-2021-34473, CVE-2021-34523) - Exchange RCE (NEW)**
   - [x] **PrintNightmare (CVE-2021-34527) - Windows Print Spooler RCE (NEW)**
   - [x] **Zerologon (CVE-2020-1472) - Active Directory privilege escalation (NEW)**
@@ -193,7 +199,7 @@
   - [x] OpenSSL vulnerabilities
   - [x] MySQL, PostgreSQL, nginx CVE patterns
 
-- [x] **NSE Script Library** (32 Lua scripts)
+- [x] **NSE Script Library** (45 Lua scripts)
   - [x] HTTP headers enumeration
   - [x] SSL certificate information
   - [x] SSH authentication methods
@@ -209,7 +215,13 @@
   - [x] Redis information
   - [x] ElasticSearch information
   - [x] Docker API enumeration
-  - [x] **SNMP information (NEW)**
+  - [x] **SMB MS08-067 detection (NEW)**
+  - [x] **SMB Conficker worm detection (NEW)**
+  - [x] **SSL cipher enumeration (NEW)**
+  - [x] **WordPress enumeration (NEW)**
+  - [x] **Struts2 CVE-2017-5638 detection (NEW)**
+  - [x] **Advanced SQL injection detection (NEW)**
+  - [x] **SNMP information**
   - [x] **LDAP RootDSE enumeration (NEW)**
   - [x] **NFS share listing (NEW)**
   - [x] **VNC server information (NEW)**
@@ -224,7 +236,7 @@
   - [x] **HTTP directory listing detection (NEW)**
   - [x] **HTTP authentication bypass (NEW)**
 
-**Deliverables**: Production vulnerability scanner (vuln module: 3,207 lines, 22 tests, scripts: 32 Lua files, 22 CVE patterns)
+**Deliverables**: Production vulnerability scanner (vuln module: 3,207 lines, 22 tests, scripts: 45 Lua files, 29 CVE patterns)
 
 **Deferred to Future Phase**: Script package manager (download/update scripts, verification, signatures)
 

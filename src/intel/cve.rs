@@ -434,17 +434,107 @@ impl CveDatabase {
             });
         }
 
-        // Cisco IOS XE Web UI (CVE-2023-20198)
+        // Cisco IOS XE (CVE-2023-20198)
         if service.to_lowercase().contains("cisco") || service.to_lowercase().contains("ios") {
             results.push(CveInfo {
                 cve_id: "CVE-2023-20198".to_string(),
-                description: "Cisco IOS XE Web UI privilege escalation vulnerability".to_string(),
+                description: "Cisco IOS XE Web UI Privilege Escalation Vulnerability".to_string(),
                 severity: CveSeverity::Critical,
                 cvss_score: 10.0,
                 published_date: "2023-10-16".to_string(),
                 references: vec![
                     "https://nvd.nist.gov/vuln/detail/CVE-2023-20198".to_string(),
                     "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-iosxe-webui-privesc-j22SaA4z".to_string(),
+                ],
+            });
+        }
+
+        // Windows SMB MS08-067
+        if service.to_lowercase().contains("smb") || service.to_lowercase().contains("microsoft-ds") {
+            results.push(CveInfo {
+                cve_id: "CVE-2008-4250".to_string(),
+                description: "Microsoft Windows Server Service RPC Request Handling RCE (MS08-067)".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 10.0,
+                published_date: "2008-10-23".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2008-4250".to_string(),
+                    "https://technet.microsoft.com/en-us/library/security/ms08-067.aspx".to_string(),
+                ],
+            });
+        }
+
+        // Apache Struts2 (CVE-2017-5638)
+        if service.to_lowercase().contains("struts") || service.to_lowercase().contains("tomcat") {
+            results.push(CveInfo {
+                cve_id: "CVE-2017-5638".to_string(),
+                description: "Apache Struts2 Jakarta Multipart Parser RCE (Equifax breach)".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 10.0,
+                published_date: "2017-03-06".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2017-5638".to_string(),
+                    "https://struts.apache.org/docs/s2-045.html".to_string(),
+                ],
+            });
+        }
+
+        // OpenSSL Heartbleed (CVE-2014-0160)
+        if service.to_lowercase().contains("ssl") || service.to_lowercase().contains("tls") {
+            results.push(CveInfo {
+                cve_id: "CVE-2014-0160".to_string(),
+                description: "OpenSSL TLS Heartbeat Extension Information Disclosure (Heartbleed)".to_string(),
+                severity: CveSeverity::High,
+                cvss_score: 7.5,
+                published_date: "2014-04-07".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2014-0160".to_string(),
+                    "http://heartbleed.com/".to_string(),
+                ],
+            });
+        }
+
+        // SSLv3 POODLE (CVE-2014-3566)
+        if service.to_lowercase().contains("ssl") || service.to_lowercase().contains("https") {
+            results.push(CveInfo {
+                cve_id: "CVE-2014-3566".to_string(),
+                description: "SSL Protocol 3.0 Padding Oracle Attack (POODLE)".to_string(),
+                severity: CveSeverity::Medium,
+                cvss_score: 4.3,
+                published_date: "2014-10-14".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2014-3566".to_string(),
+                    "https://www.openssl.org/~bodo/ssl-poodle.pdf".to_string(),
+                ],
+            });
+        }
+
+        // Bash Shellshock (CVE-2014-6271)
+        if service.to_lowercase().contains("cgi") || service.to_lowercase().contains("bash") {
+            results.push(CveInfo {
+                cve_id: "CVE-2014-6271".to_string(),
+                description: "GNU Bash Remote Code Execution via Environment Variables (Shellshock)".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 10.0,
+                published_date: "2014-09-24".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2014-6271".to_string(),
+                    "http://seclists.org/oss-sec/2014/q3/650".to_string(),
+                ],
+            });
+        }
+
+        // vsFTPd Backdoor (CVE-2011-2523)
+        if service.to_lowercase().contains("ftp") || service.to_lowercase().contains("vsftpd") {
+            results.push(CveInfo {
+                cve_id: "CVE-2011-2523".to_string(),
+                description: "vsFTPd 2.3.4 Backdoor Command Execution".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 10.0,
+                published_date: "2011-07-04".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2011-2523".to_string(),
+                    "http://scarybeastsecurity.blogspot.com/2011/07/alert-vsftpd-download-backdoored.html".to_string(),
                 ],
             });
         }
