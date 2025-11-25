@@ -3,6 +3,9 @@ pub mod compliance;
 pub mod html;
 pub mod audit;
 pub mod trends;
+pub mod templates;
+pub mod dashboard;
+pub mod analytics;
 
 pub use compliance::{
     ComplianceMapper, Framework, Control, ControlTest, CheckType,
@@ -11,6 +14,9 @@ pub use compliance::{
 pub use html::HtmlReportGenerator;
 pub use audit::{AuditTrail, AuditEntry, AuditMetadata, EventType, Evidence, EvidenceType};
 pub use trends::{TrendAnalyzer, ScanSnapshot, ScanMetrics, VulnerabilityMetrics, TrendReport, Trend, TrendDirection};
+pub use templates::{TemplateEngine, ReportTemplate, TemplateSection, ContentType};
+pub use dashboard::{Dashboard, DashboardBuilder, Widget, WidgetType, WidgetData, MetricData, ChartData, AlertLevel};
+pub use analytics::{AnalyticsEngine, RiskModel, ModelType, Prediction, RiskFactor, VulnerabilityPrediction};
 
 use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc};
