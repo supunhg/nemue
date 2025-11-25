@@ -35,6 +35,7 @@ reqwest = { version = "0.11", features = ["json"] }  # HTTP client for fuzzing
 regex = "1.10"  # Regular expressions
 url = "2.5"  # URL parsing
 lazy_static = "1.4"  # Static initialization
+crossbeam = "0.8"  # Lock-free data structures
 
 [dev-dependencies]
 tokio-test = "0.4"
