@@ -145,10 +145,20 @@ impl ServiceDetector {
         let mut buffer = vec![0u8; 4096];
 
         // Try to read initial banner (some services send data immediately)
-        match timeout(Duration::from_millis(1000), stream.read(&mut buffer)).await {
+        // MySQL, SSH, FTP, SMTP send greeting immediately
+        match timeout(Duration::from_millis(2000), stream.read(&mut buffer)).await {
             Ok(Ok(n)) if n > 0 => {
                 let banner = String::from_utf8_lossy(&buffer[..n]).to_string();
-                debug!("Received banner: {}", banner.trim());
+                debug!("Received initial banner from port {}: {}", addr.port(), banner.trim());
+                
+                // Check if this is a MySQL handshake (starts with packet length and protocol version)
+                if n >= 5 && addr.port() == 3306 {
+                    // MySQL handshake starts with: [packet_length: 3 bytes] [packet_number: 1 byte] [protocol_version: 1 byte]
+                    if buffer[4] == 10 || buffer[4] == 9 {  // Protocol version 10 or 9
+                        return Ok(format!("MYSQL_HANDSHAKE:{}", String::from_utf8_lossy(&buffer[5..n.min(100)])));
+                    }
+                }
+                
                 return Ok(banner);
             }
             _ => {}
@@ -174,21 +184,41 @@ impl ServiceDetector {
             }
         }
 
-        // If no immediate banner, try HTTP probe
-        stream.write_all(b"GET / HTTP/1.0\r\n\r\n").await?;
-        
-        match timeout(Duration::from_millis(1000), stream.read(&mut buffer)).await {
-            Ok(Ok(n)) if n > 0 => {
-                let banner = String::from_utf8_lossy(&buffer[..n]).to_string();
-                debug!("Received HTTP response: {}", banner.trim());
-                Ok(banner)
+        // If no immediate banner, try HTTP probe for web servers
+        if addr.port() == 80 || addr.port() == 443 || addr.port() == 8080 || addr.port() == 8443 {
+            stream.write_all(b"GET / HTTP/1.0\r\n\r\n").await?;
+            
+            match timeout(Duration::from_millis(1000), stream.read(&mut buffer)).await {
+                Ok(Ok(n)) if n > 0 => {
+                    let banner = String::from_utf8_lossy(&buffer[..n]).to_string();
+                    debug!("Received HTTP response: {}", banner.trim());
+                    return Ok(banner);
+                }
+                _ => {}
             }
-            _ => Ok(String::new()),
         }
+        
+        Ok(String::new())
     }
 
     fn analyze_banner(&self, port: u16, banner: &str) -> Option<ServiceInfo> {
         let banner_lower = banner.to_lowercase();
+
+        // Check for MySQL handshake
+        if banner.starts_with("MYSQL_HANDSHAKE:") {
+            let version_info = &banner[16..]; // Skip "MYSQL_HANDSHAKE:"
+            let version = self.extract_mysql_version(version_info);
+            return Some(ServiceInfo {
+                port,
+                protocol: "tcp".to_string(),
+                service: "mysql".to_string(),
+                product: Some("MySQL".to_string()),
+                version,
+                extra_info: None,
+                banner: Some(version_info.trim().to_string()),
+                confidence: 95,
+            });
+        }
 
         // Check for Microsoft RPC
         if banner == "MSRPC" || (port == 135 && !banner.is_empty()) {
@@ -408,6 +438,21 @@ impl ServiceDetector {
             let parts: Vec<&str> = ssh_line.split('-').collect();
             if parts.len() >= 3 {
                 return Some(parts[2].split('_').nth(1)?.to_string());
+            }
+        }
+        None
+    }
+
+    fn extract_mysql_version(&self, banner: &str) -> Option<String> {
+        // MySQL handshake contains version string as null-terminated string
+        // Format after protocol version: server_version\0
+        if let Some(null_pos) = banner.bytes().position(|b| b == 0) {
+            let version = &banner[..null_pos];
+            // Extract version numbers (e.g., "8.0.33-0ubuntu0.22.04.2" -> "8.0.33")
+            if let Some(first_part) = version.split('-').next() {
+                if first_part.chars().any(|c| c.is_numeric()) {
+                    return Some(first_part.to_string());
+                }
             }
         }
         None

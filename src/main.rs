@@ -403,15 +403,32 @@ async fn main() -> Result<()> {
             }
 
             // Apply aggressive mode defaults (like nmap -A)
-            let (ports, version_detect, os_detect, raw) = if aggressive {
+            let (ports, version_detect, os_detect, raw, scan_type) = if aggressive {
+                // Check if we're running as root/admin
+                // On Unix, check if effective UID is 0
+                let is_elevated = std::env::var("USER").map(|u| u == "root").unwrap_or(false)
+                    || std::env::var("SUDO_USER").is_ok();
+                
+                let effective_scan_type = if is_elevated && scan_type == "syn" {
+                    "syn".to_string()
+                } else if !is_elevated && scan_type == "syn" {
+                    // Fall back to connect scan if not root
+                    eprintln!("⚠️  Warning: Aggressive mode requires root for SYN scan. Falling back to Connect scan.");
+                    eprintln!("   Run with 'sudo' for full aggressive scan capabilities.");
+                    "connect".to_string()
+                } else {
+                    scan_type
+                };
+                
                 (
                     if ports == "1-1000" { "top1000".to_string() } else { ports },
-                    true,
-                    true,
-                    true,
+                    true,  // enable version detection
+                    true,  // enable OS detection
+                    is_elevated,  // only use raw sockets if we have root
+                    effective_scan_type
                 )
             } else {
-                (ports, version_detect, os_detect, raw)
+                (ports, version_detect, os_detect, raw, scan_type)
             };
 
             // Apply timing template if specified

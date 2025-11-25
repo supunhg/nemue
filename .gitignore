@@ -3,6 +3,17 @@
 **/*.rs.bk
 Cargo.lock
 
+# Debian packaging
+/build/
+*.deb
+*.buildinfo
+*.changes
+debian/.debhelper/
+debian/nemue/
+debian/files
+debian/*.log
+debian/*.substvars
+
 # IDE
 .vscode/
 .idea/
@@ -21,9 +32,6 @@ Thumbs.db
 !config/*.json
 !config/*.xml
 
-# Custom
-nmap.man
-scripts.nse
-RELEASE_CHECKLIST.md
-*amd64.deb
+# Temporary docs (auto-generated)
 PROJECT_STATUS.md
+RELEASE_CHECKLIST.md

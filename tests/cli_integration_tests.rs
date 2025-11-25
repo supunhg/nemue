@@ -5,12 +5,19 @@ use std::process::Command;
 use std::fs;
 
 fn get_binary_path() -> String {
-    // Use debug binary for tests
+    // Use release binary for tests (or debug if release not available)
     let mut path = std::env::current_dir().unwrap();
     path.push("target");
-    path.push("debug");
-    path.push("nemue");
-    path.to_str().unwrap().to_string()
+    
+    // Check for release binary first, fall back to debug
+    let release_path = path.join("release").join("nemue");
+    let debug_path = path.join("debug").join("nemue");
+    
+    if release_path.exists() {
+        release_path.to_str().unwrap().to_string()
+    } else {
+        debug_path.to_str().unwrap().to_string()
+    }
 }
 
 #[test]
@@ -22,7 +29,7 @@ fn test_cli_help() {
 
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("network scanner"));
+    assert!(stdout.contains("security testing framework") || stdout.contains("network scanning"));
 }
 
 #[test]

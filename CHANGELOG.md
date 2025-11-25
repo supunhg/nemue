@@ -4,6 +4,20 @@ All notable changes to the Nemue project are documented here.
 
 ---
 
+## [Unreleased]
+
+### 🐛 Bug Fixes
+- **Aggressive scan (-A) now works without sudo**: Automatically falls back to Connect scan when not running as root, with helpful warning message
+- **MySQL service detection improved**: Enhanced banner grabbing to properly detect MySQL handshake and extract version information
+- **Service detection timeout increased**: Changed from 1000ms to 2000ms for better reliability with databases and slow services
+
+### ✨ Enhancements
+- **Better MySQL version extraction**: Now properly parses MySQL handshake protocol and extracts version from server greeting
+- **Smarter aggressive mode**: Detects privilege level and adjusts scan type accordingly
+- **Improved banner detection**: Added special handling for MySQL, PostgreSQL, and other database protocols
+
+---
+
 ## [0.1.0] - 2024-11-25 🎉
 
 ### 🚀 Initial Production Release
