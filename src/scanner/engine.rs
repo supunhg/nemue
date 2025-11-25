@@ -112,6 +112,7 @@ impl ScanEngine {
             port_count: port_list.len(),
             results: all_results,
             os_fingerprints,
+            script_results: Vec::new(),
         })
     }
 
@@ -176,6 +177,7 @@ impl ScanEngine {
             port_count: port_list.len(),
             results: all_results,
             os_fingerprints,
+            script_results: Vec::new(),
         })
     }
 

@@ -85,10 +85,22 @@ impl DisplayFormatter {
         }
 
         for (target, target_results) in targets.iter() {
+            // Get hostname if available
+            let hostname_suffix = if let Some(ref result) = target_results.first() {
+                if let Some(ref hostname) = result.hostname {
+                    format!(" ({})", hostname.bright_yellow())
+                } else {
+                    String::new()
+                }
+            } else {
+                String::new()
+            };
+            
             println!(
-                "{} Scan Results for {}",
+                "{} Scan Results for {}{}",
                 "┌─".bright_cyan().bold(),
-                target.bright_white().bold()
+                target.bright_white().bold(),
+                hostname_suffix
             );
             println!("{}", "│".bright_cyan());
 
@@ -154,25 +166,75 @@ impl DisplayFormatter {
                     ("-", "-")
                 };
 
+                // Format service line with product and version like Nmap
+                let service_line = if let Some(ref info) = result.service_info {
+                    let mut parts = Vec::new();
+                    if let Some(ref prod) = info.product {
+                        parts.push(prod.clone());
+                    }
+                    if let Some(ref ver) = info.version {
+                        parts.push(ver.clone());
+                    }
+                    if let Some(ref extra) = info.extra_info {
+                        parts.push(format!("({})", extra));
+                    }
+                    if !parts.is_empty() {
+                        parts.join(" ")
+                    } else {
+                        "-".to_string()
+                    }
+                } else {
+                    "-".to_string()
+                };
+
                 println!(
-                    "{} {:<8} {:<10} {:<12} {:<20} {}",
+                    "{} {:<8} {:<10} {:<12} {}",
                     "│".bright_cyan(),
                     port_str.bright_white(),
                     state_str,
                     service.bright_blue(),
-                    version,
-                    product.dimmed()
+                    service_line.dimmed()
                 );
 
-                // Show banner if verbose
-                if self.verbose {
+                // Show script output for this port
+                let port_scripts: Vec<_> = results
+                    .script_results
+                    .iter()
+                    .filter(|s| s.target == result.target && s.port == result.port)
+                    .collect();
+
+                let has_scripts = !port_scripts.is_empty();
+
+                for script in &port_scripts {
+                    // Format script name
+                    println!(
+                        "{} | {}",
+                        "│".bright_cyan(),
+                        script.script_name.bright_yellow()
+                    );
+                    // Indent script output
+                    for line in script.output.lines() {
+                        println!(
+                            "{} |   {}",
+                            "│".bright_cyan(),
+                            line.dimmed()
+                        );
+                    }
+                }
+
+                // Show banner if verbose and no scripts
+                if self.verbose && !has_scripts {
                     if let Some(ref info) = result.service_info {
                         if let Some(ref banner) = info.banner {
+                            let banner_preview = if banner.len() > 100 {
+                                format!("{}...", &banner[..100])
+                            } else {
+                                banner.clone()
+                            };
                             println!(
-                                "{} {}  {}",
+                                "{} |   {}",
                                 "│".bright_cyan(),
-                                "  ".repeat(1),
-                                format!("Banner: {}", banner).dimmed()
+                                banner_preview.dimmed()
                             );
                         }
                     }

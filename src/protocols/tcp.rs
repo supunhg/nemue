@@ -143,6 +143,7 @@ impl TcpScanner {
             protocol: Protocol::TCP,
             service: None,
             service_info: None,
+            hostname: None,
             timestamp: chrono::Utc::now(),
         })
     }
@@ -302,6 +303,7 @@ impl TcpScanner {
             protocol: Protocol::TCP,
             service: None, // Service detection will be added in Phase 2
             service_info: None,
+            hostname: None,
             timestamp: chrono::Utc::now(),
         })
     }

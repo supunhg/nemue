@@ -1,25 +1,24 @@
 # Nemue 🌊
 
-An advanced security testing framework built in Rust, featuring high-performance network scanning, web content discovery, and extensible scripting capabilities.
+An advanced security testing framework built in Rust, featuring high-performance network scanning, service detection, OS fingerprinting, and extensible scripting capabilities.
 
-**Version**: 1.0.0  
-**Stats**: ~36,500 lines Rust + 4,658 lines Lua | 575 tests (100% pass) | 12 phases complete
+**Version**: 0.1.0  
+**Stats**: 78,239 lines Rust + 59 Lua scripts | 631 tests (100% pass) | 16/16 phases complete ✅  
+**Status**: PRODUCTION READY 🎉
 
-## Features
+## ✨ Key Features
 
-### 🔍 **NEW: Web Content Discovery & Fuzzing**
-- 🌐 **Multi-Mode Fuzzing** - Directory, file, extension, vhost, subdomain, cloud storage
-- 📚 **Built-in Wordlists** - 10 comprehensive wordlists (1K-10K+ entries)
-- 🔄 **Wordlist Mutations** - L33t speak, case variations, year suffixes
-- 🚀 **High Performance** - 1000+ requests/second capability
-- 🎯 **Smart Filtering** - Status codes, size, time, regex patterns
-- 🔁 **Recursive Discovery** - Auto-discover and scan subdirectories
-- 💉 **Parameter Fuzzing** - GET/POST/Header injection (Sniper/Clusterbomb/Pitchfork)
-- 🌐 **Subdomain Enumeration** - DNS brute-forcing with wildcard detection
-- ☁️ **Cloud Storage** - AWS S3, Azure Blob, GCP, DigitalOcean Spaces
-- 📊 **Rich Reporting** - Text, JSON, CSV, Markdown, HTML output formats
+### 🔍 **Advanced Service Detection**
+- 🎯 **100+ Service Probes** - Comprehensive protocol detection (HTTP/2, SMB, RDP, databases)
+- 🔬 **Protocol Parsers** - Deep inspection of SMB, RDP, MySQL, PostgreSQL, Redis
+- 📊 **Version Detection** - Accurate service and application version identification
+- 💡 **Confidence Scoring** - Reliability metrics for every detection
 
-### Core Scanning
+### 🖥️ **OS Fingerprinting**
+- 🔍 **TCP/IP Stack Analysis** - Advanced nmap-style OS detection
+- 📡 **Passive Detection** - p0f-style traffic analysis
+- 🎯 **6 OS Signatures** - Linux, Windows, macOS, BSD, Cisco IOS
+- 🔢 **CPE Generation** - NVD-compatible vulnerability correlation
 - ⚡ **True SYN Stealth Scanning** - Raw socket implementation via pnet datalink layer
 - 🔌 **Multi-Protocol Support** - TCP, UDP, ICMP across IPv4 and IPv6
 - 🎯 **High Performance** - Async/await with Tokio, configurable concurrency
@@ -80,12 +79,40 @@ An advanced security testing framework built in Rust, featuring high-performance
 
 ## Installation
 
-### Prerequisites
+### Option 1: Debian Package (Recommended)
+
+For Debian/Ubuntu systems, install using the pre-built `.deb` package:
+
+```bash
+# Download the .deb package
+wget https://github.com/supunhg/Nemue/releases/download/v0.1.0/nemue_0.1.0-1_amd64.deb
+
+# Install
+sudo dpkg -i nemue_0.1.0-1_amd64.deb
+
+# If dependencies are missing
+sudo apt-get install -f
+
+# Verify installation
+nemue --version
+```
+
+Or build the package yourself:
+
+```bash
+git clone https://github.com/supunhg/Nemue.git
+cd Nemue
+./build-deb-simple.sh
+sudo dpkg -i nemue_0.1.0-1_amd64.deb
+```
+
+### Option 2: Build from Source
+
+**Prerequisites:**
 - Rust 1.70 or higher
 - Root/sudo privileges (for raw socket SYN scans)
 - Linux/macOS (Windows support planned)
 
-### Build from source
 ```bash
 git clone https://github.com/supunhg/Nemue.git
 cd Nemue
@@ -96,11 +123,13 @@ sudo ./target/release/nemue --help
 ```
 
 **📖 Documentation:**
+- **Installation** → [INSTALL.md](INSTALL.md) - Complete installation guide for all methods
+- **Quick Start** → [QUICK_START.md](QUICK_START.md) - Get started in 5 minutes
 - **Usage Guide** → [USAGE.md](USAGE.md) - Comprehensive feature documentation  
-- **Development** → [ROADMAP.md](ROADMAP.md) - Complete! All 12 phases (100%)
-- **Nmap Parity** → [NMAP_FEATURE_PARITY.md](NMAP_FEATURE_PARITY.md) - Feature comparison (76%)
+- **Package Info** → [PACKAGE.md](PACKAGE.md) - Debian package quick reference
 - **Architecture** → [ARCHITECTURE.md](ARCHITECTURE.md) - System design and technical details
-- **Man Pages** → [docs/man/](docs/man/) - Traditional Unix man page documentation
+- **Development** → [ROADMAP.md](ROADMAP.md) - Complete! All 16 phases (100%)
+- **Deployment** → [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) - Production deployment guide
 
 ## Usage
 

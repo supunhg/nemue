@@ -61,6 +61,8 @@ pub struct ScanResult {
     pub service: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub service_info: Option<crate::service::ServiceInfo>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hostname: Option<String>,
     pub timestamp: chrono::DateTime<chrono::Utc>,
 }
 
@@ -100,4 +102,14 @@ pub struct ScanResults {
     pub results: Vec<ScanResult>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub os_fingerprints: Vec<crate::fingerprint::OsFingerprint>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub script_results: Vec<ScriptOutputResult>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScriptOutputResult {
+    pub target: IpAddr,
+    pub port: u16,
+    pub script_name: String,
+    pub output: String,
 }

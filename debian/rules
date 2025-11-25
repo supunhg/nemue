@@ -1,0 +1,26 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	cargo build --release --locked
+
+override_dh_auto_test:
+	cargo test --release
+
+override_dh_auto_install:
+	install -D -m 0755 target/release/nemue debian/nemue/usr/bin/nemue
+	install -d debian/nemue/usr/share/nemue/scripts
+	cp -r scripts/* debian/nemue/usr/share/nemue/scripts/
+	install -D -m 0644 README.md debian/nemue/usr/share/doc/nemue/README.md
+	install -D -m 0644 QUICK_START.md debian/nemue/usr/share/doc/nemue/QUICK_START.md
+	install -D -m 0644 USAGE.md debian/nemue/usr/share/doc/nemue/USAGE.md
+	install -D -m 0644 ARCHITECTURE.md debian/nemue/usr/share/doc/nemue/ARCHITECTURE.md
+	gzip -9 -n -c debian/changelog > debian/nemue/usr/share/doc/nemue/changelog.gz
+
+override_dh_auto_clean:
+	cargo clean || true
+
+override_dh_shlibdeps:
+	dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info

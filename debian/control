@@ -1,0 +1,27 @@
+Source: nemue
+Section: net
+Priority: optional
+Maintainer: Nemue Team <nemue@security.dev>
+Build-Depends: debhelper (>= 12), cargo, rustc (>= 1.70)
+Standards-Version: 4.5.1
+Homepage: https://github.com/supunhg/Nemue
+Vcs-Browser: https://github.com/supunhg/Nemue
+Vcs-Git: https://github.com/supunhg/Nemue.git
+
+Package: nemue
+Architecture: amd64
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Advanced security testing framework
+ Nemue is a high-performance network security testing framework built in Rust,
+ featuring comprehensive scanning capabilities, service detection, OS
+ fingerprinting, and an extensible NSE-compatible scripting engine.
+ .
+ Key features:
+  * High-performance async scanning (1000+ packets/second)
+  * Multiple scan types (SYN, Connect, UDP, etc.)
+  * Advanced service version detection with 1000+ signatures
+  * TCP/IP stack OS fingerprinting
+  * 59 NSE-compatible Lua scripts
+  * Multiple output formats (Normal, XML, JSON, Grepable)
+  * Parallel port scanning with timing controls
+  * CPE generation for vulnerability correlation

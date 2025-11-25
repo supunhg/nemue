@@ -3,7 +3,7 @@ use ipnetwork::IpNetwork;
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use std::net::IpAddr;
+use std::net::{IpAddr, ToSocketAddrs};
 use std::path::Path;
 use rand::Rng;
 
@@ -104,6 +104,7 @@ impl TargetParser {
     /// Parse a target string into a list of IP addresses
     /// Supports:
     /// - Single IPs: 192.168.1.1
+    /// - Hostnames/domains: example.com, scanme.nmap.org
     /// - CIDR notation: 192.168.1.0/24
     /// - Octet ranges: 192.168.0-255.1-254
     pub fn parse(target: &str) -> Result<Vec<IpAddr>> {
@@ -114,11 +115,13 @@ impl TargetParser {
             // Octet ranges (not IPv6)
             Self::parse_octet_range(target)
         } else {
-            // Single IP
-            let ip: IpAddr = target
-                .parse()
-                .map_err(|_| anyhow!("Invalid IP address: {}", target))?;
-            Ok(vec![ip])
+            // Try to parse as IP first
+            if let Ok(ip) = target.parse::<IpAddr>() {
+                return Ok(vec![ip]);
+            }
+            
+            // If not an IP, try DNS resolution
+            Self::resolve_hostname(target)
         }
     }
 
@@ -279,6 +282,25 @@ impl TargetParser {
     }
 
     /// Parse octet range notation (e.g., 192.168.0-255.1-254)
+    /// Resolve a hostname to IP address(es)
+    fn resolve_hostname(hostname: &str) -> Result<Vec<IpAddr>> {
+        // Add default port for resolution (doesn't matter which)
+        let addr_str = format!("{}:0", hostname);
+        
+        let addrs: Vec<_> = addr_str
+            .to_socket_addrs()
+            .map_err(|e| anyhow!("Failed to resolve hostname '{}': {}", hostname, e))?
+            .map(|socket_addr| socket_addr.ip())
+            .collect();
+
+        if addrs.is_empty() {
+            return Err(anyhow!("No IP addresses found for hostname: {}", hostname));
+        }
+
+        Ok(addrs)
+    }
+
+    /// Parse octet range notation (e.g., 192.168.0-255.1-254)
     fn parse_octet_range(range: &str) -> Result<Vec<IpAddr>> {
         let parts: Vec<&str> = range.split('.').collect();
         if parts.len() != 4 {
@@ -352,6 +374,17 @@ mod tests {
         let result = TargetParser::parse("192.168.1.1").unwrap();
         assert_eq!(result.len(), 1);
         assert_eq!(result[0].to_string(), "192.168.1.1");
+    }
+
+    #[test]
+    fn test_parse_hostname() {
+        // This test requires network access
+        let result = TargetParser::parse("localhost");
+        assert!(result.is_ok());
+        let ips = result.unwrap();
+        assert!(!ips.is_empty());
+        // localhost should resolve to 127.0.0.1 or ::1
+        assert!(ips.iter().any(|ip| ip.is_loopback()));
     }
 
     #[test]

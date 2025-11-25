@@ -24,3 +24,6 @@ Thumbs.db
 # Custom
 nmap.man
 scripts.nse
+RELEASE_CHECKLIST.md
+*amd64.deb
+PROJECT_STATUS.md

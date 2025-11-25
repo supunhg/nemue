@@ -154,6 +154,26 @@ impl ServiceDetector {
             _ => {}
         }
 
+        // For RPC endpoints (port 135), send DCE/RPC bind request
+        if addr.port() == 135 {
+            // Simple DCE/RPC probe to trigger response
+            let rpc_probe = vec![
+                0x05, 0x00, 0x0b, 0x03, 0x10, 0x00, 0x00, 0x00,
+                0x48, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            ];
+            let _ = stream.write_all(&rpc_probe).await;
+            
+            match timeout(Duration::from_millis(1000), stream.read(&mut buffer)).await {
+                Ok(Ok(n)) if n > 0 => {
+                    // Check for DCE/RPC response
+                    if n >= 10 && buffer[0] == 0x05 && buffer[1] == 0x00 {
+                        return Ok("MSRPC".to_string());
+                    }
+                }
+                _ => {}
+            }
+        }
+
         // If no immediate banner, try HTTP probe
         stream.write_all(b"GET / HTTP/1.0\r\n\r\n").await?;
         
@@ -169,6 +189,20 @@ impl ServiceDetector {
 
     fn analyze_banner(&self, port: u16, banner: &str) -> Option<ServiceInfo> {
         let banner_lower = banner.to_lowercase();
+
+        // Check for Microsoft RPC
+        if banner == "MSRPC" || (port == 135 && !banner.is_empty()) {
+            return Some(ServiceInfo {
+                port,
+                protocol: "tcp".to_string(),
+                service: "msrpc".to_string(),
+                product: Some("Microsoft Windows RPC".to_string()),
+                version: None,
+                extra_info: None,
+                banner: None,
+                confidence: 90,
+            });
+        }
 
         // Check against known patterns
         for probe in self.probes.values() {
@@ -233,108 +267,113 @@ impl ServiceDetector {
     }
 
     fn detect_by_port(&self, port: u16, banner: Option<String>) -> ServiceInfo {
-        let (service, confidence) = match port {
+        let (service, product, confidence) = match port {
             // File transfer
-            20 => ("ftp-data", 60),
-            21 => ("ftp", 70),
-            69 => ("tftp", 60),
-            115 => ("sftp", 70),
+            20 => ("ftp-data", None, 60),
+            21 => ("ftp", None, 70),
+            69 => ("tftp", None, 60),
+            115 => ("sftp", None, 70),
             
             // SSH/Telnet
-            22 => ("ssh", 80),
-            23 => ("telnet", 70),
+            22 => ("ssh", None, 80),
+            23 => ("telnet", None, 70),
             
             // Mail
-            25 => ("smtp", 70),
-            110 => ("pop3", 70),
-            143 => ("imap", 70),
-            465 => ("smtps", 75),
-            587 => ("submission", 70),
-            993 => ("imaps", 75),
-            995 => ("pop3s", 75),
+            25 => ("smtp", None, 70),
+            110 => ("pop3", None, 70),
+            143 => ("imap", None, 70),
+            465 => ("smtps", None, 75),
+            587 => ("submission", None, 70),
+            993 => ("imaps", None, 75),
+            995 => ("pop3s", None, 75),
             
             // DNS
-            53 => ("domain", 80),
+            53 => ("domain", None, 80),
             
             // HTTP/Web
-            80 => ("http", 85),
-            443 => ("https", 85),
-            8000 => ("http-alt", 70),
-            8008 => ("http", 70),
-            8080 => ("http-proxy", 75),
-            8081 => ("http-alt", 70),
-            8443 => ("https-alt", 80),
-            8888 => ("http-alt", 70),
+            80 => ("http", None, 85),
+            443 => ("https", None, 85),
+            8000 => ("http-alt", None, 70),
+            8008 => ("http", None, 70),
+            8080 => ("http-proxy", None, 75),
+            8081 => ("http-alt", None, 70),
+            8443 => ("https-alt", None, 80),
+            8888 => ("http-alt", None, 70),
+            
+            // Windows RPC/DCOM
+            135 => ("msrpc", Some("Microsoft Windows RPC"), 85),
+            593 => ("http-rpc-epmap", Some("Microsoft DCOM"), 75),
             
             // SMB/NetBIOS
-            137 => ("netbios-ns", 75),
-            138 => ("netbios-dgm", 75),
-            139 => ("netbios-ssn", 75),
-            445 => ("microsoft-ds", 80),
+            137 => ("netbios-ns", Some("Microsoft Windows netbios-ns"), 75),
+            138 => ("netbios-dgm", Some("Microsoft Windows netbios-dgm"), 75),
+            139 => ("netbios-ssn", Some("Microsoft Windows netbios-ssn"), 75),
+            445 => ("microsoft-ds", Some("Microsoft Windows SMB"), 80),
             
             // Directory
-            88 => ("kerberos", 75),
-            389 => ("ldap", 80),
-            636 => ("ldaps", 80),
-            3268 => ("ldap-gc", 75),
+            88 => ("kerberos", Some("Microsoft Windows Kerberos"), 75),
+            389 => ("ldap", None, 80),
+            636 => ("ldaps", None, 80),
+            3268 => ("ldap-gc", None, 75),
+            3269 => ("ldap-gc-ssl", None, 75),
             
             // Databases
-            1433 => ("ms-sql-s", 80),
-            1521 => ("oracle", 80),
-            3306 => ("mysql", 85),
-            5432 => ("postgresql", 85),
-            6379 => ("redis", 85),
-            7000 | 7001 => ("cassandra", 75),
-            9042 => ("cassandra-cql", 80),
-            9200 => ("elasticsearch", 85),
-            9300 => ("elasticsearch-cluster", 80),
-            11211 => ("memcached", 80),
-            27017 => ("mongodb", 85),
-            27018 => ("mongodb-shard", 80),
-            27019 => ("mongodb-config", 80),
-            5984 => ("couchdb", 75),
+            1433 => ("ms-sql-s", Some("Microsoft SQL Server"), 80),
+            1521 => ("oracle", Some("Oracle Database"), 80),
+            3306 => ("mysql", Some("MySQL"), 85),
+            5432 => ("postgresql", Some("PostgreSQL"), 85),
+            6379 => ("redis", Some("Redis"), 85),
+            7000 | 7001 => ("cassandra", Some("Apache Cassandra"), 75),
+            9042 => ("cassandra-cql", Some("Apache Cassandra CQL"), 80),
+            9200 => ("elasticsearch", Some("Elasticsearch"), 85),
+            9300 => ("elasticsearch-cluster", Some("Elasticsearch"), 80),
+            11211 => ("memcached", Some("Memcached"), 80),
+            27017 => ("mongodb", Some("MongoDB"), 85),
+            27018 => ("mongodb-shard", Some("MongoDB"), 80),
+            27019 => ("mongodb-config", Some("MongoDB"), 80),
+            5984 => ("couchdb", Some("Apache CouchDB"), 75),
             
             // Remote desktop/VNC
-            3389 => ("rdp", 85),
-            5900..=5910 => ("vnc", 80),
+            3389 => ("rdp", Some("Microsoft Terminal Services"), 85),
+            5900..=5910 => ("vnc", Some("VNC"), 80),
             
             // Message queues
-            5672 => ("amqp", 75),
-            1883 => ("mqtt", 75),
-            8883 => ("mqtt-tls", 75),
-            9092 => ("kafka", 80),
-            61616 => ("activemq", 75),
+            5672 => ("amqp", Some("RabbitMQ"), 75),
+            1883 => ("mqtt", None, 75),
+            8883 => ("mqtt-tls", None, 75),
+            9092 => ("kafka", Some("Apache Kafka"), 80),
+            61616 => ("activemq", Some("Apache ActiveMQ"), 75),
             
             // Monitoring/Management
-            161 | 162 => ("snmp", 75),
-            514 => ("syslog", 70),
-            8086 => ("influxdb", 75),
-            9090 => ("prometheus", 75),
+            161 | 162 => ("snmp", None, 75),
+            514 => ("syslog", None, 70),
+            8086 => ("influxdb", Some("InfluxDB"), 75),
+            9090 => ("prometheus", Some("Prometheus"), 75),
             
             // Container/Orchestration
-            2375 => ("docker", 80),
-            2376 => ("docker-tls", 80),
-            2379 | 2380 => ("etcd", 75),
-            6443 => ("kubernetes-api", 80),
-            8500 => ("consul", 75),
+            2375 => ("docker", Some("Docker"), 80),
+            2376 => ("docker-tls", Some("Docker"), 80),
+            2379 | 2380 => ("etcd", Some("etcd"), 75),
+            6443 => ("kubernetes-api", Some("Kubernetes"), 80),
+            8500 => ("consul", Some("HashiCorp Consul"), 75),
             
             // Web frameworks (common dev ports)
-            3000 => ("node-http", 65),
-            4200 => ("angular-dev", 65),
-            5000 => ("flask", 65),
-            9418 => ("git", 70),
+            3000 => ("node-http", Some("Node.js"), 65),
+            4200 => ("angular-dev", Some("Angular Dev Server"), 65),
+            5000 => ("flask", Some("Flask"), 65),
+            9418 => ("git", Some("Git"), 70),
             
             // SIP/VoIP
-            5060 | 5061 => ("sip", 75),
+            5060 | 5061 => ("sip", None, 75),
             
-            _ => ("unknown", 25),
+            _ => ("unknown", None, 25),
         };
 
         ServiceInfo {
             port,
             protocol: "tcp".to_string(),
             service: service.to_string(),
-            product: None,
+            product: product.map(String::from),
             version: None,
             extra_info: None,
             banner,

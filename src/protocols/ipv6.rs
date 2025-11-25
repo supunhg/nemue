@@ -99,6 +99,7 @@ impl Ipv6Scanner {
             protocol: Protocol::TCP,
             service: None,
             service_info: None,
+            hostname: None,
             timestamp: chrono::Utc::now(),
         })
     }
@@ -179,6 +180,7 @@ impl Ipv6Scanner {
             protocol: Protocol::TCP,
             service: None,
             service_info: None,
+            hostname: None,
             timestamp: chrono::Utc::now(),
         })
     }
@@ -246,6 +248,7 @@ impl Ipv6Scanner {
             protocol: Protocol::TCP,
             service: None,
             service_info: None,
+            hostname: None,
             timestamp: chrono::Utc::now(),
         })
     }
@@ -316,6 +319,7 @@ impl Ipv6Scanner {
             protocol: Protocol::TCP,
             service: None,
             service_info: None,
+            hostname: None,
             timestamp: chrono::Utc::now(),
         })
     }
@@ -400,6 +404,7 @@ impl Ipv6Scanner {
             protocol: Protocol::TCP,
             service: None,
             service_info: None,
+            hostname: None,
             timestamp: chrono::Utc::now(),
         })
     }

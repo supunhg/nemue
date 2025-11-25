@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "configure" ]; then
+    echo "Nemue has been installed successfully!"
+    echo "Run 'nemue --help' to get started"
+fi
+
+#DEBHELPER#
+
+exit 0

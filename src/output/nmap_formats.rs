@@ -362,6 +362,7 @@ mod tests {
                     protocol: Protocol::TCP,
                     service: Some("http".to_string()),
                     service_info: None,
+                    hostname: None,
                     timestamp: now,
                 },
                 ScanResult {
@@ -371,10 +372,12 @@ mod tests {
                     protocol: Protocol::TCP,
                     service: Some("https".to_string()),
                     service_info: None,
+                    hostname: None,
                     timestamp: now,
                 },
             ],
             os_fingerprints: Vec::new(),
+            script_results: Vec::new(),
         }
     }
 

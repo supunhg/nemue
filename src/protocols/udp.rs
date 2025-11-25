@@ -26,6 +26,7 @@ impl UdpScanner {
             protocol: Protocol::UDP,
             service: self.identify_service(port),
             service_info: None,
+            hostname: None,
             timestamp: chrono::Utc::now(),
         })
     }
