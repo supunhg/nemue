@@ -599,6 +599,121 @@ impl CveDatabase {
             });
         }
 
+        // Tomcat AJP File Read/Inclusion (Ghostcat)
+        if service.to_lowercase().contains("tomcat") || service.to_lowercase().contains("ajp") {
+            results.push(CveInfo {
+                cve_id: "CVE-2020-1938".to_string(),
+                description: "Apache Tomcat AJP File Read/Inclusion (Ghostcat)".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 9.8,
+                published_date: "2020-02-24".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2020-1938".to_string(),
+                    "https://www.chaitin.cn/en/ghostcat".to_string(),
+                ],
+            });
+        }
+
+        // Jenkins RCE
+        if service.to_lowercase().contains("jenkins") {
+            results.push(CveInfo {
+                cve_id: "CVE-2024-23897".to_string(),
+                description: "Jenkins CLI Arbitrary File Read Vulnerability".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 9.8,
+                published_date: "2024-01-24".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2024-23897".to_string(),
+                    "https://www.jenkins.io/security/advisory/2024-01-24/".to_string(),
+                ],
+            });
+        }
+
+        // Microsoft Exchange ProxyLogon
+        if service.to_lowercase().contains("exchange") || service.to_lowercase().contains("outlook") {
+            results.push(CveInfo {
+                cve_id: "CVE-2021-26855".to_string(),
+                description: "Microsoft Exchange Server SSRF (ProxyLogon)".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 9.8,
+                published_date: "2021-03-02".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2021-26855".to_string(),
+                    "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2021-26855".to_string(),
+                ],
+            });
+        }
+
+        // WordPress vulnerabilities
+        if service.to_lowercase().contains("wordpress") || service.to_lowercase().contains("wp") {
+            results.push(CveInfo {
+                cve_id: "CVE-2024-27956".to_string(),
+                description: "WordPress Backup Migration Plugin Unauthenticated RCE".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 9.8,
+                published_date: "2024-03-01".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2024-27956".to_string(),
+                ],
+            });
+        }
+
+        // SolarWinds Orion
+        if service.to_lowercase().contains("solarwinds") || service.to_lowercase().contains("orion") {
+            results.push(CveInfo {
+                cve_id: "CVE-2020-10148".to_string(),
+                description: "SolarWinds Orion API Authentication Bypass".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 9.8,
+                published_date: "2020-12-14".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2020-10148".to_string(),
+                ],
+            });
+        }
+
+        // Confluence RCE (2023)
+        if service.to_lowercase().contains("confluence") {
+            results.push(CveInfo {
+                cve_id: "CVE-2023-22515".to_string(),
+                description: "Atlassian Confluence Privilege Escalation".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 10.0,
+                published_date: "2023-10-04".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2023-22515".to_string(),
+                ],
+            });
+        }
+
+        // Apache Struts (newer)
+        if service.to_lowercase().contains("struts") {
+            results.push(CveInfo {
+                cve_id: "CVE-2023-50164".to_string(),
+                description: "Apache Struts File Upload Path Traversal".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 9.8,
+                published_date: "2023-12-07".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2023-50164".to_string(),
+                ],
+            });
+        }
+
+        // Ivanti Connect Secure
+        if service.to_lowercase().contains("ivanti") || service.to_lowercase().contains("pulse secure") {
+            results.push(CveInfo {
+                cve_id: "CVE-2024-21887".to_string(),
+                description: "Ivanti Connect Secure Command Injection".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 9.1,
+                published_date: "2024-01-31".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2024-21887".to_string(),
+                ],
+            });
+        }
+
         results
     }
 

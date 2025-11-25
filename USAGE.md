@@ -2,8 +2,8 @@
 
 Complete guide for using Nemue network scanner with all features.
 
-**Version**: Phase 8.5.4 Complete ✅ (IPv6, Script Engine, 74% Nmap Parity)  
-**Last Updated**: November 24, 2025
+**Version**: 1.0.0 - Production Release ✅ (All 12 phases complete)  
+**Last Updated**: November 25, 2025
 
 ---
 
