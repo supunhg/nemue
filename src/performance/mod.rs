@@ -9,6 +9,8 @@ pub mod profiler;
 pub mod streaming;
 pub mod cache;
 pub mod batch;
+pub mod qos;
+pub mod resources;
 
 pub use metrics::{MetricsCollector, PerformanceMetrics};
 pub use rate_limiter::AdaptiveRateLimiter;
@@ -20,3 +22,5 @@ pub use profiler::{Profiler, ProfileEntry};
 pub use streaming::{StreamWriter, OutputFormat};
 pub use cache::{Cache, CacheStats};
 pub use batch::BatchProcessor;
+pub use qos::{BandwidthThrottle, TrafficShaper, Priority};
+pub use resources::{ResourceManager, RetryStrategy};

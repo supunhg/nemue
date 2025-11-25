@@ -7,13 +7,13 @@
 
 ## 📊 Quick Stats
 
-- **Total Code**: ~30,200 lines Rust + 4,658 lines Lua  
-- **Total Tests**: 494 tests (100% pass rate)
+- **Total Code**: ~30,800 lines Rust + 4,658 lines Lua  
+- **Total Tests**: 509 tests (100% pass rate)
 - **NSE Scripts**: 45 Lua scripts (39 → 45, +6 new)
 - **CVE Patterns**: 29 critical vulnerabilities (2008-2024)
 - **Nmap Parity**: 106/140 features (76%)
-- **Phases Complete**: 10.75/12 (90%)
-- **Current Focus**: Phase 11 - Performance & Optimization
+- **Phases Complete**: 10.95/12 (91%)
+- **Current Focus**: Phase 11 - Performance & Optimization (95% complete)
 
 ---
 
@@ -728,9 +728,9 @@ Comprehensive web content discovery and fuzzing platform with multi-mode capabil
 **Priority**: High  
 **Estimated Effort**: 3-4 weeks  
 **Target Lines**: +1,500 (optimizations, profiling)  
-**Status**: 🔄 75% Complete  
-**Code**: ~1,646 lines across 10 modules  
-**Tests**: 51 tests (100% passing)
+**Status**: 🔄 95% Complete  
+**Code**: ~2,046 lines across 12 modules  
+**Tests**: 66 tests (100% passing)
 
 #### Goals
 - [x] **Performance Monitoring**
@@ -754,10 +754,10 @@ Comprehensive web content discovery and fuzzing platform with multi-mode capabil
   - [x] Adaptive rate limiting based on network conditions
   - [x] Worker pool with concurrent task execution
   - [x] Semaphore-based concurrency limiting
-  - [ ] CPU affinity tuning
-  - [ ] Bandwidth throttling and QoS
-  - [ ] Dynamic worker scaling based on load
-  - [ ] Intelligent retry strategies
+  - [x] Bandwidth throttling with time-window limits
+  - [x] QoS traffic shaping with priority queues
+  - [x] Dynamic worker scaling (auto-scale based on load)
+  - [x] Intelligent retry strategies (exponential backoff)
 
 - [x] **Lock-Free Data Structures**
   - [x] Unbounded lock-free queue (crossbeam SegQueue)
@@ -817,9 +817,11 @@ Comprehensive web content discovery and fuzzing platform with multi-mode capabil
 - [x] streaming.rs (225 lines, 4 tests) - Stream results to disk (JSON Lines, CSV, TSV)
 - [x] cache.rs (181 lines, 8 tests) - LRU cache with TTL expiration
 - [x] batch.rs (146 lines, 4 tests) - Batch processing for system calls
-- [x] mod.rs (20 lines) - Module exports
+- [x] qos.rs (218 lines, 6 tests) - Bandwidth throttling and traffic shaping
+- [x] resources.rs (177 lines, 9 tests) - Resource management and retry strategies
+- [x] mod.rs (26 lines) - Module exports
 
-**Testing**: 51/55 planned tests (stress tests and benchmarks pending)
+**Testing**: 66/70 planned tests (integration benchmarks pending)
 
 ---
 
