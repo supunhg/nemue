@@ -14,3 +14,4 @@ pub mod web;
 pub mod fuzzer;
 pub mod topology;
 pub mod performance;
+pub mod reporting;
