@@ -59,6 +59,16 @@ impl TopologyMap {
     pub fn to_json(&self) -> String {
         serde_json::to_string_pretty(self).unwrap_or_default()
     }
+
+    /// Export as HTML with interactive visualization
+    pub fn to_html(&self) -> String {
+        crate::topology::visualization::VisualizationEngine::generate_html(self)
+    }
+
+    /// Export as SVG diagram
+    pub fn to_svg(&self) -> String {
+        crate::topology::visualization::VisualizationEngine::generate_svg(self)
+    }
 }
 
 /// Network topology mapper

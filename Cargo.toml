@@ -34,6 +34,7 @@ uuid = { version = "1.6", features = ["v4", "serde"] }  # Unique scan IDs
 reqwest = { version = "0.11", features = ["json"] }  # HTTP client for fuzzing
 regex = "1.10"  # Regular expressions
 url = "2.5"  # URL parsing
+lazy_static = "1.4"  # Static initialization
 
 [dev-dependencies]
 tokio-test = "0.4"

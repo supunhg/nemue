@@ -4,10 +4,16 @@
 pub mod traceroute;
 pub mod mapper;
 pub mod device;
+pub mod visualization;
+pub mod mac_lookup;
+pub mod inventory;
 
 pub use traceroute::{Traceroute, TracerouteConfig, TracerouteResult, HopInfo};
 pub use mapper::{NetworkMapper, TopologyMap, NetworkSegment};
 pub use device::{DeviceClassifier, DeviceType, DeviceInfo};
+pub use visualization::VisualizationEngine;
+pub use mac_lookup::{MacVendorLookup, DeviceCategory};
+pub use inventory::{ServiceCatalog, AssetInfo, ServiceInfo, ServiceState};
 
 use std::net::IpAddr;
 
