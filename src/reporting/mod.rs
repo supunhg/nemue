@@ -1,12 +1,16 @@
 // Report generation module for compliance and analysis
 pub mod compliance;
 pub mod html;
+pub mod audit;
+pub mod trends;
 
 pub use compliance::{
     ComplianceMapper, Framework, Control, ControlTest, CheckType,
     ComplianceResult, ControlResult, ControlStatus,
 };
 pub use html::HtmlReportGenerator;
+pub use audit::{AuditTrail, AuditEntry, AuditMetadata, EventType, Evidence, EvidenceType};
+pub use trends::{TrendAnalyzer, ScanSnapshot, ScanMetrics, VulnerabilityMetrics, TrendReport, Trend, TrendDirection};
 
 use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc};

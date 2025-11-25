@@ -7,13 +7,13 @@
 
 ## 📊 Quick Stats
 
-- **Total Code**: ~32,000 lines Rust + 4,658 lines Lua  
-- **Total Tests**: 528 tests (100% pass rate)
+- **Total Code**: ~33,200 lines Rust + 4,658 lines Lua  
+- **Total Tests**: 548 tests (100% pass rate)
 - **NSE Scripts**: 45 Lua scripts (39 → 45, +6 new)
 - **CVE Patterns**: 29 critical vulnerabilities (2008-2024)
 - **Nmap Parity**: 106/140 features (76%)
-- **Phases Complete**: 11.25/12 (94%)
-- **Current Focus**: Phase 12 - Compliance & Advanced Reporting (25% complete)
+- **Phases Complete**: 11.5/12 (96%)
+- **Current Focus**: Phase 12 - Compliance & Advanced Reporting (50% complete)
 
 ---
 
@@ -831,9 +831,9 @@ Comprehensive web content discovery and fuzzing platform with multi-mode capabil
 **Priority**: Medium  
 **Estimated Effort**: 3-4 weeks  
 **Target Lines**: +1,800  
-**Status**: 🔄 25% Complete  
-**Code**: ~1,200 lines across 3 modules  
-**Tests**: 19 tests (100% passing)
+**Status**: 🔄 50% Complete  
+**Code**: ~2,100 lines across 5 modules  
+**Tests**: 39 tests (100% passing)
 
 #### Goals
 - [x] **Enhanced Report Generation**
@@ -866,8 +866,10 @@ Comprehensive web content discovery and fuzzing platform with multi-mode capabil
 - [x] mod.rs (364 lines, 6 tests) - Report generation with JSON/Text/CSV formats
 - [x] compliance.rs (364 lines, 9 tests) - Compliance frameworks (PCI-DSS, NIST, CIS)
 - [x] html.rs (285 lines, 4 tests) - HTML report generation with charts
+- [x] audit.rs (358 lines, 11 tests) - Audit trail and evidence collection
+- [x] trends.rs (264 lines, 9 tests) - Historical trend analysis
 
-**Testing**: 19/25 planned tests (audit trail and PDF generation pending)
+**Testing**: 39/45 planned tests (PDF generation and advanced analytics pending)
 
 - [ ] **Audit Trail**
   - [ ] Detailed scan logging
