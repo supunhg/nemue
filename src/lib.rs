@@ -13,3 +13,4 @@ pub mod vuln;
 pub mod web;
 pub mod fuzzer;
 pub mod topology;
+pub mod performance;
