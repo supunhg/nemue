@@ -172,13 +172,17 @@
   - [x] Scope and CIA impacts
   - [x] Vector string parser (e.g., "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H")
   - [x] Severity mapping (0.0-10.0 scale)
-  - [x] **29 pre-populated CVE patterns (EXPANDED x2)**
+  - [x] **33 pre-populated CVE patterns (EXPANDED x3)**
   - [x] **MS08-067 (CVE-2008-4250) - Windows Server RCE (NEW)**
   - [x] **Heartbleed (CVE-2014-0160) - OpenSSL TLS Information Disclosure (NEW)**
   - [x] **Shellshock (CVE-2014-6271) - Bash RCE (NEW)**
   - [x] **POODLE (CVE-2014-3566) - SSLv3 Padding Oracle (NEW)**
   - [x] **vsFTPd Backdoor (CVE-2011-2523) - FTP RCE (NEW)**
+  - [x] **ProFTPd Backdoor (CVE-2010-4221) - FTP RCE (NEW Batch 3)**
   - [x] **Struts2 RCE (CVE-2017-5638) - Jakarta Multipart Parser (Equifax breach) (NEW)**
+  - [x] **Slowloris DoS (CVE-2007-6750) - Apache HTTP Server DoS (NEW Batch 3)**
+  - [x] **Java RMI Classloading (CVE-2017-3241) - Java RMI RCE (NEW Batch 3)**
+  - [x] **Drupal SQLi (CVE-2014-3704) - Drupalgeddon (NEW Batch 3)**
   - [x] **Log4Shell (CVE-2021-44228, CVE-2021-45046) - Log4j RCE**
   - [x] **ProxyShell (CVE-2021-34473, CVE-2021-34523) - Exchange RCE (NEW)**
   - [x] **PrintNightmare (CVE-2021-34527) - Windows Print Spooler RCE (NEW)**
@@ -199,7 +203,7 @@
   - [x] OpenSSL vulnerabilities
   - [x] MySQL, PostgreSQL, nginx CVE patterns
 
-- [x] **NSE Script Library** (45 Lua scripts)
+- [x] **NSE Script Library (ENHANCED x3)** (51 Lua scripts, 5,474 lines)
   - [x] HTTP headers enumeration
   - [x] SSL certificate information
   - [x] SSH authentication methods
@@ -208,6 +212,25 @@
   - [x] SMB OS discovery
   - [x] DNS zone transfer check
   - [x] SMTP user enumeration
+  - [x] **EternalBlue detection (MS17-010) (NEW Batch 1)**
+  - [x] **Shellshock vulnerability (CVE-2014-6271) (NEW Batch 1)**
+  - [x] **Heartbleed detection (CVE-2014-0160) (NEW Batch 1)**
+  - [x] **SMB share enumeration (NEW Batch 1)**
+  - [x] **SMB user enumeration (NEW Batch 1)**
+  - [x] **vsFTPd backdoor (CVE-2011-2523) (NEW Batch 1)**
+  - [x] **POODLE vulnerability (CVE-2014-3566) (NEW Batch 1)**
+  - [x] **MS08-067 detection (Conficker vector) (NEW Batch 2)**
+  - [x] **Conficker worm detection (NEW Batch 2)**
+  - [x] **SSL/TLS cipher enumeration with grading (NEW Batch 2)**
+  - [x] **WordPress enumeration (version, plugins, themes, users) (NEW Batch 2)**
+  - [x] **Struts2 RCE (CVE-2017-5638) (NEW Batch 2)**
+  - [x] **SQL injection scanner (error, blind, union-based) (NEW Batch 2)**
+  - [x] **ProFTPD backdoor (CVE-2010-4221) (NEW Batch 3)**
+  - [x] **DNS zone transfer check (AXFR) (NEW Batch 3)**
+  - [x] **RDP NTLM info extraction (NLA detection) (NEW Batch 3)**
+  - [x] **Drupal enumeration (version, modules, vulns) (NEW Batch 3)**
+  - [x] **Slowloris DoS detection (CVE-2007-6750) (NEW Batch 3)**
+  - [x] **Java RMI registry enumeration (CVE-2017-3241) (NEW Batch 3)**
   - [x] robots.txt analysis
   - [x] RDP encryption detection
   - [x] PostgreSQL information

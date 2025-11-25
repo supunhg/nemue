@@ -539,6 +539,66 @@ impl CveDatabase {
             });
         }
 
+        // ProFTPD Backdoor (CVE-2010-4221)
+        if service.to_lowercase().contains("ftp") || service.to_lowercase().contains("proftpd") {
+            results.push(CveInfo {
+                cve_id: "CVE-2010-4221".to_string(),
+                description: "ProFTPD 1.3.3c Backdoor Remote Code Execution".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 10.0,
+                published_date: "2010-12-06".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2010-4221".to_string(),
+                    "http://www.securityfocus.com/bid/45150".to_string(),
+                ],
+            });
+        }
+
+        // Slowloris DoS (CVE-2007-6750)
+        if service.to_lowercase().contains("http") || service.to_lowercase().contains("apache") {
+            results.push(CveInfo {
+                cve_id: "CVE-2007-6750".to_string(),
+                description: "Apache HTTP Server Slowloris Denial of Service".to_string(),
+                severity: CveSeverity::High,
+                cvss_score: 7.8,
+                published_date: "2009-09-28".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2007-6750".to_string(),
+                    "https://web.archive.org/web/20150315054838/http://ha.ckers.org/slowloris/".to_string(),
+                ],
+            });
+        }
+
+        // Java RMI Remote Classloading (CVE-2017-3241)
+        if service.to_lowercase().contains("rmi") || service.to_lowercase().contains("java") {
+            results.push(CveInfo {
+                cve_id: "CVE-2017-3241".to_string(),
+                description: "Java RMI Remote Classloading Vulnerability".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 9.0,
+                published_date: "2017-01-27".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2017-3241".to_string(),
+                    "https://mogwailabs.de/blog/2019/03/attacking-rmi-based-jmx-services/".to_string(),
+                ],
+            });
+        }
+
+        // Drupal SQL Injection (CVE-2014-3704)
+        if service.to_lowercase().contains("http") || service.to_lowercase().contains("drupal") {
+            results.push(CveInfo {
+                cve_id: "CVE-2014-3704".to_string(),
+                description: "Drupal 7.x SQL Injection (Drupalgeddon)".to_string(),
+                severity: CveSeverity::Critical,
+                cvss_score: 7.5,
+                published_date: "2014-10-15".to_string(),
+                references: vec![
+                    "https://nvd.nist.gov/vuln/detail/CVE-2014-3704".to_string(),
+                    "https://www.drupal.org/SA-CORE-2014-005".to_string(),
+                ],
+            });
+        }
+
         results
     }
 
