@@ -48,7 +48,7 @@ impl ProbeDatabase {
         &self.probes
     }
 
-    fn add_probe(&mut self, probe: ServiceProbe, ports: &[u16]) {
+    pub fn add_probe(&mut self, probe: ServiceProbe, ports: &[u16]) {
         let name = probe.name.clone();
         self.probes.push(probe);
         

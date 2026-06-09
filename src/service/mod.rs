@@ -4,6 +4,7 @@ pub mod probes;
 pub mod parsers;
 pub mod enhanced;
 pub mod signatures;
+pub mod nmap_compat;
 
 pub use detection::{ServiceDetector, ServiceInfo};
 pub use intensity::{
