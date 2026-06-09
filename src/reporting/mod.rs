@@ -6,6 +6,8 @@ pub mod trends;
 pub mod templates;
 pub mod dashboard;
 pub mod analytics;
+pub mod scheduler;
+pub mod collaboration;
 pub mod pdf;
 pub mod markdown;
 pub mod custom;
@@ -20,8 +22,28 @@ pub use html::HtmlReportGenerator;
 pub use audit::{AuditTrail, AuditEntry, AuditMetadata, EventType, Evidence, EvidenceType};
 pub use trends::{TrendAnalyzer, ScanSnapshot, ScanMetrics, VulnerabilityMetrics, TrendReport, Trend, TrendDirection};
 pub use templates::{TemplateEngine, ReportTemplate, TemplateSection, ContentType};
-pub use dashboard::{Dashboard, DashboardBuilder, Widget, WidgetType, WidgetData, MetricData, ChartData, AlertLevel};
-pub use analytics::{AnalyticsEngine, RiskModel, ModelType, Prediction, RiskFactor, VulnerabilityPrediction};
+pub use dashboard::{
+    Dashboard, DashboardBuilder, Widget, WidgetType, WidgetData, MetricData, ChartData, AlertLevel,
+    LiveStatistics, RealTimeMonitor, MonitorStatus, ScanProgress, MonitorEvent, MonitorEventType,
+    InteractiveChart, ChartKind, DataSeries, DataPoint, ChartAxes, ChartInteractions, ChartAnnotation,
+    AnnotationType, DrillDown, DrillDownType, DrillFilter, DrillDownData, DrillEntry,
+};
+pub use analytics::{
+    AnalyticsEngine, RiskModel, ModelType, Prediction, RiskFactor, VulnerabilityPrediction,
+    TrendAnalysis, TrendDataPoint, AnalysisTrendDirection, ForecastPoint,
+    StatisticalSummary, DistributionType, ComparativeResult, ComparisonMetric,
+    PredictiveModel, PredictedVulnerability,
+};
+pub use scheduler::{
+    ReportScheduler, ReportSchedule, ScheduledReportType, Recurrence, ScheduleConfig,
+    OutputFormat, DistributionList, Recipient, RecipientRole, ReportArchive, ArchiveEntry,
+    ArchiveMetadata, GenerationLogEntry, GenerationStatus, ArchiveStats,
+};
+pub use collaboration::{
+    CollaborationManager, SharedReport, ReportVersion, Comment, Reaction, Annotation as CollabAnnotation,
+    AnnotationKind, AnnotationCoordinates, ShareEntry, Permission, ReportStatus,
+    AccessPolicy, AccessRule, AccessCondition, ConditionOperator, CollabAuditEntry, CollabAction,
+};
 pub use pdf::PdfReportGenerator;
 pub use markdown::MarkdownReportGenerator;
 pub use custom::{ReportCustomization, Branding, CustomSeverity, CustomSection, SectionContent, ChartType, CustomRecommendation};
