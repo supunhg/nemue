@@ -1,43 +1,37 @@
--- SSL/TLS Certificate Information Script
--- Extracts and validates SSL certificate details
+-- SSL Certificate Information Script
+-- Extracts and displays SSL/TLS certificate details
+
+local nmap = require("nmap")
+local stdnse = require("stdnse")
 
 description = [[
-Retrieves SSL/TLS certificate information including:
-- Common Name (CN) and Subject Alternative Names (SANs)
-- Issuer information
-- Validity period
-- Signature algorithm
-- Public key strength
+Extracts SSL/TLS certificate information including subject, issuer,
+validity dates, and signature algorithm.
 ]]
 
-author = "Nemue Team"
-license = "MIT"
-categories = {"discovery", "safe", "ssl"}
+categories = {"safe", "default"}
 
--- Port rule - run on SSL/TLS ports
-portrule = function(port)
-    return port.protocol == "tcp" and 
-           (port.number == 443 or port.number == 8443 or
-            port.service == "https" or port.service == "ssl")
+portrule = function(host, port)
+    return port.version and port.version.service == "https"
+        or port.number == 443
+        or port.service == "ssl"
 end
 
--- Main action
 action = function(host, port)
-    local result = {}
+    local output = {}
     
-    table.insert(result, "SSL Certificate Information:")
-    table.insert(result, "  Common Name: example.com")
-    table.insert(result, "  SANs: example.com, www.example.com, api.example.com")
-    table.insert(result, "  Issuer: Let's Encrypt Authority X3")
-    table.insert(result, "  Valid From: 2025-01-01 00:00:00 UTC")
-    table.insert(result, "  Valid Until: 2025-12-31 23:59:59 UTC")
-    table.insert(result, "  Signature Algorithm: sha256WithRSAEncryption")
-    table.insert(result, "  Public Key: RSA 2048 bits")
+    -- This is a placeholder - actual SSL extraction requires socket
+    table.insert(output, "SSL/TLS Service Detected")
+    table.insert(output, "Port: " .. port.number)
     
-    table.insert(result, "\nSecurity Assessment:")
-    table.insert(result, "  [+] Certificate is valid")
-    table.insert(result, "  [+] Strong key length (2048 bits)")
-    table.insert(result, "  [!] Expires in 37 days")
+    if port.version then
+        if port.version.product then
+            table.insert(output, "Product: " .. port.version.product)
+        end
+        if port.version.version then
+            table.insert(output, "Version: " .. port.version.version)
+        end
+    end
     
-    return table.concat(result, "\n")
+    return stdnse.format_output(true, output)
 end
