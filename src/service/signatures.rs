@@ -59,6 +59,7 @@ pub fn http_signatures() -> Vec<MatchPattern> {
         m("http", r"Server: nginx/(\d+\.\d+)", "nginx", Some("$1")),
         m("http", r"Server: nginx$", "nginx", None),
         m("http", r"Server: openresty/(\d+\.\d+\.\d+)", "OpenResty", Some("$1")),
+        m("http", r"Server: Tengine/(\d+\.\d+\.\d+)", "Tengine", Some("$1")),
         
         // Microsoft IIS
         m("http", r"Server: Microsoft-IIS/(\d+\.\d+)", "Microsoft IIS httpd", Some("$1")),
@@ -126,13 +127,20 @@ pub fn http_signatures() -> Vec<MatchPattern> {
         
         // Python
         m("http", r"Server: BaseHTTP/(\d+\.\d+) Python/(\d+\.\d+\.\d+)", "Python BaseHTTP", Some("$2")),
+        m("http", r"Server: Python/(\d+\.\d+)", "Python httpd", Some("$1")),
         
         // Ruby
         m("http", r"Server: WEBrick/(\d+\.\d+\.\d+)", "WEBrick", Some("$1")),
         m("http", r"Server: Puma (\d+\.\d+\.\d+)", "Puma", Some("$1")),
+        m("http", r"Server: Unicorn", "Unicorn", None),
+        m("http", r"Server: Thin", "Thin", None),
         
         // Node.js
         m("http", r"X-Powered-By: Express", "Node.js Express", None),
+        m("http", r"Server: Node\.js/(\d+\.\d+\.\d+)", "Node.js", Some("$1")),
+        m("http", r"Server: Fastify", "Fastify", None),
+        m("http", r"Server: Koa", "Koa", None),
+        m("http", r"Server: Hapi", "Hapi", None),
         
         // PHP
         m("http", r"X-Powered-By: PHP/(\d+\.\d+\.\d+)", "PHP", Some("$1")),
@@ -141,26 +149,36 @@ pub fn http_signatures() -> Vec<MatchPattern> {
         // ASP.NET
         m("http", r"X-Powered-By: ASP\.NET", "ASP.NET", None),
         m("http", r"X-AspNet-Version: (\d+\.\d+\.\d+)", "ASP.NET", Some("$1")),
+        m("http", r"X-AspNetMvc-Version: (\d+\.\d+)", "ASP.NET MVC", Some("$1")),
         
         // Django
         m("http", r"X-Frame-Options: DENY.*Server: WSGIServer", "Django", None),
+        m("http", r"csrfmiddlewaretoken", "Django", None),
         
         // Rails
         m("http", r"X-Powered-By: Phusion Passenger", "Phusion Passenger", None),
+        m("http", r"Server: Phusion Passenger", "Phusion Passenger", None),
         
         // Cloudflare
         m("http", r"Server: cloudflare", "Cloudflare httpd", None),
         m("http", r"Server: Cloudflare", "Cloudflare httpd", None),
+        m("http", r"CF-RAY:", "Cloudflare httpd", None),
         
         // Akamai
         m("http", r"Server: AkamaiGHost", "Akamai httpd", None),
+        m("http", r"X-Akamai-Transformed:", "Akamai httpd", None),
         
-        // Varnish
+        // Fastly
+        m("http", r"X-Served-By: cache-.*\.fastly\.net", "Fastly CDN", None),
         m("http", r"Via:.*varnish", "Varnish cache", None),
         m("http", r"X-Varnish: \d+", "Varnish cache", None),
         
         // Squid
         m("http", r"Server: squid/(\d+\.\d+)", "Squid http proxy", Some("$1")),
+        
+        // Varnish
+        m("http", r"Via:.*varnish", "Varnish cache", None),
+        m("http", r"X-Varnish: \d+", "Varnish cache", None),
         
         // Softmatches
         sm("http", r"^HTTP/\d\.\d \d\d\d"),
@@ -190,6 +208,22 @@ pub fn ssh_signatures() -> Vec<MatchPattern> {
         m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) Ubuntu", "OpenSSH (Ubuntu)", Some("$1")),
         m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) Debian", "OpenSSH (Debian)", Some("$1")),
         m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) RHEL", "OpenSSH (RHEL)", Some("$1")),
+        m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) CentOS", "OpenSSH (CentOS)", Some("$1")),
+        m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) SUSE", "OpenSSH (SUSE)", Some("$1")),
+        m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) FreeBSD", "OpenSSH (FreeBSD)", Some("$1")),
+        m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) NetBSD", "OpenSSH (NetBSD)", Some("$1")),
+        m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) OpenBSD", "OpenSSH (OpenBSD)", Some("$1")),
+        m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) Apple", "OpenSSH (macOS)", Some("$1")),
+        m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) .*QNAP", "OpenSSH (QNAP NAS)", Some("$1")),
+        m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) .*Synology", "OpenSSH (Synology NAS)", Some("$1")),
+        m("ssh", r"SSH-2.0-ROSSSH", "MikroTik SSH", None),
+        m("ssh", r"SSH-2.0-ROSSSH.*MikroTik", "MikroTik SSH", None),
+        m("ssh", r"SSH-2.0-Cisco-", "Cisco SSH", None),
+        m("ssh", r"SSH-2.0-Huawei", "Huawei SSH", None),
+        m("ssh", r"SSH-2.0-Fortinet", "Fortinet SSH", None),
+        m("ssh", r"SSH-2.0-Arista", "Arista SSH", None),
+        m("ssh", r"SSH-2.0-HP", "HP SSH", None),
+        m("ssh", r"SSH-2.0-OpenSSH", "OpenSSH", None),
         sm("ssh", r"^SSH-"),
     ]
 }

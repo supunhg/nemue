@@ -16,6 +16,7 @@ pub mod packet_io;
 pub mod config;
 pub mod diff;
 pub mod idle;
+pub mod ftp_bounce;
 
 pub use engine::ScanEngine;
 pub use target::{Target, TargetParser, TargetConfig};

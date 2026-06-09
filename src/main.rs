@@ -129,6 +129,10 @@ enum Commands {
         #[arg(short = 'I', long)]
         idle_scan: Option<String>,
 
+        /// FTP bounce scan using FTP server (format: -b ftp_server[:port])
+        #[arg(short = 'b', long)]
+        ftp_bounce: Option<String>,
+
         /// Resume a previous scan from checkpoint
         #[arg(long)]
         resume: Option<String>,
@@ -339,6 +343,7 @@ async fn main() -> Result<()> {
             os_detect,
             raw,
             idle_scan,
+            ftp_bounce,
             resume,
             packet_trace,
             reason,
