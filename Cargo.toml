@@ -29,6 +29,8 @@ indicatif = "0.17"  # Progress bars
 rand = "0.8"  # Random number generation
 mlua = { version = "0.9", features = ["lua54", "async", "send", "vendored"] }  # Lua scripting engine (vendored)
 actix-web = "4.4"  # REST API server
+actix-web-actors = "4.2"  # WebSocket actor support
+actix = "0.13"  # Actor framework
 actix-cors = "0.7"  # CORS middleware
 uuid = { version = "1.6", features = ["v4", "serde"] }  # Unique scan IDs
 reqwest = { version = "0.11", features = ["json"] }  # HTTP client for fuzzing

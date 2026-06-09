@@ -478,6 +478,15 @@ pub async fn openapi_spec() -> impl Responder {
     HttpResponse::Ok().json(spec)
 }
 
+pub async fn api_versions() -> impl Responder {
+    let config = super::versioning::VersionConfig::default();
+    let info = super::versioning::VersionInfo::from_config(&config);
+    HttpResponse::Ok().json(super::versioning::VersionResponse {
+        api_version: info,
+        server_version: env!("CARGO_PKG_VERSION").to_string(),
+    })
+}
+
 #[derive(Debug, Deserialize)]
 pub struct PaginationQuery {
     pub page: Option<usize>,

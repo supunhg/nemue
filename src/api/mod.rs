@@ -10,6 +10,10 @@ pub mod auth;
 pub mod webhooks;
 pub mod cicd;
 pub mod security;
+pub mod websocket;
+pub mod graphql;
+pub mod versioning;
+pub mod docs;
 
 use state::AppState;
 
@@ -34,7 +38,13 @@ pub async fn start_server(bind_addr: &str) -> std::io::Result<()> {
     println!("   POST   /api/v1/webhooks/:id/test         - Test webhook");
     println!("   GET    /api/v1/cicd/config              - Get CI/CD config");
     println!("   POST   /api/v1/cicd/evaluate            - Evaluate CI/CD results");
+    println!("   WS     /ws/scans                        - WebSocket real-time updates");
+    println!("   POST   /graphql                          - GraphQL endpoint");
+    println!("   GET    /graphql                          - GraphQL playground");
+    println!("   GET    /api/versions                     - API version info");
     println!("   GET    /openapi.json                     - OpenAPI specification");
+    println!("   GET    /docs                             - Interactive API documentation");
+    println!("   GET    /docs/examples                    - Code examples");
 
     HttpServer::new(move || {
         let cors = Cors::default()
@@ -48,7 +58,11 @@ pub async fn start_server(bind_addr: &str) -> std::io::Result<()> {
             .wrap(actix_web::middleware::Logger::default())
             .wrap(cors)
             .route("/health", web::get().to(handlers::health))
-            .route("/openapi.json", web::get().to(handlers::openapi_spec))
+            .route("/openapi.json", web::get().to(docs::openapi_spec_handler))
+            .route("/api/versions", web::get().to(handlers::api_versions))
+            .configure(websocket::ws_config)
+            .configure(graphql::graphql_config)
+            .configure(docs::docs_config)
             .service(
                 web::scope("/api/v1")
                     .route("/info", web::get().to(handlers::server_info))

@@ -17,3 +17,4 @@ pub mod reporting;
 pub mod ssl;
 pub mod mcp;
 pub mod integrations;
+pub mod cloud;
