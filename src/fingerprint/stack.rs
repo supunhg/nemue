@@ -258,7 +258,7 @@ impl Default for StackAnalyzer {
     }
 }
 
-struct SignatureDatabase {
+pub struct SignatureDatabase {
     signatures: Vec<OsSignature>,
 }
 

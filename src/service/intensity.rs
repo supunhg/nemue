@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Result};
+use regex::bytes::Regex;
 use std::fmt;
 
 /// Service detection intensity levels (0-9) matching nmap --version-intensity
@@ -118,6 +119,67 @@ pub struct ServiceProbe {
     pub intensity: u8,
     pub rarity: ProbeRarity,
     pub fallback: bool,
+    pub matches: Vec<MatchPattern>,
+    pub softmatches: Vec<MatchPattern>,
+    pub fallback_name: Option<String>,
+}
+
+/// A match pattern for service/version detection
+#[derive(Debug, Clone)]
+pub struct MatchPattern {
+    pub service: String,
+    pub pattern_str: String,
+    pub version_info: VersionInfo,
+    pub is_softmatch: bool,
+    pub case_insensitive: bool,
+}
+
+/// Version information extracted from a match
+#[derive(Debug, Clone, Default)]
+pub struct VersionInfo {
+    pub product: Option<String>,
+    pub version_template: Option<String>,
+    pub info: Option<String>,
+    pub hostname: Option<String>,
+    pub os: Option<String>,
+    pub cpe: Option<String>,
+    pub device_type: Option<String>,
+}
+
+impl MatchPattern {
+    /// Try to match against response data, return captures if matched
+    pub fn try_match(&self, data: &[u8]) -> Option<Vec<String>> {
+        let pattern = if self.case_insensitive {
+            format!("(?i){}", self.pattern_str)
+        } else {
+            self.pattern_str.clone()
+        };
+        
+        let re = match Regex::new(&pattern) {
+            Ok(r) => r,
+            Err(_) => return None,
+        };
+        
+        let caps = re.captures(data)?;
+        let mut groups = Vec::new();
+        for i in 0..caps.len() {
+            groups.push(
+                caps.get(i)
+                    .map(|m| String::from_utf8_lossy(m.as_bytes()).to_string())
+                    .unwrap_or_default()
+            );
+        }
+        Some(groups)
+    }
+    
+    /// Substitute version template with captured groups
+    pub fn substitute_template(template: &str, captures: &[String]) -> String {
+        let mut result = template.to_string();
+        for (i, cap) in captures.iter().enumerate() {
+            result = result.replace(&format!("${}", i), cap);
+        }
+        result
+    }
 }
 
 /// Probe protocol
@@ -164,6 +226,9 @@ impl ServiceProbe {
             intensity: 7, // default
             rarity: ProbeRarity::Moderate,
             fallback: false,
+            matches: Vec::new(),
+            softmatches: Vec::new(),
+            fallback_name: None,
         }
     }
 
@@ -186,6 +251,21 @@ impl ServiceProbe {
 
     pub fn as_fallback(mut self) -> Self {
         self.fallback = true;
+        self
+    }
+
+    pub fn with_fallback_name(mut self, name: &str) -> Self {
+        self.fallback_name = Some(name.to_string());
+        self
+    }
+
+    pub fn with_match(mut self, m: MatchPattern) -> Self {
+        self.matches.push(m);
+        self
+    }
+
+    pub fn with_softmatch(mut self, m: MatchPattern) -> Self {
+        self.softmatches.push(m);
         self
     }
 

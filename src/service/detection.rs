@@ -1,4 +1,5 @@
 use anyhow::Result;
+use regex::bytes::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::{IpAddr, SocketAddr};
@@ -23,6 +24,15 @@ pub struct ServiceInfo {
 pub struct ServiceDetector {
     timeout_duration: Duration,
     probes: HashMap<String, ServiceProbe>,
+    signatures: Vec<CompiledSignature>,
+}
+
+struct CompiledSignature {
+    service: String,
+    regex: Regex,
+    product: String,
+    version_template: Option<String>,
+    is_softmatch: bool,
 }
 
 #[derive(Clone)]
@@ -46,8 +56,10 @@ impl ServiceDetector {
         let mut detector = Self {
             timeout_duration: Duration::from_millis(timeout_ms),
             probes: HashMap::new(),
+            signatures: Vec::new(),
         };
         detector.load_default_probes();
+        detector.load_signatures();
         detector
     }
 
@@ -119,6 +131,22 @@ impl ServiceDetector {
                 }],
             },
         );
+    }
+
+    /// Load compiled signatures from the signatures database
+    fn load_signatures(&mut self) {
+        let all_sigs = super::signatures::all_signatures();
+        for sig in all_sigs {
+            if let Ok(re) = Regex::new(&sig.pattern_str) {
+                self.signatures.push(CompiledSignature {
+                    service: sig.service,
+                    regex: re,
+                    product: sig.version_info.product.unwrap_or_default(),
+                    version_template: sig.version_info.version_template,
+                    is_softmatch: sig.is_softmatch,
+                });
+            }
+        }
     }
 
     /// Detect service on a specific port
@@ -236,7 +264,55 @@ impl ServiceDetector {
             });
         }
 
-        // Check against known patterns
+        // Check against compiled signatures (regex-based matching)
+        let banner_bytes = banner.as_bytes();
+        let mut best_match: Option<ServiceInfo> = None;
+        
+        for sig in &self.signatures {
+            if let Some(caps) = sig.regex.captures(banner_bytes) {
+                let version = sig.version_template.as_ref().map(|tmpl| {
+                    let mut result = tmpl.clone();
+                    for i in 1..caps.len() {
+                        if let Some(m) = caps.get(i) {
+                            result = result.replace(
+                                &format!("${}", i),
+                                &String::from_utf8_lossy(m.as_bytes()),
+                            );
+                        }
+                    }
+                    result
+                });
+                
+                let confidence = if sig.is_softmatch { 60 } else { 90 };
+                
+                let info = ServiceInfo {
+                    port,
+                    protocol: "tcp".to_string(),
+                    service: sig.service.clone(),
+                    product: Some(sig.product.clone()),
+                    version,
+                    extra_info: None,
+                    banner: Some(banner.trim().to_string()),
+                    confidence,
+                };
+                
+                // Hard match wins over soft match
+                if !sig.is_softmatch {
+                    return Some(info);
+                }
+                
+                // Keep best soft match as fallback
+                if best_match.is_none() || confidence > best_match.as_ref().unwrap().confidence {
+                    best_match = Some(info);
+                }
+            }
+        }
+        
+        if let Some(info) = best_match {
+            return Some(info);
+        }
+
+        // Check against known patterns (legacy substring matching)
         for probe in self.probes.values() {
             for pattern in &probe.patterns {
                 if banner_lower.contains(&pattern.regex.to_lowercase()) {
