@@ -136,7 +136,35 @@ max_concurrent_targets = 8
 
 ## Installation
 
-### Option 1: Debian Package (Recommended)
+### Option 1: Docker (Quick Start)
+
+```bash
+# Build and run with Docker
+docker build -t nemue .
+docker run --rm nemue --help
+
+# Scan a target
+docker run --rm nemue scan 192.168.1.1 -p 80,443
+
+# Using docker-compose for development
+docker-compose up --build
+docker-compose run nemue scan 192.168.1.1 -p 80,443
+```
+
+**Volume Mounting:**
+
+```bash
+# Mount custom scripts
+docker run --rm -v ./scripts:/usr/local/share/nemue/scripts nemue script list
+
+# Mount config directory
+docker run --rm -v ./config:/root/.config/nemue nemue scan 192.168.1.1
+
+# Mount output directory for scan results
+docker run --rm -v ./output:/output nemue scan 192.168.1.1 -o /output/results.json
+```
+
+### Option 2: Debian Package (Recommended)
 
 For Debian/Ubuntu systems, install using the pre-built `.deb` package:
 
@@ -163,7 +191,7 @@ cd Nemue
 sudo dpkg -i nemue_0.1.0-1_amd64.deb
 ```
 
-### Option 2: Build from Source
+### Option 3: Build from Source
 
 **Prerequisites:**
 - Rust 1.70 or higher

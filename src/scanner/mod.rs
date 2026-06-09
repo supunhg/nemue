@@ -17,6 +17,8 @@ pub mod config;
 pub mod diff;
 pub mod idle;
 pub mod ftp_bounce;
+pub mod history;
+pub mod trends;
 
 pub use engine::ScanEngine;
 pub use target::{Target, TargetParser, TargetConfig};
@@ -53,6 +55,8 @@ pub use payload::{
 pub use proxy::{
     ProxyProtocol, ProxyConfig, ProxyChain, ProxyClient, ProxyConnection, ProxyChainBuilder,
 };
+pub use history::{ScanHistory, HistoryEntry, ScanSummary};
+pub use trends::{TrendReport, PortTrend, ServiceTrend, TrendSummary, TrendAnalyzer};
 
 use serde::{Deserialize, Serialize};
 use std::net::IpAddr;
@@ -107,9 +111,9 @@ pub struct ScanResults {
     pub target_count: usize,
     pub port_count: usize,
     pub results: Vec<ScanResult>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub os_fingerprints: Vec<crate::fingerprint::OsFingerprint>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub script_results: Vec<ScriptOutputResult>,
 }
 

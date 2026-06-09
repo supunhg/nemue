@@ -1,0 +1,8 @@
+version: '3.8'
+services:
+  nemue:
+    build: .
+    volumes:
+      - ./scripts:/usr/local/share/nemue/scripts
+      - ./config:/root/.config/nemue
+    network_mode: host
