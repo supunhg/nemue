@@ -155,6 +155,9 @@ pub fn import_nmap_xml_str(xml: &str) -> Result<ScanResults> {
                         extra_info: s.extrainfo.clone(),
                         banner: None,
                         confidence: 80,
+                        service_family: None,
+                        os_hint: None,
+                        cpe: None,
                     }
                 });
 

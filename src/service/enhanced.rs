@@ -316,6 +316,9 @@ impl EnhancedServiceDetector {
                     extra_info: None,
                     banner: Some(String::from_utf8_lossy(data).to_string()),
                     confidence,
+                    service_family: None,
+                    os_hint: None,
+                    cpe: None,
                 };
 
                 // Hard match wins immediately

@@ -20,6 +20,7 @@ pub mod ftp_bounce;
 pub mod history;
 pub mod trends;
 pub mod passive;
+pub mod validation;
 
 pub use engine::ScanEngine;
 pub use target::{Target, TargetParser, TargetConfig};
@@ -66,6 +67,7 @@ pub use passive::{
     PassiveDiscovery, PassiveConfig, PassiveResult, PassiveHost, PassiveService,
     PassiveDiscoveryBuilder, DnsObservation, ArpObservation, DhcpObservation, TrafficStats,
 };
+pub use validation::InputValidator;
 
 use serde::{Deserialize, Serialize};
 use std::net::IpAddr;

@@ -267,6 +267,8 @@ mod tests {
             window_scaling: None,
             max_segment_size: None,
             details: String::new(),
+            passive_indicators: Vec::new(),
+            os_generation: None,
         });
 
         let xml = format(&results).unwrap();

@@ -9,6 +9,7 @@ pub mod state;
 pub mod auth;
 pub mod webhooks;
 pub mod cicd;
+pub mod security;
 
 use state::AppState;
 

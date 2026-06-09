@@ -13,7 +13,11 @@ pub mod qos;
 pub mod resources;
 
 pub use metrics::{MetricsCollector, PerformanceMetrics};
-pub use rate_limiter::{AdaptiveRateLimiter, RateLimiterStats};
+pub use rate_limiter::{
+    AdaptiveRateLimiter, RateLimiterStats, PerTargetRateLimiter, PerTargetRateLimiterStats,
+    GlobalRateLimiter, GlobalRateLimiterStats, ApiRateLimiter, ApiRateLimiterStats,
+    CombinedRateLimiter,
+};
 pub use memory::{BufferPool, PooledBuffer, PoolStats as MemoryPoolStats};
 pub use database::{ScanDatabase, ScanRecord, ScanStatus, Checkpoint};
 pub use workers::{WorkerPool, ConcurrencyLimiter};
