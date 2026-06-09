@@ -250,12 +250,153 @@ ls scripts/
 nemue --version
 ```
 
+## Quick Docker Start
+
+### Build and Run
+
+```bash
+# Build Docker image
+docker build -t nemue .
+
+# Run scan
+docker run --rm nemue scan 192.168.1.1 -p 80,443
+
+# Get help
+docker run --rm nemue --help
+```
+
+### Docker with Volume Mounting
+
+```bash
+# Save results to host
+docker run --rm -v ./output:/output nemue scan 192.168.1.1 -o /output/results.json
+
+# Use custom scripts
+docker run --rm -v ./scripts:/usr/local/share/nemue/scripts nemue script list
+```
+
+### Docker Compose
+
+```bash
+# Build and run with docker-compose
+docker-compose up --build
+
+# Run scan
+docker-compose run nemue scan 192.168.1.1 -p 80,443
+```
+
+---
+
+## Quick MCP Start
+
+### Start MCP Server
+
+```bash
+# Start MCP server (stdio mode)
+nemue mcp
+```
+
+### Configure Claude Desktop
+
+Add to `~/.claude/claude_desktop_config.json`:
+```json
+{
+  "mcpServers": {
+    "nemue": {
+      "command": "nemue",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+### Configure Cursor
+
+Add to `.cursor/mcp.json`:
+```json
+{
+  "mcpServers": {
+    "nemue": {
+      "command": "nemue",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+### Configure VS Code
+
+Add to `.vscode/mcp.json`:
+```json
+{
+  "servers": {
+    "nemue": {
+      "command": "nemue",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+### Docker MCP Server
+
+```bash
+# Run MCP server in Docker
+docker run --rm -i nemue mcp
+```
+
+---
+
+## Quick History & Trends Start
+
+### View Scan History
+
+```bash
+# List recent scans
+nemue history list
+
+# Show history for specific target
+nemue history list --target 192.168.1.1
+
+# Show scan details
+nemue history show <scan_id>
+```
+
+### Save Scan to History
+
+```bash
+# Scan and save to history
+nemue scan 192.168.1.1 -p common --save-history
+```
+
+### Analyze Trends
+
+```bash
+# Analyze trends for a target
+nemue trends analyze 192.168.1.1
+
+# Trends over last 7 days
+nemue trends analyze 192.168.1.1 --period 7d
+
+# Save trend report
+nemue trends analyze 192.168.1.1 -o trends.json
+```
+
+### Compare Scans
+
+```bash
+# Compare two scans
+nemue history diff <scan_id_1> <scan_id_2>
+```
+
+---
+
 ## Next Steps
 
-- Read the [full documentation](README.md)
+- Read the [full documentation](USAGE.md)
 - Check the [architecture guide](ARCHITECTURE.md)
 - Review [NSE script guide](docs/NSE_GUIDE.md)
-- See [complete examples](docs/EXAMPLES.md)
+- See [complete examples](../examples/)
 
 ---
 

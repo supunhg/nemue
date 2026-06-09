@@ -23,7 +23,11 @@ Complete guide for using Nemue network scanner with all features.
 12. [Report Generation](#report-generation)
 13. [Output Formats](#output-formats)
 14. [Performance Tuning](#performance-tuning)
-15. [Troubleshooting](#troubleshooting)
+15. [Scan History](#scan-history)
+16. [Trend Analysis](#trend-analysis)
+17. [Docker Usage](#docker-usage)
+18. [MCP Server Usage](#mcp-server-usage)
+19. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -1224,6 +1228,254 @@ nemue scan 192.168.1.0/16 -p 1-65535 --stream -o results.json
 
 # Batch processing
 nemue scan 192.168.1.0/24 -p 1-65535 --batch-size 100
+```
+
+---
+
+## Scan History
+
+Nemue tracks scan history for comparison and trend analysis.
+
+### Viewing History
+
+```bash
+# List recent scans
+nemue history list
+
+# Show history for specific target
+nemue history list --target 192.168.1.1
+
+# Show scan details
+nemue history show <scan_id>
+
+# Compare two scans
+nemue history diff <scan_id_1> <scan_id_2>
+```
+
+### History Storage
+
+Scan history is stored in `~/.nemue/history/` by default. Each scan is saved with:
+- Scan ID (UUID)
+- Timestamp
+- Target information
+- Full results
+- Summary statistics
+
+### Using History
+
+```bash
+# Save scan to history
+nemue scan 192.168.1.1 -p common --save-history
+
+# View last 10 scans
+nemue history list --limit 10
+
+# Export history
+nemue history export -o history.json
+
+# Clear old history
+nemue history prune --days 30
+```
+
+---
+
+## Trend Analysis
+
+Analyze changes across multiple scans over time.
+
+### Generating Trend Reports
+
+```bash
+# Analyze trends for a target
+nemue trends analyze 192.168.1.1
+
+# Trends over last 7 days
+nemue trends analyze 192.168.1.1 --period 7d
+
+# Trends over last 30 days
+nemue trends analyze 192.168.1.1 --period 30d
+
+# Save trend report
+nemue trends analyze 192.168.1.1 -o trends.json
+```
+
+### Trend Report Contents
+
+Trend reports include:
+- **New ports**: Ports that opened during the period
+- **Closed ports**: Ports that closed during the period
+- **Service changes**: Service/version changes detected
+- **Stability score**: 0-100 rating of network stability
+- **Predictive analytics**: Expected changes based on patterns
+
+### Example Trend Report
+
+```json
+{
+  "period": "7 days",
+  "scan_count": 7,
+  "new_ports": [
+    {"host": "192.168.1.1", "port": 8080, "change_time": "2025-11-20T10:30:00Z"}
+  ],
+  "closed_ports": [],
+  "service_changes": [
+    {"host": "192.168.1.1", "port": 80, "old_service": "nginx/1.18", "new_service": "nginx/1.20"}
+  ],
+  "summary": {
+    "stability_score": 85.0
+  }
+}
+```
+
+---
+
+## Docker Usage
+
+### Quick Start
+
+```bash
+# Build Docker image
+docker build -t nemue .
+
+# Run scan
+docker run --rm nemue scan 192.168.1.1 -p 80,443
+
+# Get help
+docker run --rm nemue --help
+```
+
+### Volume Mounting
+
+```bash
+# Mount custom scripts
+docker run --rm -v ./scripts:/usr/local/share/nemue/scripts nemue script list
+
+# Mount config directory
+docker run --rm -v ./config:/root/.config/nemue nemue scan 192.168.1.1
+
+# Mount output directory
+docker run --rm -v ./output:/output nemue scan 192.168.1.1 -o /output/results.json
+```
+
+### Docker Compose
+
+```bash
+# Build and run
+docker-compose up --build
+
+# Run scan with docker-compose
+docker-compose run nemue scan 192.168.1.1 -p 80,443
+```
+
+### Docker MCP Server
+
+```bash
+# Run MCP server in Docker (for Claude Desktop, Cursor, VS Code)
+docker run --rm -i nemue mcp
+
+# With volume mounting for scripts
+docker run --rm -i -v ./scripts:/usr/local/share/nemue/scripts nemue mcp
+```
+
+### Docker Automation
+
+```bash
+#!/bin/bash
+# Scan multiple targets using Docker
+for target in 192.168.1.1 192.168.1.2 192.168.1.3; do
+  docker run --rm -v ./results:/results nemue scan "$target" -p common -o "/results/${target}.json"
+done
+```
+
+---
+
+## MCP Server Usage
+
+Nemue can run as an MCP (Model Context Protocol) tool server for AI assistants.
+
+### Starting MCP Server
+
+```bash
+# Start MCP server (stdio mode)
+nemue mcp
+
+# Start with custom config
+nemue mcp --config /path/to/config.toml
+```
+
+### AI Assistant Configuration
+
+**Claude Desktop** (`~/.claude/claude_desktop_config.json`):
+```json
+{
+  "mcpServers": {
+    "nemue": {
+      "command": "nemue",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+**Cursor** (`.cursor/mcp.json`):
+```json
+{
+  "mcpServers": {
+    "nemue": {
+      "command": "nemue",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+**VS Code** (`.vscode/mcp.json`):
+```json
+{
+  "servers": {
+    "nemue": {
+      "command": "nemue",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+### Available MCP Tools
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `nemue_scan` | Full port scan | target, ports, scan_type |
+| `nemue_quick_scan` | Fast top-ports scan | target, top_ports |
+| `nemue_service_detect` | Service detection | target, ports |
+| `nemue_os_detect` | OS fingerprinting | target |
+| `nemue_ssl_check` | SSL/TLS analysis | target, port |
+| `nemue_host_discovery` | Ping sweep | target |
+| `nemue_traceroute` | Network path discovery | target |
+| `nemue_fuzz` | Web content fuzzing | target, wordlist, mode |
+| `nemue_vuln_scan` | Vulnerability scanning | target, ports |
+
+### Example MCP Tool Calls
+
+```json
+{
+  "tool": "nemue_scan",
+  "arguments": {
+    "target": "192.168.1.1",
+    "ports": "22,80,443",
+    "scan_type": "connect"
+  }
+}
+```
+
+```json
+{
+  "tool": "nemue_quick_scan",
+  "arguments": {
+    "target": "192.168.1.1",
+    "top_ports": 100
+  }
+}
 ```
 
 ---

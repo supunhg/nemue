@@ -33,13 +33,13 @@ Nemue v0.2.0 is a Rust-based security testing framework with 35K+ lines of code,
 |-----------|--------|------|----------|---------|-------|
 | Raw Speed | 15% | 6/10 | 9/10 | 10/10 | 3/10 |
 | Accuracy/Depth | 25% | 10/10 | 3/10 | 4/10 | 5/10 |
-| Feature Breadth | 20% | 8/10 | 3/10 | 2/10 | 8/10 |
-| AI/MCP Integration | 10% | 0/10 | 0/10 | 0/10 | 7/10 |
+| Feature Breadth | 20% | 8/10 | 3/10 | 2/10 | 9/10 |
+| AI/MCP Integration | 10% | 0/10 | 0/10 | 0/10 | 9/10 |
 | Enterprise Features | 10% | 3/10 | 1/10 | 1/10 | 8/10 |
 | Community/Ecosystem | 10% | 10/10 | 7/10 | 7/10 | 1/10 |
 | Cross-Platform | 5% | 10/10 | 9/10 | 7/10 | 3/10 |
-| Documentation | 5% | 10/10 | 7/10 | 6/10 | 5/10 |
-| **Weighted Score** | **100%** | **6.75** | **4.40** | **4.20** | **5.20** |
+| Documentation | 5% | 10/10 | 7/10 | 6/10 | 6/10 |
+| **Weighted Score** | **100%** | **6.75** | **4.40** | **4.20** | **5.55** |
 
 ---
 
@@ -67,13 +67,16 @@ Nemue v0.2.0 is a Rust-based security testing framework with 35K+ lines of code,
 
 | Feature | Nmap | RustScan | Masscan | Nemue | Status |
 |---------|------|----------|---------|-------|--------|
-| MCP/AI Integration | No | No | No | Yes | **NEMUE LEADS** |
-| Compliance Reporting | No | No | No | Yes (7) | **NEMUE LEADS** |
-| Web Fuzzing | No | No | No | Yes (8 modes) | **NEMUE LEADS** |
-| REST API | No | No | No | Yes | **NEMUE LEADS** |
-| Continuous Monitoring | No | No | No | Yes | **NEMUE LEADS** |
-| Vulnerability Scanning | Via NSE | No | No | Yes | OK |
-| SSL/TLS Analysis | Via NSE | No | No | Yes | OK |
+| MCP/AI Integration | No | No | No | Yes (9 tools) | **NEMUE LEADS** |
+| Compliance Reporting | No | No | No | Yes (7 frameworks) | **NEMUE LEADS** |
+| Web Fuzzing | No | No | No | Yes (8 modes, 10 wordlists) | **NEMUE LEADS** |
+| REST API | No | No | No | Yes (7 endpoints) | **NEMUE LEADS** |
+| Continuous Monitoring | No | No | No | Yes (alerts, change detection) | **NEMUE LEADS** |
+| Scan History & Trends | No | No | No | Yes (historical analysis) | **NEMUE LEADS** |
+| Vulnerability Scanning | Via NSE | No | No | Yes (CVE database) | OK |
+| SSL/TLS Analysis | Via NSE | No | No | Yes (deep inspection) | OK |
+| Distributed Scanning | No | No | No | Yes (multi-node) | **NEMUE LEADS** |
+| Docker Support | No | No | No | Yes (multi-stage build) | **NEMUE LEADS** |
 
 ---
 
@@ -134,15 +137,25 @@ Nemue v0.2.0 is a Rust-based security testing framework with 35K+ lines of code,
 
 ## Nemue's Unique Advantages
 
-1. **MCP Integration (First Mover)**: Only network scanner with native MCP server support. As AI assistants become standard in security workflows, this becomes a moat.
+1. **MCP Integration (First Mover)**: Only network scanner with native MCP server support. 9 MCP tools available for Claude Desktop, Cursor, and VS Code. As AI assistants become standard in security workflows, this becomes a moat.
 
-2. **All-in-One Platform**: Port scanning + fuzzing + vuln scanning + compliance in one binary. No competitor offers this breadth.
+2. **All-in-One Platform**: Port scanning + fuzzing + vuln scanning + compliance + monitoring in one binary. No competitor offers this breadth.
 
-3. **Compliance-First Reporting**: Seven compliance frameworks (PCI-DSS, NIST, CIS, ISO 2701, HIPAA, SOC 2, GDPR). Enterprise buyers need this.
+3. **Compliance-First Reporting**: Seven compliance frameworks (PCI-DSS, NIST, CIS, ISO 27001, HIPAA, SOC 2, GDPR). Enterprise buyers need this.
 
 4. **Built-in Web Fuzzing**: 8 fuzzing modes with 10 built-in wordlists. Eliminates need for ffuf/gobuster.
 
-5. **REST API Server**: Full API for DevSecOps pipeline integration.
+5. **REST API Server**: Full API with 7 endpoints for DevSecOps pipeline integration.
+
+6. **Scan History & Trend Analysis**: Track network changes over time with stability scoring and predictive analytics.
+
+7. **Continuous Monitoring**: Real-time change detection with email, Slack, and webhook alerts.
+
+8. **Distributed Scanning**: Multi-node coordinator for horizontal scaling of large scans.
+
+9. **Docker-First Design**: Multi-stage Docker build with volume mounting for scripts, config, and results.
+
+10. **Modern Rust Architecture**: Async/await with Tokio, memory-safe, no garbage collector pauses.
 
 ---
 

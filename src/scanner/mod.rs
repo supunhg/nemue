@@ -37,7 +37,11 @@ pub use scan_types::{
     AdvancedScanner, 
     PortState as ScanPortState, 
     PortStateReason, 
-    ScanResult as AdvancedScanResult
+    ScanResult as AdvancedScanResult,
+    FirewallAnalysis,
+    FilteringState,
+    FirewallType,
+    WindowAnalysis,
 };
 pub use fragmentation::{
     FragmentationConfig, IpFragment, PacketFragmenter, FragmentReassembler,
