@@ -22,6 +22,7 @@ pub struct ScanEngine {
     enable_os_detection: bool,
     use_raw_sockets: bool,
     max_concurrent_targets: usize,
+    max_concurrent_ports: usize,
 }
 
 impl ScanEngine {
@@ -33,6 +34,7 @@ impl ScanEngine {
             enable_os_detection: true,
             use_raw_sockets: false,
             max_concurrent_targets: num_cpus::get().max(2),
+            max_concurrent_ports: 100,
         })
     }
 
@@ -44,6 +46,7 @@ impl ScanEngine {
             enable_os_detection: os_detection,
             use_raw_sockets: false,
             max_concurrent_targets: num_cpus::get().max(2),
+            max_concurrent_ports: 100,
         })
     }
 
@@ -61,11 +64,17 @@ impl ScanEngine {
             enable_os_detection: os_detection,
             use_raw_sockets: use_raw,
             max_concurrent_targets: num_cpus::get().max(2),
+            max_concurrent_ports: 100,
         })
     }
 
     pub fn with_max_concurrent_targets(mut self, max: usize) -> Self {
         self.max_concurrent_targets = max;
+        self
+    }
+
+    pub fn with_max_concurrent_ports(mut self, max: usize) -> Self {
+        self.max_concurrent_ports = max;
         self
     }
 
@@ -239,114 +248,79 @@ impl ScanEngine {
 
     async fn syn_scan(&self, target: IpAddr, ports: &[Port]) -> Result<Vec<ScanResult>> {
         info!("Performing SYN scan on {} ports", ports.len());
-        
         let tcp_scanner = TcpScanner::with_raw_sockets(self.timeout, self.use_raw_sockets);
-        let mut results = Vec::new();
+        let rate_limiter = self.rate_limiter.clone();
+        let max_concurrent = self.max_concurrent_ports;
 
-        // Create semaphore for concurrent scanning
-        let semaphore = Arc::new(Semaphore::new(100)); // Max 100 concurrent scans
-
-        let mut tasks = Vec::new();
-
-        for &port in ports {
-            let permit = semaphore.clone().acquire_owned().await?;
-            let tcp_scanner = tcp_scanner.clone();
-            let rate_limiter = self.rate_limiter.clone();
-
-            let task = tokio::spawn(async move {
-                // Rate limiting
-                rate_limiter.wait().await;
-
-                let result = tcp_scanner.syn_scan(target, port.value()).await;
-                drop(permit);
-                result
-            });
-
-            tasks.push(task);
-        }
-
-        // Collect results
-        for task in tasks {
-            if let Ok(Ok(result)) = task.await {
-                results.push(result);
+        self.parallel_scan_ports(ports, move |port| {
+            let scanner = tcp_scanner.clone();
+            let rl = rate_limiter.clone();
+            async move {
+                rl.wait().await;
+                scanner.syn_scan(target, port.value()).await
             }
-        }
-
-        info!(
-            "SYN scan completed: {} ports scanned, {} open",
-            results.len(),
-            results.iter().filter(|r| r.state == PortState::Open).count()
-        );
-
-        Ok(results)
+        }, max_concurrent).await
     }
 
     async fn connect_scan(&self, target: IpAddr, ports: &[Port]) -> Result<Vec<ScanResult>> {
         info!("Performing TCP Connect scan on {} ports", ports.len());
-
         let tcp_scanner = TcpScanner::new(self.timeout);
-        let mut results = Vec::new();
+        let rate_limiter = self.rate_limiter.clone();
+        let max_concurrent = self.max_concurrent_ports;
 
-        let semaphore = Arc::new(Semaphore::new(100));
-        let mut tasks = Vec::new();
-
-        for &port in ports {
-            let permit = semaphore.clone().acquire_owned().await?;
-            let tcp_scanner = tcp_scanner.clone();
-            let rate_limiter = self.rate_limiter.clone();
-
-            let task = tokio::spawn(async move {
-                rate_limiter.wait().await;
-                let result = tcp_scanner.connect_scan(target, port.value()).await;
-                drop(permit);
-                result
-            });
-
-            tasks.push(task);
-        }
-
-        for task in tasks {
-            if let Ok(Ok(result)) = task.await {
-                results.push(result);
+        self.parallel_scan_ports(ports, move |port| {
+            let scanner = tcp_scanner.clone();
+            let rl = rate_limiter.clone();
+            async move {
+                rl.wait().await;
+                scanner.connect_scan(target, port.value()).await
             }
-        }
-
-        info!(
-            "Connect scan completed: {} ports scanned, {} open",
-            results.len(),
-            results.iter().filter(|r| r.state == PortState::Open).count()
-        );
-
-        Ok(results)
+        }, max_concurrent).await
     }
 
     async fn udp_scan(&self, target: IpAddr, ports: &[Port]) -> Result<Vec<ScanResult>> {
         info!("Performing UDP scan on {} ports", ports.len());
-
         let udp_scanner = UdpScanner::new(self.timeout);
-        let mut results = Vec::new();
+        let rate_limiter = self.rate_limiter.clone();
+        let max_concurrent = self.max_concurrent_ports / 2; // Lower concurrency for UDP
 
-        // Create semaphore for concurrent scanning
-        let semaphore = Arc::new(Semaphore::new(50)); // Lower concurrency for UDP
+        self.parallel_scan_ports(ports, move |port| {
+            let scanner = udp_scanner.clone();
+            let rl = rate_limiter.clone();
+            async move {
+                rl.wait().await;
+                scanner.scan(target, port.value()).await
+            }
+        }, max_concurrent).await
+    }
 
-        let mut tasks = Vec::new();
+    /// Generic parallel port scanning with configurable concurrency
+    async fn parallel_scan_ports<F, Fut>(
+        &self,
+        ports: &[Port],
+        scan_fn: F,
+        max_concurrent: usize,
+    ) -> Result<Vec<ScanResult>>
+    where
+        F: Fn(Port) -> Fut + Send + Sync + 'static,
+        Fut: std::future::Future<Output = Result<ScanResult>> + Send + 'static,
+    {
+        let semaphore = Arc::new(Semaphore::new(max_concurrent));
+        let scan_fn = Arc::new(scan_fn);
+        let mut tasks = Vec::with_capacity(ports.len());
 
         for &port in ports {
             let permit = semaphore.clone().acquire_owned().await?;
-            let udp_scanner = udp_scanner.clone();
-            let rate_limiter = self.rate_limiter.clone();
-
+            let scan_fn = scan_fn.clone();
             let task = tokio::spawn(async move {
-                rate_limiter.wait().await;
-                let result = udp_scanner.scan(target, port.value()).await;
+                let result = scan_fn(port).await;
                 drop(permit);
                 result
             });
-
             tasks.push(task);
         }
 
-        // Collect results
+        let mut results = Vec::with_capacity(tasks.len());
         for task in tasks {
             if let Ok(Ok(result)) = task.await {
                 results.push(result);
@@ -354,7 +328,7 @@ impl ScanEngine {
         }
 
         info!(
-            "UDP scan completed: {} ports scanned, {} open",
+            "Scan completed: {} ports scanned, {} open",
             results.len(),
             results.iter().filter(|r| r.state == PortState::Open).count()
         );
