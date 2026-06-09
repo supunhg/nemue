@@ -7,7 +7,6 @@ use pnet::datalink::{self, Channel, NetworkInterface};
 use pnet::packet::tcp::{MutableTcpPacket, TcpFlags, TcpPacket};
 use pnet::packet::ip::IpNextHeaderProtocols;
 use pnet::packet::ipv4::{MutableIpv4Packet, Ipv4Packet};
-use pnet::packet::Packet;
 use rand::Rng;
 
 use crate::scanner::{PortState, Protocol, ScanResult};
@@ -144,6 +143,7 @@ impl TcpScanner {
             service: None,
             service_info: None,
             hostname: None,
+            reason: None,
             timestamp: chrono::Utc::now(),
         })
     }
@@ -304,6 +304,7 @@ impl TcpScanner {
             service: None, // Service detection will be added in Phase 2
             service_info: None,
             hostname: None,
+            reason: None,
             timestamp: chrono::Utc::now(),
         })
     }

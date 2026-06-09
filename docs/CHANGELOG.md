@@ -18,6 +18,54 @@ All notable changes to the Nemue project are documented here.
 
 ---
 
+## [0.2.0] - 2026-06-09
+
+### ⚡ Performance
+- **Parallel target scanning**: Targets are now scanned concurrently (default: CPU core count), 10-50x faster for multi-target scans
+- **Fixed adaptive rate limiter**: Governor quota is now properly updated when rate adjustments occur
+- **Fixed buffer pool**: `PooledBuffer` now returns buffers to pool on drop, enabling true buffer reuse
+- **Fixed CSV/TSV output**: Streaming writer now outputs proper delimited data instead of JSON
+- **Shared AF_PACKET channel**: Packet I/O layer with interface caching and BPF filter builder
+- **Interface cache**: Avoids repeated network interface lookups
+
+### 🤖 MCP Integration
+- **MCP server**: Nemue is now available as an MCP tool server for AI assistants
+- **9 MCP tools**: `nemue_scan`, `nemue_quick_scan`, `nemue_service_detect`, `nemue_os_detect`, `nemue_ssl_check`, `nemue_host_discovery`, `nemue_traceroute`, `nemue_fuzz`, `nemue_vuln_scan`
+- **stdio transport**: Works with Claude Desktop, Cursor, VS Code out of the box
+- **CLI integration**: `nemue mcp` subcommand to start MCP server
+
+### 🏗️ Infrastructure
+- **GitHub Actions CI**: Automated build, test, clippy, and formatting checks
+- **Release workflow**: Automated binary builds for Linux, macOS, Windows (x86_64 + aarch64)
+- **Cargo.lock committed**: Reproducible builds
+- **Zero compile warnings**: Clean build with no warnings
+
+### ✨ New Features
+- **`--top-ports N`**: Scan top N most common ports (e.g., `--top-ports 100`)
+- **`--version-light`**: Light version detection (fewer probes, faster)
+- **`--version-all`**: All version detection probes (comprehensive)
+- **`--version-intensity N`**: Version detection intensity (0-9)
+- **`--reason`**: Show reason for port state (syn-ack, reset, no-response)
+- **Config file support**: `~/.config/nemue/config.toml` for default settings
+- **`nemue mcp`**: Start MCP server for AI assistant integration
+- **Zero-copy UDP probes**: Static probe data, no heap allocation per scan
+- **Reason field in ScanResult**: Port state reason tracking
+
+### 🐛 Bug Fixes
+- **Fixed adaptive rate limiter**: Governor limiter is now recreated when rate changes
+- **Fixed buffer pool**: PooledBuffer returns to pool on drop
+- **Fixed CSV/TSV output**: Proper delimited serialization
+- **Removed overlapping module**: Consolidated `report/` and `reporting/` into single module
+- **Fixed UDP scan test**: Uses non-standard port to avoid flaky results
+- **Fixed edge case test**: Removed hostname-resolution-dependent assertion
+
+### 📚 Documentation
+- **BENCHMARKS.md**: Living benchmark document with methodology for 7 competitor comparisons
+- **PLAN.md**: Detailed development plan with 5 phases
+- **Updated README**: MCP server documentation, new flags, v0.2.0 features
+
+---
+
 ## [0.1.0] - 2024-11-25 🎉
 
 ### 🚀 Initial Production Release

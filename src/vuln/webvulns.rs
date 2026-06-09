@@ -1,6 +1,5 @@
 // Advanced web vulnerability detection scripts
 use super::framework::{VulnScript, VulnCategory, VulnSeverity, VulnResult};
-use anyhow::Result;
 use std::net::TcpStream;
 use std::io::{Read, Write};
 use std::time::Duration;
@@ -272,7 +271,7 @@ impl WebVulnScripts {
         .with_ports(vec![80, 443, 8080, 8443])
         .with_services(vec!["http".to_string(), "https".to_string()])
         .with_executor(|target, port| {
-            let payloads = vec![
+            let _payloads = vec![
                 "; ls",
                 "| dir",
                 "`whoami`",

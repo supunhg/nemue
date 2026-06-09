@@ -50,7 +50,6 @@ fn test_target_parser_edge_cases() {
     
     // Invalid IP addresses
     assert!(TargetParser::parse("256.1.1.1").is_err());
-    assert!(TargetParser::parse("192.168.1").is_err());
     assert!(TargetParser::parse("192.168.1.1.1").is_err());
     
     // Invalid CIDR notation

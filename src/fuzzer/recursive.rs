@@ -47,6 +47,7 @@ impl Default for RecursiveConfig {
 }
 
 /// Recursive scanner for automatic subdirectory discovery
+#[allow(dead_code)]
 pub struct RecursiveScanner {
     /// Base fuzzing configuration
     fuzz_config: FuzzConfig,
@@ -122,7 +123,7 @@ impl RecursiveScanner {
     async fn scan_directory(
         &self,
         base_path: &str,
-        depth: usize,
+        _depth: usize,
         wordlist: &[String],
     ) -> Result<Vec<FuzzResult>> {
         // Check if already discovered
@@ -168,7 +169,7 @@ impl RecursiveScanner {
 
         if self.recursive_config.generate_backups {
             // Generate backup file variants
-            let backup_results = self.generate_backup_variants(&results).await?;
+            let _backup_results = self.generate_backup_variants(&results).await?;
             // Would add backup_results to main results
         }
 
@@ -200,7 +201,7 @@ impl RecursiveScanner {
 
     /// Generate backup file variants for discovered files
     async fn generate_backup_variants(&self, results: &[FuzzResult]) -> Result<Vec<FuzzResult>> {
-        let mut variants = Vec::new();
+        let variants = Vec::new();
 
         for result in results {
             if result.path.ends_with('/') {
@@ -208,7 +209,7 @@ impl RecursiveScanner {
             }
 
             // Generate backup extensions
-            let backup_paths = vec![
+            let _backup_paths = vec![
                 format!("{}.bak", result.path),
                 format!("{}.old", result.path),
                 format!("{}.backup", result.path),
@@ -227,7 +228,7 @@ impl RecursiveScanner {
     }
 
     /// Extract paths from robots.txt
-    pub async fn extract_from_robots(&self, base_url: &str) -> Result<Vec<String>> {
+    pub async fn extract_from_robots(&self, _base_url: &str) -> Result<Vec<String>> {
         // Fetch robots.txt and extract disallowed paths
         // Placeholder implementation
         Ok(vec![
@@ -238,15 +239,15 @@ impl RecursiveScanner {
     }
 
     /// Extract paths from sitemap.xml
-    pub async fn extract_from_sitemap(&self, base_url: &str) -> Result<Vec<String>> {
+    pub async fn extract_from_sitemap(&self, _base_url: &str) -> Result<Vec<String>> {
         // Fetch sitemap.xml and extract all URLs
         // Placeholder implementation
         Ok(Vec::new())
     }
 
     /// Extract paths from JavaScript files
-    pub async fn extract_from_javascript(&self, js_content: &str) -> Vec<String> {
-        let mut paths = Vec::new();
+    pub async fn extract_from_javascript(&self, _js_content: &str) -> Vec<String> {
+        let paths = Vec::new();
 
         // Look for common patterns in JavaScript
         // - API endpoints: /api/v1/users
@@ -254,7 +255,7 @@ impl RecursiveScanner {
         // - URL constants: const API_URL = '/api'
         
         // Regex patterns for common JavaScript path patterns
-        let patterns = vec![
+        let _patterns = vec![
             r#"['"](/[a-zA-Z0-9/_-]+)['"]"#,  // Quoted paths
             r#"router\.(get|post|put|delete)\(['"]([^'"]+)['"]"#,  // Express.js routes
             r#"fetch\(['"]([^'"]+)['"]"#,  // Fetch API calls

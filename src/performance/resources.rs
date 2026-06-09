@@ -2,6 +2,7 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 
+#[allow(dead_code)]
 pub struct ResourceManager {
     total_workers: usize,
     active_workers: Arc<AtomicUsize>,

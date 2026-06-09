@@ -233,6 +233,7 @@ impl Default for ProxyChain {
 /// Proxy client for managing connections
 pub struct ProxyClient {
     chain: ProxyChain,
+    #[allow(dead_code)]
     connection_pool: ConnectionPool,
 }
 

@@ -6,7 +6,7 @@ use std::sync::Arc;
 use tokio::sync::{Semaphore, RwLock};
 use std::collections::{HashSet, VecDeque};
 use std::time::{Duration, Instant};
-use reqwest::{Client, Response, StatusCode};
+use reqwest::{Client, Response};
 use tracing::{debug, info, warn};
 use serde::{Serialize, Deserialize};
 
@@ -481,7 +481,7 @@ impl FuzzEngine {
 
     /// Process recursive queue for directory discovery
     async fn process_recursive_queue(&self) -> Result<Vec<FuzzResult>> {
-        let mut results = Vec::new();
+        let results = Vec::new();
         
         // This will be implemented in the recursive scanning feature
         // For now, return empty results

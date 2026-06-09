@@ -2,10 +2,10 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::SocketAddr;
-use tokio::sync::mpsc;
 use uuid::Uuid;
 
 /// Distributed scanning coordinator for multi-node deployments
+#[allow(dead_code)]
 pub struct ScanCoordinator {
     nodes: HashMap<Uuid, ScanNode>,
     job_queue: Vec<ScanJob>,

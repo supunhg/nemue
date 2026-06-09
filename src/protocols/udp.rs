@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use std::net::{IpAddr, SocketAddr};
 use tokio::net::UdpSocket;
 use tokio::time::{timeout, Duration};
@@ -27,6 +27,7 @@ impl UdpScanner {
             service: self.identify_service(port),
             service_info: None,
             hostname: None,
+            reason: None,
             timestamp: chrono::Utc::now(),
         })
     }
@@ -75,12 +76,12 @@ impl UdpScanner {
         }
     }
 
-    /// Get service-specific UDP probe
-    fn get_probe_for_port(&self, port: u16) -> Vec<u8> {
+    /// Get service-specific UDP probe (static data, zero allocation)
+    fn get_probe_for_port(&self, port: u16) -> &'static [u8] {
         match port {
             53 => {
                 // DNS query for version.bind
-                vec![
+                &[
                     0x00, 0x00, // Transaction ID
                     0x01, 0x00, // Flags: standard query
                     0x00, 0x01, // Questions: 1
@@ -96,7 +97,7 @@ impl UdpScanner {
             }
             123 => {
                 // NTP request
-                vec![
+                &[
                     0x1b, // LI, Version, Mode
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -107,7 +108,7 @@ impl UdpScanner {
             }
             161 | 162 => {
                 // SNMP GetRequest
-                vec![
+                &[
                     0x30, 0x26, // SEQUENCE
                     0x02, 0x01, 0x00, // Version: 1
                     0x04, 0x06, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, // Community: "public"
@@ -123,7 +124,7 @@ impl UdpScanner {
             }
             137 => {
                 // NetBIOS Name Service query
-                vec![
+                &[
                     0x00, 0x00, // Transaction ID
                     0x00, 0x10, // Flags
                     0x00, 0x01, // Questions
@@ -133,11 +134,11 @@ impl UdpScanner {
             }
             5060 | 5061 => {
                 // SIP OPTIONS request
-                b"OPTIONS sip:nm SIP/2.0\r\n\r\n".to_vec()
+                b"OPTIONS sip:nm SIP/2.0\r\n\r\n"
             }
             _ => {
                 // Generic empty probe
-                vec![0x00]
+                &[0x00]
             }
         }
     }
@@ -208,12 +209,12 @@ mod tests {
     #[tokio::test]
     async fn test_udp_scan_timeout() {
         let scanner = UdpScanner::new(100); // Very short timeout
-        // Scan a filtered port on localhost
-        let result = scanner.scan(IpAddr::V4(std::net::Ipv4Addr::new(127, 0, 0, 1)), 9999).await;
+        // Scan a port unlikely to be open on localhost
+        let result = scanner.scan(IpAddr::V4(std::net::Ipv4Addr::new(127, 0, 0, 1)), 58732).await;
         assert!(result.is_ok());
-        // Should timeout and return Filtered
+        // Should timeout and return Filtered, or get Closed from ICMP unreachable
         if let Ok(scan_result) = result {
-            assert!(matches!(scan_result.state, PortState::Filtered | PortState::Open));
+            assert!(matches!(scan_result.state, PortState::Filtered | PortState::Closed | PortState::Open));
         }
     }
 }

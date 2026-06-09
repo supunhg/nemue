@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use mlua::{Lua, Table, Value};
+use mlua::{Lua, Value};
 use serde::{Deserialize, Serialize};
 use std::net::IpAddr;
 use std::path::Path;

@@ -514,7 +514,7 @@ impl AdvancedScanner {
     }
 
     /// Helper for stealth scans (NULL, FIN, Xmas)
-    async fn stealth_scan(&self, target: IpAddr, port: u16, scan_name: &str) -> Result<ScanResult> {
+    async fn stealth_scan(&self, target: IpAddr, port: u16, _scan_name: &str) -> Result<ScanResult> {
         // Placeholder: These scans require raw sockets
         // Fallback to connect for now
         

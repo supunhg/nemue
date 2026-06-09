@@ -1,7 +1,7 @@
 // Wordlist Management for Fuzzing
 // Built-in wordlists and custom wordlist loading
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use std::path::Path;
 use tokio::fs::File;
 use tokio::io::{AsyncBufReadExt, BufReader};
@@ -32,6 +32,7 @@ pub enum BuiltinWordlist {
 }
 
 /// Wordlist manager
+#[allow(dead_code)]
 pub struct WordlistManager {
     /// Custom wordlist paths
     custom_wordlists: Vec<String>,

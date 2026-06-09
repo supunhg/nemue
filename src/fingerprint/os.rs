@@ -84,7 +84,7 @@ impl OsDetector {
         let mut confidence = 30; // Base confidence
         let mut os_version = None;
         let mut details = String::new();
-        let mut ip_id_sequence = None;
+        let ip_id_sequence = Some("Unknown".to_string());
 
         // TTL analysis (most reliable indicator)
         details.push_str(&format!("TTL={}; ", ttl));
@@ -139,13 +139,7 @@ impl OsDetector {
                         details.push_str("Linux kernel 2.4+; ");
                     }
                 }
-                // BSD signatures  
-                65535 => {
-                    if ttl == 64 {
-                        os_family = OsFamily::BSD;
-                        confidence += 10;
-                    }
-                }
+                // BSD signatures (handled via ttl check below)
                 _ => {}
             }
         }
@@ -242,9 +236,7 @@ impl OsDetector {
             }
         }
 
-        // IP ID sequence analysis (requires multiple packets)
-        // This is a placeholder - would need multiple probes
-        ip_id_sequence = Some("Unknown".to_string());
+        // IP ID sequence analysis (requires multiple probes - placeholder)
 
         // Cap confidence
         confidence = confidence.min(100);

@@ -9,7 +9,6 @@ use super::parsers::{DatabaseParser, Http2Parser, RdpParser, SmbParser};
 use super::probes::ProbeDatabase;
 use anyhow::Result;
 use std::net::IpAddr;
-use tokio::time::Duration;
 use tracing::{debug, info};
 
 /// Enhanced service detector with multi-probe and protocol analysis
@@ -184,7 +183,7 @@ impl EnhancedServiceDetector {
     /// Multi-probe detection for higher intensity levels
     async fn multi_probe_detection(
         &self,
-        target: IpAddr,
+        _target: IpAddr,
         port: u16,
         service_info: ServiceInfo,
     ) -> ServiceInfo {

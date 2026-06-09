@@ -160,8 +160,8 @@ impl APIDiscovery {
     }
 
     /// Extract jQuery AJAX calls
-    fn extract_jquery_ajax(js: &str) -> Vec<APIEndpoint> {
-        let mut endpoints = Vec::new();
+    fn extract_jquery_ajax(_js: &str) -> Vec<APIEndpoint> {
+        let endpoints = Vec::new();
         
         // Look for $.ajax({ url: '...' })
         // TODO: Implement proper extraction

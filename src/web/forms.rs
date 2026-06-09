@@ -30,7 +30,7 @@ pub struct FormAnalyzer;
 
 impl FormAnalyzer {
     /// Extract all forms from HTML
-    pub fn extract_forms(html: &str, page_url: &str) -> Vec<FormInfo> {
+    pub fn extract_forms(_html: &str, _page_url: &str) -> Vec<FormInfo> {
         // TODO: Implement proper HTML parsing
         // For now, return placeholder
         vec![]
@@ -95,7 +95,7 @@ impl FormAnalyzer {
     }
 
     /// Extract input fields from form HTML
-    pub fn extract_inputs(form_html: &str) -> Vec<InputField> {
+    pub fn extract_inputs(_form_html: &str) -> Vec<InputField> {
         // TODO: Implement proper HTML parsing
         vec![]
     }

@@ -36,6 +36,10 @@ regex = "1.10"  # Regular expressions
 url = "2.5"  # URL parsing
 lazy_static = "1.4"  # Static initialization
 crossbeam = "0.8"  # Lock-free data structures
+num_cpus = "1.16"  # CPU count for parallelism
+rmcp = { version = "0.16", features = ["server"] }  # MCP server support
+toml = "0.8"  # Config file parsing
+dirs = "5"  # XDG directory paths
 
 [dev-dependencies]
 tokio-test = "0.4"

@@ -211,7 +211,7 @@ impl RiskEngine {
             (6379, "Redis", "In-memory database exposed to internet"),
         ];
 
-        for (port, service) in open_ports {
+        for (port, _service) in open_ports {
             // Check against high-risk ports
             if let Some((_, svc_name, reason)) = high_risk_ports.iter().find(|(p, _, _)| p == port) {
                 let score = 15u8;

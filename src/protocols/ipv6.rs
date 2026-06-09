@@ -7,7 +7,6 @@ use pnet::datalink::{self, Channel, NetworkInterface};
 use pnet::packet::tcp::{MutableTcpPacket, TcpFlags, TcpPacket};
 use pnet::packet::ip::IpNextHeaderProtocols;
 use pnet::packet::ipv6::{MutableIpv6Packet, Ipv6Packet};
-use pnet::packet::Packet;
 use rand::Rng;
 
 use crate::scanner::{PortState, Protocol, ScanResult};
@@ -100,6 +99,7 @@ impl Ipv6Scanner {
             service: None,
             service_info: None,
             hostname: None,
+            reason: None,
             timestamp: chrono::Utc::now(),
         })
     }
@@ -181,6 +181,7 @@ impl Ipv6Scanner {
             service: None,
             service_info: None,
             hostname: None,
+            reason: None,
             timestamp: chrono::Utc::now(),
         })
     }
@@ -249,6 +250,7 @@ impl Ipv6Scanner {
             service: None,
             service_info: None,
             hostname: None,
+            reason: None,
             timestamp: chrono::Utc::now(),
         })
     }
@@ -320,6 +322,7 @@ impl Ipv6Scanner {
             service: None,
             service_info: None,
             hostname: None,
+            reason: None,
             timestamp: chrono::Utc::now(),
         })
     }
@@ -405,6 +408,7 @@ impl Ipv6Scanner {
             service: None,
             service_info: None,
             hostname: None,
+            reason: None,
             timestamp: chrono::Utc::now(),
         })
     }

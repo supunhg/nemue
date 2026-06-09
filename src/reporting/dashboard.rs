@@ -1,6 +1,5 @@
 // Dashboard data aggregation for real-time monitoring
 use serde::{Serialize, Deserialize};
-use std::collections::HashMap;
 use chrono::{DateTime, Utc};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

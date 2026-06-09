@@ -2,11 +2,68 @@
 
 An advanced security testing framework built in Rust, featuring high-performance network scanning, service detection, OS fingerprinting, and extensible scripting capabilities.
 
-**Version**: 0.1.0  
-**Stats**: 78,239 lines Rust + 59 Lua scripts | 631 tests (100% pass) | 16/16 phases complete ✅  
+**Version**: 0.2.0  
+**Stats**: 78,239 lines Rust + 59 Lua scripts | 630+ tests | 16/16 phases complete ✅  
 **Status**: PRODUCTION READY 🎉
 
 ## ✨ Key Features
+
+### 🤖 MCP Server (NEW in v0.2.0)
+Nemue is available as an MCP (Model Context Protocol) tool server for AI assistants.
+
+```bash
+# Start MCP server for Claude Desktop / Cursor / VS Code
+nemue mcp
+```
+
+**9 MCP tools available:**
+- `nemue_scan` - Full port scan with service detection
+- `nemue_quick_scan` - Fast top-ports scan
+- `nemue_service_detect` - Service/version detection
+- `nemue_os_detect` - OS fingerprinting
+- `nemue_ssl_check` - SSL/TLS analysis
+- `nemue_host_discovery` - Ping sweep
+- `nemue_traceroute` - Network path discovery
+- `nemue_fuzz` - Web content fuzzing
+- `nemue_vuln_scan` - Vulnerability scanning
+
+### ⚡ Performance (v0.2.0)
+- **Parallel target scanning** - Targets scanned concurrently (10-50x faster for subnets)
+- **Fixed adaptive rate limiting** - Rate adjustments now properly enforced
+- **Buffer pool reuse** - Pooled buffers return on drop
+- **Shared AF_PACKET channel** - Kernel-level BPF filtering
+- **Zero-copy UDP probes** - Static probe data, no heap allocation
+
+### 🆕 New CLI Flags (v0.2.0)
+- `--top-ports N` - Scan top N most common ports (e.g., `--top-ports 100`)
+- `--version-light` - Light version detection (fewer probes, faster)
+- `--version-all` - All version detection probes (comprehensive)
+- `--version-intensity N` - Version detection intensity (0-9)
+- `--reason` - Show reason for port state (syn-ack, reset, no-response)
+- `nemue mcp` - Start MCP server for AI assistant integration
+
+### ⚙️ Config File Support (v0.2.0)
+Create `~/.config/nemue/config.toml` for default settings:
+
+```toml
+[scan]
+timing = "T3"
+scan_type = "connect"
+rate = 1000
+timeout_ms = 1000
+version_detect = false
+os_detect = false
+
+[output]
+format = "json"
+color = true
+progress = true
+
+[performance]
+adaptive_rate = true
+buffer_pool_size = 1000
+max_concurrent_targets = 8
+```
 
 ### 🔍 **Advanced Service Detection**
 - 🎯 **100+ Service Probes** - Comprehensive protocol detection (HTTP/2, SMB, RDP, databases)

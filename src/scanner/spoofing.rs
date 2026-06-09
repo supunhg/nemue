@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use std::net::{IpAddr, Ipv4Addr};
+use std::net::IpAddr;
 
 /// MAC address representation
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

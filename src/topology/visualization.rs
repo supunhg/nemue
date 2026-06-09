@@ -1,7 +1,5 @@
 // HTML/SVG interactive visualization for network topology
 use crate::topology::{TopologyMap, DeviceInfo, DeviceType};
-use std::collections::HashMap;
-use std::net::IpAddr;
 
 /// Visualization engine for network topology
 pub struct VisualizationEngine;
@@ -180,7 +178,7 @@ simulation.on('tick', () => {{
         svg.push_str("\n  </style>\n");
 
         // Draw connections
-        let mut y_pos = 100;
+        let y_pos = 100;
         for i in 0..map.path_to_target.len().saturating_sub(1) {
             let x1 = 100 + i * 200;
             let x2 = 100 + (i + 1) * 200;
@@ -280,6 +278,8 @@ simulation.on('tick', () => {{
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
+    use std::net::IpAddr;
     use std::str::FromStr;
 
     #[test]

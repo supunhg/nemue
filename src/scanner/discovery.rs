@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::net::{IpAddr, SocketAddr};
 use std::time::Duration;
 use tokio::net::TcpStream;
 use tokio::time::timeout;
@@ -365,7 +365,7 @@ impl HostDiscovery {
 
     /// ICMPv6 Echo Ping - IPv6 echo request/reply
     async fn icmpv6_echo_ping(&self, target: IpAddr) -> Result<Option<u64>> {
-        use std::net::Ipv6Addr;
+        
         
         if let IpAddr::V6(ipv6_addr) = target {
             // ICMPv6 implementation requires raw sockets
@@ -387,7 +387,7 @@ impl HostDiscovery {
 
     /// IPv6 Neighbor Discovery - uses ICMPv6 Neighbor Solicitation
     async fn ipv6_neighbor_discovery(&self, target: IpAddr) -> Result<Option<u64>> {
-        use std::net::Ipv6Addr;
+        
         
         if let IpAddr::V6(ipv6_addr) = target {
             // NDP implementation requires ICMPv6

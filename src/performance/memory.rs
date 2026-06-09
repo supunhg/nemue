@@ -3,9 +3,10 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use std::collections::VecDeque;
 
-/// Reusable buffer from the pool
+/// Reusable buffer from the pool - returns to pool on drop
 pub struct PooledBuffer {
     data: Vec<u8>,
+    pool: Option<Arc<Mutex<BufferPool>>>,
 }
 
 impl PooledBuffer {
@@ -23,6 +24,18 @@ impl PooledBuffer {
 
     pub fn is_empty(&self) -> bool {
         self.data.is_empty()
+    }
+}
+
+impl Drop for PooledBuffer {
+    fn drop(&mut self) {
+        if let Some(pool) = self.pool.take() {
+            let buf = std::mem::take(&mut self.data);
+            // Best-effort return to pool; if lock is contended, buffer is dropped
+            if let Some(mut pool) = pool.try_lock().ok() {
+                pool.return_buffer(buf);
+            }
+        }
     }
 }
 
@@ -47,19 +60,18 @@ impl BufferPool {
         }))
     }
 
-    pub fn acquire(pool: Arc<Mutex<Self>>) -> PooledBuffer {
+    pub async fn acquire(pool: Arc<Mutex<Self>>) -> PooledBuffer {
         let data = {
-            let mut pool_guard = pool.try_lock().unwrap_or_else(|_| {
-                std::thread::sleep(std::time::Duration::from_micros(10));
-                pool.blocking_lock()
-            });
-            
+            let mut pool_guard = pool.lock().await;
             pool_guard.buffers.pop_front().unwrap_or_else(|| {
                 vec![0u8; pool_guard.buffer_size]
             })
         };
 
-        PooledBuffer { data }
+        PooledBuffer {
+            data,
+            pool: Some(pool),
+        }
     }
 
     fn return_buffer(&mut self, mut buffer: Vec<u8>) {
@@ -75,87 +87,48 @@ impl BufferPool {
     }
 }
 
-/// Connection pool for reusing TCP/UDP connections
-pub struct ConnectionPool<T> {
-    connections: Arc<Mutex<VecDeque<T>>>,
-    max_size: usize,
-}
-
-impl<T> ConnectionPool<T> {
-    pub fn new(max_size: usize) -> Self {
-        Self {
-            connections: Arc::new(Mutex::new(VecDeque::with_capacity(max_size))),
-            max_size,
-        }
-    }
-
-    pub async fn acquire(&self) -> Option<T> {
-        self.connections.lock().await.pop_front()
-    }
-
-    pub async fn release(&self, conn: T) {
-        let mut conns = self.connections.lock().await;
-        if conns.len() < self.max_size {
-            conns.push_back(conn);
-        }
-    }
-
-    pub async fn size(&self) -> usize {
-        self.connections.lock().await.len()
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_buffer_pool_creation() {
-        let pool = BufferPool::new(1024, 10, 100);
-        let pool_guard = pool.blocking_lock();
-        assert_eq!(pool_guard.pool_size(), 10);
-    }
-
-    #[test]
-    fn test_buffer_acquire() {
-        let pool = BufferPool::new(1024, 10, 100);
-        let buffer = BufferPool::acquire(pool.clone());
-        assert_eq!(buffer.len(), 1024);
-    }
-
-    #[test]
-    fn test_buffer_pool_reuse() {
-        let pool = BufferPool::new(1024, 5, 100);
+    #[tokio::test]
+    async fn test_buffer_pool_acquire_return() {
+        let pool = BufferPool::new(64, 4, 8);
         {
-            let _buffer = BufferPool::acquire(pool.clone());
-            assert_eq!(pool.blocking_lock().pool_size(), 4);
+            let p = pool.lock().await;
+            assert_eq!(p.pool_size(), 4);
         }
-        // Buffer should be returned after drop
-        std::thread::sleep(std::time::Duration::from_millis(10));
+
+        let buf = BufferPool::acquire(pool.clone()).await;
+        assert_eq!(buf.len(), 64);
+        {
+            let p = pool.lock().await;
+            assert_eq!(p.pool_size(), 3);
+        }
+        drop(buf);
+
+        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+        {
+            let p = pool.lock().await;
+            assert_eq!(p.pool_size(), 4);
+        }
     }
 
     #[tokio::test]
-    async fn test_connection_pool() {
-        let pool: ConnectionPool<String> = ConnectionPool::new(10);
-        
-        pool.release("conn1".to_string()).await;
-        pool.release("conn2".to_string()).await;
-        
-        assert_eq!(pool.size().await, 2);
-        
-        let conn = pool.acquire().await;
-        assert!(conn.is_some());
-        assert_eq!(pool.size().await, 1);
-    }
+    async fn test_buffer_pool_reuse() {
+        let pool = BufferPool::new(128, 2, 4);
 
-    #[tokio::test]
-    async fn test_connection_pool_max_size() {
-        let pool: ConnectionPool<u32> = ConnectionPool::new(2);
-        
-        pool.release(1).await;
-        pool.release(2).await;
-        pool.release(3).await; // Should be dropped
-        
-        assert_eq!(pool.size().await, 2);
+        let buf1 = BufferPool::acquire(pool.clone()).await;
+        let buf2 = BufferPool::acquire(pool.clone()).await;
+        drop(buf1);
+        drop(buf2);
+
+        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+
+        // Both buffers should be back in the pool
+        let buf3 = BufferPool::acquire(pool.clone()).await;
+        let buf4 = BufferPool::acquire(pool.clone()).await;
+        assert_eq!(buf3.len(), 128);
+        assert_eq!(buf4.len(), 128);
     }
 }

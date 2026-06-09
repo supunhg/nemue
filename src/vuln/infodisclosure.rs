@@ -1,6 +1,5 @@
 // Additional information disclosure detection scripts
 use super::framework::{VulnScript, VulnCategory, VulnSeverity, VulnResult};
-use anyhow::Result;
 use std::net::TcpStream;
 use std::io::{Read, Write};
 use std::time::Duration;

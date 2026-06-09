@@ -1,6 +1,5 @@
 //! X.509 Certificate parsing and validation
 
-use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use std::time::SystemTime;
 

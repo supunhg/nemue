@@ -20,7 +20,6 @@ pub use analytics::{AnalyticsEngine, RiskModel, ModelType, Prediction, RiskFacto
 
 use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc};
-use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScanReport {

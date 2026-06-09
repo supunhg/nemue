@@ -5,7 +5,6 @@ use anyhow::Result;
 use reqwest::{Client, Method};
 use std::collections::HashMap;
 use std::time::Instant;
-use tracing::debug;
 
 use super::engine::{FuzzResult, ResponseFilter};
 

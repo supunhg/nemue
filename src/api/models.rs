@@ -183,6 +183,7 @@ impl ApiError {
         Self::new("not_found", message, 404)
     }
 
+    #[allow(dead_code)]
     pub fn internal_error(message: &str) -> Self {
         Self::new("internal_error", message, 500)
     }

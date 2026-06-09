@@ -7,7 +7,7 @@ use std::time::{Duration, Instant};
 use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc};
 
-use super::engine::{FuzzResult, FuzzMode};
+use super::engine::FuzzResult;
 use super::subdomain::SubdomainResult;
 use super::cloud::CloudStorageResult;
 

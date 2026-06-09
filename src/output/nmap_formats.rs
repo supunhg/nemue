@@ -363,6 +363,7 @@ mod tests {
                     service: Some("http".to_string()),
                     service_info: None,
                     hostname: None,
+                    reason: None,
                     timestamp: now,
                 },
                 ScanResult {
@@ -373,6 +374,7 @@ mod tests {
                     service: Some("https".to_string()),
                     service_info: None,
                     hostname: None,
+                    reason: None,
                     timestamp: now,
                 },
             ],

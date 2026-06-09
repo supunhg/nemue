@@ -1,8 +1,8 @@
 // Subdomain Enumeration - DNS brute-forcing and discovery
 // amass/subfinder-style subdomain enumeration
 
-use anyhow::{Result, anyhow};
-use std::collections::{HashSet, HashMap};
+use anyhow::Result;
+use std::collections::HashSet;
 use std::net::{IpAddr, ToSocketAddrs};
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -152,7 +152,7 @@ impl SubdomainEnumerator {
                 }
             }
 
-            let permit = semaphore.clone().acquire_owned().await.unwrap();
+            let permit = semaphore.clone().acquire_owned().await.map_err(|_| anyhow::anyhow!("Semaphore closed"))?;
             let fqdn_clone = fqdn.clone();
             let wildcard_ips = self.wildcard_ips.clone();
             let discovered = self.discovered.clone();
@@ -290,7 +290,7 @@ impl SubdomainEnumerator {
     async fn reverse_dns_from_results(&self, results: &[SubdomainResult]) -> Result<Vec<SubdomainResult>> {
         debug!("Performing reverse DNS lookups");
         
-        let mut reverse_results = Vec::new();
+        let reverse_results = Vec::new();
         let mut seen_ips = HashSet::new();
 
         for result in results {

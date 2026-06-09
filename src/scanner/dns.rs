@@ -156,7 +156,10 @@ impl DnsResolver {
         let mut tasks = Vec::new();
 
         for hostname in hostnames {
-            let permit = semaphore.clone().acquire_owned().await.unwrap();
+            let permit = match semaphore.clone().acquire_owned().await {
+                Ok(p) => p,
+                Err(_) => break,
+            };
             let resolver = self.clone_for_task();
             let hostname_clone = hostname.clone();
 
@@ -186,7 +189,10 @@ impl DnsResolver {
         let mut tasks = Vec::new();
 
         for ip in ips {
-            let permit = semaphore.clone().acquire_owned().await.unwrap();
+            let permit = match semaphore.clone().acquire_owned().await {
+                Ok(p) => p,
+                Err(_) => break,
+            };
             let resolver = self.clone_for_task();
 
             let task = tokio::spawn(async move {
@@ -249,7 +255,7 @@ impl DnsResolver {
 
         tokio::time::timeout(timeout, async {
             // Use reverse DNS lookup via system resolver
-            let socket = SocketAddr::new(ip, 0);
+            let _socket = SocketAddr::new(ip, 0);
             
             // Simple reverse lookup using DNS protocol
             // For production, we'd use trust-dns-resolver here

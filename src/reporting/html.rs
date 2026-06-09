@@ -297,7 +297,7 @@ mod tests {
 
     #[test]
     fn test_html_with_findings() {
-        let mut builder = ReportBuilder::new()
+        let builder = ReportBuilder::new()
             .metadata(ReportMetadata {
                 scan_id: "scan-001".to_string(),
                 report_id: "report-001".to_string(),

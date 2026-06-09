@@ -12,6 +12,8 @@ mod decoy;
 mod spoofing;
 mod payload;
 mod proxy;
+pub mod packet_io;
+pub mod config;
 
 pub use engine::ScanEngine;
 pub use target::{Target, TargetParser, TargetConfig};
@@ -63,6 +65,8 @@ pub struct ScanResult {
     pub service_info: Option<crate::service::ServiceInfo>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub hostname: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
     pub timestamp: chrono::DateTime<chrono::Utc>,
 }
 

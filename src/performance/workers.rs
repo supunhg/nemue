@@ -28,7 +28,9 @@ impl WorkerPool {
         F: FnOnce() -> () + Send + 'static,
     {
         let job = Box::new(f);
-        self.sender.send(job).expect("Failed to send job");
+        if let Err(e) = self.sender.send(job) {
+            tracing::error!("Failed to send job: {}", e);
+        }
     }
 
     pub fn size(&self) -> usize {
@@ -36,6 +38,7 @@ impl WorkerPool {
     }
 }
 
+#[allow(dead_code)]
 struct Worker {
     id: usize,
     handle: Option<JoinHandle<()>>,
@@ -76,7 +79,7 @@ impl ConcurrencyLimiter {
         }
     }
 
-    pub async fn acquire(&self) -> Result<tokio::sync::SemaphorePermit, String> {
+    pub async fn acquire(&self) -> Result<tokio::sync::SemaphorePermit<'_>, String> {
         self.semaphore
             .acquire()
             .await

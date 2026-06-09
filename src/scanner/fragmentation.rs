@@ -259,7 +259,7 @@ impl PacketFragmenter {
 pub struct FragmentReassembler {
     /// Fragments by ID
     fragments: std::collections::HashMap<u16, Vec<IpFragment>>,
-    /// Timeout for incomplete fragments (seconds)
+    #[allow(dead_code)]
     timeout: u64,
 }
 

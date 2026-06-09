@@ -14,7 +14,7 @@ pub mod resources;
 
 pub use metrics::{MetricsCollector, PerformanceMetrics};
 pub use rate_limiter::AdaptiveRateLimiter;
-pub use memory::{BufferPool, PooledBuffer, ConnectionPool};
+pub use memory::{BufferPool, PooledBuffer};
 pub use database::{ScanDatabase, ScanRecord, ScanStatus, Checkpoint};
 pub use workers::{WorkerPool, ConcurrencyLimiter};
 pub use lockfree::{LockFreeQueue, BoundedQueue, AtomicFlag};

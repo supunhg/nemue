@@ -105,6 +105,18 @@ enum Commands {
         #[arg(short = 'V', long)]
         version_detect: bool,
 
+        /// Light version detection (fewer probes, faster)
+        #[arg(long)]
+        version_light: bool,
+
+        /// All version detection probes (comprehensive, slower)
+        #[arg(long)]
+        version_all: bool,
+
+        /// Version detection intensity (0-9, where 2=light, 7=default, 9=all)
+        #[arg(long)]
+        version_intensity: Option<u8>,
+
         /// OS detection
         #[arg(short = 'O', long)]
         os_detect: bool,
@@ -112,6 +124,14 @@ enum Commands {
         /// Use raw sockets for stealth SYN scan (requires root)
         #[arg(long)]
         raw: bool,
+
+        /// Show reason for port state
+        #[arg(long)]
+        reason: bool,
+
+        /// Scan top N most common ports (e.g., --top-ports 100)
+        #[arg(long)]
+        top_ports: Option<usize>,
 
         /// Show closed ports (hidden by default)
         #[arg(short = 'c', long)]
@@ -247,6 +267,9 @@ enum Commands {
         #[arg(long)]
         mutate: bool,
     },
+
+    /// Start MCP server for AI assistant integration (stdio transport)
+    Mcp,
 }
 
 #[tokio::main]
@@ -277,8 +300,13 @@ async fn main() -> Result<()> {
             min_rate,
             max_rate,
             version_detect,
+            version_light,
+            version_all,
+            version_intensity,
             os_detect,
             raw,
+            reason,
+            top_ports,
             show_closed,
             show_filtered,
             output,
@@ -431,6 +459,16 @@ async fn main() -> Result<()> {
                 (ports, version_detect, os_detect, raw, scan_type)
             };
 
+            // Handle --top-ports N
+            let ports = if let Some(top_n) = top_ports {
+                format!("top{}", top_n)
+            } else {
+                ports
+            };
+
+            // Handle --version-light / --version-all / --version-intensity
+            let version_detect = version_detect || version_light || version_all || version_intensity.is_some();
+
             // Apply timing template if specified
             let timing_template = timing
                 .and_then(TimingTemplate::from_number)
@@ -581,6 +619,32 @@ async fn main() -> Result<()> {
             } else {
                 // Just display to console
                 display.print_results_filtered(&results, show_closed, show_filtered);
+            }
+
+            // Show reason codes if --reason flag is set
+            if reason {
+                println!("\nReason codes:");
+                for r in &results.results {
+                    let reason_str = r.reason.as_deref().unwrap_or(match r.state {
+                        nemue::scanner::PortState::Open => "syn-ack",
+                        nemue::scanner::PortState::Closed => "reset",
+                        nemue::scanner::PortState::Filtered => "no-response",
+                        nemue::scanner::PortState::Unfiltered => "reset",
+                        nemue::scanner::PortState::OpenFiltered => "no-response",
+                        nemue::scanner::PortState::Unknown => "unknown",
+                    });
+                    let state_str = match r.state {
+                        nemue::scanner::PortState::Open => "open",
+                        nemue::scanner::PortState::Closed => "closed",
+                        nemue::scanner::PortState::Filtered => "filtered",
+                        nemue::scanner::PortState::Unfiltered => "unfiltered",
+                        nemue::scanner::PortState::OpenFiltered => "open|filtered",
+                        nemue::scanner::PortState::Unknown => "unknown",
+                    };
+                    if show_closed || r.state == nemue::scanner::PortState::Open {
+                        println!("  {}/{}: {} ({})", r.port, r.protocol, state_str, reason_str);
+                    }
+                }
             }
         }
 
@@ -778,7 +842,7 @@ async fn main() -> Result<()> {
                     scan_id: uuid::Uuid::new_v4().to_string(),
                     target: url.clone(),
                     mode: mode.clone(),
-                    start_time: Utc::now() - chrono::Duration::from_std(duration).unwrap(),
+                    start_time: Utc::now() - chrono::Duration::from_std(duration).unwrap_or_default(),
                     end_time: Some(Utc::now()),
                     wordlist_name: builtin.clone().or(wordlist.clone()).unwrap_or_else(|| "custom".to_string()),
                     wordlist_size: results.len(), // Use results length instead
@@ -805,6 +869,22 @@ async fn main() -> Result<()> {
             } else {
                 println!("\n{}", output_data);
             }
+        }
+
+        Commands::Mcp => {
+            use nemue::mcp::NemueMcpServer;
+            use rmcp::ServiceExt;
+            use tokio::io::{stdin, stdout};
+
+            eprintln!("Nemue MCP Server v{}", env!("CARGO_PKG_VERSION"));
+            eprintln!("Transport: stdio");
+            eprintln!("Waiting for client connection...");
+
+            let server = NemueMcpServer::new()?;
+            let service = server.serve((stdin(), stdout())).await?;
+
+            eprintln!("Client connected. Server running.");
+            service.waiting().await?;
         }
     }
 

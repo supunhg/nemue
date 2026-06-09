@@ -2,8 +2,8 @@
 use std::collections::HashMap;
 use lazy_static::lazy_static;
 
-/// OUI (Organizationally Unique Identifier) database
 lazy_static! {
+    #[allow(dead_code)]
     static ref OUI_DATABASE: HashMap<&'static str, &'static str> = {
         let mut db = HashMap::new();
         

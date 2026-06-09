@@ -59,7 +59,7 @@ impl DisplayFormatter {
     }
 
     pub fn print_results_filtered(&self, results: &ScanResults, show_closed: bool, show_filtered: bool) {
-        let mut stdout = io::stdout();
+        let _stdout = io::stdout();
         
         // Group results by target
         let mut targets: std::collections::HashMap<String, Vec<_>> = std::collections::HashMap::new();
@@ -157,7 +157,7 @@ impl DisplayFormatter {
 
                 let service = result.service.as_deref().unwrap_or("-");
                 
-                let (product, version) = if let Some(ref info) = result.service_info {
+                let (_product, _version) = if let Some(ref info) = result.service_info {
                     (
                         info.product.as_deref().unwrap_or("-"),
                         info.version.as_deref().unwrap_or("-"),

@@ -6,7 +6,7 @@ use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 use tokio::time::timeout;
-use tracing::{debug, info};
+use tracing::debug;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServiceInfo {
@@ -27,7 +27,9 @@ pub struct ServiceDetector {
 
 #[derive(Clone)]
 struct ServiceProbe {
+    #[allow(dead_code)]
     name: String,
+    #[allow(dead_code)]
     probe_data: Vec<u8>,
     patterns: Vec<ServicePattern>,
 }

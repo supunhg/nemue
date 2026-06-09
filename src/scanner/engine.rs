@@ -1,8 +1,9 @@
 use anyhow::{anyhow, Result};
+use futures::stream::{self, StreamExt};
 use std::net::IpAddr;
 use std::sync::Arc;
 use tokio::sync::Semaphore;
-use tracing::{info, warn};
+use tracing::info;
 
 use super::{
     Port, PortParser, PortState, RateLimiter, ScanResult, ScanResults,
@@ -13,12 +14,14 @@ use crate::protocols::udp::UdpScanner;
 use crate::fingerprint::OsDetector;
 use crate::service::ServiceDetector;
 
+#[derive(Clone)]
 pub struct ScanEngine {
     rate_limiter: RateLimiter,
     timeout: u64,
     enable_service_detection: bool,
     enable_os_detection: bool,
     use_raw_sockets: bool,
+    max_concurrent_targets: usize,
 }
 
 impl ScanEngine {
@@ -29,6 +32,7 @@ impl ScanEngine {
             enable_service_detection: true,
             enable_os_detection: true,
             use_raw_sockets: false,
+            max_concurrent_targets: num_cpus::get().max(2),
         })
     }
 
@@ -39,6 +43,7 @@ impl ScanEngine {
             enable_service_detection: service_detection,
             enable_os_detection: os_detection,
             use_raw_sockets: false,
+            max_concurrent_targets: num_cpus::get().max(2),
         })
     }
 
@@ -55,7 +60,13 @@ impl ScanEngine {
             enable_service_detection: service_detection,
             enable_os_detection: os_detection,
             use_raw_sockets: use_raw,
+            max_concurrent_targets: num_cpus::get().max(2),
         })
+    }
+
+    pub fn with_max_concurrent_targets(mut self, max: usize) -> Self {
+        self.max_concurrent_targets = max;
+        self
     }
 
     pub async fn scan(
@@ -75,32 +86,39 @@ impl ScanEngine {
         info!("Parsed {} port(s)", port_list.len());
 
         let target_count = targets.len();
+        let port_count = port_list.len();
+
+        // Scan targets in parallel
+        let engine = Arc::new(self.clone());
+        let port_list = Arc::new(port_list);
+
+        let target_futures = targets.into_iter().map(|target_ip| {
+            let engine = engine.clone();
+            let port_list = port_list.clone();
+            let scan_type = scan_type.to_string();
+            async move {
+                engine.scan_single_target(target_ip, &port_list, &scan_type).await
+            }
+        });
+
         let mut all_results = Vec::new();
         let mut os_fingerprints = Vec::new();
 
-        // Scan each target
-        for target_ip in targets {
-            info!("Scanning target: {}", target_ip);
-            let mut results = match scan_type {
-                "syn" => self.syn_scan(target_ip, &port_list).await?,
-                "connect" => self.connect_scan(target_ip, &port_list).await?,
-                "udp" => self.udp_scan(target_ip, &port_list).await?,
-                _ => return Err(anyhow!("Unknown scan type: {}", scan_type)),
-            };
+        let mut stream = stream::iter(target_futures)
+            .buffer_unordered(engine.max_concurrent_targets);
 
-            // Perform service detection on open ports
-            if self.enable_service_detection {
-                results = self.detect_services(target_ip, results).await;
-            }
-
-            // Perform OS detection
-            if self.enable_os_detection {
-                if let Some(os_fp) = self.detect_os(target_ip, &results).await {
-                    os_fingerprints.push(os_fp);
+        while let Some(result) = stream.next().await {
+            match result {
+                Ok((results, os_fp)) => {
+                    all_results.extend(results);
+                    if let Some(fp) = os_fp {
+                        os_fingerprints.push(fp);
+                    }
+                }
+                Err(e) => {
+                    tracing::warn!("Target scan failed: {}", e);
                 }
             }
-
-            all_results.extend(results);
         }
 
         let scan_end = chrono::Utc::now();
@@ -109,11 +127,42 @@ impl ScanEngine {
             scan_start,
             scan_end,
             target_count,
-            port_count: port_list.len(),
+            port_count,
             results: all_results,
             os_fingerprints,
             script_results: Vec::new(),
         })
+    }
+
+    /// Scan a single target with all detection enabled
+    async fn scan_single_target(
+        &self,
+        target_ip: IpAddr,
+        port_list: &[Port],
+        scan_type: &str,
+    ) -> Result<(Vec<ScanResult>, Option<crate::fingerprint::OsFingerprint>)> {
+        info!("Scanning target: {}", target_ip);
+
+        let mut results = match scan_type {
+            "syn" => self.syn_scan(target_ip, port_list).await?,
+            "connect" => self.connect_scan(target_ip, port_list).await?,
+            "udp" => self.udp_scan(target_ip, port_list).await?,
+            _ => return Err(anyhow!("Unknown scan type: {}", scan_type)),
+        };
+
+        // Service detection on open ports
+        if self.enable_service_detection {
+            results = self.detect_services(target_ip, results).await;
+        }
+
+        // OS detection
+        let os_fp = if self.enable_os_detection {
+            self.detect_os(target_ip, &results).await
+        } else {
+            None
+        };
+
+        Ok((results, os_fp))
     }
 
     /// Scan with port exclusions
@@ -133,39 +182,46 @@ impl ScanEngine {
         // Parse ports and exclusions
         let mut port_list = PortParser::parse(ports)?;
         let exclude_list = PortParser::parse(exclude_ports)?;
-        
+
         // Filter out excluded ports
         port_list.retain(|port| !exclude_list.contains(port));
-        
+
         info!("Parsed {} port(s) ({} excluded)", port_list.len(), exclude_list.len());
 
         let target_count = targets.len();
+        let port_count = port_list.len();
+
+        // Scan targets in parallel
+        let engine = Arc::new(self.clone());
+        let port_list = Arc::new(port_list);
+
+        let target_futures = targets.into_iter().map(|target_ip| {
+            let engine = engine.clone();
+            let port_list = port_list.clone();
+            let scan_type = scan_type.to_string();
+            async move {
+                engine.scan_single_target(target_ip, &port_list, &scan_type).await
+            }
+        });
+
         let mut all_results = Vec::new();
         let mut os_fingerprints = Vec::new();
 
-        // Scan each target
-        for target_ip in targets {
-            info!("Scanning target: {}", target_ip);
-            let mut results = match scan_type {
-                "syn" => self.syn_scan(target_ip, &port_list).await?,
-                "connect" => self.connect_scan(target_ip, &port_list).await?,
-                "udp" => self.udp_scan(target_ip, &port_list).await?,
-                _ => return Err(anyhow!("Unknown scan type: {}", scan_type)),
-            };
+        let mut stream = stream::iter(target_futures)
+            .buffer_unordered(engine.max_concurrent_targets);
 
-            // Perform service detection on open ports
-            if self.enable_service_detection {
-                results = self.detect_services(target_ip, results).await;
-            }
-
-            // Perform OS detection
-            if self.enable_os_detection {
-                if let Some(os_fp) = self.detect_os(target_ip, &results).await {
-                    os_fingerprints.push(os_fp);
+        while let Some(result) = stream.next().await {
+            match result {
+                Ok((results, os_fp)) => {
+                    all_results.extend(results);
+                    if let Some(fp) = os_fp {
+                        os_fingerprints.push(fp);
+                    }
+                }
+                Err(e) => {
+                    tracing::warn!("Target scan failed: {}", e);
                 }
             }
-
-            all_results.extend(results);
         }
 
         let scan_end = chrono::Utc::now();
@@ -174,7 +230,7 @@ impl ScanEngine {
             scan_start,
             scan_end,
             target_count,
-            port_count: port_list.len(),
+            port_count,
             results: all_results,
             os_fingerprints,
             script_results: Vec::new(),
