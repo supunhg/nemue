@@ -1,27 +1,39 @@
-use actix_web::{middleware, web, App, HttpServer};
+use actix_web::{web, App, HttpServer};
 use actix_cors::Cors;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-mod models;
-mod handlers;
-mod state;
+pub mod models;
+pub mod handlers;
+pub mod state;
+pub mod auth;
+pub mod webhooks;
+pub mod cicd;
 
 use state::AppState;
 
-/// Start the REST API server
+/// Start the REST API server with all endpoints
 pub async fn start_server(bind_addr: &str) -> std::io::Result<()> {
     let app_state = Arc::new(RwLock::new(AppState::new()));
 
     println!("🚀 Starting Nemue API server on http://{}", bind_addr);
-    println!("📚 API Documentation:");
-    println!("   GET  /health              - Health check");
-    println!("   POST /api/v1/scans        - Start new scan");
-    println!("   GET  /api/v1/scans        - List all scans");
-    println!("   GET  /api/v1/scans/:id    - Get scan status");
-    println!("   GET  /api/v1/scans/:id/results - Get scan results");
-    println!("   POST /api/v1/scans/:id/cancel - Cancel scan");
-    println!("   DELETE /api/v1/scans/:id  - Delete scan");
+    println!("📚 API Endpoints:");
+    println!("   GET    /health                         - Health check");
+    println!("   GET    /api/v1/info                     - Server info & capabilities");
+    println!("   POST   /api/v1/scans                    - Start new scan");
+    println!("   GET    /api/v1/scans                    - List all scans");
+    println!("   GET    /api/v1/scans/:id                - Get scan status");
+    println!("   GET    /api/v1/scans/:id/results        - Get scan results");
+    println!("   POST   /api/v1/scans/:id/cancel         - Cancel scan");
+    println!("   DELETE /api/v1/scans/:id                 - Delete scan");
+    println!("   GET    /api/v1/stats                     - Aggregated statistics");
+    println!("   POST   /api/v1/webhooks                 - Register webhook");
+    println!("   GET    /api/v1/webhooks                 - List webhooks");
+    println!("   DELETE /api/v1/webhooks/:id              - Delete webhook");
+    println!("   POST   /api/v1/webhooks/:id/test         - Test webhook");
+    println!("   GET    /api/v1/cicd/config              - Get CI/CD config");
+    println!("   POST   /api/v1/cicd/evaluate            - Evaluate CI/CD results");
+    println!("   GET    /openapi.json                     - OpenAPI specification");
 
     HttpServer::new(move || {
         let cors = Cors::default()
@@ -32,17 +44,26 @@ pub async fn start_server(bind_addr: &str) -> std::io::Result<()> {
 
         App::new()
             .app_data(web::Data::new(app_state.clone()))
-            .wrap(middleware::Logger::default())
+            .wrap(actix_web::middleware::Logger::default())
             .wrap(cors)
             .route("/health", web::get().to(handlers::health))
+            .route("/openapi.json", web::get().to(handlers::openapi_spec))
             .service(
                 web::scope("/api/v1")
+                    .route("/info", web::get().to(handlers::server_info))
+                    .route("/stats", web::get().to(handlers::scan_stats))
                     .route("/scans", web::post().to(handlers::start_scan))
                     .route("/scans", web::get().to(handlers::list_scans))
                     .route("/scans/{scan_id}", web::get().to(handlers::get_scan_status))
                     .route("/scans/{scan_id}/results", web::get().to(handlers::get_scan_results))
                     .route("/scans/{scan_id}/cancel", web::post().to(handlers::cancel_scan))
                     .route("/scans/{scan_id}", web::delete().to(handlers::delete_scan))
+                    .route("/webhooks", web::post().to(handlers::register_webhook))
+                    .route("/webhooks", web::get().to(handlers::list_webhooks))
+                    .route("/webhooks/{webhook_id}", web::delete().to(handlers::delete_webhook))
+                    .route("/webhooks/{webhook_id}/test", web::post().to(handlers::test_webhook))
+                    .route("/cicd/config", web::get().to(handlers::get_cicd_config))
+                    .route("/cicd/evaluate", web::post().to(handlers::evaluate_cicd))
             )
     })
     .bind(bind_addr)?
@@ -96,7 +117,7 @@ mod tests {
             .uri("/scans")
             .set_json(&scan_req)
             .to_request();
-        
+
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), 202); // Accepted
     }
@@ -115,9 +136,54 @@ mod tests {
         let req = test::TestRequest::get()
             .uri(&format!("/scans/{}", fake_uuid))
             .to_request();
-        
+
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), 404); // Not Found
+    }
+
+    #[actix_web::test]
+    async fn test_server_info_endpoint() {
+        let app_state = Arc::new(RwLock::new(AppState::new()));
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_state))
+                .route("/info", web::get().to(handlers::server_info)),
+        )
+        .await;
+
+        let req = test::TestRequest::get().uri("/info").to_request();
+        let resp = test::call_service(&app, req).await;
+        assert!(resp.status().is_success());
+    }
+
+    #[actix_web::test]
+    async fn test_stats_endpoint() {
+        let app_state = Arc::new(RwLock::new(AppState::new()));
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_state))
+                .route("/stats", web::get().to(handlers::scan_stats)),
+        )
+        .await;
+
+        let req = test::TestRequest::get().uri("/stats").to_request();
+        let resp = test::call_service(&app, req).await;
+        assert!(resp.status().is_success());
+    }
+
+    #[actix_web::test]
+    async fn test_openapi_endpoint() {
+        let app_state = Arc::new(RwLock::new(AppState::new()));
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(app_state))
+                .route("/openapi.json", web::get().to(handlers::openapi_spec)),
+        )
+        .await;
+
+        let req = test::TestRequest::get().uri("/openapi.json").to_request();
+        let resp = test::call_service(&app, req).await;
+        assert!(resp.status().is_success());
     }
 
     #[tokio::test]
@@ -157,7 +223,7 @@ mod tests {
         let scan_id = state.create_scan(request).await;
         let result = state.cancel_scan(&scan_id).await;
         assert!(result.is_ok());
-        
+
         let status = state.get_scan_status(&scan_id).unwrap();
         assert_eq!(status.status, ScanState::Cancelled);
     }
@@ -165,8 +231,7 @@ mod tests {
     #[tokio::test]
     async fn test_app_state_list_scans() {
         let mut state = AppState::new();
-        
-        // Create multiple scans
+
         for i in 0..5 {
             let request = ScanRequest {
                 targets: vec![format!("192.168.1.{}", i)],
@@ -185,5 +250,25 @@ mod tests {
         assert_eq!(response.total, 5);
         assert_eq!(response.scans.len(), 3);
         assert_eq!(response.per_page, 3);
+    }
+
+    #[tokio::test]
+    async fn test_app_state_stats() {
+        let mut state = AppState::new();
+
+        let request = ScanRequest {
+            targets: vec!["10.0.0.1".to_string()],
+            ports: vec![80, 443],
+            scan_type: ScanType::Tcp,
+            timing: TimingTemplate::Normal,
+            enable_service_detection: false,
+            enable_os_detection: false,
+            enable_vuln_check: false,
+            enable_threat_intel: false,
+        };
+        state.create_scan(request).await;
+
+        let stats = state.get_stats();
+        assert_eq!(stats.total_scans, 1);
     }
 }

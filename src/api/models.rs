@@ -3,7 +3,6 @@ use std::net::IpAddr;
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
 
-/// API request to start a new scan
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScanRequest {
     pub targets: Vec<String>,
@@ -54,12 +53,11 @@ impl Default for TimingTemplate {
     }
 }
 
-/// Scan status response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScanStatus {
     pub scan_id: Uuid,
     pub status: ScanState,
-    pub progress: f32, // 0.0 - 100.0
+    pub progress: f32,
     pub targets_total: usize,
     pub targets_completed: usize,
     pub ports_total: usize,
@@ -79,7 +77,6 @@ pub enum ScanState {
     Cancelled,
 }
 
-/// Scan results response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScanResults {
     pub scan_id: Uuid,
@@ -158,7 +155,6 @@ pub struct ThreatInfo {
     pub confidence_score: u8,
 }
 
-/// API error response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ApiError {
     pub error: String,
@@ -189,7 +185,6 @@ impl ApiError {
     }
 }
 
-/// Health check response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthResponse {
     pub status: String,
@@ -199,7 +194,6 @@ pub struct HealthResponse {
     pub completed_scans: usize,
 }
 
-/// List scans response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScanListResponse {
     pub scans: Vec<ScanSummary>,
@@ -216,4 +210,56 @@ pub struct ScanSummary {
     pub ports_count: usize,
     pub started_at: DateTime<Utc>,
     pub completed_at: Option<DateTime<Utc>>,
+}
+
+/// Aggregated scan statistics
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScanStats {
+    pub total_scans: usize,
+    pub active_scans: usize,
+    pub completed_scans: usize,
+    pub failed_scans: usize,
+    pub cancelled_scans: usize,
+    pub total_targets_scanned: usize,
+    pub total_ports_scanned: usize,
+    pub uptime_seconds: u64,
+}
+
+/// Request to register a webhook
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RegisterWebhookRequest {
+    pub url: String,
+    pub provider: super::webhooks::WebhookProvider,
+    #[serde(default)]
+    pub secret: Option<String>,
+    #[serde(default = "default_max_retries")]
+    pub max_retries: u32,
+    #[serde(default)]
+    pub events: Vec<String>,
+}
+
+fn default_max_retries() -> u32 { 3 }
+
+/// Registered webhook info (without secrets)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WebhookInfo {
+    pub webhook_id: Uuid,
+    pub url: String,
+    pub provider: super::webhooks::WebhookProvider,
+    pub events: Vec<String>,
+    pub created_at: DateTime<Utc>,
+}
+
+/// Request to evaluate CI/CD results
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CiCdEvaluateRequest {
+    pub scan_id: String,
+    #[serde(default)]
+    pub targets_scanned: usize,
+    #[serde(default)]
+    pub total_open_ports: usize,
+    #[serde(default)]
+    pub total_vulnerabilities: usize,
+    #[serde(default)]
+    pub risk_score: u8,
 }
