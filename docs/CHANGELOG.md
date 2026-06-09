@@ -6,15 +6,31 @@ All notable changes to the Nemue project are documented here.
 
 ## [Unreleased]
 
-### 🐛 Bug Fixes
-- **Aggressive scan (-A) now works without sudo**: Automatically falls back to Connect scan when not running as root, with helpful warning message
-- **MySQL service detection improved**: Enhanced banner grabbing to properly detect MySQL handshake and extract version information
-- **Service detection timeout increased**: Changed from 1000ms to 2000ms for better reliability with databases and slow services
+### 🔍 Service Detection (v0.2.1)
+- **100+ version detection signatures**: HTTP, SSH, FTP, SMTP, DNS, databases, containers, web apps
+- **Regex-based pattern matching**: Real regex with capture groups, not substring matching
+- **Hard/soft match confidence**: Hard matches (90 confidence) vs soft matches (60 confidence)
+- **Version extraction from capture groups**: `$1`, `$2` substitution in version templates
+- **Case-insensitive matching**: Optional case-insensitive regex patterns
+- **Legacy substring fallback**: Preserved for backward compatibility
 
-### ✨ Enhancements
-- **Better MySQL version extraction**: Now properly parses MySQL handshake protocol and extracts version from server greeting
-- **Smarter aggressive mode**: Detects privilege level and adjusts scan type accordingly
-- **Improved banner detection**: Added special handling for MySQL, PostgreSQL, and other database protocols
+### 🖥️ OS Fingerprinting (v0.2.1)
+- **8 OS signatures**: Linux 5.x/6.x, Windows 10/11, Windows Server, macOS 12+, FreeBSD 13+, Cisco IOS, Solaris 11, OpenBSD 7+
+- **TCP/IP stack analysis**: Window size, TTL, MSS, TCP options, quirks
+- **ICMP fingerprinting**: TTL, code, payload, TOS, DF bit
+- **IP ID sequence detection**: Incremental, random, zero, constant patterns
+- **SignatureDatabase::find_match()**: Easy OS detection API
+
+### 🐛 Bug Fixes
+- **Fixed MCP server constructor**: Returns Result instead of panicking
+- **Removed stub MCP tools**: traceroute and fuzz removed until implemented
+- **Fixed semaphore unwrap**: Proper error handling in dns.rs and subdomain.rs
+- **Fixed chrono unwrap**: Duration conversion uses unwrap_or_default
+- **Fixed worker pool expect**: Proper error handling with tracing
+
+### 📚 Documentation
+- **COMPETITORS.md**: Gap analysis with scorecard and roadmap
+- **Reorganized docs/**: All docs except README moved to docs/ folder
 
 ---
 
