@@ -6,6 +6,11 @@ pub mod trends;
 pub mod templates;
 pub mod dashboard;
 pub mod analytics;
+pub mod pdf;
+pub mod markdown;
+pub mod custom;
+pub mod executive;
+pub mod xml_report;
 
 pub use compliance::{
     ComplianceMapper, Framework, Control, ControlTest, CheckType,
@@ -17,6 +22,11 @@ pub use trends::{TrendAnalyzer, ScanSnapshot, ScanMetrics, VulnerabilityMetrics,
 pub use templates::{TemplateEngine, ReportTemplate, TemplateSection, ContentType};
 pub use dashboard::{Dashboard, DashboardBuilder, Widget, WidgetType, WidgetData, MetricData, ChartData, AlertLevel};
 pub use analytics::{AnalyticsEngine, RiskModel, ModelType, Prediction, RiskFactor, VulnerabilityPrediction};
+pub use pdf::PdfReportGenerator;
+pub use markdown::MarkdownReportGenerator;
+pub use custom::{ReportCustomization, Branding, CustomSeverity, CustomSection, SectionContent, ChartType, CustomRecommendation};
+pub use executive::ExecutiveReport;
+pub use xml_report::XmlReportGenerator;
 
 use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc};
@@ -232,20 +242,121 @@ impl ScanReport {
     }
 
     pub fn to_csv(&self) -> String {
-        let mut output = String::from("Severity,Title,Affected Hosts,CVSS,CVE IDs\n");
-        
+        let mut output = String::new();
+
+        // Header section
+        output.push_str("# Report Metadata\n");
+        output.push_str(&format!("Report ID,{}\n", self.metadata.report_id));
+        output.push_str(&format!("Scan ID,{}\n", self.metadata.scan_id));
+        output.push_str(&format!("Generated,{}\n", self.metadata.generated_at.format("%Y-%m-%d %H:%M:%S UTC")));
+        output.push_str(&format!("Targets,{}\n", self.metadata.target_count));
+        output.push('\n');
+
+        // Summary section
+        output.push_str("# Executive Summary\n");
+        output.push_str(&format!("Total Hosts,{}\n", self.executive_summary.total_hosts));
+        output.push_str(&format!("Hosts Up,{}\n", self.executive_summary.hosts_up));
+        output.push_str(&format!("Open Ports,{}/{}\n", self.executive_summary.open_ports, self.executive_summary.total_ports));
+        output.push_str(&format!("Risk Score,{:.1}\n", self.executive_summary.risk_score));
+        output.push_str(&format!("Compliance Score,{:.1}%\n", self.executive_summary.compliance_score));
+        output.push_str(&format!("Critical Vulns,{}\n", self.executive_summary.vulnerabilities.critical));
+        output.push_str(&format!("High Vulns,{}\n", self.executive_summary.vulnerabilities.high));
+        output.push_str(&format!("Medium Vulns,{}\n", self.executive_summary.vulnerabilities.medium));
+        output.push_str(&format!("Low Vulns,{}\n", self.executive_summary.vulnerabilities.low));
+        output.push('\n');
+
+        // Findings
+        output.push_str("ID,Severity,Title,Affected Hosts,CVSS,CVE IDs,Remediation\n");
         for finding in &self.findings {
+            let hosts = finding.affected_hosts.join(";");
+            let cves = finding.cve_ids.join(";");
+            let cvss = finding.cvss_score.map_or("-".to_string(), |s| format!("{:.1}", s));
+            let remediation = finding.remediation.replace(',', ";").replace('\n', " ");
             output.push_str(&format!(
-                "{:?},{},{},{},{}\n",
-                finding.severity,
-                finding.title,
-                finding.affected_hosts.len(),
-                finding.cvss_score.map_or("-".to_string(), |s| s.to_string()),
-                finding.cve_ids.join(";")
+                "{},{:?},{},{},{},{},{}\n",
+                finding.id, finding.severity, finding.title, hosts, cvss, cves, remediation
             ));
         }
-        
+
+        // Recommendations
+        if !self.recommendations.is_empty() {
+            output.push('\n');
+            output.push_str("# Recommendations\n");
+            output.push_str("Priority,Category,Title,Impact,Effort\n");
+            for rec in &self.recommendations {
+                output.push_str(&format!(
+                    "{:?},{},{},{},{}\n",
+                    rec.priority, rec.category, rec.title, rec.impact, rec.effort
+                ));
+            }
+        }
+
         output
+    }
+
+    pub fn to_xml(&self) -> String {
+        let mut xml = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        xml.push_str("<security_report>\n");
+        xml.push_str(&format!("  <metadata>\n    <report_id>{}</report_id>\n    <scan_id>{}</scan_id>\n", self.metadata.report_id, self.metadata.scan_id));
+        xml.push_str(&format!("    <generated_at>{}</generated_at>\n    <version>{}</version>\n  </metadata>\n", self.metadata.generated_at.format("%Y-%m-%dT%H:%M:%SZ"), self.metadata.version));
+
+        xml.push_str("  <executive_summary>\n");
+        xml.push_str(&format!("    <total_hosts>{}</total_hosts>\n", self.executive_summary.total_hosts));
+        xml.push_str(&format!("    <hosts_up>{}</hosts_up>\n", self.executive_summary.hosts_up));
+        xml.push_str(&format!("    <open_ports>{}</open_ports>\n", self.executive_summary.open_ports));
+        xml.push_str(&format!("    <risk_score>{:.1}</risk_score>\n", self.executive_summary.risk_score));
+        xml.push_str(&format!("    <compliance_score>{:.1}</compliance_score>\n", self.executive_summary.compliance_score));
+        xml.push_str(&format!("    <vulnerabilities critical=\"{}\" high=\"{}\" medium=\"{}\" low=\"{}\" info=\"{}\" />\n",
+            self.executive_summary.vulnerabilities.critical,
+            self.executive_summary.vulnerabilities.high,
+            self.executive_summary.vulnerabilities.medium,
+            self.executive_summary.vulnerabilities.low,
+            self.executive_summary.vulnerabilities.info));
+        xml.push_str("  </executive_summary>\n");
+
+        xml.push_str("  <findings>\n");
+        for finding in &self.findings {
+            xml.push_str(&format!("    <finding id=\"{}\">\n", finding.id));
+            xml.push_str(&format!("      <severity>{:?}</severity>\n", finding.severity));
+            xml.push_str(&format!("      <title>{}</title>\n", Self::xml_escape(&finding.title)));
+            xml.push_str(&format!("      <description>{}</description>\n", Self::xml_escape(&finding.description)));
+            for host in &finding.affected_hosts {
+                xml.push_str(&format!("      <affected_host>{}</affected_host>\n", host));
+            }
+            if let Some(cvss) = finding.cvss_score {
+                xml.push_str(&format!("      <cvss_score>{:.1}</cvss_score>\n", cvss));
+            }
+            for cve in &finding.cve_ids {
+                xml.push_str(&format!("      <cve_id>{}</cve_id>\n", cve));
+            }
+            xml.push_str(&format!("      <remediation>{}</remediation>\n", Self::xml_escape(&finding.remediation)));
+            xml.push_str("    </finding>\n");
+        }
+        xml.push_str("  </findings>\n");
+
+        xml.push_str(&format!("  <compliance overall_score=\"{:.1}\">\n", self.compliance.overall_score));
+        for fw in &self.compliance.frameworks {
+            xml.push_str(&format!("    <framework name=\"{}\" version=\"{}\" score=\"{:.1}\" passing=\"{}\" failing=\"{}\" />\n",
+                Self::xml_escape(&fw.name), fw.version, fw.score, fw.controls_passing, fw.controls_failing));
+        }
+        xml.push_str("  </compliance>\n");
+
+        xml.push_str("  <recommendations>\n");
+        for rec in &self.recommendations {
+            xml.push_str(&format!("    <recommendation priority=\"{:?}\">\n", rec.priority));
+            xml.push_str(&format!("      <category>{}</category>\n", Self::xml_escape(&rec.category)));
+            xml.push_str(&format!("      <title>{}</title>\n", Self::xml_escape(&rec.title)));
+            xml.push_str(&format!("      <impact>{}</impact>\n", Self::xml_escape(&rec.impact)));
+            xml.push_str(&format!("      <effort>{}</effort>\n", Self::xml_escape(&rec.effort)));
+            xml.push_str("    </recommendation>\n");
+        }
+        xml.push_str("  </recommendations>\n");
+        xml.push_str("</security_report>\n");
+        xml
+    }
+
+    fn xml_escape(s: &str) -> String {
+        s.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;").replace('"', "&quot;")
     }
 }
 
@@ -393,12 +504,66 @@ mod tests {
                 overall_score: 75.0,
             })
             .add_finding(finding)
+            .add_recommendation(Recommendation {
+                priority: Priority::Critical,
+                category: "Patch".to_string(),
+                title: "Apply security patch".to_string(),
+                description: "Install latest patches".to_string(),
+                impact: "High".to_string(),
+                effort: "Low".to_string(),
+            })
             .build()
             .unwrap();
 
         let csv = report.to_csv();
-        assert!(csv.contains("Severity,Title"));
+        assert!(csv.contains("ID,Severity,Title"));
         assert!(csv.contains("Critical,Critical Issue"));
         assert!(csv.contains("9.8"));
+        assert!(csv.contains("Report ID"));
+        assert!(csv.contains("Executive Summary"));
+        assert!(csv.contains("Recommendations"));
+        assert!(csv.contains("Apply security patch"));
+    }
+
+    #[test]
+    fn test_to_xml() {
+        let finding = Finding {
+            id: "finding-001".to_string(),
+            severity: Severity::Critical,
+            title: "Test <finding>".to_string(),
+            description: "Desc".to_string(),
+            affected_hosts: vec!["10.0.0.1".to_string()],
+            cvss_score: Some(9.8),
+            cve_ids: vec!["CVE-2021-1234".to_string()],
+            remediation: "Fix & patch".to_string(),
+        };
+
+        let report = ReportBuilder::new()
+            .metadata(sample_metadata())
+            .summary(sample_summary())
+            .compliance(ComplianceStatus {
+                frameworks: vec![ComplianceFramework {
+                    name: "PCI-DSS".to_string(),
+                    version: "4.0".to_string(),
+                    controls_total: 10,
+                    controls_passing: 8,
+                    controls_failing: 2,
+                    score: 80.0,
+                    findings: vec![],
+                }],
+                overall_score: 80.0,
+            })
+            .add_finding(finding)
+            .build()
+            .unwrap();
+
+        let xml = report.to_xml();
+        assert!(xml.contains("<?xml version=\"1.0\""));
+        assert!(xml.contains("<security_report>"));
+        assert!(xml.contains("<severity>Critical</severity>"));
+        assert!(xml.contains("&lt;finding&gt;"));
+        assert!(xml.contains("Fix &amp; patch"));
+        assert!(xml.contains("<framework name=\"PCI-DSS\""));
+        assert!(xml.contains("</security_report>"));
     }
 }

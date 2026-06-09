@@ -8,12 +8,19 @@ pub mod visualization;
 pub mod mac_lookup;
 pub mod inventory;
 
-pub use traceroute::{Traceroute, TracerouteConfig, TracerouteResult, HopInfo};
-pub use mapper::{NetworkMapper, TopologyMap, NetworkSegment};
+pub use traceroute::{
+    Traceroute, TracerouteConfig, TracerouteResult, HopInfo, TracerouteProtocol,
+    IcmpTraceroute, UdpTraceroute, TcpTraceroute, ParallelTraceroute,
+};
+pub use mapper::{
+    NetworkMapper, TopologyMap, NetworkSegment, SegmentType,
+    DeviceConnection, ConnectionType, ServiceMapping, MappingServiceState,
+    TopologyMetadata, TopologyStatistics,
+};
 pub use device::{DeviceClassifier, DeviceType, DeviceInfo};
 pub use visualization::VisualizationEngine;
 pub use mac_lookup::{MacVendorLookup, DeviceCategory};
-pub use inventory::{ServiceCatalog, AssetInfo, ServiceInfo, ServiceState};
+pub use inventory::{ServiceCatalog, AssetInfo, ServiceInfo};
 
 use std::net::IpAddr;
 

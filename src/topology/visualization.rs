@@ -281,9 +281,9 @@ mod tests {
     use std::collections::HashMap;
     use std::net::IpAddr;
     use std::str::FromStr;
+    use crate::topology::mapper::{TopologyMetadata, SegmentType};
 
-    #[test]
-    fn test_generate_html() {
+    fn create_test_map() -> TopologyMap {
         let mut devices = HashMap::new();
         let router = IpAddr::from_str("192.168.1.1").unwrap();
         devices.insert(router, DeviceInfo {
@@ -293,13 +293,28 @@ mod tests {
             hostname: Some("gw1".to_string()),
         });
 
-        let map = TopologyMap {
+        TopologyMap {
             target: IpAddr::from_str("8.8.8.8").unwrap(),
             segments: vec![],
             devices,
             path_to_target: vec![router],
-        };
+            connections: vec![],
+            services: vec![],
+            scan_time: chrono::Utc::now().to_rfc3339(),
+            metadata: TopologyMetadata {
+                total_devices: 1,
+                total_segments: 0,
+                total_connections: 0,
+                total_services: 0,
+                device_type_distribution: HashMap::new(),
+                os_distribution: HashMap::new(),
+            },
+        }
+    }
 
+    #[test]
+    fn test_generate_html() {
+        let map = create_test_map();
         let html = VisualizationEngine::generate_html(&map);
         assert!(html.contains("<!DOCTYPE html>"));
         assert!(html.contains("Network Topology"));
@@ -309,22 +324,7 @@ mod tests {
 
     #[test]
     fn test_generate_svg() {
-        let mut devices = HashMap::new();
-        let router = IpAddr::from_str("192.168.1.1").unwrap();
-        devices.insert(router, DeviceInfo {
-            device_type: DeviceType::Router,
-            os_family: None,
-            vendor: None,
-            hostname: None,
-        });
-
-        let map = TopologyMap {
-            target: IpAddr::from_str("8.8.8.8").unwrap(),
-            segments: vec![],
-            devices,
-            path_to_target: vec![router],
-        };
-
+        let map = create_test_map();
         let svg = VisualizationEngine::generate_svg(&map);
         assert!(svg.contains("<svg"));
         assert!(svg.contains("192.168.1.1"));

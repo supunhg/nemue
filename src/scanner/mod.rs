@@ -19,6 +19,7 @@ pub mod idle;
 pub mod ftp_bounce;
 pub mod history;
 pub mod trends;
+pub mod passive;
 
 pub use engine::ScanEngine;
 pub use target::{Target, TargetParser, TargetConfig};
@@ -29,7 +30,7 @@ pub use timing::{
     TimingTemplate, TimingConfig, TimingConfigBuilder,
     parse_duration, parse_parallelism, parse_rate, parse_retries, parse_hostgroup,
 };
-pub use discovery::{HostDiscovery, DiscoveryMethod, DiscoveryConfig, DiscoveryResult};
+pub use discovery::{HostDiscovery, DiscoveryMethod, DiscoveryConfig, DiscoveryResult, ArpDiscovery};
 pub use dns::{DnsResolver, DnsConfig};
 pub use scan_types::{
     ScanType, 
@@ -61,6 +62,10 @@ pub use proxy::{
 };
 pub use history::{ScanHistory, HistoryEntry, ScanSummary};
 pub use trends::{TrendReport, PortTrend, ServiceTrend, TrendSummary, TrendAnalyzer};
+pub use passive::{
+    PassiveDiscovery, PassiveConfig, PassiveResult, PassiveHost, PassiveService,
+    PassiveDiscoveryBuilder, DnsObservation, ArpObservation, DhcpObservation, TrafficStats,
+};
 
 use serde::{Deserialize, Serialize};
 use std::net::IpAddr;
