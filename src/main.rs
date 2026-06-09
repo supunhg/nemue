@@ -125,6 +125,14 @@ enum Commands {
         #[arg(long)]
         raw: bool,
 
+        /// Idle scan using zombie host (format: -sI zombie[:port])
+        #[arg(short = 'I', long)]
+        idle_scan: Option<String>,
+
+        /// Resume a previous scan from checkpoint
+        #[arg(long)]
+        resume: Option<String>,
+
         /// Show reason for port state
         #[arg(long)]
         reason: bool,
@@ -326,6 +334,8 @@ async fn main() -> Result<()> {
             version_intensity,
             os_detect,
             raw,
+            idle_scan,
+            resume,
             reason,
             top_ports,
             show_closed,
@@ -618,8 +628,76 @@ async fn main() -> Result<()> {
             
             display.clear_progress();
             display.print_progress("Scanning ports");
-            
-            let results = if let Some(ref exclude_ports) = exclude {
+
+            // Handle resume if specified
+            let results = if let Some(ref scan_id) = resume {
+                use nemue::performance::ScanDatabase;
+
+                let db = ScanDatabase::new(".nemue/scans");
+                let checkpoint = db.load_checkpoint(scan_id).await
+                    .map_err(|e| anyhow::anyhow!("Failed to load checkpoint: {}", e))?;
+
+                println!("📂 Resuming scan {}", scan_id);
+                println!("  Completed targets: {}", checkpoint.completed_targets.len());
+                println!("  Pending targets: {}", checkpoint.pending_targets.len());
+
+                // Scan only pending targets
+                let pending_targets = checkpoint.pending_targets.join(",");
+                if pending_targets.is_empty() {
+                    println!("✅ All targets already completed!");
+                    nemue::scanner::ScanResults {
+                        scan_start: chrono::Utc::now(),
+                        scan_end: chrono::Utc::now(),
+                        target_count: 0,
+                        port_count: 0,
+                        results: Vec::new(),
+                        os_fingerprints: Vec::new(),
+                        script_results: Vec::new(),
+                    }
+                } else {
+                    scan_engine.scan(&pending_targets, &ports, &scan_type).await?
+                }
+            } else if let Some(ref zombie_spec) = idle_scan {
+                use nemue::scanner::idle::{self, IdleScanConfig};
+
+                // Parse zombie specification (format: zombie[:port])
+                let parts: Vec<&str> = zombie_spec.split(':').collect();
+                let zombie_ip: std::net::Ipv4Addr = parts[0].parse()
+                    .map_err(|_| anyhow::anyhow!("Invalid zombie IP: {}", parts[0]))?;
+                let zombie_port = if parts.len() > 1 {
+                    parts[1].parse::<u16>()
+                        .map_err(|_| anyhow::anyhow!("Invalid zombie port: {}", parts[1]))?
+                } else {
+                    80
+                };
+
+                let config = IdleScanConfig::new(zombie_ip)
+                    .with_port(zombie_port)
+                    .with_timeout(timeout);
+
+                let target_ip: std::net::Ipv4Addr = match target.parse::<std::net::IpAddr>()? {
+                    std::net::IpAddr::V4(ip) => ip,
+                    _ => return Err(anyhow::anyhow!("Idle scan requires IPv4 target")),
+                };
+
+                let port_list = nemue::scanner::PortParser::parse(&ports)?;
+                let port_numbers: Vec<u16> = port_list.iter().map(|p| p.value()).collect();
+
+                display.print_progress(&format!("Idle scan via zombie {}:{}", zombie_ip, zombie_port));
+
+                let idle_results = idle::idle_scan(&config, target_ip, &port_numbers).await?;
+                let scan_results = idle::to_scan_results(idle_results, target_ip.into());
+
+                nemue::scanner::ScanResults {
+                    scan_start: chrono::Utc::now(),
+                    scan_end: chrono::Utc::now(),
+                    target_count: 1,
+                    port_count: port_numbers.len(),
+                    results: scan_results,
+                    os_fingerprints: Vec::new(),
+                    script_results: Vec::new(),
+                }
+            } else if let Some(ref exclude_ports) = exclude {
                 scan_engine.scan_with_exclusions(&target, &ports, exclude_ports, &scan_type).await?
             } else {
                 scan_engine.scan(&target, &ports, &scan_type).await?
