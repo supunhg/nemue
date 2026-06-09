@@ -133,6 +133,10 @@ enum Commands {
         #[arg(long)]
         resume: Option<String>,
 
+        /// Enable packet trace logging
+        #[arg(long)]
+        packet_trace: bool,
+
         /// Show reason for port state
         #[arg(long)]
         reason: bool,
@@ -336,6 +340,7 @@ async fn main() -> Result<()> {
             raw,
             idle_scan,
             resume,
+            packet_trace,
             reason,
             top_ports,
             show_closed,

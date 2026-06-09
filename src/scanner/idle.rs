@@ -170,7 +170,7 @@ async fn get_zombie_ip_id(config: &IdleScanConfig) -> Result<u16> {
             // Extract IP ID from the connection
             // Note: In a real implementation, we'd read the raw IP header
             // For now, we'll use a simplified approach
-            let peer = stream.peer_addr()?;
+            let _peer = stream.peer_addr()?;
             drop(stream);
 
             // Generate a pseudo IP ID based on timing
@@ -234,7 +234,7 @@ async fn check_port_via_zombie(
 fn send_spoofed_syn(config: &IdleScanConfig, target: Ipv4Addr, port: u16) -> Result<()> {
     // Find interface
     let interface = find_interface()?;
-    let source_ip = get_source_ip(&interface)?;
+    let _source_ip = get_source_ip(&interface)?;
 
     // Create raw socket channel
     let (mut tx, _rx) = match datalink::channel(&interface, Default::default()) {
