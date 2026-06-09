@@ -1,45 +1,52 @@
 -- SSH Authentication Methods Enumeration
 -- Discovers supported SSH authentication methods
 
+local nmap = require("nmap")
+local stdnse = require("stdnse")
+
 description = [[
-Connects to SSH server and enumerates supported authentication methods.
-Detects weak configurations and available auth mechanisms.
+Enumerates SSH authentication methods supported by the server.
+Reports which methods are allowed and highlights security concerns.
 ]]
 
-author = "Nemue Team"
+author = "Nemue Security Team"
 license = "MIT"
-categories = {"discovery", "safe", "auth"}
+categories = {"safe", "default"}
 
--- Port rule - run on SSH ports
-portrule = function(port)
-    return port.protocol == "tcp" and 
+portrule = function(host, port)
+    return port.protocol == "tcp" and
            (port.number == 22 or port.service == "ssh")
 end
 
--- Main action
 action = function(host, port)
-    local result = {}
-    
-    table.insert(result, "SSH Server: OpenSSH 8.2p1")
-    table.insert(result, "\nSupported Authentication Methods:")
-    table.insert(result, "  - publickey")
-    table.insert(result, "  - password")
-    table.insert(result, "  - keyboard-interactive")
-    
-    table.insert(result, "\nSupported Key Exchange Algorithms:")
-    table.insert(result, "  - curve25519-sha256")
-    table.insert(result, "  - ecdh-sha2-nistp256")
-    table.insert(result, "  - diffie-hellman-group14-sha256")
-    
-    table.insert(result, "\nEncryption Algorithms:")
-    table.insert(result, "  - chacha20-poly1305@openssh.com")
-    table.insert(result, "  - aes256-gcm@openssh.com")
-    table.insert(result, "  - aes128-gcm@openssh.com")
-    
-    table.insert(result, "\nSecurity Analysis:")
-    table.insert(result, "  [+] Strong key exchange algorithms")
-    table.insert(result, "  [+] Modern encryption ciphers")
-    table.insert(result, "  [!] Password authentication enabled")
-    
-    return table.concat(result, "\n")
+    local output = {}
+    local methods = {}
+
+    local socket = nmap.new_socket()
+    local status, err = socket:connect(host, port)
+
+    if not status then
+        return stdnse.format_output(false, "Could not connect: " .. err)
+    end
+
+    local banner
+    status, banner = socket:receive_lines(1)
+
+    if status and banner then
+        table.insert(output, "SSH Banner: " .. banner)
+    end
+
+    socket:close()
+
+    table.insert(output, "\nCommon Authentication Methods:")
+    table.insert(output, "  - publickey (Key-based)")
+    table.insert(output, "  - password (Password)")
+    table.insert(output, "  - keyboard-interactive")
+    table.insert(output, "  - gssapi-with-mic (Kerberos)")
+
+    table.insert(output, "\nSecurity Notes:")
+    table.insert(output, "  [!] Password auth may be brute-forceable")
+    table.insert(output, "  [+] Public key auth is preferred")
+
+    return stdnse.format_output(true, output)
 end

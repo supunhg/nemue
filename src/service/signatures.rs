@@ -634,25 +634,1159 @@ pub fn cicd_signatures() -> Vec<MatchPattern> {
         // Jenkins
         m("jenkins", r"Jenkins", "Jenkins", None),
         m("http", r"jenkins", "Jenkins", None),
-        
+
         // GitLab
         m("gitlab", r"GitLab", "GitLab", None),
         m("http", r"gitlab", "GitLab", None),
-        
+
         // GitHub Enterprise
         m("github", r"GitHub Enterprise", "GitHub Enterprise", None),
-        
+
         // Nexus
         m("nexus", r"Nexus Repository", "Sonatype Nexus", None),
-        
+
         // Artifactory
         m("artifactory", r"Artifactory", "JFrog Artifactory", None),
-        
+
         // SonarQube
         m("sonarqube", r"SonarQube", "SonarQube", None),
-        
+
         // Harbor
         m("harbor", r"Harbor", "Harbor Registry", None),
+    ]
+}
+
+/// Get additional HTTP framework signatures
+pub fn http_frameworks_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Vert.x
+        m("http", r"Server: Vert\.x-Web/(\d+\.\d+\.\d+)", "Vert.x-Web", Some("$1")),
+        m("http", r"Server: Vert\.x HTTP Server", "Vert.x HTTP Server", None),
+        m("http", r"X-Powered-By: Vert\.x", "Vert.x", None),
+
+        // Undertow
+        m("http", r"Server: Undertow/(\d+\.\d+\.\d+)", "Undertow", Some("$1")),
+        m("http", r"Server: Undertow", "Undertow", None),
+        m("http", r"X-Powered-By: Undertow", "Undertow", None),
+
+        // Netty
+        m("http", r"Server: Netty/(\d+\.\d+\.\d+)", "Netty HTTP", Some("$1")),
+        m("http", r"Server: Netty", "Netty HTTP", None),
+        m("http", r"X-Powered-By: Netty", "Netty HTTP", None),
+
+        // Resin
+        m("http", r"Server: Resin/(\d+\.\d+\.\d+)", "Caucho Resin", Some("$1")),
+        m("http", r"Server: Resin", "Caucho Resin", None),
+
+        // Zope
+        m("http", r"Server: Zope/(\d+\.\d+\.\d+)", "Zope", Some("$1")),
+        m("http", r"Server: Zope", "Zope", None),
+        m("http", r"X-Powered-By: Zope", "Zope", None),
+
+        // Web2py
+        m("http", r"X-Powered-By: web2py", "web2py", None),
+        m("http", r"web2py\.js", "web2py", None),
+
+        // Bottle
+        m("http", r"Server: Bottle/(\d+\.\d+\.\d+)", "Bottle", Some("$1")),
+        m("http", r"Server: Bottle", "Bottle", None),
+        m("http", r"X-Powered-By: Bottle", "Bottle", None),
+
+        // Flask
+        m("http", r"Server: Werkzeug/(\d+\.\d+\.\d+) Python/(\d+\.\d+\.\d+)", "Flask", Some("$1")),
+        m("http", r"X-Powered-By: Flask", "Flask", None),
+
+        // FastAPI
+        m("http", r"Server: uvicorn/(\d+\.\d+\.\d+)", "FastAPI/uvicorn", Some("$1")),
+        m("http", r"X-Powered-By: FastAPI", "FastAPI", None),
+
+        // Falcon
+        m("http", r"X-Powered-By: Falcon", "Falcon", None),
+
+        // Sanic
+        m("http", r"Server: Sanic/(\d+\.\d+\.\d+)", "Sanic", Some("$1")),
+        m("http", r"Server: Sanic", "Sanic", None),
+
+        // Tornado (extra)
+        m("http", r"Server: TornadoServer", "Tornado", None),
+
+        // Twisted
+        m("http", r"Server: TwistedWeb/(\d+\.\d+\.\d+)", "Twisted Web", Some("$1")),
+        m("http", r"Server: TwistedWeb", "Twisted Web", None),
+
+        // Cowboy (Erlang)
+        m("http", r"Server: Cowboy/(\d+\.\d+\.\d+)", "Cowboy", Some("$1")),
+        m("http", r"Server: Cowboy", "Cowboy", None),
+
+        // Mochiweb
+        m("http", r"Server: MochiWeb/(\d+\.\d+)", "MochiWeb", Some("$1")),
+        m("http", r"Server: MochiWeb", "MochiWeb", None),
+
+        // Yaws
+        m("http", r"Server: Yaws/(\d+\.\d+\.\d+)", "Yaws", Some("$1")),
+        m("http", r"Server: Yaws", "Yaws", None),
+
+        // Mojolicious
+        m("http", r"X-Powered-By: Mojolicious", "Mojolicious", None),
+
+        // Dancer
+        m("http", r"X-Powered-By: Perl Dancer", "Perl Dancer", None),
+        m("http", r"X-Powered-By: Dancer2", "Dancer2", None),
+
+        // Sinatra
+        m("http", r"X-Powered-By: Sinatra", "Sinatra", None),
+
+        // Rack
+        m("http", r"X-Powered-By: Rack", "Rack", None),
+
+        // Starlette
+        m("http", r"Server: Starlette", "Starlette", None),
+
+        // AIOHTTP
+        m("http", r"Server: Python/(\d+\.\d+) aiohttp/(\d+\.\d+\.\d+)", "aiohttp", Some("$2")),
+
+        // Apache Struts
+        m("http", r"X-Powered-By: Struts", "Apache Struts", None),
+
+        // Grails
+        m("http", r"X-Powered-By: Grails", "Grails", None),
+
+        // Play Framework
+        m("http", r"X-Powered-By: Play Framework", "Play Framework", None),
+        m("http", r"Server: Play", "Play Framework", None),
+
+        // Akka HTTP
+        m("http", r"Server: akka-http/(\d+\.\d+\.\d+)", "Akka HTTP", Some("$1")),
+        m("http", r"Server: akka-http", "Akka HTTP", None),
+
+        // Hapi (extra)
+        m("http", r"Server: hapi", "hapi", None),
+
+        // Koa (extra)
+        m("http", r"X-Powered-By: Koa", "Koa", None),
+
+        // NestJS
+        m("http", r"X-Powered-By: NestJS", "NestJS", None),
+    ]
+}
+
+/// Get additional CDN signatures
+pub fn cdn_signatures() -> Vec<MatchPattern> {
+    vec![
+        // KeyCDN
+        m("http", r"Server: keycdn-engine", "KeyCDN", None),
+        m("http", r"X-Edge-Location:.*keycdn", "KeyCDN", None),
+
+        // StackPath
+        m("http", r"Server: StackPath", "StackPath CDN", None),
+        m("http", r"X-CDN: StackPath", "StackPath CDN", None),
+        m("http", r"X-HW:.*stackpathcdn", "StackPath CDN", None),
+
+        // Sucuri
+        m("http", r"Server: Sucuri/Cloudproxy", "Sucuri WAF", None),
+        m("http", r"X-Sucuri-ID:", "Sucuri WAF", None),
+        m("http", r"X-Sucuri-Cache:", "Sucuri CDN", None),
+
+        // Incapsula/Imperva
+        m("http", r"Server: Incapsula", "Imperva Incapsula", None),
+        m("http", r"X-CDN: Incapsula", "Imperva Incapsula", None),
+        m("http", r"incap_ses", "Imperva Incapsula", None),
+        m("http", r"visid_incap_", "Imperva Incapsula", None),
+
+        // BelugaCDN
+        m("http", r"Server: BelugaCDN", "BelugaCDN", None),
+
+        // BunnyCDN
+        m("http", r"Server: BunnyCDN", "BunnyCDN", None),
+        m("http", r"CDN-PullZone:.*bunnycdn", "BunnyCDN", None),
+
+        // CacheFly
+        m("http", r"Server: CFS ", "CacheFly CDN", None),
+
+        // Limelight
+        m("http", r"Server: Limelight", "Limelight CDN", None),
+
+        // MaxCDN/bootstrapcdn
+        m("http", r"Server: NetDNA", "MaxCDN", None),
+
+        // Rackspace CDN
+        m("http", r"X-Trans-Id:.*cdn", "Rackspace CDN", None),
+    ]
+}
+
+/// Get additional reverse proxy signatures
+pub fn reverse_proxy_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Pound
+        m("http", r"Server: Pound", "Pound proxy", None),
+        m("http", r"X-Pound:", "Pound proxy", None),
+
+        // Nginx variants
+        m("http", r"Server: nginx/(\d+\.\d+\.\d+).*mod", "nginx (modified)", Some("$1")),
+        m("http", r"Server: nginx-unit/(\d+\.\d+\.\d+)", "NGINX Unit", Some("$1")),
+        m("http", r"Server: Unit/(\d+\.\d+\.\d+)", "NGINX Unit", Some("$1")),
+        m("http", r"Server: Nginx", "nginx", None),
+
+        // Varnish variants
+        m("http", r"Server: Varnish/(\d+\.\d+\.\d+)", "Varnish", Some("$1")),
+        m("http", r"Via:.*varnish/(\d+\.\d+)", "Varnish", Some("$1")),
+
+        // Apache Traffic Server
+        m("http", r"Server: ATS/(\d+\.\d+\.\d+)", "Apache Traffic Server", Some("$1")),
+        m("http", r"Server: ApacheTrafficServer", "Apache Traffic Server", None),
+        m("http", r"Via:.*ApacheTrafficServer", "Apache Traffic Server", None),
+
+        // Envoy variants
+        m("http", r"Server: envoy/(\d+\.\d+\.\d+)", "Envoy proxy", Some("$1")),
+        m("http", r"x-envoy-upstream-service-time:", "Envoy proxy", None),
+
+        // Traefik variants
+        m("http", r"Server: Traefik/(\d+\.\d+\.\d+)", "Traefik", Some("$1")),
+
+        // Linkerd
+        m("http", r"Server: linkerd", "Linkerd proxy", None),
+        m("http", r"l5d-dst-override:", "Linkerd proxy", None),
+
+        // Caddy variants
+        m("http", r"Server: Caddy/(\d+\.\d+)", "Caddy", Some("$1")),
+
+        // AWS ALB
+        m("http", r"Server: awselb", "AWS ELB", None),
+        m("http", r"X-Amzn-Trace-Id:", "AWS load balancer", None),
+
+        // GCP Load Balancer
+        m("http", r"Via:.*google", "Google Cloud LB", None),
+        m("http", r"Server: Google Frontend", "Google Frontend", None),
+
+        // Azure Application Gateway
+        m("http", r"Server: Microsoft-Azure-Application-Gateway", "Azure App GW", None),
+    ]
+}
+
+/// Get API gateway signatures
+pub fn api_gateway_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Kong
+        m("http", r"Server: kong/(\d+\.\d+\.\d+)", "Kong Gateway", Some("$1")),
+        m("http", r"Server: kong", "Kong Gateway", None),
+        m("http", r"X-Kong-.*:", "Kong Gateway", None),
+
+        // Apigee
+        m("http", r"X-Apigee-.*:", "Apigee", None),
+        m("http", r"Server: Apigee", "Apigee", None),
+
+        // AWS API Gateway
+        m("http", r"Server: apigateway", "AWS API Gateway", None),
+        m("http", r"x-amzn-RequestId:", "AWS API Gateway", None),
+        m("http", r"x-amz-apigw-id:", "AWS API Gateway", None),
+
+        // Tyk
+        m("http", r"Server: Tyk", "Tyk Gateway", None),
+        m("http", r"X-Tyk-.*:", "Tyk Gateway", None),
+
+        // Ambassador
+        m("http", r"Server: Ambassador", "Ambassador Gateway", None),
+
+        // Express Gateway
+        m("http", r"X-Powered-By: Express Gateway", "Express Gateway", None),
+
+        // Zuul
+        m("http", r"X-Zuul-.*:", "Netflix Zuul", None),
+
+        // Azure API Management
+        m("http", r"Server: Azure-API-Management", "Azure API Management", None),
+
+        // Gravitee
+        m("http", r"X-Gravitee-.*:", "Gravitee Gateway", None),
+
+        // WSO2
+        m("http", r"Server: WSO2", "WSO2 Gateway", None),
+    ]
+}
+
+/// Get additional SSH vendor signatures
+pub fn ssh_vendor_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Brocade
+        m("ssh", r"SSH-2.0-Brocade", "Brocade SSH", None),
+        m("ssh", r"SSH-2.0-.*brocade", "Brocade SSH", None),
+
+        // Extreme Networks
+        m("ssh", r"SSH-2.0-Extreme Networks", "Extreme Networks SSH", None),
+        m("ssh", r"SSH-2.0-ExtremeXOS", "Extreme Networks SSH", None),
+
+        // Aruba Networks
+        m("ssh", r"SSH-2.0-ArubaOS", "ArubaOS SSH", None),
+        m("ssh", r"SSH-2.0-Aruba", "Aruba SSH", None),
+
+        // Ruckus
+        m("ssh", r"SSH-2.0-Ruckus", "Ruckus SSH", None),
+        m("ssh", r"SSH-2.0-SZ", "Ruckus SmartZone SSH", None),
+
+        // Ubiquiti
+        m("ssh", r"SSH-2.0-Ubiquiti", "Ubiquiti SSH", None),
+        m("ssh", r"SSH-2.0-EdgeRouter", "Ubiquiti EdgeRouter SSH", None),
+
+        // Dell Networking (extra)
+        m("ssh", r"SSH-2.0-OpenSSH_.*Dell", "Dell Networking SSH", None),
+        m("ssh", r"SSH-2.0-Dell", "Dell SSH", None),
+
+        // Juniper (extra)
+        m("ssh", r"SSH-2.0-Junos", "Juniper Junos SSH", None),
+
+        // Arista (extra)
+        m("ssh", r"SSH-2.0-Arista.*EOS", "Arista EOS SSH", None),
+
+        // Cisco (extra)
+        m("ssh", r"SSH-2.0-Cisco-.*NX-OS", "Cisco NX-OS SSH", None),
+        m("ssh", r"SSH-2.0-Cisco-.*ASA", "Cisco ASA SSH", None),
+
+        // Huawei (extra)
+        m("ssh", r"SSH-2.0-OpenSSH_.*HUAWEI", "Huawei SSH", None),
+        m("ssh", r"SSH-2.0-SSH_.*VRP", "Huawei VRP SSH", None),
+
+        // ZTE
+        m("ssh", r"SSH-2.0-ZTE", "ZTE SSH", None),
+
+        // TP-Link
+        m("ssh", r"SSH-2.0-TP-LINK", "TP-Link SSH", None),
+
+        // Netgear
+        m("ssh", r"SSH-2.0-Netgear", "Netgear SSH", None),
+
+        // Linksys
+        m("ssh", r"SSH-2.0-Linksys", "Linksys SSH", None),
+
+        // SonicWall
+        m("ssh", r"SSH-2.0-SonicWall", "SonicWall SSH", None),
+    ]
+}
+
+/// Get additional SSH OS variant signatures
+pub fn ssh_os_signatures() -> Vec<MatchPattern> {
+    vec![
+        // AlmaLinux
+        m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) AlmaLinux", "OpenSSH (AlmaLinux)", Some("$1")),
+        m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) .*alma", "OpenSSH (AlmaLinux)", Some("$1")),
+
+        // Rocky Linux
+        m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) Rocky", "OpenSSH (Rocky Linux)", Some("$1")),
+        m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) .*rocky", "OpenSSH (Rocky Linux)", Some("$1")),
+
+        // Amazon Linux
+        m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) .*amzn", "OpenSSH (Amazon Linux)", Some("$1")),
+        m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) Amazon", "OpenSSH (Amazon Linux)", Some("$1")),
+
+        // Oracle Linux
+        m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) .*Oracle", "OpenSSH (Oracle Linux)", Some("$1")),
+        m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) .*el.*uek", "OpenSSH (Oracle UEK)", Some("$1")),
+
+        // Arch Linux
+        m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) .*arch", "OpenSSH (Arch Linux)", Some("$1")),
+
+        // Gentoo
+        m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) .*gentoo", "OpenSSH (Gentoo)", Some("$1")),
+
+        // Alpine
+        m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) .*alpine", "OpenSSH (Alpine Linux)", Some("$1")),
+
+        // Manjaro
+        m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) .*manjaro", "OpenSSH (Manjaro)", Some("$1")),
+
+        // Fedora
+        m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) .*fc\d+", "OpenSSH (Fedora)", Some("$1")),
+
+        // CloudLinux
+        m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) .*cloudlinux", "OpenSSH (CloudLinux)", Some("$1")),
+
+        // AIX
+        m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) .*aix", "OpenSSH (AIX)", Some("$1")),
+
+        // HP-UX
+        m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) .*HP-UX", "OpenSSH (HP-UX)", Some("$1")),
+
+        // Solaris
+        m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) .*SunOS", "OpenSSH (Solaris)", Some("$1")),
+        m("ssh", r"SSH-2.0-Sun_SSH_([\d.]+)", "Sun SSH", Some("$1")),
+
+        // SmartOS
+        m("ssh", r"SSH-2.0-OpenSSH_([\d.]+) .*joyent", "OpenSSH (SmartOS/Joyent)", Some("$1")),
+    ]
+}
+
+/// Get additional FTP server signatures
+pub fn ftp_extended_signatures() -> Vec<MatchPattern> {
+    vec![
+        // glFTPd
+        m("ftp", r"220.*glFTPd (\d+\.\d+\.\d+)", "glFTPd", Some("$1")),
+        m("ftp", r"220.*glFTPd", "glFTPd", None),
+
+        // RaidenFTPD
+        m("ftp", r"220.*RaidenFTPD (\d+\.\d+\.\d+)", "RaidenFTPD", Some("$1")),
+        m("ftp", r"220.*RaidenFTPD", "RaidenFTPD", None),
+        m("ftp", r"220.*Raiden FTPD", "RaidenFTPD", None),
+
+        // Cerberus FTP
+        m("ftp", r"220.*Cerberus FTP Server (\d+\.\d+)", "Cerberus FTP", Some("$1")),
+        m("ftp", r"220.*Cerberus FTP", "Cerberus FTP", None),
+
+        // CrushFTP
+        m("ftp", r"220.*CrushFTP (\d+\.\d+)", "CrushFTP", Some("$1")),
+        m("ftp", r"220.*CrushFTP", "CrushFTP", None),
+
+        // Wing FTP
+        m("ftp", r"220.*Wing FTP Server (\d+\.\d+)", "Wing FTP", Some("$1")),
+        m("ftp", r"220.*Wing FTP Server", "Wing FTP", None),
+
+        // Gene6
+        m("ftp", r"220.*Gene6 FTP Server", "Gene6 FTP", None),
+
+        // War FTP Daemon
+        m("ftp", r"220.*WarFTPd (\d+\.\d+)", "War FTP Daemon", Some("$1")),
+        m("ftp", r"220.*WarFTPd", "War FTP Daemon", None),
+
+        // BulletProof FTP
+        m("ftp", r"220.*BPFTP Server", "BulletProof FTP", None),
+
+        // ioFTPD
+        m("ftp", r"220.*ioFTPD", "ioFTPD", None),
+
+        // DrFTPD
+        m("ftp", r"220.*DrFTPD", "DrFTPD", None),
+
+        // Pure-FTPd variants
+        m("ftp", r"220.*Pure-FTPd (\d+\.\d+)", "Pure-FTPd", Some("$1")),
+
+        // ProFTPD variants
+        m("ftp", r"220.*ProFTPD (\d+\.\d+) ", "ProFTPD", Some("$1")),
+        m("ftp", r"220.*ProFTPD.*Debian", "ProFTPD (Debian)", None),
+        m("ftp", r"220.*ProFTPD.*Ubuntu", "ProFTPD (Ubuntu)", None),
+
+        // vsftpd variants
+        m("ftp", r"220.*vsFTPd (\d+\.\d+\.\d+).*Ubuntu", "vsftpd (Ubuntu)", Some("$1")),
+        m("ftp", r"220.*vsFTPd (\d+\.\d+\.\d+).*Debian", "vsftpd (Debian)", Some("$1")),
+
+        // FileZilla variants
+        m("ftp", r"220.*FileZilla Server (\d+\.\d+\.\d+)", "FileZilla Server", Some("$1")),
+
+        // Golden FTP
+        m("ftp", r"220.*Golden FTP Server", "Golden FTP", None),
+
+        // Baby FTP
+        m("ftp", r"220.*Baby FTP Server", "Baby FTP", None),
+
+        // Quick 'n Easy FTP
+        m("ftp", r"220.*Quick.*Easy FTP", "Quick 'n Easy FTP", None),
+
+        // SurgeFTP
+        m("ftp", r"220.*SurgeFTP (\d+\.\d+)", "SurgeFTP", Some("$1")),
+        m("ftp", r"220.*SurgeFTP", "SurgeFTP", None),
+    ]
+}
+
+/// Get additional SMTP server signatures
+pub fn smtp_extended_signatures() -> Vec<MatchPattern> {
+    vec![
+        // CommuniGate Pro
+        m("smtp", r"220.*CommuniGate Pro (\d+\.\d+)", "CommuniGate Pro", Some("$1")),
+        m("smtp", r"220.*CommuniGate Pro", "CommuniGate Pro", None),
+        m("smtp", r"220.*CommuniGate", "CommuniGate Pro", None),
+
+        // IceWarp
+        m("smtp", r"220.*IceWarp (\d+\.\d+)", "IceWarp", Some("$1")),
+        m("smtp", r"220.*IceWarp", "IceWarp", None),
+
+        // Merak Mail Server
+        m("smtp", r"220.*Merak (\d+\.\d+)", "Merak Mail Server", Some("$1")),
+        m("smtp", r"220.*Merak", "Merak Mail Server", None),
+        m("smtp", r"220.*MerakMail", "Merak Mail Server", None),
+
+        // Kerio Connect
+        m("smtp", r"220.*Kerio Connect (\d+\.\d+)", "Kerio Connect", Some("$1")),
+        m("smtp", r"220.*Kerio Connect", "Kerio Connect", None),
+        m("smtp", r"220.*Kerio MailServer", "Kerio Connect", None),
+
+        // Office 365 / Exchange Online
+        m("smtp", r"220.*\.outlook\.com", "Microsoft 365 SMTP", None),
+        m("smtp", r"220.*\.protection\.outlook\.com", "Microsoft 365 SMTP", None),
+        m("smtp", r"220.*Exchange Online", "Microsoft 365 SMTP", None),
+
+        // Google Workspace
+        m("smtp", r"220.*\.google\.com ESMTP", "Google Workspace SMTP", None),
+        m("smtp", r"220.*smtp\.google\.com", "Google Workspace SMTP", None),
+
+        // Amazon SES
+        m("smtp", r"220.*email-smtp\.amazonaws\.com", "Amazon SES", None),
+
+        // Mailgun
+        m("smtp", r"220.*Mailgun", "Mailgun SMTP", None),
+
+        // SendGrid
+        m("smtp", r"220.*SendGrid", "SendGrid SMTP", None),
+
+        // Postfix variants
+        m("smtp", r"220.*Postfix \((\d+\.\d+\.\d+)\)", "Postfix", Some("$1")),
+        m("smtp", r"220.*Postfix.*Ubuntu", "Postfix (Ubuntu)", None),
+        m("smtp", r"220.*Postfix.*Debian", "Postfix (Debian)", None),
+
+        // Exim variants
+        m("smtp", r"220.*Exim (\d+\.\d+\.\d+)", "Exim", Some("$1")),
+        m("smtp", r"220.*Exim.*Debian", "Exim (Debian)", None),
+
+        // Courier MTA
+        m("smtp", r"220.*Courier", "Courier MTA", None),
+
+        // qmail
+        m("smtp", r"220.*ESMTP qmail", "qmail", None),
+        m("smtp", r"220.*qmail", "qmail", None),
+
+        // Citadel
+        m("smtp", r"220.*Citadel", "Citadel", None),
+
+        // Haraka
+        m("smtp", r"220.*Haraka", "Haraka SMTP", None),
+
+        // Zone MTA
+        m("smtp", r"220.*Zone-MTA", "Zone-MTA", None),
+
+        // MessageSystems
+        m("smtp", r"220.*Momentum", "Momentum MTA", None),
+    ]
+}
+
+/// Get additional database signatures
+pub fn database_extended_signatures() -> Vec<MatchPattern> {
+    vec![
+        // CockroachDB
+        m("postgres", r"CockroachDB", "CockroachDB", None),
+        m("postgres", r"cockroach", "CockroachDB", None),
+
+        // TiDB
+        m("mysql", r"TiDB", "TiDB", None),
+        m("mysql", r"tidb-server", "TiDB", None),
+
+        // ScyllaDB
+        m("cassandra", r"Scylla", "ScyllaDB", None),
+        m("cassandra", r"scylla", "ScyllaDB", None),
+
+        // ClickHouse
+        m("clickhouse", r"ClickHouse", "ClickHouse", None),
+        m("http", r"X-ClickHouse-Summary:", "ClickHouse", None),
+        m("clickhouse", r"ClickHouse server", "ClickHouse", None),
+
+        // InfluxDB
+        m("influxdb", r"InfluxDB", "InfluxDB", None),
+        m("http", r"X-Influxdb-Build:", "InfluxDB", None),
+        m("http", r"X-Influxdb-Version:", "InfluxDB", None),
+
+        // TimescaleDB
+        m("postgres", r"timescaledb", "TimescaleDB", None),
+        m("postgres", r"TimescaleDB", "TimescaleDB", None),
+
+        // SQLite (via HTTP services)
+        m("http", r"X-Powered-By: SQLite", "SQLite", None),
+
+        // Firebird
+        m("firebird", r"Firebird", "Firebird", None),
+        m("gds-db", r"Firebird", "Firebird", None),
+        m("firebird", r"Firebird/(\d+\.\d+\.\d+)", "Firebird", Some("$1")),
+
+        // Informix
+        m("informix", r"Informix", "IBM Informix", None),
+        m("drda", r"Informix", "IBM Informix", None),
+
+        // Sybase/SAP ASE
+        m("sybase", r"Sybase", "SAP ASE", None),
+        m("sybase", r"Adaptive Server", "SAP ASE", None),
+
+        // Couchbase
+        m("couchbase", r"Couchbase", "Couchbase", None),
+        m("memcached", r"Couchbase", "Couchbase", None),
+        m("http", r"X-Couchbase", "Couchbase", None),
+
+        // Neo4j
+        m("neo4j", r"Neo4j", "Neo4j", None),
+        m("http", r"X-Neo4j", "Neo4j", None),
+        m("bolt", r"Neo4j", "Neo4j", None),
+
+        // ArangoDB
+        m("arangodb", r"ArangoDB", "ArangoDB", None),
+        m("http", r"X-ArangoDB", "ArangoDB", None),
+
+        // RethinkDB
+        m("rethinkdb", r"RethinkDB", "RethinkDB", None),
+        m("http", r"X-RethinkDB", "RethinkDB", None),
+
+        // Memcached
+        m("memcached", r"memcached", "Memcached", None),
+        m("memcached", r"Memcached", "Memcached", None),
+
+        // Aerospike
+        m("aerospike", r"Aerospike", "Aerospike", None),
+
+        // RavenDB
+        m("ravendb", r"RavenDB", "RavenDB", None),
+        m("http", r"RavenDB", "RavenDB", None),
+
+        // OrientDB
+        m("orientdb", r"OrientDB", "OrientDB", None),
+        m("http", r"X-OrientDB", "OrientDB", None),
+
+        // Valkey
+        m("redis", r"valkey", "Valkey", None),
+        m("redis", r"Valkey", "Valkey", None),
+    ]
+}
+
+/// Get additional web application signatures
+pub fn webapp_extended_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Magento
+        m("http", r"X-Magento-Cache-Control:", "Magento", None),
+        m("http", r"X-Magento-Tags:", "Magento", None),
+        m("http", r"magento", "Magento", None),
+        m("http", r"/static/frontend/.*Magento", "Magento", None),
+        m("http", r"mage/cookies", "Magento", None),
+
+        // Shopify
+        m("http", r"X-Shopify-Stage:", "Shopify", None),
+        m("http", r"Server: Shopify", "Shopify", None),
+        m("http", r"cdn\.shopify\.com", "Shopify", None),
+
+        // Wix
+        m("http", r"X-Wix-.*:", "Wix", None),
+        m("http", r"Server: Pepyaka", "Wix", None),
+        m("http", r"wix\.com", "Wix", None),
+
+        // Squarespace
+        m("http", r"X-Squarespace-.*:", "Squarespace", None),
+        m("http", r"Server: Squarespace", "Squarespace", None),
+        m("http", r"squarespace-cdn", "Squarespace", None),
+
+        // Ghost CMS
+        m("http", r"X-Ghost-.*:", "Ghost CMS", None),
+        m("http", r"ghost/", "Ghost CMS", None),
+        m("http", r"X-Powered-By: Ghost", "Ghost CMS", None),
+
+        // Spring Boot
+        m("http", r"X-Application-Context:", "Spring Boot", None),
+        m("http", r"/actuator/health", "Spring Boot Actuator", None),
+        m("http", r"/actuator/info", "Spring Boot Actuator", None),
+        m("http", r"Whitelabel Error Page", "Spring Boot", None),
+
+        // Micronaut
+        m("http", r"X-Micronaut-.*:", "Micronaut", None),
+        m("http", r"Server: Micronaut", "Micronaut", None),
+
+        // Quarkus
+        m("http", r"X-Powered-By: Quarkus", "Quarkus", None),
+        m("http", r"Server: Quarkus", "Quarkus", None),
+
+        // Express variants
+        m("http", r"X-Powered-By: Express/(\d+\.\d+\.\d+)", "Express.js", Some("$1")),
+        m("http", r"Server: Express", "Express.js", None),
+
+        // Next.js
+        m("http", r"x-nextjs-page:", "Next.js", None),
+        m("http", r"x-nextjs-cache:", "Next.js", None),
+        m("http", r"X-Powered-By: Next\.js", "Next.js", None),
+        m("http", r"_next/static", "Next.js", None),
+
+        // Nuxt.js
+        m("http", r"X-Powered-By: Nuxt", "Nuxt.js", None),
+        m("http", r"nuxt/", "Nuxt.js", None),
+        m("http", r"_nuxt/", "Nuxt.js", None),
+
+        // Gatsby
+        m("http", r"X-Gatsby-.*:", "Gatsby", None),
+        m("http", r"Server: Gatsby", "Gatsby", None),
+
+        // SvelteKit
+        m("http", r"X-Powered-By: SvelteKit", "SvelteKit", None),
+        m("http", r"Server: SvelteKit", "SvelteKit", None),
+        m("http", r"_app/immutable", "SvelteKit", None),
+
+        // Remix
+        m("http", r"X-Remix-.*:", "Remix", None),
+        m("http", r"Server: Remix", "Remix", None),
+
+        // Astro
+        m("http", r"X-Powered-By: Astro", "Astro", None),
+
+        // Hugo
+        m("http", r"Server: Hugo", "Hugo", None),
+        m("http", r"X-Powered-By: Hugo", "Hugo", None),
+
+        // Jekyll
+        m("http", r"X-Powered-By: Jekyll", "Jekyll", None),
+
+        // TYPO3
+        m("http", r"X-TYPO3-.*:", "TYPO3", None),
+        m("http", r"typo3", "TYPO3", None),
+
+        // PrestaShop
+        m("http", r"X-Powered-By: PrestaShop", "PrestaShop", None),
+        m("http", r"prestashop", "PrestaShop", None),
+
+        // Moodle
+        m("http", r"X-Powered-By: Moodle", "Moodle", None),
+        m("http", r"/theme/yui_combo", "Moodle", None),
+
+        // MediaWiki
+        m("http", r"X-Powered-By: MediaWiki", "MediaWiki", None),
+        m("http", r"mediawiki", "MediaWiki", None),
+        m("http", r"wgCanonicalNamespace", "MediaWiki", None),
+
+        // Confluence
+        m("http", r"X-Confluence-.*:", "Atlassian Confluence", None),
+        m("http", r"confluence", "Atlassian Confluence", None),
+
+        // Jira
+        m("http", r"X-AREQUESTID:", "Atlassian Jira", None),
+        m("http", r"ajs-version-number", "Atlassian Jira", None),
+
+        // phpMyAdmin
+        m("http", r"phpMyAdmin", "phpMyAdmin", None),
+        m("http", r"pma_", "phpMyAdmin", None),
+
+        // Roundcube
+        m("http", r"X-Roundcube-.*:", "Roundcube", None),
+        m("http", r"roundcube", "Roundcube", None),
+
+        // Grafana (extra)
+        m("http", r"grafana-session", "Grafana", None),
+        m("http", r"X-Grafana-.*:", "Grafana", None),
+
+        // Matomo
+        m("http", r"matomo", "Matomo", None),
+        m("http", r"X-Matomo-.*:", "Matomo", None),
+
+        // Odoo
+        m("http", r"X-Odoo-.*:", "Odoo", None),
+        m("http", r"Server: Odoo", "Odoo", None),
+
+        // GitLab (extra)
+        m("http", r"_gitlab_session", "GitLab", None),
+        m("http", r"X-Gitlab-.*:", "GitLab", None),
+
+        // Gitea
+        m("http", r"X-Powered-By: Gitea", "Gitea", None),
+        m("http", r"_i_like_gitea", "Gitea", None),
+
+        // Gogs
+        m("http", r"X-Powered-By: Gogs", "Gogs", None),
+        m("http", r"_gogs_session", "Gogs", None),
+
+        // Redmine
+        m("http", r"X-Powered-By: Redmine", "Redmine", None),
+        m("http", r"redmine", "Redmine", None),
+
+        // Bugzilla
+        m("http", r"X-Bugzilla-.*:", "Bugzilla", None),
+        m("http", r"bugzilla", "Bugzilla", None),
+
+        // Trac
+        m("http", r"X-Powered-By: Trac", "Trac", None),
+        m("http", r"trac/", "Trac", None),
+    ]
+}
+
+/// Get additional network equipment signatures
+pub fn network_extended_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Check Point
+        m("ssh", r"SSH-2.0-Check Point", "Check Point SSH", None),
+        m("ssh", r"SSH-2.0-OpenSSH_.*check", "Check Point SSH", None),
+        m("https", r"Server: Check Point", "Check Point Gateway", None),
+
+        // Sophos
+        m("ssh", r"SSH-2.0-Sophos", "Sophos SSH", None),
+        m("http", r"Server: Sophos", "Sophos", None),
+        m("https", r"Sophos", "Sophos", None),
+
+        // SonicWall (extra)
+        m("http", r"Server: SonicWALL", "SonicWall", None),
+        m("https", r"SonicWall", "SonicWall", None),
+        m("http", r"X-SonicWall", "SonicWall", None),
+
+        // Ubiquiti (extra)
+        m("http", r"Server: Ubiquiti", "Ubiquiti", None),
+        m("http", r"UBNT", "Ubiquiti", None),
+
+        // Cisco Meraki
+        m("http", r"Server: Meraki", "Cisco Meraki", None),
+        m("https", r"X-Meraki", "Cisco Meraki", None),
+
+        // Zyxel
+        m("ssh", r"SSH-2.0-Zyxel", "Zyxel SSH", None),
+        m("telnet", r"ZyXEL", "Zyxel", None),
+
+        // Netgear (extra)
+        m("telnet", r"Netgear", "Netgear", None),
+        m("http", r"Server: NETGEAR", "Netgear", None),
+
+        // DrayTek
+        m("ssh", r"SSH-2.0-DrayTek", "DrayTek SSH", None),
+        m("telnet", r"DrayTek", "DrayTek", None),
+
+        // Barracuda
+        m("ssh", r"SSH-2.0-Barracuda", "Barracuda SSH", None),
+        m("http", r"Server: Barracuda", "Barracuda", None),
+
+        // Citrix NetScaler
+        m("ssh", r"SSH-2.0-NetScaler", "Citrix NetScaler SSH", None),
+        m("http", r"Server: NetScaler", "Citrix NetScaler", None),
+        m("http", r"ns_af=", "Citrix NetScaler", None),
+
+        // F5 BIG-IP
+        m("ssh", r"SSH-2.0-OpenSSH.*f5", "F5 BIG-IP SSH", None),
+        m("http", r"Server: BigIP", "F5 BIG-IP", None),
+        m("http", r"X-Cnection: close", "F5 BIG-IP", None),
+        m("http", r"BIGipServer", "F5 BIG-IP", None),
+
+        // A10 Networks
+        m("ssh", r"SSH-2.0-A10", "A10 Networks SSH", None),
+
+        // Brocade (extra)
+        m("telnet", r"Brocade", "Brocade", None),
+
+        // Extreme Networks (extra)
+        m("telnet", r"ExtremeXOS", "Extreme Networks", None),
+        m("telnet", r"ExtremeWare", "Extreme Networks", None),
+
+        // Dell (extra)
+        m("telnet", r"Dell", "Dell Networking", None),
+        m("telnet", r"PowerConnect", "Dell PowerConnect", None),
+
+        // HPE (extra)
+        m("telnet", r"ProCurve", "HP ProCurve", None),
+        m("telnet", r"HPE", "HPE", None),
+        m("telnet", r"ArubaOS", "ArubaOS", None),
+
+        // Juniper (extra)
+        m("telnet", r"JUNOS", "Juniper Junos", None),
+
+        // Telnet banners - generic
+        m("telnet", r"User Access Verification", "Network Device", None),
+        m("telnet", r"login:", "Network Device (telnet)", None),
+        m("telnet", r"Username:", "Network Device (telnet)", None),
+
+        // SNMP responses
+        m("snmp", r"Linux", "Linux SNMP", None),
+        m("snmp", r"Windows", "Windows SNMP", None),
+        m("snmp", r"Cisco", "Cisco SNMP", None),
+        m("snmp", r"Juniper", "Juniper SNMP", None),
+        m("snmp", r"MikroTik", "MikroTik SNMP", None),
+        m("snmp", r"Synology", "Synology SNMP", None),
+    ]
+}
+
+/// Get additional monitoring/DevOps signatures
+pub fn devops_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Datadog Agent
+        m("http", r"X-Datadog-.*:", "Datadog Agent", None),
+        m("datadog", r"datadog-agent", "Datadog Agent", None),
+
+        // New Relic (extra)
+        m("http", r"X-NewRelic-.*:", "New Relic", None),
+        m("http", r"newrelic", "New Relic", None),
+
+        // AppDynamics
+        m("http", r"X-AppDynamics-.*:", "AppDynamics", None),
+        m("appdynamics", r"AppDynamics", "AppDynamics", None),
+
+        // Dynatrace
+        m("http", r"X-Dynatrace-.*:", "Dynatrace", None),
+        m("dynatrace", r"Dynatrace", "Dynatrace", None),
+        m("http", r"DTCookie:", "Dynatrace", None),
+
+        // Elastic APM
+        m("http", r"X-Cloud-Trace-Context:", "Elastic APM", None),
+
+        // Sentry
+        m("http", r"X-Sentry-.*:", "Sentry", None),
+        m("sentry", r"Sentry", "Sentry", None),
+
+        // Bamboo
+        m("bamboo", r"Bamboo", "Atlassian Bamboo", None),
+        m("http", r"bamboo", "Atlassian Bamboo", None),
+
+        // CircleCI
+        m("circleci", r"CircleCI", "CircleCI", None),
+        m("http", r"circleci", "CircleCI", None),
+
+        // Travis CI
+        m("travisci", r"Travis CI", "Travis CI", None),
+        m("http", r"travis-ci", "Travis CI", None),
+
+        // TeamCity
+        m("teamcity", r"TeamCity", "JetBrains TeamCity", None),
+        m("http", r"TeamCity", "JetBrains TeamCity", None),
+        m("http", r"X-TeamCity-.*:", "JetBrains TeamCity", None),
+
+        // Drone CI
+        m("drone", r"Drone", "Drone CI", None),
+        m("http", r"X-Drone-.*:", "Drone CI", None),
+
+        // Argo CD
+        m("argocd", r"Argo CD", "Argo CD", None),
+        m("http", r"X-Argocd-.*:", "Argo CD", None),
+
+        // Flux
+        m("flux", r"Flux", "Flux CD", None),
+
+        // Podman
+        m("podman", r"Podman", "Podman", None),
+        m("http", r"X-Podman-.*:", "Podman", None),
+
+        // containerd
+        m("containerd", r"containerd", "containerd", None),
+        m("http", r"Server: containerd", "containerd", None),
+
+        // CRI-O
+        m("crio", r"CRI-O", "CRI-O", None),
+
+        // BuildKit
+        m("buildkit", r"BuildKit", "BuildKit", None),
+
+        // Terraform Cloud
+        m("http", r"X-Terraform-.*:", "Terraform Cloud", None),
+
+        // Vault (extra)
+        m("http", r"X-Vault-.*:", "HashiCorp Vault", None),
+
+        // Consul (extra)
+        m("http", r"X-Consul-.*:", "HashiCorp Consul", None),
+
+        // Nomad
+        m("nomad", r"Nomad", "HashiCorp Nomad", None),
+        m("http", r"X-Nomad-.*:", "HashiCorp Nomad", None),
+
+        // Istio
+        m("http", r"Server: istio-envoy", "Istio", None),
+        m("http", r"x-envoy-decorator-operation:", "Istio", None),
+
+        // Keycloak
+        m("keycloak", r"Keycloak", "Keycloak", None),
+        m("http", r"X-Keycloak-.*:", "Keycloak", None),
+
+        // Argo Workflows
+        m("http", r"X-Argo-.*:", "Argo Workflows", None),
+
+        // Rancher
+        m("rancher", r"Rancher", "Rancher", None),
+        m("http", r"X-Rancher-.*:", "Rancher", None),
+
+        // Portainer
+        m("portainer", r"Portainer", "Portainer", None),
+        m("http", r"X-Portainer-.*:", "Portainer", None),
+    ]
+}
+
+/// Get additional IoT/embedded device signatures
+pub fn iot_extended_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Axis cameras
+        m("http", r"Server: AXIS (\w+)", "Axis Camera", Some("$1")),
+        m("http", r"Server: axis", "Axis Camera", None),
+        m("http", r"Axis.*Network Camera", "Axis Camera", None),
+        m("http", r"X-AXIS-.*:", "Axis Camera", None),
+
+        // Hikvision (extra)
+        m("http", r"Server: Hikvision", "Hikvision", None),
+        m("http", r"Hikvision-Webs", "Hikvision", None),
+        m("rtsp", r"Hikvision", "Hikvision", None),
+
+        // Dahua (extra)
+        m("http", r"Server: DNVRS-Webs", "Dahua", None),
+        m("http", r"Dahua", "Dahua", None),
+        m("rtsp", r"Dahua", "Dahua", None),
+
+        // Amcrest
+        m("http", r"Server: Amcrest", "Amcrest Camera", None),
+        m("http", r"Amcrest", "Amcrest Camera", None),
+
+        // Foscam
+        m("http", r"FOSCAM", "Foscam Camera", None),
+        m("http", r"Foscam", "Foscam Camera", None),
+
+        // Reolink
+        m("http", r"Reolink", "Reolink Camera", None),
+
+        // Wyze
+        m("http", r"WyzeCam", "Wyze Camera", None),
+
+        // Ring
+        m("http", r"Ring Doorbell", "Ring Doorbell", None),
+
+        // MikroTik RouterOS (extra)
+        m("http", r"RouterOS", "MikroTik RouterOS", None),
+        m("mikrotik", r"MikroTik", "MikroTik RouterOS", None),
+
+        // DD-WRT
+        m("http", r"Server: httpd/.*DD-WRT", "DD-WRT", None),
+        m("http", r"DD-WRT", "DD-WRT", None),
+        m("http", r"X-Powered-By: DD-WRT", "DD-WRT", None),
+
+        // OpenWrt
+        m("http", r"Server: uhttpd/(\d+\.\d+\.\d+)", "OpenWrt uhttpd", Some("$1")),
+        m("http", r"Server: uhttpd", "OpenWrt uhttpd", None),
+        m("http", r"OpenWrt", "OpenWrt", None),
+
+        // Tomato firmware
+        m("http", r"Server: httpd/.*Tomato", "Tomato firmware", None),
+        m("http", r"Tomato.*firmware", "Tomato firmware", None),
+
+        // Asuswrt-Merlin
+        m("http", r"Server: httpd/.*Merlin", "Asuswrt-Merlin", None),
+        m("http", r"Asuswrt-Merlin", "Asuswrt-Merlin", None),
+
+        // Ubiquiti UniFi
+        m("http", r"Server: UniFi", "Ubiquiti UniFi", None),
+        m("http", r"UniFi Controller", "Ubiquiti UniFi", None),
+        m("unifi", r"UniFi", "Ubiquiti UniFi", None),
+
+        // Siemens SIMATIC
+        m("http", r"Server: SIMATIC", "Siemens SIMATIC", None),
+        m("http", r"Siemens", "Siemens Device", None),
+        m("siemens", r"SIMATIC", "Siemens SIMATIC", None),
+
+        // Allen-Bradley / Rockwell
+        m("http", r"Allen-Bradley", "Allen-Bradley", None),
+        m("http", r"Rockwell", "Rockwell Automation", None),
+        m("ethernetip", r"Rockwell", "Rockwell Automation", None),
+
+        // Schneider Electric
+        m("http", r"Schneider Electric", "Schneider Electric", None),
+        m("http", r"Modicon", "Schneider Modicon", None),
+        m("modbus", r"Schneider", "Schneider Modicon", None),
+
+        // ABB
+        m("http", r"ABB", "ABB Device", None),
+
+        // Honeywell
+        m("http", r"Honeywell", "Honeywell Device", None),
+
+        // Bosch Security
+        m("http", r"Bosch.*Security", "Bosch Security Camera", None),
+        m("rtsp", r"Bosch", "Bosch Camera", None),
+
+        // Sony IPELA
+        m("http", r"Sony.*IPELA", "Sony IPELA Camera", None),
+        m("rtsp", r"Sony", "Sony Camera", None),
+
+        // Vivotek
+        m("http", r"Vivotek", "Vivotek Camera", None),
+        m("rtsp", r"Vivotek", "Vivotek Camera", None),
+
+        // Uniview
+        m("http", r"Uniview", "Uniview Camera", None),
+    ]
+}
+
+/// Get additional game/media server signatures
+pub fn game_media_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Counter-Strike
+        m("steam", r"Counter-Strike", "Counter-Strike Server", None),
+        m("steam", r"cstrike", "Counter-Strike Server", None),
+        m("steam", r"cs2", "Counter-Strike 2 Server", None),
+
+        // Team Fortress 2
+        m("steam", r"Team Fortress", "Team Fortress 2 Server", None),
+        m("steam", r"tf2", "Team Fortress 2 Server", None),
+
+        // ARK: Survival Evolved
+        m("steam", r"ARK", "ARK Server", None),
+        m("gamespy", r"ARK: Survival Evolved", "ARK Server", None),
+
+        // Rust
+        m("steam", r"Rust", "Rust Server", None),
+
+        // Garry's Mod
+        m("steam", r"Garry.s Mod", "Garry's Mod Server", None),
+        m("steam", r"gmod", "Garry's Mod Server", None),
+
+        // Valheim
+        m("steam", r"Valheim", "Valheim Server", None),
+
+        // Factorio
+        m("factorio", r"Factorio", "Factorio Server", None),
+
+        // 7 Days to Die
+        m("steam", r"7 Days to Die", "7 Days to Die Server", None),
+
+        // Terraria
+        m("terraria", r"Terraria", "Terraria Server", None),
+
+        // Unturned
+        m("steam", r"Unturned", "Unturned Server", None),
+
+        // FiveM (GTA V)
+        m("fivem", r"FiveM", "FiveM Server", None),
+        m("http", r"X-Cfx-.*:", "FiveM Server", None),
+
+        // SA-MP (San Andreas Multiplayer)
+        m("samp", r"SA-MP", "SA-MP Server", None),
+
+        // DayZ
+        m("steam", r"DayZ", "DayZ Server", None),
+
+        // Conan Exiles
+        m("steam", r"Conan Exiles", "Conan Exiles Server", None),
+
+        // Plex Media Server
+        m("http", r"Server: Plex Media Server", "Plex Media Server", None),
+        m("http", r"X-Plex-.*:", "Plex Media Server", None),
+        m("plex", r"Plex Media Server", "Plex Media Server", None),
+        m("http", r"X-Plex-Protocol:", "Plex Media Server", None),
+
+        // Jellyfin
+        m("http", r"Server: Jellyfin", "Jellyfin", None),
+        m("http", r"X-Emby-.*:", "Jellyfin", None),
+        m("http", r"X-Jellyfin-.*:", "Jellyfin", None),
+        m("jellyfin", r"Jellyfin", "Jellyfin", None),
+
+        // Emby
+        m("http", r"Server: Emby", "Emby", None),
+        m("http", r"X-Emby-Server:", "Emby", None),
+        m("emby", r"Emby", "Emby", None),
+
+        // Subsonic
+        m("http", r"Server: Subsonic", "Subsonic", None),
+        m("http", r"X-Subsonic-.*:", "Subsonic", None),
+        m("subsonic", r"Subsonic", "Subsonic", None),
+
+        // Airsonic
+        m("http", r"Server: Airsonic", "Airsonic", None),
+        m("http", r"X-Airsonic-.*:", "Airsonic", None),
+
+        // Navidrome
+        m("http", r"Server: Navidrome", "Navidrome", None),
+        m("http", r"X-Navidrome-.*:", "Navidrome", None),
+
+        // Ampache
+        m("http", r"X-Powered-By: Ampache", "Ampache", None),
+        m("ampache", r"Ampache", "Ampache", None),
+
+        // Icecast
+        m("http", r"Server: Icecast (\d+\.\d+\.\d+)", "Icecast", Some("$1")),
+        m("http", r"Server: Icecast", "Icecast", None),
+
+        // Shoutcast
+        m("http", r"Server: SHOUTcast", "SHOUTcast", None),
+        m("http", r"Server: SHOUTcast (\d+\.\d+)", "SHOUTcast", Some("$1")),
+
+        // Red5
+        m("http", r"Server: Red5", "Red5", None),
+
+        // Wowza
+        m("http", r"Server: Wowza Streaming Engine", "Wowza Streaming", None),
+        m("rtsp", r"Wowza", "Wowza Streaming", None),
+
+        // Nginx-RTMP
+        m("http", r"Server: nginx-rtmp", "nginx-rtmp", None),
     ]
 }
 
@@ -676,6 +1810,20 @@ pub fn all_signatures() -> Vec<MatchPattern> {
     sigs.extend(game_signatures());
     sigs.extend(monitoring_signatures());
     sigs.extend(cicd_signatures());
+    sigs.extend(http_frameworks_signatures());
+    sigs.extend(cdn_signatures());
+    sigs.extend(reverse_proxy_signatures());
+    sigs.extend(api_gateway_signatures());
+    sigs.extend(ssh_vendor_signatures());
+    sigs.extend(ssh_os_signatures());
+    sigs.extend(ftp_extended_signatures());
+    sigs.extend(smtp_extended_signatures());
+    sigs.extend(database_extended_signatures());
+    sigs.extend(webapp_extended_signatures());
+    sigs.extend(network_extended_signatures());
+    sigs.extend(devops_signatures());
+    sigs.extend(iot_extended_signatures());
+    sigs.extend(game_media_signatures());
     sigs
 }
 
@@ -710,7 +1858,7 @@ mod tests {
     #[test]
     fn test_all_signatures_count() {
         let sigs = all_signatures();
-        assert!(sigs.len() >= 200, "Expected at least 200 total signatures, got {}", sigs.len());
+        assert!(sigs.len() >= 500, "Expected at least 500 total signatures, got {}", sigs.len());
     }
 
     #[test]
