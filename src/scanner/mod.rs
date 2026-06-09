@@ -21,6 +21,10 @@ pub mod history;
 pub mod trends;
 pub mod passive;
 pub mod validation;
+pub mod templates;
+pub mod groups;
+pub mod scheduler;
+pub mod notifications;
 
 pub use engine::ScanEngine;
 pub use target::{Target, TargetParser, TargetConfig};
@@ -68,6 +72,20 @@ pub use passive::{
     PassiveDiscoveryBuilder, DnsObservation, ArpObservation, DhcpObservation, TrafficStats,
 };
 pub use validation::InputValidator;
+pub use templates::{
+    ScanTemplate, TemplateLibrary, TemplateBuilder, TemplateCategory,
+};
+pub use groups::{
+    ScanGroup, GroupTarget, GroupResult, GroupStats, TargetStats, GroupManager,
+};
+pub use scheduler::{
+    ScheduledScan, ScanScheduler, Recurrence, ScheduleStatus,
+};
+pub use notifications::{
+    NotificationConfig, NotificationChannel, NotificationEvent,
+    NotificationMessage, NotificationMessageBuilder, NotificationRecord,
+    NotificationManager,
+};
 
 use serde::{Deserialize, Serialize};
 use std::net::IpAddr;

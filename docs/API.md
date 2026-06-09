@@ -476,3 +476,226 @@ stage('Security Scan') {
     }
 }
 ```
+
+---
+
+## Integrations
+
+Nemue integrates with external ticketing and incident management systems to automatically create tickets from vulnerability findings.
+
+### Jira Integration
+
+Create and update Jira issues from scan findings.
+
+**Configuration:**
+```rust
+use nemue::integrations::JiraConfig;
+
+let config = JiraConfig {
+    base_url: "https://your-org.atlassian.net".to_string(),
+    email: "security@your-org.com".to_string(),
+    api_token: std::env::var("JIRA_API_TOKEN").unwrap(),
+    project_key: "SEC".to_string(),
+    default_assignee: Some("security-team".to_string()),
+    default_labels: vec!["automated".to_string()],
+    custom_field_mappings: HashMap::new(),
+};
+```
+
+**Severity to Priority Mapping:**
+
+| Nemue Severity | Jira Priority |
+|---------------|---------------|
+| Critical | Highest |
+| High | High |
+| Medium | Medium |
+| Low | Low |
+| Info | Lowest |
+
+**Features:**
+- Create issues from vulnerability findings with full details (CVE IDs, evidence, remediation)
+- Update existing issues with new findings
+- Transition issues through workflow states
+- Custom field mapping for organizational requirements
+
+**Example:**
+```rust
+use nemue::integrations::{JiraClient, JiraConfig};
+
+let client = JiraClient::new(config);
+let issue = client.create_issue_from_finding(&vuln_result);
+let issue_key = client.create_issue(&issue).await?;
+```
+
+---
+
+### ServiceNow Integration
+
+Create incidents and change requests from scan findings.
+
+**Configuration:**
+```rust
+use nemue::integrations::ServiceNowConfig;
+
+let config = ServiceNowConfig {
+    instance_url: "https://dev.service-now.com".to_string(),
+    username: "admin".to_string(),
+    password: std::env::var("SNOW_PASSWORD").unwrap(),
+    assignment_group: Some("Security Team".to_string()),
+    caller_id: Some("nemue-service".to_string()),
+    default_cmdb_ci: Some("web-server-01".to_string()),
+    custom_table: None,
+    custom_fields: HashMap::new(),
+};
+```
+
+**Severity to Priority Mapping:**
+
+| Nemue Severity | ServiceNow Priority | Impact |
+|---------------|-------------------|--------|
+| Critical | 1 - Critical | High |
+| High | 2 - High | High |
+| Medium | 3 - Moderate | Medium |
+| Low | 4 - Low | Low |
+| Info | 5 - Planning | Low |
+
+**Features:**
+- Create incidents from vulnerability findings
+- Create change requests for remediation tracking
+- Map findings to CMDB configuration items
+- Custom table support for organizational workflows
+- Custom field mapping
+
+**Example:**
+```rust
+use nemue::integrations::{ServiceNowClient, ServiceNowConfig};
+
+let client = ServiceNowClient::new(config);
+
+// Create incident
+let incident = client.create_incident_from_finding(&vuln_result);
+let incident_number = client.create_incident(&incident).await?;
+
+// Create change request
+let change = client.create_change_from_finding(&vuln_result);
+let change_number = client.create_change_request(&change).await?;
+```
+
+---
+
+### PagerDuty Integration
+
+Trigger incidents for critical and high-severity findings.
+
+**Configuration:**
+```rust
+use nemue::integrations::PagerDutyConfig;
+
+let config = PagerDutyConfig {
+    routing_key: std::env::var("PD_ROUTING_KEY").unwrap(),
+    api_token: std::env::var("PD_API_TOKEN").unwrap(),
+    service_id: "service-id".to_string(),
+    escalation_policy_id: Some("policy-id".to_string()),
+    default_urgency: "high".to_string(),
+    auto_acknowledge: false,
+    auto_resolve: false,
+};
+```
+
+**Severity Mapping:**
+
+| Nemue Severity | PagerDuty Severity | Urgency |
+|---------------|-------------------|---------|
+| Critical | critical | high |
+| High | error | high |
+| Medium | warning | default |
+| Low/Info | info | default |
+
+**Features:**
+- Trigger incidents via Events API v2 for critical findings
+- Configure escalation policies per severity level
+- Deduplication keys prevent duplicate incidents
+- Acknowledge and resolve incidents programmatically
+- Custom urgency based on severity
+
+**Example:**
+```rust
+use nemue::integrations::{PagerDutyClient, PagerDutyConfig};
+
+let client = PagerDutyClient::new(config);
+let incident = client.create_incident_from_finding(&vuln_result);
+let dedup_key = client.trigger_incident(&incident).await?;
+
+// Later, acknowledge or resolve
+client.acknowledge_incident(&dedup_key).await?;
+client.resolve_incident(&dedup_key).await?;
+```
+
+---
+
+### GitHub Issues Integration
+
+Create GitHub issues from scan findings with labels and milestones.
+
+**Configuration:**
+```rust
+use nemue::integrations::GitHubConfig;
+
+let config = GitHubConfig {
+    token: std::env::var("GITHUB_TOKEN").unwrap(),
+    owner: "myorg".to_string(),
+    repo: "security-reports".to_string(),
+    default_labels: vec!["auto-generated".to_string()],
+    default_assignees: vec!["security-lead".to_string()],
+    default_milestone: Some(5),
+    project_board_id: None,
+    project_column_id: None,
+};
+```
+
+**Labels Applied:**
+
+| Label | Description |
+|-------|-------------|
+| `security` | All findings |
+| `vulnerability` | All findings |
+| `severity:critical` | Critical severity |
+| `severity:high` | High severity |
+| `severity:medium` | Medium severity |
+| `severity:low` | Low severity |
+| `severity:info` | Info severity |
+
+**Features:**
+- Create issues with rich Markdown formatting (tables, code blocks, links)
+- Automatic label assignment by severity
+- Milestone assignment for tracking
+- Project board integration
+- Assignee management
+
+**Example:**
+```rust
+use nemue::integrations::{GitHubClient, GitHubConfig};
+
+let client = GitHubClient::new(config);
+let issue = client.create_issue_from_finding(&vuln_result);
+let issue_number = client.create_issue(&issue).await?;
+
+// Add to project board
+client.add_to_project(
+    &format!("https://api.github.com/repos/myorg/security-reports/issues/{}", issue_number),
+    column_id,
+).await?;
+```
+
+---
+
+### Integration Module Structure
+
+```
+src/integrations/
+├── mod.rs           # Module exports
+├── jira.rs          # Jira integration
+├── servicenow.rs    # ServiceNow integration
+├── pagerduty.rs     # PagerDuty integration
+└── github.rs        # GitHub Issues integration
+```
