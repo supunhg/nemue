@@ -270,6 +270,27 @@ enum Commands {
 
     /// Start MCP server for AI assistant integration (stdio transport)
     Mcp,
+
+    /// Compare two scan results and show changes
+    Diff {
+        /// First scan result file (JSON)
+        file_a: String,
+
+        /// Second scan result file (JSON)
+        file_b: String,
+
+        /// Output format: text (default), json
+        #[arg(short, long, default_value = "text")]
+        format: String,
+
+        /// Show only new open ports
+        #[arg(long)]
+        new_only: bool,
+
+        /// Show only closed ports
+        #[arg(long)]
+        closed_only: bool,
+    },
 }
 
 #[tokio::main]
@@ -885,6 +906,43 @@ async fn main() -> Result<()> {
 
             eprintln!("Client connected. Server running.");
             service.waiting().await?;
+        }
+
+        Commands::Diff {
+            file_a,
+            file_b,
+            format,
+            new_only,
+            closed_only,
+        } => {
+            use nemue::scanner::diff;
+
+            let scan_a = diff::load_scan(&file_a)?;
+            let scan_b = diff::load_scan(&file_b)?;
+
+            let mut diff_result = diff::compare_scans(&scan_a, &scan_b);
+
+            // Apply filters
+            if new_only {
+                diff_result.closed_ports.clear();
+                diff_result.changed_services.clear();
+                diff_result.removed_hosts.clear();
+            }
+            if closed_only {
+                diff_result.new_ports.clear();
+                diff_result.changed_services.clear();
+                diff_result.new_hosts.clear();
+            }
+
+            match format.as_str() {
+                "json" => {
+                    let json = serde_json::to_string_pretty(&diff_result)?;
+                    println!("{}", json);
+                }
+                _ => {
+                    println!("{}", diff::format_diff_text(&diff_result));
+                }
+            }
         }
     }
 

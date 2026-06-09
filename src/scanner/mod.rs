@@ -14,6 +14,7 @@ mod payload;
 mod proxy;
 pub mod packet_io;
 pub mod config;
+pub mod diff;
 
 pub use engine::ScanEngine;
 pub use target::{Target, TargetParser, TargetConfig};

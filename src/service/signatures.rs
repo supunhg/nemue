@@ -403,6 +403,225 @@ pub fn proxy_signatures() -> Vec<MatchPattern> {
     ]
 }
 
+/// Get all network equipment signatures
+pub fn network_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Cisco
+        m("ssh", r"Cisco-", "Cisco SSH", None),
+        m("telnet", r"Cisco", "Cisco IOS", None),
+        m("telnet", r"User Access Verification", "Cisco", None),
+        
+        // Juniper
+        m("ssh", r"Juniper", "Juniper SSH", None),
+        m("telnet", r"Juniper", "Juniper Junos", None),
+        
+        // MikroTik
+        m("ssh", r"ROSSSH", "MikroTik SSH", None),
+        m("ssh", r"MikroTik", "MikroTik SSH", None),
+        m("telnet", r"MikroTik", "MikroTik RouterOS", None),
+        
+        // Huawei
+        m("ssh", r"Huawei", "Huawei SSH", None),
+        m("telnet", r"Huawei", "Huawei VRP", None),
+        
+        // Fortinet
+        m("ssh", r"Fortinet", "Fortinet FortiOS", None),
+        m("https", r"FortiGate", "Fortinet FortiGate", None),
+        
+        // Palo Alto
+        m("ssh", r"Palo Alto", "Palo Alto PAN-OS", None),
+        
+        // Arista
+        m("ssh", r"Arista", "Arista EOS", None),
+        
+        // Dell
+        m("ssh", r"Dell", "Dell Networking OS", None),
+        
+        // HP/Aruba
+        m("ssh", r"HP", "HP ProCurve", None),
+        m("ssh", r"Aruba", "ArubaOS", None),
+    ]
+}
+
+/// Get all printer signatures
+pub fn printer_signatures() -> Vec<MatchPattern> {
+    vec![
+        // HP JetDirect
+        m("http", r"HP LaserJet", "HP LaserJet", None),
+        m("http", r"HP Color LaserJet", "HP Color LaserJet", None),
+        m("http", r"HP OfficeJet", "HP OfficeJet", None),
+        m("http", r"JetDirect", "HP JetDirect", None),
+        m("printer", r"HP JetDirect", "HP JetDirect", None),
+        
+        // Canon
+        m("http", r"Canon", "Canon printer", None),
+        m("http", r"imageRUNNER", "Canon imageRUNNER", None),
+        
+        // Epson
+        m("http", r"Epson", "Epson printer", None),
+        
+        // Brother
+        m("http", r"Brother", "Brother printer", None),
+        
+        // Xerox
+        m("http", r"Xerox", "Xerox printer", None),
+        m("http", r"WorkCentre", "Xerox WorkCentre", None),
+        
+        // Ricoh
+        m("http", r"Ricoh", "Ricoh printer", None),
+        
+        // Lexmark
+        m("http", r"Lexmark", "Lexmark printer", None),
+        
+        // Samsung
+        m("http", r"Samsung.*printer", "Samsung printer", None),
+        
+        // Kyocera
+        m("http", r"Kyocera", "Kyocera printer", None),
+    ]
+}
+
+/// Get all VPN signatures
+pub fn vpn_signatures() -> Vec<MatchPattern> {
+    vec![
+        // OpenVPN
+        m("openvpn", r"OpenVPN", "OpenVPN", None),
+        
+        // WireGuard
+        m("wireguard", r"WireGuard", "WireGuard", None),
+        
+        // IPSec/IKE
+        m("isakmp", r"IKE", "IKE/IPSec", None),
+        
+        // PPTP
+        m("pptp", r"PPTP", "PPTP VPN", None),
+        
+        // L2TP
+        m("l2tp", r"L2TP", "L2TP VPN", None),
+        
+        // Cisco AnyConnect
+        m("https", r"AnyConnect", "Cisco AnyConnect", None),
+        
+        // GlobalProtect
+        m("https", r"GlobalProtect", "Palo Alto GlobalProtect", None),
+        
+        // FortiClient
+        m("https", r"FortiClient", "Fortinet FortiClient", None),
+    ]
+}
+
+/// Get all IoT signatures
+pub fn iot_signatures() -> Vec<MatchPattern> {
+    vec![
+        // MQTT brokers
+        m("mqtt", r"mosquitto", "Mosquitto MQTT", None),
+        m("mqtt", r"MQTT", "MQTT Broker", None),
+        m("mqtt", r"EMQ", "EMQ X", None),
+        
+        // CoAP
+        m("coap", r"CoAP", "CoAP server", None),
+        
+        // Modbus
+        m("modbus", r"Modbus", "Modbus device", None),
+        
+        // BACnet
+        m("bacnet", r"BACnet", "BACnet device", None),
+        
+        // SNMP
+        m("snmp", r"SNMP", "SNMP agent", None),
+        
+        // IP cameras
+        m("http", r"Hikvision", "Hikvision camera", None),
+        m("http", r"Dahua", "Dahua camera", None),
+        m("http", r"Axis.*camera", "Axis camera", None),
+        
+        // Smart home
+        m("http", r"Home Assistant", "Home Assistant", None),
+        m("http", r"OpenHAB", "OpenHAB", None),
+    ]
+}
+
+/// Get all game server signatures
+pub fn game_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Minecraft
+        m("minecraft", r"Minecraft", "Minecraft Server", None),
+        m("minecraft", r"MCServer", "Minecraft Server", None),
+        
+        // Steam
+        m("steam", r"Steam", "Steam Server", None),
+        
+        // TeamSpeak
+        m("teamspeak", r"TeamSpeak", "TeamSpeak Server", None),
+        
+        // Mumble
+        m("mumble", r"Mumble", "Mumble Server", None),
+        
+        // Discord (bot)
+        m("discord", r"Discord", "Discord Bot", None),
+    ]
+}
+
+/// Get all monitoring signatures
+pub fn monitoring_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Prometheus
+        m("prometheus", r"Prometheus", "Prometheus", None),
+        m("http", r"prometheus", "Prometheus", None),
+        
+        // Grafana
+        m("grafana", r"Grafana", "Grafana", None),
+        m("http", r"grafana", "Grafana", None),
+        
+        // Zabbix
+        m("zabbix", r"Zabbix", "Zabbix", None),
+        m("http", r"zabbix", "Zabbix", None),
+        
+        // Nagios
+        m("nagios", r"Nagios", "Nagios", None),
+        m("http", r"nagios", "Nagios", None),
+        
+        // Datadog
+        m("datadog", r"Datadog", "Datadog Agent", None),
+        
+        // New Relic
+        m("newrelic", r"New Relic", "New Relic Agent", None),
+        
+        // Elastic Stack
+        m("elasticsearch", r"elasticsearch", "Elasticsearch", None),
+        m("logstash", r"logstash", "Logstash", None),
+        m("kibana", r"kibana", "Kibana", None),
+    ]
+}
+
+/// Get all CI/CD signatures
+pub fn cicd_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Jenkins
+        m("jenkins", r"Jenkins", "Jenkins", None),
+        m("http", r"jenkins", "Jenkins", None),
+        
+        // GitLab
+        m("gitlab", r"GitLab", "GitLab", None),
+        m("http", r"gitlab", "GitLab", None),
+        
+        // GitHub Enterprise
+        m("github", r"GitHub Enterprise", "GitHub Enterprise", None),
+        
+        // Nexus
+        m("nexus", r"Nexus Repository", "Sonatype Nexus", None),
+        
+        // Artifactory
+        m("artifactory", r"Artifactory", "JFrog Artifactory", None),
+        
+        // SonarQube
+        m("sonarqube", r"SonarQube", "SonarQube", None),
+        
+        // Harbor
+        m("harbor", r"Harbor", "Harbor Registry", None),
+    ]
+}
+
 /// Get all signatures combined
 pub fn all_signatures() -> Vec<MatchPattern> {
     let mut sigs = Vec::new();
@@ -416,6 +635,13 @@ pub fn all_signatures() -> Vec<MatchPattern> {
     sigs.extend(container_signatures());
     sigs.extend(mail_signatures());
     sigs.extend(proxy_signatures());
+    sigs.extend(network_signatures());
+    sigs.extend(printer_signatures());
+    sigs.extend(vpn_signatures());
+    sigs.extend(iot_signatures());
+    sigs.extend(game_signatures());
+    sigs.extend(monitoring_signatures());
+    sigs.extend(cicd_signatures());
     sigs
 }
 
@@ -450,7 +676,7 @@ mod tests {
     #[test]
     fn test_all_signatures_count() {
         let sigs = all_signatures();
-        assert!(sigs.len() >= 100, "Expected at least 100 total signatures, got {}", sigs.len());
+        assert!(sigs.len() >= 200, "Expected at least 200 total signatures, got {}", sigs.len());
     }
 
     #[test]
