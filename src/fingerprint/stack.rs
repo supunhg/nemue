@@ -263,31 +263,36 @@ pub struct SignatureDatabase {
 }
 
 #[derive(Clone)]
-struct OsSignature {
-    os_name: String,
-    tcp: TcpSignature,
-    icmp: IcmpSignature,
-    ip: IpSignature,
+pub struct OsSignature {
+    pub os_name: String,
+    pub tcp: TcpSignature,
+    pub icmp: IcmpSignature,
+    pub ip: IpSignature,
 }
 
 impl SignatureDatabase {
+    pub fn new() -> Self {
+        Self::load_default()
+    }
+
     fn load_default() -> Self {
         let signatures = vec![
+            // Linux 5.x/6.x (modern)
             OsSignature {
-                os_name: "Linux 4.x/5.x".to_string(),
+                os_name: "Linux 5.x/6.x".to_string(),
                 tcp: TcpSignature {
-                    window_size: 29200,
+                    window_size: 65535,
                     ttl: 64,
                     max_segment_size: Some(1460),
                     window_scaling: Some(7),
                     timestamp: Some(0),
                     selective_ack: true,
-                    tcp_options: vec!["mss".to_string()],
+                    tcp_options: vec!["mss".to_string(), "sackOK".to_string(), "ts".to_string(), "nop".to_string(), "ws".to_string()],
                     tcp_flags: 0x02,
                     window_size_multiple: Some(64),
                     dont_fragment: true,
                     explicit_congestion: false,
-                    tcp_option_order: vec!["mss".to_string(), "sackOK".to_string()],
+                    tcp_option_order: vec!["mss".to_string(), "sackOK".to_string(), "ts".to_string(), "nop".to_string(), "ws".to_string()],
                     quirks: Vec::new(),
                 },
                 icmp: IcmpSignature {
@@ -311,8 +316,306 @@ impl SignatureDatabase {
                     ip_options: Vec::new(),
                 },
             },
+            // Windows 10/11
+            OsSignature {
+                os_name: "Windows 10/11".to_string(),
+                tcp: TcpSignature {
+                    window_size: 64240,
+                    ttl: 128,
+                    max_segment_size: Some(1460),
+                    window_scaling: Some(8),
+                    timestamp: Some(0),
+                    selective_ack: true,
+                    tcp_options: vec!["mss".to_string(), "nop".to_string(), "ws".to_string(), "nop".to_string(), "nop".to_string(), "sackOK".to_string()],
+                    tcp_flags: 0x02,
+                    window_size_multiple: Some(64),
+                    dont_fragment: true,
+                    explicit_congestion: false,
+                    tcp_option_order: vec!["mss".to_string(), "nop".to_string(), "ws".to_string(), "nop".to_string(), "nop".to_string(), "sackOK".to_string()],
+                    quirks: Vec::new(),
+                },
+                icmp: IcmpSignature {
+                    ttl: 128,
+                    code: 0,
+                    echo_id: Some(0),
+                    echo_sequence: Some(0),
+                    payload_size: 32,
+                    data_pattern: vec![0x61],
+                    tos: 0,
+                    df_bit: false,
+                    quirks: Vec::new(),
+                },
+                ip: IpSignature {
+                    id_sequence: IdSequence::Incremental,
+                    ttl: 128,
+                    ttl_distance: 0,
+                    flags: 0x40,
+                    fragmentation: false,
+                    tos: 0,
+                    ip_options: Vec::new(),
+                },
+            },
+            // Windows Server 2019/2022
+            OsSignature {
+                os_name: "Windows Server 2019/2022".to_string(),
+                tcp: TcpSignature {
+                    window_size: 65535,
+                    ttl: 128,
+                    max_segment_size: Some(1460),
+                    window_scaling: Some(8),
+                    timestamp: Some(0),
+                    selective_ack: true,
+                    tcp_options: vec!["mss".to_string(), "nop".to_string(), "ws".to_string(), "nop".to_string(), "nop".to_string(), "sackOK".to_string()],
+                    tcp_flags: 0x02,
+                    window_size_multiple: Some(64),
+                    dont_fragment: true,
+                    explicit_congestion: false,
+                    tcp_option_order: vec!["mss".to_string(), "nop".to_string(), "ws".to_string(), "nop".to_string(), "nop".to_string(), "sackOK".to_string()],
+                    quirks: Vec::new(),
+                },
+                icmp: IcmpSignature {
+                    ttl: 128,
+                    code: 0,
+                    echo_id: Some(0),
+                    echo_sequence: Some(0),
+                    payload_size: 32,
+                    data_pattern: vec![0x61],
+                    tos: 0,
+                    df_bit: false,
+                    quirks: Vec::new(),
+                },
+                ip: IpSignature {
+                    id_sequence: IdSequence::Incremental,
+                    ttl: 128,
+                    ttl_distance: 0,
+                    flags: 0x40,
+                    fragmentation: false,
+                    tos: 0,
+                    ip_options: Vec::new(),
+                },
+            },
+            // macOS 12+ (Monterey+)
+            OsSignature {
+                os_name: "macOS 12+".to_string(),
+                tcp: TcpSignature {
+                    window_size: 65535,
+                    ttl: 64,
+                    max_segment_size: Some(1460),
+                    window_scaling: Some(6),
+                    timestamp: Some(0),
+                    selective_ack: true,
+                    tcp_options: vec!["mss".to_string(), "nop".to_string(), "ws".to_string(), "nop".to_string(), "nop".to_string(), "sackOK".to_string(), "ts".to_string()],
+                    tcp_flags: 0x02,
+                    window_size_multiple: Some(64),
+                    dont_fragment: true,
+                    explicit_congestion: false,
+                    tcp_option_order: vec!["mss".to_string(), "nop".to_string(), "ws".to_string(), "nop".to_string(), "nop".to_string(), "sackOK".to_string(), "ts".to_string()],
+                    quirks: Vec::new(),
+                },
+                icmp: IcmpSignature {
+                    ttl: 64,
+                    code: 0,
+                    echo_id: Some(0),
+                    echo_sequence: Some(0),
+                    payload_size: 56,
+                    data_pattern: vec![0x08],
+                    tos: 0,
+                    df_bit: false,
+                    quirks: Vec::new(),
+                },
+                ip: IpSignature {
+                    id_sequence: IdSequence::Random,
+                    ttl: 64,
+                    ttl_distance: 0,
+                    flags: 0x40,
+                    fragmentation: false,
+                    tos: 0,
+                    ip_options: Vec::new(),
+                },
+            },
+            // FreeBSD 13+
+            OsSignature {
+                os_name: "FreeBSD 13+".to_string(),
+                tcp: TcpSignature {
+                    window_size: 65535,
+                    ttl: 64,
+                    max_segment_size: Some(1460),
+                    window_scaling: Some(6),
+                    timestamp: Some(0),
+                    selective_ack: true,
+                    tcp_options: vec!["mss".to_string(), "nop".to_string(), "ws".to_string(), "sackOK".to_string(), "ts".to_string()],
+                    tcp_flags: 0x02,
+                    window_size_multiple: Some(64),
+                    dont_fragment: true,
+                    explicit_congestion: false,
+                    tcp_option_order: vec!["mss".to_string(), "nop".to_string(), "ws".to_string(), "sackOK".to_string(), "ts".to_string()],
+                    quirks: Vec::new(),
+                },
+                icmp: IcmpSignature {
+                    ttl: 64,
+                    code: 0,
+                    echo_id: Some(0),
+                    echo_sequence: Some(0),
+                    payload_size: 56,
+                    data_pattern: vec![0x08],
+                    tos: 0,
+                    df_bit: false,
+                    quirks: Vec::new(),
+                },
+                ip: IpSignature {
+                    id_sequence: IdSequence::Random,
+                    ttl: 64,
+                    ttl_distance: 0,
+                    flags: 0x40,
+                    fragmentation: false,
+                    tos: 0,
+                    ip_options: Vec::new(),
+                },
+            },
+            // Cisco IOS
+            OsSignature {
+                os_name: "Cisco IOS".to_string(),
+                tcp: TcpSignature {
+                    window_size: 4128,
+                    ttl: 255,
+                    max_segment_size: Some(1460),
+                    window_scaling: None,
+                    timestamp: None,
+                    selective_ack: false,
+                    tcp_options: vec!["mss".to_string()],
+                    tcp_flags: 0x02,
+                    window_size_multiple: Some(64),
+                    dont_fragment: false,
+                    explicit_congestion: false,
+                    tcp_option_order: vec!["mss".to_string()],
+                    quirks: Vec::new(),
+                },
+                icmp: IcmpSignature {
+                    ttl: 255,
+                    code: 0,
+                    echo_id: Some(0),
+                    echo_sequence: Some(0),
+                    payload_size: 56,
+                    data_pattern: vec![0xab],
+                    tos: 0,
+                    df_bit: false,
+                    quirks: Vec::new(),
+                },
+                ip: IpSignature {
+                    id_sequence: IdSequence::Incremental,
+                    ttl: 255,
+                    ttl_distance: 0,
+                    flags: 0x40,
+                    fragmentation: false,
+                    tos: 0,
+                    ip_options: Vec::new(),
+                },
+            },
+            // Solaris 11
+            OsSignature {
+                os_name: "Solaris 11".to_string(),
+                tcp: TcpSignature {
+                    window_size: 49640,
+                    ttl: 255,
+                    max_segment_size: Some(1460),
+                    window_scaling: None,
+                    timestamp: Some(0),
+                    selective_ack: true,
+                    tcp_options: vec!["mss".to_string(), "sackOK".to_string(), "ts".to_string()],
+                    tcp_flags: 0x02,
+                    window_size_multiple: Some(64),
+                    dont_fragment: false,
+                    explicit_congestion: false,
+                    tcp_option_order: vec!["mss".to_string(), "sackOK".to_string(), "ts".to_string()],
+                    quirks: Vec::new(),
+                },
+                icmp: IcmpSignature {
+                    ttl: 255,
+                    code: 0,
+                    echo_id: Some(0),
+                    echo_sequence: Some(0),
+                    payload_size: 56,
+                    data_pattern: vec![0x08],
+                    tos: 0,
+                    df_bit: false,
+                    quirks: Vec::new(),
+                },
+                ip: IpSignature {
+                    id_sequence: IdSequence::Incremental,
+                    ttl: 255,
+                    ttl_distance: 0,
+                    flags: 0x40,
+                    fragmentation: false,
+                    tos: 0,
+                    ip_options: Vec::new(),
+                },
+            },
+            // OpenBSD 7+
+            OsSignature {
+                os_name: "OpenBSD 7+".to_string(),
+                tcp: TcpSignature {
+                    window_size: 16384,
+                    ttl: 64,
+                    max_segment_size: Some(1460),
+                    window_scaling: Some(6),
+                    timestamp: None,
+                    selective_ack: true,
+                    tcp_options: vec!["mss".to_string(), "nop".to_string(), "ws".to_string(), "sackOK".to_string()],
+                    tcp_flags: 0x02,
+                    window_size_multiple: Some(64),
+                    dont_fragment: false,
+                    explicit_congestion: false,
+                    tcp_option_order: vec!["mss".to_string(), "nop".to_string(), "ws".to_string(), "sackOK".to_string()],
+                    quirks: Vec::new(),
+                },
+                icmp: IcmpSignature {
+                    ttl: 64,
+                    code: 0,
+                    echo_id: Some(0),
+                    echo_sequence: Some(0),
+                    payload_size: 64,
+                    data_pattern: vec![0x08],
+                    tos: 0,
+                    df_bit: false,
+                    quirks: Vec::new(),
+                },
+                ip: IpSignature {
+                    id_sequence: IdSequence::Random,
+                    ttl: 64,
+                    ttl_distance: 0,
+                    flags: 0x40,
+                    fragmentation: false,
+                    tos: 0,
+                    ip_options: Vec::new(),
+                },
+            },
         ];
 
         Self { signatures }
+    }
+
+    /// Get all signatures
+    pub fn signatures(&self) -> &[OsSignature] {
+        &self.signatures
+    }
+
+    /// Find best match for given signatures
+    pub fn find_match(&self, tcp: &TcpSignature, icmp: &IcmpSignature, ip: &IpSignature) -> Option<(String, f64)> {
+        let analyzer = StackAnalyzer::new();
+        let result = analyzer.analyze(
+            Some(tcp.clone()),
+            Some(icmp.clone()),
+            Some(ip.clone()),
+        );
+        match result {
+            Ok(fingerprint) => {
+                if let Some(first) = fingerprint.os_matches.first() {
+                    Some((first.os_name.clone(), first.confidence as f64))
+                } else {
+                    None
+                }
+            }
+            Err(_) => None,
+        }
     }
 }
