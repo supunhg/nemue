@@ -20,3 +20,5 @@ pub mod integrations;
 pub mod cloud;
 pub mod automation;
 pub mod ml;
+pub mod containers;
+pub mod wireless;
