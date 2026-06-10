@@ -1,6 +1,6 @@
 use nemue::performance::Profiler;
 use nemue::scanner::{PortParser, TargetParser};
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 #[test]
 fn test_port_parser_cpu_efficiency() {

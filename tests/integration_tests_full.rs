@@ -5,7 +5,7 @@ use nemue::reporting::{
 };
 use nemue::scanner::{
     cache::{CacheConfig, CacheKey, ScanCache},
-    compression::{CompressionAlgorithm, ScanCompressor},
+    compression::ScanCompressor,
     config::NemueConfig,
     dedup::ScanDeduplicator,
     validation::InputValidator,
@@ -186,10 +186,10 @@ fn large_report(finding_count: usize) -> ScanReport {
 #[test]
 fn test_port_parser_common_presets() {
     let common = PortParser::parse("common").unwrap();
-    assert!(common.len() > 0);
+    assert!(!common.is_empty());
 
     let top100 = PortParser::parse("top100").unwrap();
-    assert!(top100.len() > 0);
+    assert!(!top100.is_empty());
 }
 
 #[test]

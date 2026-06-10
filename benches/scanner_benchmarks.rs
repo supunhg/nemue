@@ -394,7 +394,7 @@ fn benchmark_enhanced_detection(c: &mut Criterion) {
 fn benchmark_probe_database(c: &mut Criterion) {
     let mut group = c.benchmark_group("probe_database");
 
-    group.bench_function("probe_db_creation", |b| b.iter(|| ProbeDatabase::new()));
+    group.bench_function("probe_db_creation", |b| b.iter(ProbeDatabase::new));
 
     let db = ProbeDatabase::new();
 
@@ -436,7 +436,7 @@ fn benchmark_probe_database(c: &mut Criterion) {
 fn benchmark_signatures(c: &mut Criterion) {
     let mut group = c.benchmark_group("signatures");
 
-    group.bench_function("load_all_signatures", |b| b.iter(|| all_signatures()));
+    group.bench_function("load_all_signatures", |b| b.iter(all_signatures));
 
     let sigs = all_signatures();
     group.throughput(Throughput::Elements(sigs.len() as u64));
@@ -696,7 +696,7 @@ fn benchmark_vuln_scanning(c: &mut Criterion) {
 
     // Default credentials database
     group.bench_function("credentials_db_creation", |b| {
-        b.iter(|| DefaultCredentials::new())
+        b.iter(DefaultCredentials::new)
     });
 
     let cred_db = DefaultCredentials::new();
@@ -770,7 +770,7 @@ fn benchmark_vuln_scanning(c: &mut Criterion) {
     });
 
     // Script engine
-    group.bench_function("script_engine_creation", |b| b.iter(|| ScriptEngine::new()));
+    group.bench_function("script_engine_creation", |b| b.iter(ScriptEngine::new));
 
     let mut engine = ScriptEngine::new();
     for i in 0..20 {
@@ -806,7 +806,7 @@ fn benchmark_vuln_scanning(c: &mut Criterion) {
 
     // Exploit database benchmarks
     group.bench_function("exploit_db_creation", |b| {
-        b.iter(|| nemue::vuln::ExploitDatabase::new())
+        b.iter(nemue::vuln::ExploitDatabase::new)
     });
 
     let exploit_db = nemue::vuln::ExploitDatabase::new();
@@ -1192,12 +1192,12 @@ fn create_multi_port_results(ports: &[(u16, PortState, Option<&str>)]) -> ScanRe
 fn benchmark_scan_history(c: &mut Criterion) {
     let mut group = c.benchmark_group("scan_history");
 
-    group.bench_function("history_creation", |b| b.iter(|| ScanHistory::new()));
+    group.bench_function("history_creation", |b| b.iter(ScanHistory::new));
 
     // Add entry benchmark
     group.bench_function("add_entry_single_port", |b| {
         b.iter_batched(
-            || ScanHistory::new(),
+            ScanHistory::new,
             |mut history| {
                 history.add_entry(
                     "192.168.1.1".to_string(),
@@ -1213,7 +1213,7 @@ fn benchmark_scan_history(c: &mut Criterion) {
             .map(|p| (p, PortState::Open, Some("http")))
             .collect();
         b.iter_batched(
-            || ScanHistory::new(),
+            ScanHistory::new,
             |mut history| {
                 history.add_entry("192.168.1.1".to_string(), create_multi_port_results(&ports))
             },
@@ -1303,7 +1303,7 @@ fn benchmark_trend_analysis(c: &mut Criterion) {
 
     // Reporting trend analyzer
     group.bench_function("reporting_trend_analyzer_creation", |b| {
-        b.iter(|| ReportingTrendAnalyzer::new())
+        b.iter(ReportingTrendAnalyzer::new)
     });
 
     let mut analyzer = ReportingTrendAnalyzer::new();
@@ -1317,8 +1317,8 @@ fn benchmark_trend_analysis(c: &mut Criterion) {
                 total_ports: 1000,
                 open_ports: 400 + (i as usize % 50),
                 vulnerabilities: ReportingVulnMetrics {
-                    critical: (10 - (i as usize % 10)).max(0),
-                    high: 15 - (i as usize % 15).max(0),
+                    critical: (10 - (i as usize % 10)),
+                    high: 15 - (i as usize % 15),
                     medium: 20,
                     low: 10,
                     info: 5,
@@ -1338,7 +1338,7 @@ fn benchmark_trend_analysis(c: &mut Criterion) {
 
     group.bench_function("reporting_trend_add_snapshot", |b| {
         b.iter_batched(
-            || ReportingTrendAnalyzer::new(),
+            ReportingTrendAnalyzer::new,
             |mut a| {
                 a.add_snapshot(ScanSnapshot {
                     scan_id: "test".to_string(),
@@ -1437,16 +1437,12 @@ fn benchmark_intensity_levels(c: &mut Criterion) {
 
     // DetectionConfig benchmarks
     group.bench_function("detection_config_default", |b| {
-        b.iter(|| DetectionConfig::default())
+        b.iter(DetectionConfig::default)
     });
 
-    group.bench_function("detection_config_light", |b| {
-        b.iter(|| DetectionConfig::light())
-    });
+    group.bench_function("detection_config_light", |b| b.iter(DetectionConfig::light));
 
-    group.bench_function("detection_config_all", |b| {
-        b.iter(|| DetectionConfig::all())
-    });
+    group.bench_function("detection_config_all", |b| b.iter(DetectionConfig::all));
 
     group.finish();
 }

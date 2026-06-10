@@ -1,6 +1,5 @@
 use nemue::performance::{BoundedQueue, BufferPool, LockFreeQueue, MetricsCollector};
 use nemue::scanner::cache::{CacheConfig, CacheKey, ScanCache};
-use std::sync::Arc;
 use std::time::Duration;
 
 #[tokio::test]

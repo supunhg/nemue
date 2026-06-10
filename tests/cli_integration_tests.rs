@@ -45,7 +45,7 @@ fn test_cli_version() {
 #[test]
 fn test_scan_subcommand_help() {
     let output = Command::new(get_binary_path())
-        .args(&["scan", "--help"])
+        .args(["scan", "--help"])
         .output()
         .expect("Failed to execute nemue");
 
@@ -58,7 +58,7 @@ fn test_scan_subcommand_help() {
 #[test]
 fn test_invalid_target() {
     let output = Command::new(get_binary_path())
-        .args(&["scan", "invalid.target"])
+        .args(["scan", "invalid.target"])
         .output()
         .expect("Failed to execute nemue");
 
@@ -68,7 +68,7 @@ fn test_invalid_target() {
 #[test]
 fn test_localhost_scan_basic() {
     let output = Command::new(get_binary_path())
-        .args(&["scan", "127.0.0.1", "-p", "1-10", "-q"])
+        .args(["scan", "127.0.0.1", "-p", "1-10", "-q"])
         .output()
         .expect("Failed to execute nemue");
 
@@ -79,7 +79,7 @@ fn test_localhost_scan_basic() {
 #[test]
 fn test_timing_template_flag() {
     let output = Command::new(get_binary_path())
-        .args(&["scan", "127.0.0.1", "-p", "80", "-T", "3", "-q"])
+        .args(["scan", "127.0.0.1", "-p", "80", "-T", "3", "-q"])
         .output()
         .expect("Failed to execute nemue");
 
@@ -89,7 +89,7 @@ fn test_timing_template_flag() {
 #[test]
 fn test_invalid_timing_template() {
     let output = Command::new(get_binary_path())
-        .args(&["scan", "127.0.0.1", "-p", "80", "-T", "6"])
+        .args(["scan", "127.0.0.1", "-p", "80", "-T", "6"])
         .output()
         .expect("Failed to execute nemue");
 
@@ -101,7 +101,7 @@ fn test_output_file_json() {
     let temp_file = "/tmp/nemue_test_output.json";
 
     let output = Command::new(get_binary_path())
-        .args(&["scan", "127.0.0.1", "-p", "1-10", "-o", temp_file, "-q"])
+        .args(["scan", "127.0.0.1", "-p", "1-10", "-o", temp_file, "-q"])
         .output()
         .expect("Failed to execute nemue");
 
@@ -115,7 +115,7 @@ fn test_output_file_json() {
 #[test]
 fn test_script_updatedb_flag() {
     let output = Command::new(get_binary_path())
-        .args(&["scan", "127.0.0.1", "--script-updatedb"])
+        .args(["scan", "127.0.0.1", "--script-updatedb"])
         .output()
         .expect("Failed to execute nemue");
 
@@ -130,7 +130,7 @@ fn test_script_updatedb_flag() {
 #[test]
 fn test_script_help_nonexistent() {
     let output = Command::new(get_binary_path())
-        .args(&["scan", "127.0.0.1", "--script-help", "nonexistent-script"])
+        .args(["scan", "127.0.0.1", "--script-help", "nonexistent-script"])
         .output()
         .expect("Failed to execute nemue");
 
@@ -142,7 +142,7 @@ fn test_script_help_nonexistent() {
 #[test]
 fn test_fine_grained_timing_flags() {
     let output = Command::new(get_binary_path())
-        .args(&[
+        .args([
             "scan",
             "127.0.0.1",
             "-p",
@@ -164,7 +164,7 @@ fn test_fine_grained_timing_flags() {
 #[test]
 fn test_port_exclusion() {
     let output = Command::new(get_binary_path())
-        .args(&["scan", "127.0.0.1", "-p", "1-100", "-e", "22,80", "-q"])
+        .args(["scan", "127.0.0.1", "-p", "1-100", "-e", "22,80", "-q"])
         .output()
         .expect("Failed to execute nemue");
 
@@ -174,7 +174,7 @@ fn test_port_exclusion() {
 #[test]
 fn test_common_ports_preset() {
     let output = Command::new(get_binary_path())
-        .args(&["scan", "127.0.0.1", "-p", "common", "-q"])
+        .args(["scan", "127.0.0.1", "-p", "common", "-q"])
         .output()
         .expect("Failed to execute nemue");
 
@@ -184,7 +184,7 @@ fn test_common_ports_preset() {
 #[test]
 fn test_top100_ports_preset() {
     let output = Command::new(get_binary_path())
-        .args(&["scan", "127.0.0.1", "-p", "top100", "-q"])
+        .args(["scan", "127.0.0.1", "-p", "top100", "-q"])
         .output()
         .expect("Failed to execute nemue");
 
@@ -194,7 +194,7 @@ fn test_top100_ports_preset() {
 #[test]
 fn test_verbose_flag() {
     let output = Command::new(get_binary_path())
-        .args(&["scan", "127.0.0.1", "-p", "80", "-v"])
+        .args(["scan", "127.0.0.1", "-p", "80", "-v"])
         .output()
         .expect("Failed to execute nemue");
 
@@ -204,7 +204,7 @@ fn test_verbose_flag() {
 #[test]
 fn test_script_args_parsing() {
     let output = Command::new(get_binary_path())
-        .args(&[
+        .args([
             "scan",
             "127.0.0.1",
             "-p",
@@ -223,7 +223,7 @@ fn test_script_args_parsing() {
 #[test]
 fn test_multiple_timing_overrides() {
     let output = Command::new(get_binary_path())
-        .args(&[
+        .args([
             "scan",
             "127.0.0.1",
             "-p",

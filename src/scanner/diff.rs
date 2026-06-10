@@ -449,7 +449,7 @@ mod tests {
 
     #[test]
     fn test_compare_scans_service_change() {
-        let mut scan_a = create_scan_a();
+        let scan_a = create_scan_a();
         let mut scan_b = create_scan_a();
 
         // Change service on port 80

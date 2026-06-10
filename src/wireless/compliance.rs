@@ -639,13 +639,8 @@ impl Default for WirelessComplianceChecker {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::wireless::bluetooth::{
-        BleDevice, BluetoothDevice, BluetoothService, DeviceClass, ServiceUuid,
-    };
-    use crate::wireless::wifi::{
-        AccessPoint, AuthenticationMode, ChannelInfo, InterferenceLevel, WifiBand, WifiClient,
-        WifiSecurity,
-    };
+    use crate::wireless::bluetooth::{BluetoothDevice, DeviceClass};
+    use crate::wireless::wifi::{AccessPoint, AuthenticationMode, WifiBand, WifiSecurity};
 
     fn create_test_ap(ssid: &str, encryption: EncryptionType) -> AccessPoint {
         AccessPoint {

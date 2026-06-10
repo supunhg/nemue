@@ -620,7 +620,7 @@ mod tests {
             "port_80".to_string(),
             "HTTP/1.1 200 OK\r\nServer: Hikvision-Webs".to_string(),
         );
-        let (cat, vendor, model, conf) = fp.match_fingerprint(&[80, 554], &banners);
+        let (cat, vendor, _model, conf) = fp.match_fingerprint(&[80, 554], &banners);
         assert_eq!(cat, DeviceCategory::IPCamera);
         assert_eq!(vendor, Some("Hikvision".to_string()));
         assert!(conf > 0.5);

@@ -280,7 +280,7 @@ simulation.on('tick', () => {{
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::topology::mapper::{SegmentType, TopologyMetadata};
+    use crate::topology::mapper::TopologyMetadata;
     use std::collections::HashMap;
     use std::net::IpAddr;
     use std::str::FromStr;
