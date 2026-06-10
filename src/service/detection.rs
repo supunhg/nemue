@@ -324,8 +324,9 @@ impl ServiceDetector {
     pub async fn detect(&self, target: IpAddr, port: u16) -> Result<ServiceInfo> {
         let addr = SocketAddr::new(target, port);
 
-        // Try to connect and grab banner
-        let banner = match timeout(self.timeout_duration, self.grab_banner(addr)).await {
+        // Try to connect and grab banner (use longer timeout for service detection)
+        let detect_timeout = Duration::from_millis(self.timeout_duration.as_millis().max(5000) as u64);
+        let banner = match timeout(detect_timeout, self.grab_banner(addr)).await {
             Ok(Ok(b)) => Some(b),
             _ => None,
         };
