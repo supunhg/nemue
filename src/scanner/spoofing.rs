@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use std::net::{IpAddr, Ipv4Addr};
+use std::net::IpAddr;
 
 /// MAC address representation
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -15,15 +15,15 @@ impl MacAddress {
     /// Formats: "00:11:22:33:44:55", "00-11-22-33-44-55", "001122334455"
     pub fn parse(s: &str) -> Result<Self> {
         let clean = s.replace([':', '-'], "");
-        
+
         if clean.len() != 12 {
             return Err(anyhow!("MAC address must be 12 hex characters"));
         }
 
         let mut bytes = [0u8; 6];
         for (i, chunk) in clean.as_bytes().chunks(2).enumerate() {
-            let hex_str = std::str::from_utf8(chunk)
-                .map_err(|_| anyhow!("Invalid MAC address format"))?;
+            let hex_str =
+                std::str::from_utf8(chunk).map_err(|_| anyhow!("Invalid MAC address format"))?;
             bytes[i] = u8::from_str_radix(hex_str, 16)
                 .map_err(|_| anyhow!("Invalid hex in MAC address: {}", hex_str))?;
         }
@@ -84,7 +84,7 @@ impl std::fmt::Display for MacAddress {
 }
 
 /// Source manipulation configuration
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct SourceConfig {
     /// Spoofed source IP address (-S)
     pub source_ip: Option<IpAddr>,
@@ -94,17 +94,6 @@ pub struct SourceConfig {
     pub interface: Option<String>,
     /// Spoofed MAC address (--spoof-mac)
     pub spoof_mac: Option<MacAddress>,
-}
-
-impl Default for SourceConfig {
-    fn default() -> Self {
-        Self {
-            source_ip: None,
-            source_port: None,
-            interface: None,
-            spoof_mac: None,
-        }
-    }
 }
 
 impl SourceConfig {
@@ -142,9 +131,7 @@ impl SourceConfig {
     pub fn parse_mac_spec(spec: &str) -> Result<MacAddress> {
         match spec {
             "0" => Ok(MacAddress::random()),
-            vendor if !vendor.contains(':') && !vendor.contains('-') => {
-                MacAddress::vendor(vendor)
-            }
+            vendor if !vendor.contains(':') && !vendor.contains('-') => MacAddress::vendor(vendor),
             mac => MacAddress::parse(mac),
         }
     }
@@ -352,7 +339,8 @@ impl SourceSpooferBuilder {
 
     /// Parse and spoof source IP
     pub fn spoof_ip_str(mut self, ip: &str) -> Result<Self> {
-        let addr = ip.parse()
+        let addr = ip
+            .parse()
             .map_err(|_| anyhow!("Invalid IP address: {}", ip))?;
         self.config.source_ip = Some(addr);
         Ok(self)
@@ -443,13 +431,13 @@ mod tests {
     fn test_mac_address_random() {
         let mac1 = MacAddress::random();
         let mac2 = MacAddress::random();
-        
+
         // Should be different (very high probability)
         assert_ne!(mac1, mac2);
-        
+
         // Should have locally administered bit set
         assert_eq!(mac1.as_bytes()[0] & 0x02, 0x02);
-        
+
         // Should not have multicast bit set
         assert_eq!(mac1.as_bytes()[0] & 0x01, 0x00);
     }
@@ -524,7 +512,7 @@ mod tests {
     fn test_source_spoofer_ip() {
         let real_ip: IpAddr = "10.0.0.1".parse().unwrap();
         let spoof_ip: IpAddr = "192.168.1.1".parse().unwrap();
-        
+
         let spoofer = SourceSpoofer::with_ip_spoofing(spoof_ip);
         assert_eq!(spoofer.get_source_ip(real_ip), spoof_ip);
         assert!(spoofer.is_ip_spoofed());
@@ -534,7 +522,7 @@ mod tests {
     fn test_source_spoofer_no_spoof() {
         let real_ip: IpAddr = "10.0.0.1".parse().unwrap();
         let spoofer = SourceSpoofer::new(SourceConfig::new());
-        
+
         assert_eq!(spoofer.get_source_ip(real_ip), real_ip);
         assert!(!spoofer.is_ip_spoofed());
     }
@@ -543,7 +531,7 @@ mod tests {
     fn test_source_spoofer_mac() {
         let mac = MacAddress::random();
         let real_mac = MacAddress::random();
-        
+
         let spoofer = SourceSpoofer::with_mac_spoofing(mac);
         assert_eq!(spoofer.get_mac_address(real_mac), mac);
         assert!(spoofer.is_mac_spoofed());
@@ -553,7 +541,7 @@ mod tests {
     fn test_source_spoofer_port() {
         let config = SourceConfig::new().with_source_port(53);
         let spoofer = SourceSpoofer::new(config);
-        
+
         assert_eq!(spoofer.get_source_port(), 53);
         assert!(spoofer.is_port_fixed());
     }

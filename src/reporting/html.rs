@@ -6,24 +6,29 @@ pub struct HtmlReportGenerator;
 impl HtmlReportGenerator {
     pub fn generate(report: &ScanReport) -> String {
         let mut html = String::new();
-        
+
         html.push_str("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n");
         html.push_str("  <meta charset=\"UTF-8\">\n");
-        html.push_str("  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n");
-        html.push_str(&format!("  <title>Security Scan Report - {}</title>\n", report.metadata.report_id));
+        html.push_str(
+            "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n",
+        );
+        html.push_str(&format!(
+            "  <title>Security Scan Report - {}</title>\n",
+            report.metadata.report_id
+        ));
         html.push_str("  <style>\n");
         html.push_str(Self::css());
         html.push_str("  </style>\n");
         html.push_str("</head>\n<body>\n");
-        
+
         html.push_str(&Self::header(report));
         html.push_str(&Self::executive_summary(report));
         html.push_str(&Self::vulnerability_chart(report));
         html.push_str(&Self::findings_table(report));
         html.push_str(&Self::compliance_section(report));
         html.push_str(&Self::recommendations_section(report));
-        html.push_str(&Self::footer());
-        
+        html.push_str(Self::footer());
+
         html.push_str("</body>\n</html>");
         html
     }
@@ -141,7 +146,7 @@ impl HtmlReportGenerator {
 
         let mut html = String::from("  <h2>🔍 Findings</h2>\n  <table>\n");
         html.push_str("    <tr><th>Severity</th><th>Title</th><th>Hosts</th><th>CVSS</th><th>CVE IDs</th></tr>\n");
-        
+
         for finding in &report.findings {
             let severity_class = match finding.severity {
                 Severity::Critical => "critical",
@@ -150,7 +155,7 @@ impl HtmlReportGenerator {
                 Severity::Low => "low",
                 Severity::Info => "info",
             };
-            
+
             html.push_str(&format!(
                 "    <tr>\n      <td><span class=\"badge {}\">{:?}</span></td>\n      <td>{}</td>\n      <td>{}</td>\n      <td>{}</td>\n      <td>{}</td>\n    </tr>\n",
                 severity_class,
@@ -161,20 +166,22 @@ impl HtmlReportGenerator {
                 finding.cve_ids.join(", ")
             ));
         }
-        
+
         html.push_str("  </table>\n");
         html
     }
 
     fn compliance_section(report: &ScanReport) -> String {
         let mut html = String::from("  <h2>✅ Compliance Status</h2>\n");
-        html.push_str(&format!("  <p>Overall Compliance Score: <strong>{:.1}%</strong></p>\n", 
-            report.compliance.overall_score));
-        
+        html.push_str(&format!(
+            "  <p>Overall Compliance Score: <strong>{:.1}%</strong></p>\n",
+            report.compliance.overall_score
+        ));
+
         if !report.compliance.frameworks.is_empty() {
             html.push_str("  <table>\n");
             html.push_str("    <tr><th>Framework</th><th>Version</th><th>Passing</th><th>Failing</th><th>Score</th></tr>\n");
-            
+
             for framework in &report.compliance.frameworks {
                 html.push_str(&format!(
                     "    <tr>\n      <td>{}</td>\n      <td>{}</td>\n      <td>{}</td>\n      <td>{}</td>\n      <td>{:.1}%</td>\n    </tr>\n",
@@ -185,10 +192,10 @@ impl HtmlReportGenerator {
                     framework.score
                 ));
             }
-            
+
             html.push_str("  </table>\n");
         }
-        
+
         html
     }
 
@@ -199,7 +206,7 @@ impl HtmlReportGenerator {
 
         let mut html = String::from("  <h2>💡 Recommendations</h2>\n  <table>\n");
         html.push_str("    <tr><th>Priority</th><th>Category</th><th>Title</th><th>Impact</th><th>Effort</th></tr>\n");
-        
+
         for rec in &report.recommendations {
             html.push_str(&format!(
                 "    <tr>\n      <td><span class=\"badge\">{:?}</span></td>\n      <td>{}</td>\n      <td>{}</td>\n      <td>{}</td>\n      <td>{}</td>\n    </tr>\n",
@@ -210,7 +217,7 @@ impl HtmlReportGenerator {
                 rec.effort
             ));
         }
-        
+
         html.push_str("  </table>\n");
         html
     }
@@ -269,7 +276,7 @@ mod tests {
     fn test_html_generation() {
         let report = sample_report();
         let html = HtmlReportGenerator::generate(&report);
-        
+
         assert!(html.contains("<!DOCTYPE html>"));
         assert!(html.contains("Security Scan Report"));
         assert!(html.contains("report-001"));
@@ -279,7 +286,7 @@ mod tests {
     fn test_html_contains_summary() {
         let report = sample_report();
         let html = HtmlReportGenerator::generate(&report);
-        
+
         assert!(html.contains("Executive Summary"));
         assert!(html.contains("Total Hosts"));
         assert!(html.contains("10"));
@@ -289,7 +296,7 @@ mod tests {
     fn test_html_contains_vulnerabilities() {
         let report = sample_report();
         let html = HtmlReportGenerator::generate(&report);
-        
+
         assert!(html.contains("Vulnerabilities"));
         assert!(html.contains("Critical"));
         assert!(html.contains("High"));
@@ -297,7 +304,7 @@ mod tests {
 
     #[test]
     fn test_html_with_findings() {
-        let mut builder = ReportBuilder::new()
+        let builder = ReportBuilder::new()
             .metadata(ReportMetadata {
                 scan_id: "scan-001".to_string(),
                 report_id: "report-001".to_string(),
@@ -339,7 +346,7 @@ mod tests {
 
         let report = builder.build().unwrap();
         let html = HtmlReportGenerator::generate(&report);
-        
+
         assert!(html.contains("Findings"));
         assert!(html.contains("Test Finding"));
         assert!(html.contains("9.8"));

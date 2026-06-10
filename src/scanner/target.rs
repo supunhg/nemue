@@ -1,11 +1,11 @@
 use anyhow::{anyhow, Result};
 use ipnetwork::IpNetwork;
+use rand::Rng;
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::net::{IpAddr, ToSocketAddrs};
 use std::path::Path;
-use rand::Rng;
 
 #[derive(Debug, Clone)]
 pub struct Target {
@@ -49,7 +49,7 @@ impl TargetConfig {
         for line in reader.lines() {
             let line = line?;
             let trimmed = line.trim();
-            
+
             // Skip empty lines and comments
             if trimmed.is_empty() || trimmed.starts_with('#') {
                 continue;
@@ -57,11 +57,13 @@ impl TargetConfig {
 
             // Parse as CIDR or single IP
             if trimmed.contains('/') {
-                let network: IpNetwork = trimmed.parse()
+                let network: IpNetwork = trimmed
+                    .parse()
                     .map_err(|_| anyhow!("Invalid CIDR in exclusion file: {}", trimmed))?;
                 self.excluded_networks.push(network);
             } else {
-                let ip: IpAddr = trimmed.parse()
+                let ip: IpAddr = trimmed
+                    .parse()
                     .map_err(|_| anyhow!("Invalid IP in exclusion file: {}", trimmed))?;
                 self.exclusions.insert(ip);
             }
@@ -119,7 +121,7 @@ impl TargetParser {
             if let Ok(ip) = target.parse::<IpAddr>() {
                 return Ok(vec![ip]);
             }
-            
+
             // If not an IP, try DNS resolution
             Self::resolve_hostname(target)
         }
@@ -156,11 +158,11 @@ impl TargetParser {
 
         for line in reader.lines() {
             let line = line?;
-            
+
             // Split by whitespace (space, tab)
             for target in line.split_whitespace() {
                 let trimmed = target.trim();
-                
+
                 // Skip comments and empty
                 if trimmed.is_empty() || trimmed.starts_with('#') {
                     continue;
@@ -191,7 +193,10 @@ impl TargetParser {
         }
 
         if count > 1_000_000 {
-            return Err(anyhow!("Random target count too large: {}. Maximum is 1,000,000", count));
+            return Err(anyhow!(
+                "Random target count too large: {}. Maximum is 1,000,000",
+                count
+            ));
         }
 
         let mut rng = rand::thread_rng();
@@ -200,21 +205,22 @@ impl TargetParser {
         // Private/reserved ranges to skip
         let private_ranges = if skip_private {
             vec![
-                "0.0.0.0/8",        // Current network
-                "10.0.0.0/8",       // Private
-                "127.0.0.0/8",      // Loopback
-                "169.254.0.0/16",   // Link-local
-                "172.16.0.0/12",    // Private
-                "192.0.0.0/24",     // IETF Protocol Assignments
-                "192.0.2.0/24",     // TEST-NET-1
-                "192.168.0.0/16",   // Private
-                "198.18.0.0/15",    // Benchmarking
-                "198.51.100.0/24",  // TEST-NET-2
-                "203.0.113.0/24",   // TEST-NET-3
-                "224.0.0.0/4",      // Multicast
-                "240.0.0.0/4",      // Reserved
+                "0.0.0.0/8",          // Current network
+                "10.0.0.0/8",         // Private
+                "127.0.0.0/8",        // Loopback
+                "169.254.0.0/16",     // Link-local
+                "172.16.0.0/12",      // Private
+                "192.0.0.0/24",       // IETF Protocol Assignments
+                "192.0.2.0/24",       // TEST-NET-1
+                "192.168.0.0/16",     // Private
+                "198.18.0.0/15",      // Benchmarking
+                "198.51.100.0/24",    // TEST-NET-2
+                "203.0.113.0/24",     // TEST-NET-3
+                "224.0.0.0/4",        // Multicast
+                "240.0.0.0/4",        // Reserved
                 "255.255.255.255/32", // Broadcast
-            ].iter()
+            ]
+            .iter()
             .map(|s| s.parse::<IpNetwork>().unwrap())
             .collect::<Vec<_>>()
         } else {
@@ -228,12 +234,7 @@ impl TargetParser {
             attempts += 1;
 
             // Generate random IPv4 (more common than IPv6 for random scanning)
-            let octets: [u8; 4] = [
-                rng.gen(),
-                rng.gen(),
-                rng.gen(),
-                rng.gen(),
-            ];
+            let octets: [u8; 4] = [rng.gen(), rng.gen(), rng.gen(), rng.gen()];
             let ip = IpAddr::from(octets);
 
             // Skip if in private range
@@ -286,7 +287,7 @@ impl TargetParser {
     fn resolve_hostname(hostname: &str) -> Result<Vec<IpAddr>> {
         // Add default port for resolution (doesn't matter which)
         let addr_str = format!("{}:0", hostname);
-        
+
         let addrs: Vec<_> = addr_str
             .to_socket_addrs()
             .map_err(|e| anyhow!("Failed to resolve hostname '{}': {}", hostname, e))?
@@ -317,9 +318,11 @@ impl TargetParser {
                     return Err(anyhow!("Invalid octet range: {}", part));
                 }
 
-                let start: u8 = range_parts[0].parse()
+                let start: u8 = range_parts[0]
+                    .parse()
                     .map_err(|_| anyhow!("Invalid octet start: {}", range_parts[0]))?;
-                let end: u8 = range_parts[1].parse()
+                let end: u8 = range_parts[1]
+                    .parse()
                     .map_err(|_| anyhow!("Invalid octet end: {}", range_parts[1]))?;
 
                 if start > end {
@@ -329,16 +332,15 @@ impl TargetParser {
                 octet_ranges.push((start..=end).collect());
             } else {
                 // Single value
-                let val: u8 = part.parse()
+                let val: u8 = part
+                    .parse()
                     .map_err(|_| anyhow!("Invalid octet: {}", part))?;
                 octet_ranges.push(vec![val]);
             }
         }
 
         // Calculate total combinations
-        let total: usize = octet_ranges.iter()
-            .map(|r| r.len())
-            .product();
+        let total: usize = octet_ranges.iter().map(|r| r.len()).product();
 
         if total > 65536 {
             return Err(anyhow!(
@@ -437,7 +439,7 @@ mod tests {
     fn test_exclusion_single_ip() {
         let mut config = TargetConfig::new();
         config.exclude_ip("192.168.1.1".parse().unwrap());
-        
+
         assert!(config.is_excluded(&"192.168.1.1".parse().unwrap()));
         assert!(!config.is_excluded(&"192.168.1.2".parse().unwrap()));
     }
@@ -446,7 +448,7 @@ mod tests {
     fn test_exclusion_network() {
         let mut config = TargetConfig::new();
         config.exclude_network("192.168.1.0/24".parse().unwrap());
-        
+
         assert!(config.is_excluded(&"192.168.1.1".parse().unwrap()));
         assert!(config.is_excluded(&"192.168.1.255".parse().unwrap()));
         assert!(!config.is_excluded(&"192.168.2.1".parse().unwrap()));
@@ -456,7 +458,7 @@ mod tests {
     fn test_parse_with_config_exclusions() {
         let mut config = TargetConfig::new();
         config.exclude_ip("192.168.1.2".parse().unwrap());
-        
+
         let result = TargetParser::parse_with_config("192.168.1.1-3", &config).unwrap();
         assert_eq!(result.len(), 2);
         assert!(!result.contains(&"192.168.1.2".parse().unwrap()));
@@ -470,14 +472,14 @@ mod tests {
         writeln!(file, "")?;
         writeln!(file, "192.168.1.2 192.168.1.3")?;
         writeln!(file, "192.168.1.4-5")?;
-        
+
         let config = TargetConfig::default();
         let result = TargetParser::parse_from_file(file.path(), &config)?;
-        
+
         assert_eq!(result.len(), 5);
         assert!(result.contains(&"192.168.1.1".parse().unwrap()));
         assert!(result.contains(&"192.168.1.5".parse().unwrap()));
-        
+
         Ok(())
     }
 
@@ -487,14 +489,14 @@ mod tests {
         writeln!(file, "192.168.1.1")?;
         writeln!(file, "# Exclude this network")?;
         writeln!(file, "10.0.0.0/8")?;
-        
+
         let mut config = TargetConfig::new();
         config.load_exclusions_from_file(file.path())?;
-        
+
         assert!(config.is_excluded(&"192.168.1.1".parse().unwrap()));
         assert!(config.is_excluded(&"10.0.0.1".parse().unwrap()));
         assert!(config.is_excluded(&"10.255.255.255".parse().unwrap()));
-        
+
         Ok(())
     }
 
@@ -502,7 +504,7 @@ mod tests {
     fn test_generate_random() {
         let result = TargetParser::generate_random(10, false).unwrap();
         assert_eq!(result.len(), 10);
-        
+
         // Should all be valid IPs
         for ip in result {
             assert!(ip.is_ipv4());
@@ -513,7 +515,7 @@ mod tests {
     fn test_generate_random_skip_private() {
         let result = TargetParser::generate_random(100, true).unwrap();
         assert_eq!(result.len(), 100);
-        
+
         // None should be in private ranges
         for ip in result {
             let ip_str = ip.to_string();

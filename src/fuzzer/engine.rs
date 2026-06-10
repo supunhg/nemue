@@ -2,13 +2,13 @@
 // Implements gobuster/feroxbuster/ffuf-like fuzzing capabilities
 
 use anyhow::{anyhow, Result};
-use std::sync::Arc;
-use tokio::sync::{Semaphore, RwLock};
+use reqwest::{Client, Response};
+use serde::{Deserialize, Serialize};
 use std::collections::{HashSet, VecDeque};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
-use reqwest::{Client, Response, StatusCode};
+use tokio::sync::{RwLock, Semaphore};
 use tracing::{debug, info, warn};
-use serde::{Serialize, Deserialize};
 
 /// Fuzzing mode determines what to enumerate
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -189,8 +189,8 @@ impl FuzzEngine {
 
         // Configure redirect policy
         if let Some(max_redirects) = config.follow_redirects {
-            client_builder = client_builder
-                .redirect(reqwest::redirect::Policy::limited(max_redirects as usize));
+            client_builder =
+                client_builder.redirect(reqwest::redirect::Policy::limited(max_redirects as usize));
         } else {
             client_builder = client_builder.redirect(reqwest::redirect::Policy::none());
         }
@@ -211,7 +211,7 @@ impl FuzzEngine {
     /// Start fuzzing with the configured wordlist
     pub async fn fuzz(&self, wordlist: Vec<String>) -> Result<Vec<FuzzResult>> {
         info!("Starting fuzzing engine with {} entries", wordlist.len());
-        
+
         // Initialize stats
         {
             let mut stats = self.stats.write().await;
@@ -235,13 +235,13 @@ impl FuzzEngine {
         for word in wordlist {
             let permit = self.semaphore.clone().acquire_owned().await?;
             let engine = self.clone_for_task();
-            
+
             let task = tokio::spawn(async move {
                 let result = engine.fuzz_path(&word, 0).await;
                 drop(permit);
                 result
             });
-            
+
             tasks.push(task);
 
             // Rate limiting
@@ -270,7 +270,7 @@ impl FuzzEngine {
     async fn fuzz_path(&self, word: &str, depth: usize) -> Result<Option<FuzzResult>> {
         // Build URL based on mode
         let url = self.build_url(word)?;
-        
+
         debug!("Fuzzing: {}", url);
 
         // Send request
@@ -284,13 +284,14 @@ impl FuzzEngine {
                 return Ok(None);
             }
         };
-        
+
         let elapsed = start.elapsed().as_millis() as u64;
 
         // Extract response details
         let status = response.status().as_u16();
         let is_redirect = response.status().is_redirection();
-        let redirect_location = response.headers()
+        let redirect_location = response
+            .headers()
             .get("location")
             .and_then(|v| v.to_str().ok())
             .map(|s| s.to_string());
@@ -334,11 +335,12 @@ impl FuzzEngine {
         }
 
         // Add to recursive queue if this is a directory
-        if self.config.recursive && depth < self.config.max_depth {
-            if status == 200 || status == 301 || status == 302 {
-                let mut queue = self.queue.write().await;
-                queue.push_back((word.to_string(), depth + 1));
-            }
+        if self.config.recursive
+            && depth < self.config.max_depth
+            && (status == 200 || status == 301 || status == 302)
+        {
+            let mut queue = self.queue.write().await;
+            queue.push_back((word.to_string(), depth + 1));
         }
 
         // Update findings count
@@ -353,14 +355,10 @@ impl FuzzEngine {
     /// Build URL based on fuzzing mode
     fn build_url(&self, word: &str) -> Result<String> {
         let base = self.config.base_url.trim_end_matches('/');
-        
+
         match self.config.mode {
-            FuzzMode::Directory => {
-                Ok(format!("{}/{}/", base, word.trim_start_matches('/')))
-            }
-            FuzzMode::File => {
-                Ok(format!("{}/{}", base, word.trim_start_matches('/')))
-            }
+            FuzzMode::Directory => Ok(format!("{}/{}/", base, word.trim_start_matches('/'))),
+            FuzzMode::File => Ok(format!("{}/{}", base, word.trim_start_matches('/'))),
             FuzzMode::Extension => {
                 // Will be implemented with extension fuzzing
                 Ok(format!("{}/{}", base, word))
@@ -372,12 +370,12 @@ impl FuzzEngine {
     /// Send HTTP request with configured headers
     async fn send_request(&self, url: &str) -> Result<Response> {
         let mut request = self.client.get(url);
-        
+
         // Add custom headers
         for (key, value) in &self.config.headers {
             request = request.header(key, value);
         }
-        
+
         let response = request.send().await?;
         Ok(response)
     }
@@ -431,14 +429,17 @@ impl FuzzEngine {
     /// Detect wildcard responses by testing random non-existent paths
     async fn detect_wildcard_response(&self) -> Result<()> {
         info!("Detecting wildcard responses...");
-        
+
         // Test with random non-existent path
         let random_path = format!("__nemue_test_{}", uuid::Uuid::new_v4());
-        
+
         if let Ok(Some(result)) = self.fuzz_path(&random_path, 0).await {
             let mut signature = self.wildcard_signature.write().await;
             *signature = Some((result.status_code, result.size));
-            info!("Wildcard detected: status={}, size={}", result.status_code, result.size);
+            info!(
+                "Wildcard detected: status={}, size={}",
+                result.status_code, result.size
+            );
         }
 
         Ok(())
@@ -447,7 +448,7 @@ impl FuzzEngine {
     /// Check if response matches wildcard signature
     async fn is_wildcard_response(&self, status: u16, size: usize) -> bool {
         let signature = self.wildcard_signature.read().await;
-        
+
         if let Some((wildcard_status, wildcard_size)) = *signature {
             // Allow 5% variance in size for dynamic content
             let size_diff = if wildcard_size > 0 {
@@ -455,7 +456,7 @@ impl FuzzEngine {
             } else {
                 size == wildcard_size
             };
-            
+
             status == wildcard_status && size_diff
         } else {
             false
@@ -465,11 +466,11 @@ impl FuzzEngine {
     /// Auto-calibrate by sampling wordlist to find common false positives
     async fn calibrate(&self, wordlist: &[String]) -> Result<()> {
         info!("Auto-calibrating...");
-        
+
         // Sample a few entries from the wordlist
         let sample_size = std::cmp::min(5, wordlist.len());
         let samples: Vec<_> = wordlist.iter().take(sample_size).collect();
-        
+
         // Test samples and look for patterns
         // This is a placeholder for more sophisticated calibration
         for sample in samples {
@@ -481,11 +482,11 @@ impl FuzzEngine {
 
     /// Process recursive queue for directory discovery
     async fn process_recursive_queue(&self) -> Result<Vec<FuzzResult>> {
-        let mut results = Vec::new();
-        
+        let results = Vec::new();
+
         // This will be implemented in the recursive scanning feature
         // For now, return empty results
-        
+
         Ok(results)
     }
 
@@ -534,7 +535,7 @@ mod tests {
             mode: FuzzMode::Directory,
             ..Default::default()
         };
-        
+
         let engine = FuzzEngine::new(config).unwrap();
         let url = engine.build_url("admin").unwrap();
         assert_eq!(url, "https://example.com/admin/");
@@ -547,7 +548,7 @@ mod tests {
             mode: FuzzMode::File,
             ..Default::default()
         };
-        
+
         let engine = FuzzEngine::new(config).unwrap();
         let url = engine.build_url("robots.txt").unwrap();
         assert_eq!(url, "https://example.com/robots.txt");
@@ -557,10 +558,10 @@ mod tests {
     fn test_matches_filter_status_code() {
         let config = FuzzConfig::default();
         let engine = FuzzEngine::new(config).unwrap();
-        
+
         // Should match (200 is in default filter)
         assert!(engine.matches_filter(200, 1000, 100));
-        
+
         // Should not match (404 is not in default filter)
         assert!(!engine.matches_filter(404, 1000, 100));
     }
@@ -570,15 +571,15 @@ mod tests {
         let mut config = FuzzConfig::default();
         config.filter.min_size = Some(500);
         config.filter.max_size = Some(2000);
-        
+
         let engine = FuzzEngine::new(config).unwrap();
-        
+
         // Should match
         assert!(engine.matches_filter(200, 1000, 100));
-        
+
         // Too small
         assert!(!engine.matches_filter(200, 100, 100));
-        
+
         // Too large
         assert!(!engine.matches_filter(200, 5000, 100));
     }
@@ -587,12 +588,12 @@ mod tests {
     fn test_matches_filter_exclude_size() {
         let mut config = FuzzConfig::default();
         config.filter.exclude_sizes = vec![1234, 5678];
-        
+
         let engine = FuzzEngine::new(config).unwrap();
-        
+
         // Should match
         assert!(engine.matches_filter(200, 1000, 100));
-        
+
         // Should not match (excluded size)
         assert!(!engine.matches_filter(200, 1234, 100));
     }

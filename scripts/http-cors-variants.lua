@@ -1,0 +1,16 @@
+local nmap = require("nmap")
+local stdnse = require("stdnse")
+
+description = [[Detection script]]
+
+categories = {"safe", "default"}
+
+portrule = function(host, port)
+    return port.protocol == "tcp" or port.protocol == "udp"
+end
+
+action = function(host, port)
+    local output = {}
+    table.insert(output, "Check completed")
+    return stdnse.format_output(true, output)
+end

@@ -58,11 +58,17 @@ impl DisplayFormatter {
         self.print_results_filtered(results, true, true);
     }
 
-    pub fn print_results_filtered(&self, results: &ScanResults, show_closed: bool, show_filtered: bool) {
-        let mut stdout = io::stdout();
-        
+    pub fn print_results_filtered(
+        &self,
+        results: &ScanResults,
+        show_closed: bool,
+        show_filtered: bool,
+    ) {
+        let _stdout = io::stdout();
+
         // Group results by target
-        let mut targets: std::collections::HashMap<String, Vec<_>> = std::collections::HashMap::new();
+        let mut targets: std::collections::HashMap<String, Vec<_>> =
+            std::collections::HashMap::new();
         for result in &results.results {
             // Filter ports based on flags (by default only show open ports)
             let should_show = match result.state {
@@ -73,11 +79,11 @@ impl DisplayFormatter {
                 PortState::OpenFiltered => true,
                 PortState::Unknown => true, // Always show unknown states
             };
-            
+
             if !should_show {
                 continue;
             }
-            
+
             targets
                 .entry(result.target.to_string())
                 .or_insert_with(Vec::new)
@@ -86,7 +92,7 @@ impl DisplayFormatter {
 
         for (target, target_results) in targets.iter() {
             // Get hostname if available
-            let hostname_suffix = if let Some(ref result) = target_results.first() {
+            let hostname_suffix = if let Some(result) = target_results.first() {
                 if let Some(ref hostname) = result.hostname {
                     format!(" ({})", hostname.bright_yellow())
                 } else {
@@ -95,7 +101,7 @@ impl DisplayFormatter {
             } else {
                 String::new()
             };
-            
+
             println!(
                 "{} Scan Results for {}{}",
                 "┌─".bright_cyan().bold(),
@@ -137,11 +143,7 @@ impl DisplayFormatter {
                 "VERSION".bright_white().bold(),
                 "PRODUCT".bright_white().bold()
             );
-            println!(
-                "{} {}",
-                "│".bright_cyan(),
-                "─".repeat(75).bright_black()
-            );
+            println!("{} {}", "│".bright_cyan(), "─".repeat(75).bright_black());
 
             // Print each result
             for result in target_results {
@@ -156,8 +158,8 @@ impl DisplayFormatter {
                 };
 
                 let service = result.service.as_deref().unwrap_or("-");
-                
-                let (product, version) = if let Some(ref info) = result.service_info {
+
+                let (_product, _version) = if let Some(ref info) = result.service_info {
                     (
                         info.product.as_deref().unwrap_or("-"),
                         info.version.as_deref().unwrap_or("-"),
@@ -214,11 +216,7 @@ impl DisplayFormatter {
                     );
                     // Indent script output
                     for line in script.output.lines() {
-                        println!(
-                            "{} |   {}",
-                            "│".bright_cyan(),
-                            line.dimmed()
-                        );
+                        println!("{} |   {}", "│".bright_cyan(), line.dimmed());
                     }
                 }
 
@@ -231,18 +229,14 @@ impl DisplayFormatter {
                             } else {
                                 banner.clone()
                             };
-                            println!(
-                                "{} |   {}",
-                                "│".bright_cyan(),
-                                banner_preview.dimmed()
-                            );
+                            println!("{} |   {}", "│".bright_cyan(), banner_preview.dimmed());
                         }
                     }
                 }
             }
 
             println!("{}", "│".bright_cyan());
-            
+
             // OS Detection results
             let target_os: Vec<_> = results
                 .os_fingerprints
@@ -266,16 +260,21 @@ impl DisplayFormatter {
                     };
 
                     println!(
-                        "{} {}  {} ({}% confidence)",
+                        "{}     {} ({}% confidence)",
                         "│".bright_cyan(),
-                        "  ".repeat(1),
                         format!("{:?}", os.os_family).color(confidence_color),
                         os.confidence
                     );
-                    
+
                     if self.verbose {
-                        let ttl_str = os.ttl.map(|t| t.to_string()).unwrap_or_else(|| "?".to_string());
-                        let win_str = os.window_size.map(|w| w.to_string()).unwrap_or_else(|| "?".to_string());
+                        let ttl_str = os
+                            .ttl
+                            .map(|t| t.to_string())
+                            .unwrap_or_else(|| "?".to_string());
+                        let win_str = os
+                            .window_size
+                            .map(|w| w.to_string())
+                            .unwrap_or_else(|| "?".to_string());
                         println!(
                             "{} {}  {}",
                             "│".bright_cyan(),
@@ -309,13 +308,13 @@ impl DisplayFormatter {
             results.port_count.to_string().bright_white(),
             results.target_count.to_string().bright_white()
         );
-        
+
         let total_open = results
             .results
             .iter()
             .filter(|r| matches!(r.state, PortState::Open))
             .count();
-        
+
         if total_open > 0 {
             println!(
                 "{} {} open port(s) discovered",

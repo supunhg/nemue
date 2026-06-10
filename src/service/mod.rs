@@ -1,22 +1,19 @@
 pub mod detection;
-pub mod intensity;
-pub mod probes;
-pub mod parsers;
 pub mod enhanced;
+pub mod intensity;
+pub mod nmap_compat;
+pub mod parsers;
+pub mod probes;
+pub mod signatures;
 
 pub use detection::{ServiceDetector, ServiceInfo};
+pub use enhanced::{EnhancedServiceDetector, ProbeStatistics};
 pub use intensity::{
-    IntensityLevel,
-    DetectionConfig,
-    ServiceProbe,
-    ProbeProtocol,
-    ProbeRarity,
+    DetectionConfig, IntensityLevel, MatchPattern, ProbeProtocol, ProbeRarity, ServiceProbe,
+    VersionInfo,
+};
+pub use parsers::{
+    DatabaseInfo, DatabaseParser, Http2Info, Http2Parser, RdpInfo, RdpParser, SmbInfo, SmbParser,
 };
 pub use probes::ProbeDatabase;
-pub use parsers::{
-    SmbParser, SmbInfo,
-    RdpParser, RdpInfo,
-    Http2Parser, Http2Info,
-    DatabaseParser, DatabaseInfo,
-};
-pub use enhanced::{EnhancedServiceDetector, ProbeStatistics};
+pub use signatures::all_signatures;

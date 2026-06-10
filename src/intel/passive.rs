@@ -62,7 +62,7 @@ impl PassiveRecon {
         // - Censys: https://search.censys.io/api
         // - Netlas: https://netlas.io/api
         // - GreyNoise: https://docs.greynoise.io/
-        
+
         let data = self.query_sources(ip).await?;
 
         // Cache the results
@@ -79,7 +79,7 @@ impl PassiveRecon {
     /// In production, this would make actual HTTP requests to APIs
     async fn query_sources(&self, ip: &str) -> Result<Option<PassiveData>> {
         // For demonstration, return simulated data for known patterns
-        
+
         // Check if we have API keys configured
         if self.shodan_key.is_none() && self.censys_key.is_none() {
             // No API keys - return None (passive recon disabled)
@@ -165,11 +165,7 @@ pub fn merge_scan_data(
     // Add passive-only ports (not found in active scan)
     for port_info in &passive.ports {
         if !active_ports.iter().any(|(p, _)| *p == port_info.port) {
-            merged.push((
-                port_info.port,
-                port_info.service.clone(),
-                true,
-            ));
+            merged.push((port_info.port, port_info.service.clone(), true));
         }
     }
 
@@ -210,10 +206,10 @@ mod tests {
     async fn test_query_with_api_keys() {
         let mut recon = PassiveRecon::new(true);
         recon.configure_apis(Some("test_key".to_string()), None);
-        
+
         let result = recon.query("1.2.3.4").await.unwrap();
         assert!(result.is_some());
-        
+
         let data = result.unwrap();
         assert_eq!(data.ip, "1.2.3.4");
         assert!(!data.ports.is_empty());
@@ -261,24 +257,21 @@ mod tests {
             source: "Test".to_string(),
         };
 
-        let active_ports = vec![
-            (80, "HTTP".to_string()),
-            (22, "SSH".to_string()),
-        ];
+        let active_ports = vec![(80, "HTTP".to_string()), (22, "SSH".to_string())];
 
         let merged = merge_scan_data(&passive, &active_ports);
-        
+
         // Should have 3 ports: 80 (both), 22 (active only), 443 (passive only)
         assert_eq!(merged.len(), 3);
-        
+
         // Port 80 should be in both
         let port_80 = merged.iter().find(|(p, _, _)| *p == 80).unwrap();
         assert!(port_80.2); // in_passive = true
-        
+
         // Port 22 should be active only
         let port_22 = merged.iter().find(|(p, _, _)| *p == 22).unwrap();
         assert!(!port_22.2); // in_passive = false
-        
+
         // Port 443 should be passive only
         let port_443 = merged.iter().find(|(p, _, _)| *p == 443).unwrap();
         assert!(port_443.2); // in_passive = true
@@ -288,9 +281,9 @@ mod tests {
     async fn test_stats() {
         let mut recon = PassiveRecon::new(true);
         recon.configure_apis(Some("test".to_string()), None);
-        
+
         let _ = recon.query("1.2.3.4").await.unwrap();
-        
+
         let stats = recon.stats();
         assert_eq!(stats.cached_ips, 1);
         assert!(stats.has_api_keys);

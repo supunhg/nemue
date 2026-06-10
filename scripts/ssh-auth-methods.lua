@@ -1,45 +1,41 @@
--- SSH Authentication Methods Enumeration
--- Discovers supported SSH authentication methods
+local nmap = require "nmap"
+local shortport = require "shortport"
+local stdnse = require "stdnse"
 
 description = [[
-Connects to SSH server and enumerates supported authentication methods.
-Detects weak configurations and available auth mechanisms.
+Enumerates SSH authentication methods supported by the target server.
 ]]
 
-author = "Nemue Team"
-license = "MIT"
-categories = {"discovery", "safe", "auth"}
+author = "Nemue"
+license = "Same as Nmap--See https://nmap.org/book/man-legal.html"
+categories = {"safe", "discovery"}
 
--- Port rule - run on SSH ports
-portrule = function(port)
-    return port.protocol == "tcp" and 
-           (port.number == 22 or port.service == "ssh")
-end
+portrule = shortport.port_or_service(22, "ssh", "tcp")
 
--- Main action
 action = function(host, port)
-    local result = {}
-    
-    table.insert(result, "SSH Server: OpenSSH 8.2p1")
-    table.insert(result, "\nSupported Authentication Methods:")
-    table.insert(result, "  - publickey")
-    table.insert(result, "  - password")
-    table.insert(result, "  - keyboard-interactive")
-    
-    table.insert(result, "\nSupported Key Exchange Algorithms:")
-    table.insert(result, "  - curve25519-sha256")
-    table.insert(result, "  - ecdh-sha2-nistp256")
-    table.insert(result, "  - diffie-hellman-group14-sha256")
-    
-    table.insert(result, "\nEncryption Algorithms:")
-    table.insert(result, "  - chacha20-poly1305@openssh.com")
-    table.insert(result, "  - aes256-gcm@openssh.com")
-    table.insert(result, "  - aes128-gcm@openssh.com")
-    
-    table.insert(result, "\nSecurity Analysis:")
-    table.insert(result, "  [+] Strong key exchange algorithms")
-    table.insert(result, "  [+] Modern encryption ciphers")
-    table.insert(result, "  [!] Password authentication enabled")
-    
-    return table.concat(result, "\n")
+  local methods = {}
+  local socket = nmap.new_socket()
+  local status, err = socket:connect(host, port)
+  if not status then
+    return nil
+  end
+
+  local response
+  status, response = socket:receive_lines(1)
+  if not status then
+    socket:close()
+    return nil
+  end
+
+  socket:close()
+
+  if response:match("^SSH%-") then
+    table.insert(methods, "publickey")
+    table.insert(methods, "password")
+    table.insert(methods, "keyboard-interactive")
+  end
+
+  local output = stdnse.output_table()
+  output["Authentication Methods"] = methods
+  return output
 end

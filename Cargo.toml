@@ -1,6 +1,6 @@
 [package]
 name = "nemue"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["Nemue Project"]
 description = "Advanced security testing framework with network scanning, web fuzzing, and scripting"
@@ -29,6 +29,8 @@ indicatif = "0.17"  # Progress bars
 rand = "0.8"  # Random number generation
 mlua = { version = "0.9", features = ["lua54", "async", "send", "vendored"] }  # Lua scripting engine (vendored)
 actix-web = "4.4"  # REST API server
+actix-web-actors = "4.2"  # WebSocket actor support
+actix = "0.13"  # Actor framework
 actix-cors = "0.7"  # CORS middleware
 uuid = { version = "1.6", features = ["v4", "serde"] }  # Unique scan IDs
 reqwest = { version = "0.11", features = ["json"] }  # HTTP client for fuzzing
@@ -36,6 +38,14 @@ regex = "1.10"  # Regular expressions
 url = "2.5"  # URL parsing
 lazy_static = "1.4"  # Static initialization
 crossbeam = "0.8"  # Lock-free data structures
+num_cpus = "1.16"  # CPU count for parallelism
+rmcp = { version = "0.16", features = ["server"] }  # MCP server support
+toml = "0.8"  # Config file parsing
+dirs = "5"  # XDG directory paths
+printpdf = "0.5"  # PDF report generation
+flate2 = "1.0"  # gzip compression
+zstd = "0.13"  # zstd compression
+aes-gcm = "0.10"  # AES-256-GCM encryption
 
 [dev-dependencies]
 tokio-test = "0.4"
@@ -57,6 +67,6 @@ path = "src/lib.rs"
 
 [profile.release]
 opt-level = 3
-lto = true
-codegen-units = 1
+lto = "thin"
+codegen-units = 16
 strip = true

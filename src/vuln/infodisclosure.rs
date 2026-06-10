@@ -1,8 +1,7 @@
 // Additional information disclosure detection scripts
-use super::framework::{VulnScript, VulnCategory, VulnSeverity, VulnResult};
-use anyhow::Result;
-use std::net::TcpStream;
+use super::framework::{VulnCategory, VulnResult, VulnScript, VulnSeverity};
 use std::io::{Read, Write};
+use std::net::TcpStream;
 use std::time::Duration;
 
 pub struct InfoDisclosureScripts;
@@ -35,45 +34,42 @@ impl InfoDisclosureScripts {
         .with_executor(|target, port| {
             let addr = format!("{}:{}", target, port);
             let timeout = Duration::from_secs(5);
-            
-            match TcpStream::connect_timeout(&addr.parse().unwrap(), timeout) {
-                Ok(mut stream) => {
-                    stream.set_read_timeout(Some(timeout)).ok();
-                    stream.set_write_timeout(Some(timeout)).ok();
 
-                    let request = format!(
-                        "GET /.git/HEAD HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n\r\n",
-                        target
-                    );
+            if let Ok(mut stream) = TcpStream::connect_timeout(&addr.parse().unwrap(), timeout) {
+                stream.set_read_timeout(Some(timeout)).ok();
+                stream.set_write_timeout(Some(timeout)).ok();
 
-                    if stream.write_all(request.as_bytes()).is_ok() {
-                        let mut response = String::new();
-                        stream.read_to_string(&mut response).ok();
+                let request = format!(
+                    "GET /.git/HEAD HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n\r\n",
+                    target
+                );
 
-                        // Check for .git/HEAD content
-                        let vulnerable = response.contains("HTTP/1.1 200") 
-                            && response.contains("ref:");
+                if stream.write_all(request.as_bytes()).is_ok() {
+                    let mut response = String::new();
+                    stream.read_to_string(&mut response).ok();
 
-                        return Ok(VulnResult {
-                            script_id: "git-exposed".to_string(),
-                            target: target.to_string(),
-                            port,
-                            vulnerable,
-                            severity: VulnSeverity::High,
-                            cve_ids: vec![],
-                            description: "Exposed .git directory allows source code download".to_string(),
-                            evidence: if vulnerable {
-                                Some(".git/HEAD accessible".to_string())
-                            } else {
-                                None
-                            },
-                            remediation: Some("Remove .git directory from web root or block access via web server config".to_string()),
-                            references: vec!["https://en.internetwache.org/dont-publicly-expose-git-or-how-we-downloaded-your-websites-sourcecode-an-analysis-of-alexas-1m-28-07-2015/".to_string()],
-                            exploit_available: false,
-                        });
-                    }
+                    // Check for .git/HEAD content
+                    let vulnerable = response.contains("HTTP/1.1 200")
+                        && response.contains("ref:");
+
+                    return Ok(VulnResult {
+                        script_id: "git-exposed".to_string(),
+                        target: target.to_string(),
+                        port,
+                        vulnerable,
+                        severity: VulnSeverity::High,
+                        cve_ids: vec![],
+                        description: "Exposed .git directory allows source code download".to_string(),
+                        evidence: if vulnerable {
+                            Some(".git/HEAD accessible".to_string())
+                        } else {
+                            None
+                        },
+                        remediation: Some("Remove .git directory from web root or block access via web server config".to_string()),
+                        references: vec!["https://en.internetwache.org/dont-publicly-expose-git-or-how-we-downloaded-your-websites-sourcecode-an-analysis-of-alexas-1m-28-07-2015/".to_string()],
+                        exploit_available: false,
+                    });
                 }
-                Err(_) => {}
             }
 
             Ok(VulnResult {
@@ -105,43 +101,41 @@ impl InfoDisclosureScripts {
         .with_executor(|target, port| {
             let addr = format!("{}:{}", target, port);
             let timeout = Duration::from_secs(5);
-            
-            match TcpStream::connect_timeout(&addr.parse().unwrap(), timeout) {
-                Ok(mut stream) => {
-                    stream.set_read_timeout(Some(timeout)).ok();
-                    stream.set_write_timeout(Some(timeout)).ok();
 
-                    let request = format!(
-                        "GET /.svn/entries HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n\r\n",
-                        target
-                    );
+            if let Ok(mut stream) = TcpStream::connect_timeout(&addr.parse().unwrap(), timeout) {
+                stream.set_read_timeout(Some(timeout)).ok();
+                stream.set_write_timeout(Some(timeout)).ok();
 
-                    if stream.write_all(request.as_bytes()).is_ok() {
-                        let mut response = String::new();
-                        stream.read_to_string(&mut response).ok();
+                let request = format!(
+                    "GET /.svn/entries HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n\r\n",
+                    target
+                );
 
-                        let vulnerable = response.contains("HTTP/1.1 200");
+                if stream.write_all(request.as_bytes()).is_ok() {
+                    let mut response = String::new();
+                    stream.read_to_string(&mut response).ok();
 
-                        return Ok(VulnResult {
-                            script_id: "svn-exposed".to_string(),
-                            target: target.to_string(),
-                            port,
-                            vulnerable,
-                            severity: VulnSeverity::High,
-                            cve_ids: vec![],
-                            description: "Exposed .svn directory allows source code download".to_string(),
-                            evidence: if vulnerable {
-                                Some(".svn/entries accessible".to_string())
-                            } else {
-                                None
-                            },
-                            remediation: Some("Remove .svn directory from web root".to_string()),
-                            references: vec![],
-                            exploit_available: false,
-                        });
-                    }
+                    let vulnerable = response.contains("HTTP/1.1 200");
+
+                    return Ok(VulnResult {
+                        script_id: "svn-exposed".to_string(),
+                        target: target.to_string(),
+                        port,
+                        vulnerable,
+                        severity: VulnSeverity::High,
+                        cve_ids: vec![],
+                        description: "Exposed .svn directory allows source code download"
+                            .to_string(),
+                        evidence: if vulnerable {
+                            Some(".svn/entries accessible".to_string())
+                        } else {
+                            None
+                        },
+                        remediation: Some("Remove .svn directory from web root".to_string()),
+                        references: vec![],
+                        exploit_available: false,
+                    });
                 }
-                Err(_) => {}
             }
 
             Ok(VulnResult {
@@ -173,7 +167,7 @@ impl InfoDisclosureScripts {
         .with_executor(|target, port| {
             let addr = format!("{}:{}", target, port);
             let timeout = Duration::from_secs(5);
-            
+
             let backup_patterns = vec![
                 "/backup.zip",
                 "/backup.tar.gz",
@@ -184,7 +178,8 @@ impl InfoDisclosureScripts {
             ];
 
             for pattern in backup_patterns {
-                if let Ok(mut stream) = TcpStream::connect_timeout(&addr.parse().unwrap(), timeout) {
+                if let Ok(mut stream) = TcpStream::connect_timeout(&addr.parse().unwrap(), timeout)
+                {
                     stream.set_read_timeout(Some(timeout)).ok();
                     stream.set_write_timeout(Some(timeout)).ok();
 
@@ -207,7 +202,10 @@ impl InfoDisclosureScripts {
                                 cve_ids: vec![],
                                 description: "Backup files accessible via web server".to_string(),
                                 evidence: Some(format!("Found: {}", pattern)),
-                                remediation: Some("Remove backup files from web root and use secure storage".to_string()),
+                                remediation: Some(
+                                    "Remove backup files from web root and use secure storage"
+                                        .to_string(),
+                                ),
                                 references: vec![],
                                 exploit_available: false,
                             });
@@ -245,7 +243,7 @@ impl InfoDisclosureScripts {
         .with_executor(|target, port| {
             let addr = format!("{}:{}", target, port);
             let timeout = Duration::from_secs(5);
-            
+
             let admin_paths = vec![
                 "/admin",
                 "/administrator",
@@ -260,7 +258,8 @@ impl InfoDisclosureScripts {
             let mut found_panels = Vec::new();
 
             for path in admin_paths {
-                if let Ok(mut stream) = TcpStream::connect_timeout(&addr.parse().unwrap(), timeout) {
+                if let Ok(mut stream) = TcpStream::connect_timeout(&addr.parse().unwrap(), timeout)
+                {
                     stream.set_read_timeout(Some(Duration::from_secs(2))).ok();
                     stream.set_write_timeout(Some(Duration::from_secs(2))).ok();
 
@@ -287,7 +286,11 @@ impl InfoDisclosureScripts {
                 target: target.to_string(),
                 port,
                 vulnerable,
-                severity: if vulnerable { VulnSeverity::Medium } else { VulnSeverity::Info },
+                severity: if vulnerable {
+                    VulnSeverity::Medium
+                } else {
+                    VulnSeverity::Info
+                },
                 cve_ids: vec![],
                 description: "Admin panels discovered".to_string(),
                 evidence: if vulnerable {
@@ -295,7 +298,9 @@ impl InfoDisclosureScripts {
                 } else {
                     None
                 },
-                remediation: Some("Use non-standard admin URLs and implement IP whitelisting".to_string()),
+                remediation: Some(
+                    "Use non-standard admin URLs and implement IP whitelisting".to_string(),
+                ),
                 references: vec![],
                 exploit_available: false,
             })
@@ -315,55 +320,50 @@ impl InfoDisclosureScripts {
         .with_executor(|target, port| {
             let addr = format!("{}:{}", target, port);
             let timeout = Duration::from_secs(5);
-            
-            match TcpStream::connect_timeout(&addr.parse().unwrap(), timeout) {
-                Ok(mut stream) => {
-                    stream.set_read_timeout(Some(timeout)).ok();
-                    stream.set_write_timeout(Some(timeout)).ok();
 
-                    let request = format!(
-                        "GET / HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n\r\n",
-                        target
-                    );
+            if let Ok(mut stream) = TcpStream::connect_timeout(&addr.parse().unwrap(), timeout) {
+                stream.set_read_timeout(Some(timeout)).ok();
+                stream.set_write_timeout(Some(timeout)).ok();
 
-                    if stream.write_all(request.as_bytes()).is_ok() {
-                        let mut response = String::new();
-                        stream.read_to_string(&mut response).ok();
+                let request = format!(
+                    "GET / HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n\r\n",
+                    target
+                );
 
-                        // Look for Server header with version
-                        let mut server_header = None;
-                        for line in response.lines() {
-                            if line.to_lowercase().starts_with("server:") {
-                                server_header = Some(line.to_string());
-                                break;
-                            }
-                        }
+                if stream.write_all(request.as_bytes()).is_ok() {
+                    let mut response = String::new();
+                    stream.read_to_string(&mut response).ok();
 
-                        if let Some(header) = server_header {
-                            // Check if version number is present
-                            let has_version = header.chars().any(|c| c.is_numeric());
-                            
-                            return Ok(VulnResult {
-                                script_id: "server-version".to_string(),
-                                target: target.to_string(),
-                                port,
-                                vulnerable: has_version,
-                                severity: VulnSeverity::Low,
-                                cve_ids: vec![],
-                                description: "Server version disclosed in headers".to_string(),
-                                evidence: if has_version {
-                                    Some(header)
-                                } else {
-                                    None
-                                },
-                                remediation: Some("Configure server to hide version information".to_string()),
-                                references: vec![],
-                                exploit_available: false,
-                            });
+                    // Look for Server header with version
+                    let mut server_header = None;
+                    for line in response.lines() {
+                        if line.to_lowercase().starts_with("server:") {
+                            server_header = Some(line.to_string());
+                            break;
                         }
                     }
+
+                    if let Some(header) = server_header {
+                        // Check if version number is present
+                        let has_version = header.chars().any(|c| c.is_numeric());
+
+                        return Ok(VulnResult {
+                            script_id: "server-version".to_string(),
+                            target: target.to_string(),
+                            port,
+                            vulnerable: has_version,
+                            severity: VulnSeverity::Low,
+                            cve_ids: vec![],
+                            description: "Server version disclosed in headers".to_string(),
+                            evidence: if has_version { Some(header) } else { None },
+                            remediation: Some(
+                                "Configure server to hide version information".to_string(),
+                            ),
+                            references: vec![],
+                            exploit_available: false,
+                        });
+                    }
                 }
-                Err(_) => {}
             }
 
             Ok(VulnResult {
@@ -395,16 +395,12 @@ impl InfoDisclosureScripts {
         .with_executor(|target, port| {
             let addr = format!("{}:{}", target, port);
             let timeout = Duration::from_secs(5);
-            
-            let phpinfo_paths = vec![
-                "/phpinfo.php",
-                "/info.php",
-                "/test.php",
-                "/php.php",
-            ];
+
+            let phpinfo_paths = vec!["/phpinfo.php", "/info.php", "/test.php", "/php.php"];
 
             for path in phpinfo_paths {
-                if let Ok(mut stream) = TcpStream::connect_timeout(&addr.parse().unwrap(), timeout) {
+                if let Ok(mut stream) = TcpStream::connect_timeout(&addr.parse().unwrap(), timeout)
+                {
                     stream.set_read_timeout(Some(timeout)).ok();
                     stream.set_write_timeout(Some(timeout)).ok();
 
@@ -425,9 +421,12 @@ impl InfoDisclosureScripts {
                                 vulnerable: true,
                                 severity: VulnSeverity::Medium,
                                 cve_ids: vec![],
-                                description: "PHPInfo page exposes sensitive configuration".to_string(),
+                                description: "PHPInfo page exposes sensitive configuration"
+                                    .to_string(),
                                 evidence: Some(format!("Found at: {}", path)),
-                                remediation: Some("Remove phpinfo() files from production servers".to_string()),
+                                remediation: Some(
+                                    "Remove phpinfo() files from production servers".to_string(),
+                                ),
                                 references: vec![],
                                 exploit_available: false,
                             });
@@ -465,44 +464,45 @@ impl InfoDisclosureScripts {
         .with_executor(|target, port| {
             let addr = format!("{}:{}", target, port);
             let timeout = Duration::from_secs(5);
-            
-            match TcpStream::connect_timeout(&addr.parse().unwrap(), timeout) {
-                Ok(mut stream) => {
-                    stream.set_read_timeout(Some(timeout)).ok();
-                    stream.set_write_timeout(Some(timeout)).ok();
 
-                    let request = format!(
-                        "GET /.env HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n\r\n",
-                        target
-                    );
+            if let Ok(mut stream) = TcpStream::connect_timeout(&addr.parse().unwrap(), timeout) {
+                stream.set_read_timeout(Some(timeout)).ok();
+                stream.set_write_timeout(Some(timeout)).ok();
 
-                    if stream.write_all(request.as_bytes()).is_ok() {
-                        let mut response = String::new();
-                        stream.read_to_string(&mut response).ok();
+                let request = format!(
+                    "GET /.env HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n\r\n",
+                    target
+                );
 
-                        let vulnerable = response.contains("HTTP/1.1 200") 
-                            && (response.contains("DB_") || response.contains("APP_KEY") || response.contains("SECRET"));
+                if stream.write_all(request.as_bytes()).is_ok() {
+                    let mut response = String::new();
+                    stream.read_to_string(&mut response).ok();
 
-                        return Ok(VulnResult {
-                            script_id: "dotenv-exposed".to_string(),
-                            target: target.to_string(),
-                            port,
-                            vulnerable,
-                            severity: VulnSeverity::Critical,
-                            cve_ids: vec![],
-                            description: ".env file exposes secrets and credentials".to_string(),
-                            evidence: if vulnerable {
-                                Some(".env file accessible with secrets".to_string())
-                            } else {
-                                None
-                            },
-                            remediation: Some("Block access to .env files in web server config".to_string()),
-                            references: vec![],
-                            exploit_available: false,
-                        });
-                    }
+                    let vulnerable = response.contains("HTTP/1.1 200")
+                        && (response.contains("DB_")
+                            || response.contains("APP_KEY")
+                            || response.contains("SECRET"));
+
+                    return Ok(VulnResult {
+                        script_id: "dotenv-exposed".to_string(),
+                        target: target.to_string(),
+                        port,
+                        vulnerable,
+                        severity: VulnSeverity::Critical,
+                        cve_ids: vec![],
+                        description: ".env file exposes secrets and credentials".to_string(),
+                        evidence: if vulnerable {
+                            Some(".env file accessible with secrets".to_string())
+                        } else {
+                            None
+                        },
+                        remediation: Some(
+                            "Block access to .env files in web server config".to_string(),
+                        ),
+                        references: vec![],
+                        exploit_available: false,
+                    });
                 }
-                Err(_) => {}
             }
 
             Ok(VulnResult {
@@ -534,44 +534,43 @@ impl InfoDisclosureScripts {
         .with_executor(|target, port| {
             let addr = format!("{}:{}", target, port);
             let timeout = Duration::from_secs(5);
-            
-            match TcpStream::connect_timeout(&addr.parse().unwrap(), timeout) {
-                Ok(mut stream) => {
-                    stream.set_read_timeout(Some(timeout)).ok();
-                    stream.set_write_timeout(Some(timeout)).ok();
 
-                    let request = format!(
-                        "GET /.aws/credentials HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n\r\n",
-                        target
-                    );
+            if let Ok(mut stream) = TcpStream::connect_timeout(&addr.parse().unwrap(), timeout) {
+                stream.set_read_timeout(Some(timeout)).ok();
+                stream.set_write_timeout(Some(timeout)).ok();
 
-                    if stream.write_all(request.as_bytes()).is_ok() {
-                        let mut response = String::new();
-                        stream.read_to_string(&mut response).ok();
+                let request = format!(
+                    "GET /.aws/credentials HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n\r\n",
+                    target
+                );
 
-                        let vulnerable = response.contains("HTTP/1.1 200") 
-                            && response.contains("aws_access_key_id");
+                if stream.write_all(request.as_bytes()).is_ok() {
+                    let mut response = String::new();
+                    stream.read_to_string(&mut response).ok();
 
-                        return Ok(VulnResult {
-                            script_id: "aws-creds-exposed".to_string(),
-                            target: target.to_string(),
-                            port,
-                            vulnerable,
-                            severity: VulnSeverity::Critical,
-                            cve_ids: vec![],
-                            description: "AWS credentials file publicly accessible".to_string(),
-                            evidence: if vulnerable {
-                                Some("AWS credentials file accessible".to_string())
-                            } else {
-                                None
-                            },
-                            remediation: Some("Remove credentials from web root, rotate keys immediately".to_string()),
-                            references: vec![],
-                            exploit_available: false,
-                        });
-                    }
+                    let vulnerable =
+                        response.contains("HTTP/1.1 200") && response.contains("aws_access_key_id");
+
+                    return Ok(VulnResult {
+                        script_id: "aws-creds-exposed".to_string(),
+                        target: target.to_string(),
+                        port,
+                        vulnerable,
+                        severity: VulnSeverity::Critical,
+                        cve_ids: vec![],
+                        description: "AWS credentials file publicly accessible".to_string(),
+                        evidence: if vulnerable {
+                            Some("AWS credentials file accessible".to_string())
+                        } else {
+                            None
+                        },
+                        remediation: Some(
+                            "Remove credentials from web root, rotate keys immediately".to_string(),
+                        ),
+                        references: vec![],
+                        exploit_available: false,
+                    });
                 }
-                Err(_) => {}
             }
 
             Ok(VulnResult {
@@ -604,19 +603,24 @@ mod tests {
     #[test]
     fn test_script_categories() {
         let scripts = InfoDisclosureScripts::get_all();
-        
+
         // All should be InfoDisclosure category
-        assert!(scripts.iter().all(|s| s.category == VulnCategory::InfoDisclosure));
+        assert!(scripts
+            .iter()
+            .all(|s| s.category == VulnCategory::InfoDisclosure));
     }
 
     #[test]
     fn test_severity_levels() {
         let scripts = InfoDisclosureScripts::get_all();
-        
+
         // Check critical severity scripts
         let dotenv = scripts.iter().find(|s| s.id == "dotenv-exposed").unwrap();
-        let aws = scripts.iter().find(|s| s.id == "aws-creds-exposed").unwrap();
-        
+        let aws = scripts
+            .iter()
+            .find(|s| s.id == "aws-creds-exposed")
+            .unwrap();
+
         // These would be critical if vulnerable (checked in executor)
         assert_eq!(dotenv.id, "dotenv-exposed");
         assert_eq!(aws.id, "aws-creds-exposed");

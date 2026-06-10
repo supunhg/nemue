@@ -6,10 +6,10 @@ use std::fmt;
 /// Cipher suite strength classification
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum CipherStrength {
-    Null,       // NULL cipher (no encryption)
-    Weak,       // Export, DES, RC4, <128-bit
-    Medium,     // 128-bit
-    Strong,     // 256-bit AES-GCM, ChaCha20
+    Null,        // NULL cipher (no encryption)
+    Weak,        // Export, DES, RC4, <128-bit
+    Medium,      // 128-bit
+    Strong,      // 256-bit AES-GCM, ChaCha20
     Recommended, // TLS 1.3 ciphers
 }
 
@@ -55,8 +55,10 @@ pub struct CipherSuite {
 impl CipherSuite {
     /// Check if cipher is considered secure
     pub fn is_secure(&self) -> bool {
-        matches!(self.strength, CipherStrength::Strong | CipherStrength::Recommended)
-            && self.pfs
+        matches!(
+            self.strength,
+            CipherStrength::Strong | CipherStrength::Recommended
+        ) && self.pfs
             && !self.has_weak_components()
     }
 
@@ -138,12 +140,17 @@ pub struct SupportedCiphers {
 impl SupportedCiphers {
     /// Get ciphers by strength
     pub fn by_strength(&self, strength: CipherStrength) -> Vec<&CipherSuite> {
-        self.ciphers.iter().filter(|c| c.strength == strength).collect()
+        self.ciphers
+            .iter()
+            .filter(|c| c.strength == strength)
+            .collect()
     }
 
     /// Check if any weak ciphers are supported
     pub fn has_weak_ciphers(&self) -> bool {
-        self.ciphers.iter().any(|c| matches!(c.strength, CipherStrength::Weak | CipherStrength::Null))
+        self.ciphers
+            .iter()
+            .any(|c| matches!(c.strength, CipherStrength::Weak | CipherStrength::Null))
     }
 
     /// Get count by strength
@@ -189,7 +196,7 @@ impl SupportedCiphers {
             }
         }
 
-        score.max(0)
+        score
     }
 }
 
@@ -333,7 +340,11 @@ impl CipherDatabase {
             mac: "SHA1".to_string(),
             pfs: true,
             strength: CipherStrength::Medium,
-            tls_versions: vec![super::TlsVersion::Tls12, super::TlsVersion::Tls11, super::TlsVersion::Tls10],
+            tls_versions: vec![
+                super::TlsVersion::Tls12,
+                super::TlsVersion::Tls11,
+                super::TlsVersion::Tls10,
+            ],
         }
     }
 
@@ -349,7 +360,11 @@ impl CipherDatabase {
             mac: "SHA1".to_string(),
             pfs: true,
             strength: CipherStrength::Medium,
-            tls_versions: vec![super::TlsVersion::Tls12, super::TlsVersion::Tls11, super::TlsVersion::Tls10],
+            tls_versions: vec![
+                super::TlsVersion::Tls12,
+                super::TlsVersion::Tls11,
+                super::TlsVersion::Tls10,
+            ],
         }
     }
 
@@ -366,7 +381,12 @@ impl CipherDatabase {
             mac: "SHA1".to_string(),
             pfs: false,
             strength: CipherStrength::Weak,
-            tls_versions: vec![super::TlsVersion::Tls12, super::TlsVersion::Tls11, super::TlsVersion::Tls10, super::TlsVersion::SslV3],
+            tls_versions: vec![
+                super::TlsVersion::Tls12,
+                super::TlsVersion::Tls11,
+                super::TlsVersion::Tls10,
+                super::TlsVersion::SslV3,
+            ],
         }
     }
 
@@ -382,7 +402,12 @@ impl CipherDatabase {
             mac: "SHA1".to_string(),
             pfs: false,
             strength: CipherStrength::Weak,
-            tls_versions: vec![super::TlsVersion::Tls12, super::TlsVersion::Tls11, super::TlsVersion::Tls10, super::TlsVersion::SslV3],
+            tls_versions: vec![
+                super::TlsVersion::Tls12,
+                super::TlsVersion::Tls11,
+                super::TlsVersion::Tls10,
+                super::TlsVersion::SslV3,
+            ],
         }
     }
 }
@@ -413,7 +438,7 @@ mod tests {
         assert!(!cipher.is_secure());
         assert_eq!(cipher.strength, CipherStrength::Weak);
         assert!(!cipher.pfs);
-        
+
         let issues = cipher.security_issues();
         assert!(!issues.is_empty());
         assert!(issues.iter().any(|i| i.contains("RC4")));

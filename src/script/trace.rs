@@ -73,25 +73,65 @@ impl ScriptTracer {
     /// Print event to console
     fn print_event(&self, event: &TraceEvent) {
         match event {
-            TraceEvent::ScriptStart { script_name, timestamp } => {
-                eprintln!("[TRACE {}] Starting script: {}", 
-                    timestamp.format("%H:%M:%S%.3f"), script_name);
+            TraceEvent::ScriptStart {
+                script_name,
+                timestamp,
+            } => {
+                eprintln!(
+                    "[TRACE {}] Starting script: {}",
+                    timestamp.format("%H:%M:%S%.3f"),
+                    script_name
+                );
             }
-            TraceEvent::ScriptEnd { script_name, duration_ms, timestamp } => {
-                eprintln!("[TRACE {}] Finished script: {} ({}ms)", 
-                    timestamp.format("%H:%M:%S%.3f"), script_name, duration_ms);
+            TraceEvent::ScriptEnd {
+                script_name,
+                duration_ms,
+                timestamp,
+            } => {
+                eprintln!(
+                    "[TRACE {}] Finished script: {} ({}ms)",
+                    timestamp.format("%H:%M:%S%.3f"),
+                    script_name,
+                    duration_ms
+                );
             }
-            TraceEvent::FunctionCall { script_name, function, args, timestamp } => {
-                eprintln!("[TRACE {}] {}::{} called with: {}", 
-                    timestamp.format("%H:%M:%S%.3f"), script_name, function, args);
+            TraceEvent::FunctionCall {
+                script_name,
+                function,
+                args,
+                timestamp,
+            } => {
+                eprintln!(
+                    "[TRACE {}] {}::{} called with: {}",
+                    timestamp.format("%H:%M:%S%.3f"),
+                    script_name,
+                    function,
+                    args
+                );
             }
-            TraceEvent::Output { script_name, message, timestamp } => {
-                eprintln!("[TRACE {}] {} output: {}", 
-                    timestamp.format("%H:%M:%S%.3f"), script_name, message);
+            TraceEvent::Output {
+                script_name,
+                message,
+                timestamp,
+            } => {
+                eprintln!(
+                    "[TRACE {}] {} output: {}",
+                    timestamp.format("%H:%M:%S%.3f"),
+                    script_name,
+                    message
+                );
             }
-            TraceEvent::Error { script_name, error, timestamp } => {
-                eprintln!("[TRACE {}] {} ERROR: {}", 
-                    timestamp.format("%H:%M:%S%.3f"), script_name, error);
+            TraceEvent::Error {
+                script_name,
+                error,
+                timestamp,
+            } => {
+                eprintln!(
+                    "[TRACE {}] {} ERROR: {}",
+                    timestamp.format("%H:%M:%S%.3f"),
+                    script_name,
+                    error
+                );
             }
         }
     }
@@ -145,26 +185,26 @@ mod tests {
     #[test]
     fn test_trace_events() {
         let tracer = ScriptTracer::new(true);
-        
+
         tracer.trace(TraceEvent::ScriptStart {
             script_name: "test-script".to_string(),
             timestamp: Utc::now(),
         });
-        
+
         tracer.trace(TraceEvent::Output {
             script_name: "test-script".to_string(),
             message: "Hello World".to_string(),
             timestamp: Utc::now(),
         });
-        
+
         tracer.trace(TraceEvent::ScriptEnd {
             script_name: "test-script".to_string(),
             duration_ms: 150,
             timestamp: Utc::now(),
         });
-        
+
         assert_eq!(tracer.event_count(), 3);
-        
+
         let events = tracer.get_events();
         assert_eq!(events.len(), 3);
     }
@@ -172,12 +212,12 @@ mod tests {
     #[test]
     fn test_trace_when_disabled() {
         let tracer = ScriptTracer::new(false);
-        
+
         tracer.trace(TraceEvent::ScriptStart {
             script_name: "test".to_string(),
             timestamp: Utc::now(),
         });
-        
+
         // When disabled, events are not stored (early return in trace method)
         assert_eq!(tracer.event_count(), 0);
     }
@@ -185,14 +225,14 @@ mod tests {
     #[test]
     fn test_clear_events() {
         let tracer = ScriptTracer::new(true);
-        
+
         tracer.trace(TraceEvent::ScriptStart {
             script_name: "test".to_string(),
             timestamp: Utc::now(),
         });
-        
+
         assert_eq!(tracer.event_count(), 1);
-        
+
         tracer.clear();
         assert_eq!(tracer.event_count(), 0);
     }
@@ -200,17 +240,17 @@ mod tests {
     #[test]
     fn test_function_call_trace() {
         let tracer = ScriptTracer::new(true);
-        
+
         tracer.trace(TraceEvent::FunctionCall {
             script_name: "http-check".to_string(),
             function: "http_get".to_string(),
             args: "url=\"http://example.com\"".to_string(),
             timestamp: Utc::now(),
         });
-        
+
         let events = tracer.get_events();
         assert_eq!(events.len(), 1);
-        
+
         if let TraceEvent::FunctionCall { function, .. } = &events[0] {
             assert_eq!(function, "http_get");
         } else {
@@ -221,13 +261,13 @@ mod tests {
     #[test]
     fn test_error_trace() {
         let tracer = ScriptTracer::new(true);
-        
+
         tracer.trace(TraceEvent::Error {
             script_name: "bad-script".to_string(),
             error: "Connection timeout".to_string(),
             timestamp: Utc::now(),
         });
-        
+
         let events = tracer.get_events();
         if let TraceEvent::Error { error, .. } = &events[0] {
             assert_eq!(error, "Connection timeout");

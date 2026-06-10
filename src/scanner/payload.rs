@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 
 /// Custom payload configuration for packet manipulation
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct PayloadConfig {
     /// Hex data to append (--data)
     pub hex_data: Option<Vec<u8>>,
@@ -15,19 +15,6 @@ pub struct PayloadConfig {
     pub ttl: Option<u8>,
     /// Send with incorrect checksum (--badsum)
     pub bad_checksum: bool,
-}
-
-impl Default for PayloadConfig {
-    fn default() -> Self {
-        Self {
-            hex_data: None,
-            string_data: None,
-            random_length: None,
-            ip_options: None,
-            ttl: None,
-            bad_checksum: false,
-        }
-    }
 }
 
 impl PayloadConfig {
@@ -75,15 +62,14 @@ impl PayloadConfig {
     /// Parse hex string to bytes
     fn parse_hex(hex: &str) -> Result<Vec<u8>> {
         let clean = hex.replace(['0', 'x', 'X', ' ', '\t', '\n'], "");
-        
-        if clean.len() % 2 != 0 {
+
+        if !clean.len().is_multiple_of(2) {
             return Err(anyhow!("Hex string must have even number of characters"));
         }
 
         let mut bytes = Vec::new();
         for chunk in clean.as_bytes().chunks(2) {
-            let hex_str = std::str::from_utf8(chunk)
-                .map_err(|_| anyhow!("Invalid hex format"))?;
+            let hex_str = std::str::from_utf8(chunk).map_err(|_| anyhow!("Invalid hex format"))?;
             let byte = u8::from_str_radix(hex_str, 16)
                 .map_err(|_| anyhow!("Invalid hex digit: {}", hex_str))?;
             bytes.push(byte);
@@ -197,11 +183,11 @@ impl CustomPacketBuilder {
     /// Build packet with custom payload
     pub fn build_packet(&self, base_packet: &[u8]) -> Vec<u8> {
         let mut packet = base_packet.to_vec();
-        
+
         // Append custom payload
         let payload = self.config.get_payload();
         packet.extend(payload);
-        
+
         packet
     }
 
@@ -229,11 +215,11 @@ impl CustomPacketBuilder {
             let mut new_packet = packet[..20].to_vec();
             new_packet.extend(options);
             new_packet.extend(&packet[20..]);
-            
+
             // Update IP header length
             let ihl = 5 + (options.len() / 4) as u8; // IHL in 32-bit words
             new_packet[0] = (new_packet[0] & 0x0F) | (ihl << 4);
-            
+
             *packet = new_packet;
         }
 
@@ -275,16 +261,16 @@ pub struct TtlPresets;
 impl TtlPresets {
     /// Default TTL (64 - Linux/macOS)
     pub const DEFAULT: u8 = 64;
-    
+
     /// Windows default
     pub const WINDOWS: u8 = 128;
-    
+
     /// Very low TTL for local network
     pub const LOCAL: u8 = 1;
-    
+
     /// Maximum TTL
     pub const MAX: u8 = 255;
-    
+
     /// Common router hop count
     pub const ROUTER: u8 = 32;
 
@@ -390,62 +376,56 @@ mod tests {
 
     #[test]
     fn test_payload_config_hex_data() {
-        let config = PayloadConfig::new()
-            .with_hex_data("48656c6c6f")
-            .unwrap();
-        
+        let config = PayloadConfig::new().with_hex_data("48656c6c6f").unwrap();
+
         assert!(config.hex_data.is_some());
         assert_eq!(config.hex_data.unwrap(), b"Hello");
     }
 
     #[test]
     fn test_payload_config_string_data() {
-        let config = PayloadConfig::new()
-            .with_string_data("Test".to_string());
-        
+        let config = PayloadConfig::new().with_string_data("Test".to_string());
+
         assert!(config.string_data.is_some());
         assert_eq!(config.string_data.unwrap(), "Test");
     }
 
     #[test]
     fn test_payload_config_random_data() {
-        let config = PayloadConfig::new()
-            .with_random_data(10);
-        
+        let config = PayloadConfig::new().with_random_data(10);
+
         assert_eq!(config.random_length, Some(10));
     }
 
     #[test]
     fn test_payload_config_ttl() {
-        let config = PayloadConfig::new()
-            .with_ttl(64);
-        
+        let config = PayloadConfig::new().with_ttl(64);
+
         assert_eq!(config.ttl, Some(64));
     }
 
     #[test]
     fn test_payload_config_bad_checksum() {
-        let config = PayloadConfig::new()
-            .with_bad_checksum();
-        
+        let config = PayloadConfig::new().with_bad_checksum();
+
         assert!(config.bad_checksum);
     }
 
     #[test]
     fn test_get_payload_combined() {
         let config = PayloadConfig::new()
-            .with_hex_data("4142").unwrap() // "AB"
+            .with_hex_data("4142")
+            .unwrap() // "AB"
             .with_string_data("CD".to_string());
-        
+
         let payload = config.get_payload();
         assert_eq!(payload, b"ABCD");
     }
 
     #[test]
     fn test_get_payload_random() {
-        let config = PayloadConfig::new()
-            .with_random_data(10);
-        
+        let config = PayloadConfig::new().with_random_data(10);
+
         let payload = config.get_payload();
         assert_eq!(payload.len(), 10);
     }
@@ -455,8 +435,7 @@ mod tests {
         let config1 = PayloadConfig::new();
         assert!(!config1.has_payload());
 
-        let config2 = PayloadConfig::new()
-            .with_hex_data("4142").unwrap();
+        let config2 = PayloadConfig::new().with_hex_data("4142").unwrap();
         assert!(config2.has_payload());
     }
 
@@ -479,7 +458,7 @@ mod tests {
     fn test_ip_option_build() {
         let options = vec![IpOption::RecordRoute, IpOption::Timestamp];
         let bytes = IpOption::build(&options);
-        
+
         assert_eq!(bytes.len() % 4, 0); // Should be padded
         assert_eq!(bytes[0], 7); // RecordRoute
         assert_eq!(bytes[1], 68); // Timestamp
@@ -487,13 +466,12 @@ mod tests {
 
     #[test]
     fn test_custom_packet_builder() {
-        let config = PayloadConfig::new()
-            .with_hex_data("ABCD").unwrap();
-        
+        let config = PayloadConfig::new().with_hex_data("ABCD").unwrap();
+
         let builder = CustomPacketBuilder::new(config);
         let base = vec![0u8; 20]; // Base packet
         let packet = builder.build_packet(&base);
-        
+
         assert_eq!(packet.len(), 22); // 20 + 2 bytes payload
     }
 
@@ -502,7 +480,7 @@ mod tests {
         assert_eq!(TtlPresets::DEFAULT, 64);
         assert_eq!(TtlPresets::WINDOWS, 128);
         assert_eq!(TtlPresets::MAX, 255);
-        
+
         assert_eq!(TtlPresets::for_os("linux"), 64);
         assert_eq!(TtlPresets::for_os("windows"), 128);
     }
@@ -510,12 +488,13 @@ mod tests {
     #[test]
     fn test_payload_builder() {
         let config = PayloadBuilder::new()
-            .hex("4142").unwrap()
+            .hex("4142")
+            .unwrap()
             .string("CD")
             .ttl(64)
             .bad_checksum()
             .build();
-        
+
         assert!(config.hex_data.is_some());
         assert!(config.string_data.is_some());
         assert_eq!(config.ttl, Some(64));
@@ -526,10 +505,10 @@ mod tests {
     fn test_apply_ttl() {
         let config = PayloadConfig::new().with_ttl(128);
         let builder = CustomPacketBuilder::new(config);
-        
+
         let mut packet = vec![0u8; 20];
         builder.apply_ttl(&mut packet).unwrap();
-        
+
         assert_eq!(packet[8], 128); // TTL at byte 8
     }
 
@@ -537,10 +516,10 @@ mod tests {
     fn test_corrupt_checksum() {
         let config = PayloadConfig::new().with_bad_checksum();
         let builder = CustomPacketBuilder::new(config);
-        
+
         let mut packet = vec![0u8; 40];
         builder.corrupt_checksum(&mut packet).unwrap();
-        
+
         assert_eq!(packet[10], 0xFF); // IP checksum corrupted
         assert_eq!(packet[11], 0xFF);
     }

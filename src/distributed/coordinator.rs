@@ -2,10 +2,10 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::SocketAddr;
-use tokio::sync::mpsc;
 use uuid::Uuid;
 
 /// Distributed scanning coordinator for multi-node deployments
+#[allow(dead_code)]
 pub struct ScanCoordinator {
     nodes: HashMap<Uuid, ScanNode>,
     job_queue: Vec<ScanJob>,
@@ -164,7 +164,8 @@ impl ScanCoordinator {
         }
 
         // Collect pending jobs with their scan types
-        let pending_jobs: Vec<(usize, ScanType)> = self.job_queue
+        let pending_jobs: Vec<(usize, ScanType)> = self
+            .job_queue
             .iter()
             .enumerate()
             .filter(|(_, job)| job.status == JobStatus::Pending)
@@ -202,7 +203,11 @@ impl ScanCoordinator {
     }
 
     /// Find an available node ID considering current loads
-    fn find_available_node_with_loads(&self, scan_type: &ScanType, loads: &HashMap<Uuid, usize>) -> Option<Uuid> {
+    fn find_available_node_with_loads(
+        &self,
+        scan_type: &ScanType,
+        loads: &HashMap<Uuid, usize>,
+    ) -> Option<Uuid> {
         let supports_scan = |node: &ScanNode| -> bool {
             match scan_type {
                 ScanType::Syn => node.capabilities.supports_syn_scan,
@@ -387,10 +392,10 @@ mod tests {
     fn test_register_node() {
         let mut coordinator = ScanCoordinator::new();
         let (addr, caps) = create_test_node();
-        
+
         let node_id = coordinator.register_node(addr, caps);
         assert!(coordinator.get_node(&node_id).is_some());
-        
+
         let stats = coordinator.get_stats();
         assert_eq!(stats.total_nodes, 1);
         assert_eq!(stats.online_nodes, 1);
@@ -400,10 +405,10 @@ mod tests {
     fn test_unregister_node() {
         let mut coordinator = ScanCoordinator::new();
         let (addr, caps) = create_test_node();
-        
+
         let node_id = coordinator.register_node(addr, caps);
         coordinator.unregister_node(&node_id).unwrap();
-        
+
         assert!(coordinator.get_node(&node_id).is_none());
         assert_eq!(coordinator.get_stats().total_nodes, 0);
     }
@@ -413,13 +418,13 @@ mod tests {
         let mut coordinator = ScanCoordinator::new();
         let (addr, caps) = create_test_node();
         coordinator.register_node(addr, caps);
-        
+
         let targets = vec!["192.168.1.1".to_string(), "192.168.1.2".to_string()];
         let ports = vec![80, 443];
-        
+
         let job_ids = coordinator.submit_scan(targets, ports, ScanType::Tcp);
         assert!(!job_ids.is_empty());
-        
+
         let stats = coordinator.get_stats();
         assert!(stats.pending_jobs > 0);
     }
@@ -429,13 +434,13 @@ mod tests {
         let mut coordinator = ScanCoordinator::new();
         let (addr, caps) = create_test_node();
         coordinator.register_node(addr, caps);
-        
+
         let targets = vec!["192.168.1.1".to_string()];
         let ports = vec![80];
-        
+
         coordinator.submit_scan(targets, ports, ScanType::Tcp);
         let assigned = coordinator.assign_jobs().unwrap();
-        
+
         assert_eq!(assigned, 1);
         let stats = coordinator.get_stats();
         assert_eq!(stats.pending_jobs, 0);
@@ -447,16 +452,13 @@ mod tests {
         let mut coordinator = ScanCoordinator::new();
         let (addr, caps) = create_test_node();
         coordinator.register_node(addr, caps);
-        
-        let job_ids = coordinator.submit_scan(
-            vec!["192.168.1.1".to_string()],
-            vec![80],
-            ScanType::Tcp,
-        );
-        
+
+        let job_ids =
+            coordinator.submit_scan(vec!["192.168.1.1".to_string()], vec![80], ScanType::Tcp);
+
         coordinator.assign_jobs().unwrap();
         coordinator.complete_job(&job_ids[0], 1, 1, 1, 100).unwrap();
-        
+
         let stats = coordinator.get_stats();
         assert_eq!(stats.completed_jobs, 1);
     }
@@ -466,18 +468,19 @@ mod tests {
         let mut coordinator = ScanCoordinator::new();
         let (addr, caps) = create_test_node();
         coordinator.register_node(addr, caps);
-        
-        let job_ids = coordinator.submit_scan(
-            vec!["192.168.1.1".to_string()],
-            vec![80],
-            ScanType::Tcp,
-        );
-        
+
+        let job_ids =
+            coordinator.submit_scan(vec!["192.168.1.1".to_string()], vec![80], ScanType::Tcp);
+
         coordinator.assign_jobs().unwrap();
         coordinator.fail_job(&job_ids[0]).unwrap();
-        
+
         // Job should be marked as failed
-        let job = coordinator.job_queue.iter().find(|j| j.job_id == job_ids[0]).unwrap();
+        let job = coordinator
+            .job_queue
+            .iter()
+            .find(|j| j.job_id == job_ids[0])
+            .unwrap();
         assert_eq!(job.status, JobStatus::Failed);
     }
 
@@ -491,16 +494,16 @@ mod tests {
             supports_udp_scan: true,
             supports_ipv6: true,
         };
-        
+
         coordinator.register_node(addr, caps);
-        
+
         // Submit 3 jobs
         coordinator.submit_scan(vec!["192.168.1.1".to_string()], vec![80], ScanType::Tcp);
         coordinator.submit_scan(vec!["192.168.1.2".to_string()], vec![80], ScanType::Tcp);
         coordinator.submit_scan(vec!["192.168.1.3".to_string()], vec![80], ScanType::Tcp);
-        
+
         coordinator.assign_jobs().unwrap();
-        
+
         // Only 2 should be assigned (node capacity)
         let stats = coordinator.get_stats();
         assert_eq!(stats.running_jobs, 2);

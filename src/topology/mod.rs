@@ -1,19 +1,25 @@
 // Network Topology Discovery Module
 // Implements traceroute, network mapping, and device classification
 
-pub mod traceroute;
-pub mod mapper;
 pub mod device;
-pub mod visualization;
-pub mod mac_lookup;
 pub mod inventory;
+pub mod mac_lookup;
+pub mod mapper;
+pub mod traceroute;
+pub mod visualization;
 
-pub use traceroute::{Traceroute, TracerouteConfig, TracerouteResult, HopInfo};
-pub use mapper::{NetworkMapper, TopologyMap, NetworkSegment};
-pub use device::{DeviceClassifier, DeviceType, DeviceInfo};
+pub use device::{DeviceClassifier, DeviceInfo, DeviceType};
+pub use inventory::{AssetInfo, ServiceCatalog, ServiceInfo};
+pub use mac_lookup::{DeviceCategory, MacVendorLookup};
+pub use mapper::{
+    ConnectionType, DeviceConnection, MappingServiceState, NetworkMapper, NetworkSegment,
+    SegmentType, ServiceMapping, TopologyMap, TopologyMetadata, TopologyStatistics,
+};
+pub use traceroute::{
+    HopInfo, IcmpTraceroute, ParallelTraceroute, TcpTraceroute, Traceroute, TracerouteConfig,
+    TracerouteProtocol, TracerouteResult, UdpTraceroute,
+};
 pub use visualization::VisualizationEngine;
-pub use mac_lookup::{MacVendorLookup, DeviceCategory};
-pub use inventory::{ServiceCatalog, AssetInfo, ServiceInfo, ServiceState};
 
 use std::net::IpAddr;
 
@@ -37,7 +43,7 @@ impl TopologyDiscovery {
     pub async fn discover(&mut self, target: IpAddr) -> Result<TopologyMap, String> {
         // Run traceroute to discover path
         let trace_result = self.traceroute.trace(target).await?;
-        
+
         // Classify devices along the path
         for hop in &trace_result.hops {
             if let Some(addr) = hop.address {
@@ -45,7 +51,7 @@ impl TopologyDiscovery {
                 self.mapper.add_device(addr, device_info);
             }
         }
-        
+
         // Build topology map
         self.mapper.build_topology(&trace_result)
     }

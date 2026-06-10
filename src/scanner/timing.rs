@@ -1,9 +1,9 @@
-use std::time::Duration;
 use serde::{Deserialize, Serialize};
+use std::time::Duration;
 
 /// Timing templates (T0-T5) similar to nmap
 /// These control scan speed, aggressiveness, and stealth
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum TimingTemplate {
     /// T0: Paranoid - IDS evasion mode (5 minutes between probes)
     Paranoid,
@@ -12,6 +12,7 @@ pub enum TimingTemplate {
     /// T2: Polite - Slower to reduce bandwidth usage (0.4 seconds between probes)
     Polite,
     /// T3: Normal - Default nmap timing (balanced speed and accuracy)
+    #[default]
     Normal,
     /// T4: Aggressive - Fast scan for modern reliable networks
     Aggressive,
@@ -139,12 +140,6 @@ impl TimingTemplate {
                 max_rate: 10000,
             },
         }
-    }
-}
-
-impl Default for TimingTemplate {
-    fn default() -> Self {
-        Self::Normal
     }
 }
 
@@ -384,94 +379,103 @@ impl Default for TimingConfigBuilder {
 /// Parse duration from human-readable string (e.g., "1.5s", "500ms", "2m")
 pub fn parse_duration(s: &str) -> Result<Duration, String> {
     let s = s.trim().to_lowercase();
-    
+
     // Check for milliseconds
     if let Some(num_str) = s.strip_suffix("ms") {
-        let num: u64 = num_str.parse()
+        let num: u64 = num_str
+            .parse()
             .map_err(|_| format!("Invalid milliseconds value: {}", num_str))?;
         return Ok(Duration::from_millis(num));
     }
-    
+
     // Check for seconds
     if let Some(num_str) = s.strip_suffix('s') {
-        let num: f64 = num_str.parse()
+        let num: f64 = num_str
+            .parse()
             .map_err(|_| format!("Invalid seconds value: {}", num_str))?;
         return Ok(Duration::from_secs_f64(num));
     }
-    
+
     // Check for minutes
     if let Some(num_str) = s.strip_suffix('m') {
-        let num: f64 = num_str.parse()
+        let num: f64 = num_str
+            .parse()
             .map_err(|_| format!("Invalid minutes value: {}", num_str))?;
         return Ok(Duration::from_secs_f64(num * 60.0));
     }
-    
+
     // Check for hours
     if let Some(num_str) = s.strip_suffix('h') {
-        let num: f64 = num_str.parse()
+        let num: f64 = num_str
+            .parse()
             .map_err(|_| format!("Invalid hours value: {}", num_str))?;
         return Ok(Duration::from_secs_f64(num * 3600.0));
     }
-    
+
     // Default to milliseconds if no suffix
-    let num: u64 = s.parse()
+    let num: u64 = s
+        .parse()
         .map_err(|_| format!("Invalid duration value: {}", s))?;
     Ok(Duration::from_millis(num))
 }
 
 /// Parse parallelism value (number of simultaneous operations)
 pub fn parse_parallelism(s: &str) -> Result<usize, String> {
-    let num: usize = s.parse()
+    let num: usize = s
+        .parse()
         .map_err(|_| format!("Invalid parallelism value: {}", s))?;
-    
+
     if num == 0 {
         return Err("Parallelism must be greater than 0".to_string());
     }
-    
+
     if num > 10000 {
         return Err("Parallelism too high (max 10000)".to_string());
     }
-    
+
     Ok(num)
 }
 
 /// Parse rate value (packets per second)
 pub fn parse_rate(s: &str) -> Result<u32, String> {
-    let num: u32 = s.parse()
+    let num: u32 = s
+        .parse()
         .map_err(|_| format!("Invalid rate value: {}", s))?;
-    
+
     if num > 100000 {
         return Err("Rate too high (max 100000 pps)".to_string());
     }
-    
+
     Ok(num)
 }
 
 /// Parse retries value
 pub fn parse_retries(s: &str) -> Result<u32, String> {
-    let num: u32 = s.parse()
+    let num: u32 = s
+        .parse()
         .map_err(|_| format!("Invalid retries value: {}", s))?;
-    
+
     if num > 20 {
         return Err("Max retries too high (max 20)".to_string());
     }
-    
+
     Ok(num)
 }
 
 /// Parse hostgroup size
 pub fn parse_hostgroup(s: &str) -> Result<usize, String> {
-    let num: usize = s.parse()
+    let num: usize = s
+        .parse()
         .map_err(|_| format!("Invalid hostgroup value: {}", s))?;
-    
+
     if num == 0 {
         return Err("Hostgroup size must be greater than 0".to_string());
     }
-    
+
     if num > 65536 {
         return Err("Hostgroup size too large (max 65536)".to_string());
     }
-    
+
     Ok(num)
 }
 
@@ -481,11 +485,17 @@ mod tests {
 
     #[test]
     fn test_timing_template_from_number() {
-        assert_eq!(TimingTemplate::from_number(0), Some(TimingTemplate::Paranoid));
+        assert_eq!(
+            TimingTemplate::from_number(0),
+            Some(TimingTemplate::Paranoid)
+        );
         assert_eq!(TimingTemplate::from_number(1), Some(TimingTemplate::Sneaky));
         assert_eq!(TimingTemplate::from_number(2), Some(TimingTemplate::Polite));
         assert_eq!(TimingTemplate::from_number(3), Some(TimingTemplate::Normal));
-        assert_eq!(TimingTemplate::from_number(4), Some(TimingTemplate::Aggressive));
+        assert_eq!(
+            TimingTemplate::from_number(4),
+            Some(TimingTemplate::Aggressive)
+        );
         assert_eq!(TimingTemplate::from_number(5), Some(TimingTemplate::Insane));
         assert_eq!(TimingTemplate::from_number(6), None);
     }
@@ -593,14 +603,20 @@ mod tests {
     #[test]
     fn test_parse_duration_milliseconds() {
         assert_eq!(parse_duration("500ms").unwrap(), Duration::from_millis(500));
-        assert_eq!(parse_duration("1000MS").unwrap(), Duration::from_millis(1000));
+        assert_eq!(
+            parse_duration("1000MS").unwrap(),
+            Duration::from_millis(1000)
+        );
         assert_eq!(parse_duration("100ms").unwrap(), Duration::from_millis(100));
     }
 
     #[test]
     fn test_parse_duration_seconds() {
         assert_eq!(parse_duration("1s").unwrap(), Duration::from_secs(1));
-        assert_eq!(parse_duration("1.5s").unwrap(), Duration::from_secs_f64(1.5));
+        assert_eq!(
+            parse_duration("1.5s").unwrap(),
+            Duration::from_secs_f64(1.5)
+        );
         assert_eq!(parse_duration("10S").unwrap(), Duration::from_secs(10));
         assert_eq!(parse_duration("0.5s").unwrap(), Duration::from_millis(500));
     }
@@ -608,7 +624,10 @@ mod tests {
     #[test]
     fn test_parse_duration_minutes() {
         assert_eq!(parse_duration("1m").unwrap(), Duration::from_secs(60));
-        assert_eq!(parse_duration("2.5m").unwrap(), Duration::from_secs_f64(150.0));
+        assert_eq!(
+            parse_duration("2.5m").unwrap(),
+            Duration::from_secs_f64(150.0)
+        );
         assert_eq!(parse_duration("5M").unwrap(), Duration::from_secs(300));
     }
 

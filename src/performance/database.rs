@@ -1,8 +1,8 @@
 // Database backend for storing scan results
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::path::Path;
 use tokio::fs;
-use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScanRecord {
@@ -55,7 +55,7 @@ impl ScanDatabase {
         let path = format!("{}/scan_{}.json", self.base_path, record.scan_id);
         let json = serde_json::to_string_pretty(record)
             .map_err(|e| format!("Serialization error: {}", e))?;
-        
+
         fs::write(&path, json)
             .await
             .map_err(|e| format!("Failed to write scan record: {}", e))
@@ -66,16 +66,15 @@ impl ScanDatabase {
         let data = fs::read_to_string(&path)
             .await
             .map_err(|e| format!("Failed to read scan record: {}", e))?;
-        
-        serde_json::from_str(&data)
-            .map_err(|e| format!("Deserialization error: {}", e))
+
+        serde_json::from_str(&data).map_err(|e| format!("Deserialization error: {}", e))
     }
 
     pub async fn save_checkpoint(&self, checkpoint: &Checkpoint) -> Result<(), String> {
         let path = format!("{}/checkpoint_{}.json", self.base_path, checkpoint.scan_id);
         let json = serde_json::to_string_pretty(checkpoint)
             .map_err(|e| format!("Serialization error: {}", e))?;
-        
+
         fs::write(&path, json)
             .await
             .map_err(|e| format!("Failed to write checkpoint: {}", e))
@@ -86,9 +85,8 @@ impl ScanDatabase {
         let data = fs::read_to_string(&path)
             .await
             .map_err(|e| format!("Failed to read checkpoint: {}", e))?;
-        
-        serde_json::from_str(&data)
-            .map_err(|e| format!("Deserialization error: {}", e))
+
+        serde_json::from_str(&data).map_err(|e| format!("Deserialization error: {}", e))
     }
 
     pub async fn list_scans(&self) -> Result<Vec<ScanRecord>, String> {
@@ -116,10 +114,10 @@ impl ScanDatabase {
     pub async fn delete_scan(&self, scan_id: &str) -> Result<(), String> {
         let scan_path = format!("{}/scan_{}.json", self.base_path, scan_id);
         let checkpoint_path = format!("{}/checkpoint_{}.json", self.base_path, scan_id);
-        
+
         let _ = fs::remove_file(&scan_path).await;
         let _ = fs::remove_file(&checkpoint_path).await;
-        
+
         Ok(())
     }
 }
@@ -229,7 +227,7 @@ mod tests {
 
         db.save_scan(&record).await.unwrap();
         assert!(db.load_scan("delete_me").await.is_ok());
-        
+
         db.delete_scan("delete_me").await.unwrap();
         assert!(db.load_scan("delete_me").await.is_err());
     }

@@ -2,8 +2,8 @@
 // Implements --script-help functionality
 
 use anyhow::{anyhow, Result};
-use std::path::Path;
 use std::fs;
+use std::path::Path;
 
 /// Script documentation
 #[derive(Debug, Clone)]
@@ -33,9 +33,13 @@ impl ScriptHelp {
         let content = fs::read_to_string(path.as_ref())
             .map_err(|e| anyhow!("Failed to read script file: {}", e))?;
 
-        Self::from_content(&content, path.as_ref().file_stem()
-            .and_then(|s| s.to_str())
-            .unwrap_or("unknown"))
+        Self::from_content(
+            &content,
+            path.as_ref()
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("unknown"),
+        )
     }
 
     /// Parse help from script content
@@ -121,7 +125,7 @@ impl ScriptHelp {
     fn parse_arg_doc(line: &str) -> Option<ScriptArgument> {
         let content = line.trim_start_matches("--@arg").trim();
         let parts: Vec<&str> = content.splitn(2, ' ').collect();
-        
+
         if parts.is_empty() {
             return None;
         }
@@ -130,23 +134,24 @@ impl ScriptHelp {
         let rest = if parts.len() > 1 { parts[1] } else { "" };
 
         let required = rest.contains("required");
-        
+
         // Extract default value and remove it from description parsing
         let (default_value, description_text) = if let Some(start) = rest.find("default=") {
             let start = start + 8;
             let after_default = &rest[start..];
-            
+
             // Find end of default value (whitespace or end of string)
-            let end = after_default.find(|c: char| c.is_whitespace())
+            let end = after_default
+                .find(|c: char| c.is_whitespace())
                 .unwrap_or(after_default.len());
-            
+
             let default = after_default[..end].to_string();
             let remaining = if end < after_default.len() {
                 &after_default[end..]
             } else {
                 ""
             };
-            
+
             (Some(default), remaining.trim())
         } else {
             (None, rest)
@@ -172,7 +177,7 @@ impl ScriptHelp {
         println!("\n{}", "=".repeat(70));
         println!("Script: {}", self.name);
         println!("{}", "=".repeat(70));
-        
+
         if !self.description.is_empty() {
             println!("\nDescription:");
             println!("  {}", self.description);
@@ -194,7 +199,11 @@ impl ScriptHelp {
         if !self.arguments.is_empty() {
             println!("\nArguments:");
             for arg in &self.arguments {
-                let req = if arg.required { "[required]" } else { "[optional]" };
+                let req = if arg.required {
+                    "[required]"
+                } else {
+                    "[optional]"
+                };
                 let default = if let Some(ref d) = arg.default_value {
                     format!(" (default: {})", d)
                 } else {
@@ -300,7 +309,8 @@ end
 
     #[test]
     fn test_parse_arg_doc_required() {
-        let arg = ScriptHelp::parse_arg_doc("--@arg username required The username to use").unwrap();
+        let arg =
+            ScriptHelp::parse_arg_doc("--@arg username required The username to use").unwrap();
         assert_eq!(arg.name, "username");
         assert!(arg.required);
         assert!(arg.default_value.is_none());
@@ -309,7 +319,8 @@ end
 
     #[test]
     fn test_parse_arg_doc_optional_with_default() {
-        let arg = ScriptHelp::parse_arg_doc("--@arg port optional default=80 The port number").unwrap();
+        let arg =
+            ScriptHelp::parse_arg_doc("--@arg port optional default=80 The port number").unwrap();
         assert_eq!(arg.name, "port");
         assert!(!arg.required);
         assert_eq!(arg.default_value, Some("80".to_string()));
@@ -325,14 +336,12 @@ end
             author: "Test".to_string(),
             categories: vec!["test".to_string()],
             usage: Some("nemue --script test".to_string()),
-            arguments: vec![
-                ScriptArgument {
-                    name: "arg1".to_string(),
-                    description: "First argument".to_string(),
-                    required: true,
-                    default_value: None,
-                },
-            ],
+            arguments: vec![ScriptArgument {
+                name: "arg1".to_string(),
+                description: "First argument".to_string(),
+                required: true,
+                default_value: None,
+            }],
             examples: vec!["nemue --script test --script-args arg1=value".to_string()],
             output: Some("Returns test result".to_string()),
         };

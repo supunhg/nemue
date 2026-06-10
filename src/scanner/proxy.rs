@@ -2,11 +2,11 @@
 // Implements HTTP/SOCKS4/SOCKS5 proxy chains for anonymous scanning
 
 use anyhow::{anyhow, Result};
-use tracing::debug;
 use serde::{Deserialize, Serialize};
+use std::collections::VecDeque;
 use std::net::{IpAddr, SocketAddr};
 use std::time::Duration;
-use std::collections::VecDeque;
+use tracing::debug;
 
 /// Proxy protocol type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -86,9 +86,10 @@ impl ProxyConfig {
     /// Parse from URL format: protocol://[user:pass@]host:port
     pub fn parse(url: &str) -> Result<Self> {
         // Extract protocol
-        let (protocol_str, rest) = url.split_once("://")
+        let (protocol_str, rest) = url
+            .split_once("://")
             .ok_or_else(|| anyhow!("Invalid proxy URL format (missing ://)"))?;
-        
+
         let protocol = ProxyProtocol::from_str(protocol_str)
             .ok_or_else(|| anyhow!("Unsupported proxy protocol: {}", protocol_str))?;
 
@@ -96,24 +97,30 @@ impl ProxyConfig {
         let (auth, host_port) = if let Some(at_pos) = rest.find('@') {
             let auth_str = &rest[..at_pos];
             let host_port_str = &rest[at_pos + 1..];
-            
-            let (username, password) = auth_str.split_once(':')
+
+            let (username, password) = auth_str
+                .split_once(':')
                 .ok_or_else(|| anyhow!("Invalid auth format (expected user:pass)"))?;
-            
-            (Some((username.to_string(), password.to_string())), host_port_str)
+
+            (
+                Some((username.to_string(), password.to_string())),
+                host_port_str,
+            )
         } else {
             (None, rest)
         };
 
         // Parse host and port
-        let (host, port) = host_port.rsplit_once(':')
+        let (host, port) = host_port
+            .rsplit_once(':')
             .ok_or_else(|| anyhow!("Invalid host:port format"))?;
-        
-        let port: u16 = port.parse()
+
+        let port: u16 = port
+            .parse()
             .map_err(|_| anyhow!("Invalid port number: {}", port))?;
 
         let mut config = ProxyConfig::new(protocol, host.to_string(), port);
-        
+
         if let Some((username, password)) = auth {
             config = config.with_auth(username, password);
         }
@@ -123,9 +130,11 @@ impl ProxyConfig {
 
     /// Get socket address for connection
     pub fn socket_addr(&self) -> Result<SocketAddr> {
-        let ip: IpAddr = self.host.parse()
+        let ip: IpAddr = self
+            .host
+            .parse()
             .map_err(|_| anyhow!("Invalid IP address: {}", self.host))?;
-        
+
         Ok(SocketAddr::new(ip, self.port))
     }
 
@@ -200,7 +209,7 @@ impl ProxyChain {
     /// Parse chain from comma-separated proxy URLs
     pub fn parse(urls: &str) -> Result<Self> {
         let mut chain = ProxyChain::new();
-        
+
         for url in urls.split(',') {
             let url = url.trim();
             if !url.is_empty() {
@@ -233,6 +242,7 @@ impl Default for ProxyChain {
 /// Proxy client for managing connections
 pub struct ProxyClient {
     chain: ProxyChain,
+    #[allow(dead_code)]
     connection_pool: ConnectionPool,
 }
 
@@ -258,7 +268,11 @@ impl ProxyClient {
                 Ok(conn) => return Ok(conn),
                 Err(e) => {
                     if attempts >= max_attempts {
-                        return Err(anyhow!("Failed to connect after {} attempts: {}", attempts, e));
+                        return Err(anyhow!(
+                            "Failed to connect after {} attempts: {}",
+                            attempts,
+                            e
+                        ));
                     }
 
                     // Rotate to next proxy if failover enabled
@@ -272,14 +286,16 @@ impl ProxyClient {
 
     /// Attempt single connection
     async fn try_connect(&self, target: SocketAddr) -> Result<ProxyConnection> {
-        let proxy = self.chain.first()
+        let proxy = self
+            .chain
+            .first()
             .ok_or_else(|| anyhow!("No proxies in chain"))?;
 
         // Connect to proxy server
         let proxy_addr = format!("{}:{}", proxy.host, proxy.port);
         let _stream = tokio::time::timeout(
             Duration::from_secs(5),
-            tokio::net::TcpStream::connect(&proxy_addr)
+            tokio::net::TcpStream::connect(&proxy_addr),
         )
         .await
         .map_err(|_| anyhow!("Proxy connection timeout"))?
@@ -313,7 +329,10 @@ impl ProxyClient {
     pub async fn close(&mut self, conn: ProxyConnection) -> Result<()> {
         // Note: Full implementation would close TcpStream and update stats
         // For now, just log the closure
-        debug!("Closing proxy connection to {} via {}", conn.target, conn.proxy.host);
+        debug!(
+            "Closing proxy connection to {} via {}",
+            conn.target, conn.proxy.host
+        );
         Ok(())
     }
 }
@@ -335,7 +354,7 @@ struct ConnectionPool {
 
 impl ConnectionPool {
     fn new(max_size: usize) -> Self {
-        Self { 
+        Self {
             max_size,
             active_count: std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0)),
         }
@@ -363,19 +382,22 @@ impl ProxyChainBuilder {
 
     /// Add HTTP proxy
     pub fn http(mut self, host: String, port: u16) -> Self {
-        self.chain.add_proxy(ProxyConfig::new(ProxyProtocol::HTTP, host, port));
+        self.chain
+            .add_proxy(ProxyConfig::new(ProxyProtocol::HTTP, host, port));
         self
     }
 
     /// Add SOCKS4 proxy
     pub fn socks4(mut self, host: String, port: u16) -> Self {
-        self.chain.add_proxy(ProxyConfig::new(ProxyProtocol::SOCKS4, host, port));
+        self.chain
+            .add_proxy(ProxyConfig::new(ProxyProtocol::SOCKS4, host, port));
         self
     }
 
     /// Add SOCKS5 proxy
     pub fn socks5(mut self, host: String, port: u16) -> Self {
-        self.chain.add_proxy(ProxyConfig::new(ProxyProtocol::SOCKS5, host, port));
+        self.chain
+            .add_proxy(ProxyConfig::new(ProxyProtocol::SOCKS5, host, port));
         self
     }
 
@@ -421,8 +443,14 @@ mod tests {
     #[test]
     fn test_proxy_protocol_from_str() {
         assert_eq!(ProxyProtocol::from_str("http"), Some(ProxyProtocol::HTTP));
-        assert_eq!(ProxyProtocol::from_str("socks4"), Some(ProxyProtocol::SOCKS4));
-        assert_eq!(ProxyProtocol::from_str("socks5"), Some(ProxyProtocol::SOCKS5));
+        assert_eq!(
+            ProxyProtocol::from_str("socks4"),
+            Some(ProxyProtocol::SOCKS4)
+        );
+        assert_eq!(
+            ProxyProtocol::from_str("socks5"),
+            Some(ProxyProtocol::SOCKS5)
+        );
         assert_eq!(ProxyProtocol::from_str("invalid"), None);
     }
 
@@ -439,7 +467,7 @@ mod tests {
     fn test_proxy_config_with_auth() {
         let proxy = ProxyConfig::new(ProxyProtocol::HTTP, "127.0.0.1".to_string(), 8080)
             .with_auth("user".to_string(), "pass".to_string());
-        
+
         assert!(proxy.has_auth());
         assert_eq!(proxy.username, Some("user".to_string()));
         assert_eq!(proxy.password, Some("pass".to_string()));
@@ -477,7 +505,7 @@ mod tests {
     fn test_proxy_chain_single() {
         let proxy = ProxyConfig::new(ProxyProtocol::HTTP, "127.0.0.1".to_string(), 8080);
         let chain = ProxyChain::single(proxy);
-        
+
         assert_eq!(chain.len(), 1);
         assert!(!chain.is_empty());
     }
@@ -485,16 +513,24 @@ mod tests {
     #[test]
     fn test_proxy_chain_multiple() {
         let mut chain = ProxyChain::new();
-        chain.add_proxy(ProxyConfig::new(ProxyProtocol::HTTP, "proxy1.com".to_string(), 8080));
-        chain.add_proxy(ProxyConfig::new(ProxyProtocol::SOCKS5, "proxy2.com".to_string(), 1080));
-        
+        chain.add_proxy(ProxyConfig::new(
+            ProxyProtocol::HTTP,
+            "proxy1.com".to_string(),
+            8080,
+        ));
+        chain.add_proxy(ProxyConfig::new(
+            ProxyProtocol::SOCKS5,
+            "proxy2.com".to_string(),
+            1080,
+        ));
+
         assert_eq!(chain.len(), 2);
     }
 
     #[test]
     fn test_proxy_chain_parse() {
         let chain = ProxyChain::parse("http://192.168.1.1:8080,socks5://10.0.0.1:1080").unwrap();
-        
+
         assert_eq!(chain.len(), 2);
         assert_eq!(chain.first().unwrap().protocol, ProxyProtocol::HTTP);
     }
@@ -502,13 +538,21 @@ mod tests {
     #[test]
     fn test_proxy_chain_rotate() {
         let mut chain = ProxyChain::new();
-        chain.add_proxy(ProxyConfig::new(ProxyProtocol::HTTP, "proxy1.com".to_string(), 8080));
-        chain.add_proxy(ProxyConfig::new(ProxyProtocol::SOCKS5, "proxy2.com".to_string(), 1080));
-        
+        chain.add_proxy(ProxyConfig::new(
+            ProxyProtocol::HTTP,
+            "proxy1.com".to_string(),
+            8080,
+        ));
+        chain.add_proxy(ProxyConfig::new(
+            ProxyProtocol::SOCKS5,
+            "proxy2.com".to_string(),
+            1080,
+        ));
+
         let first_before = chain.first().unwrap().host.clone();
         chain.rotate();
         let first_after = chain.first().unwrap().host.clone();
-        
+
         assert_ne!(first_before, first_after);
         assert_eq!(first_after, "proxy2.com");
     }
@@ -522,7 +566,7 @@ mod tests {
             .max_retries(5)
             .failover()
             .build();
-        
+
         assert_eq!(chain.len(), 2);
         assert_eq!(chain.max_retries, 5);
         assert!(chain.failover_enabled);

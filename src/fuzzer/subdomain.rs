@@ -1,13 +1,13 @@
 // Subdomain Enumeration - DNS brute-forcing and discovery
 // amass/subfinder-style subdomain enumeration
 
-use anyhow::{Result, anyhow};
-use std::collections::{HashSet, HashMap};
+use anyhow::Result;
+use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use std::net::{IpAddr, ToSocketAddrs};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, info, warn};
-use serde::{Serialize, Deserialize};
 
 /// Subdomain enumeration configuration
 #[derive(Debug, Clone)]
@@ -35,8 +35,8 @@ impl Default for SubdomainConfig {
         Self {
             domain: String::new(),
             resolvers: vec![
-                "8.8.8.8".to_string(),      // Google
-                "1.1.1.1".to_string(),      // Cloudflare
+                "8.8.8.8".to_string(),        // Google
+                "1.1.1.1".to_string(),        // Cloudflare
                 "208.67.222.222".to_string(), // OpenDNS
             ],
             wildcard_detection: true,
@@ -129,21 +129,24 @@ impl SubdomainEnumerator {
         let reverse_results = self.reverse_dns_from_results(&results).await?;
         results.extend(reverse_results);
 
-        info!("Subdomain enumeration complete. Found {} unique subdomains", results.len());
+        info!(
+            "Subdomain enumeration complete. Found {} unique subdomains",
+            results.len()
+        );
         Ok(results)
     }
 
     /// Brute-force subdomains using wordlist
     async fn brute_force(&self, wordlist: &[String]) -> Result<Vec<SubdomainResult>> {
         debug!("Brute-forcing {} subdomains", wordlist.len());
-        
+
         let mut results = Vec::new();
         let semaphore = Arc::new(tokio::sync::Semaphore::new(self.config.concurrency));
         let mut handles = Vec::new();
 
         for subdomain in wordlist {
             let fqdn = format!("{}.{}", subdomain, self.config.domain);
-            
+
             // Skip if already discovered
             {
                 let discovered = self.discovered.read().await;
@@ -152,7 +155,11 @@ impl SubdomainEnumerator {
                 }
             }
 
-            let permit = semaphore.clone().acquire_owned().await.unwrap();
+            let permit = semaphore
+                .clone()
+                .acquire_owned()
+                .await
+                .map_err(|_| anyhow::anyhow!("Semaphore closed"))?;
             let fqdn_clone = fqdn.clone();
             let wildcard_ips = self.wildcard_ips.clone();
             let discovered = self.discovered.clone();
@@ -199,7 +206,7 @@ impl SubdomainEnumerator {
     async fn resolve_subdomain(fqdn: &str) -> Result<Option<SubdomainResult>> {
         // Try to resolve the subdomain
         let addr = format!("{}:80", fqdn);
-        
+
         match addr.to_socket_addrs() {
             Ok(addrs) => {
                 let ips: Vec<IpAddr> = addrs.map(|a| a.ip()).collect();
@@ -226,7 +233,11 @@ impl SubdomainEnumerator {
         // Try to resolve a random non-existent subdomain
         let random_subdomains = vec![
             format!("xn--random-{}.{}", uuid::Uuid::new_v4(), self.config.domain),
-            format!("nonexistent-{}.{}", uuid::Uuid::new_v4(), self.config.domain),
+            format!(
+                "nonexistent-{}.{}",
+                uuid::Uuid::new_v4(),
+                self.config.domain
+            ),
             format!("test-{}.{}", uuid::Uuid::new_v4(), self.config.domain),
         ];
 
@@ -239,7 +250,10 @@ impl SubdomainEnumerator {
         }
 
         if !wildcard_ips.is_empty() {
-            warn!("Wildcard DNS detected for {}: {:?}", self.config.domain, wildcard_ips);
+            warn!(
+                "Wildcard DNS detected for {}: {:?}",
+                self.config.domain, wildcard_ips
+            );
             let mut wild = self.wildcard_ips.write().await;
             *wild = Some(wildcard_ips);
         } else {
@@ -252,9 +266,7 @@ impl SubdomainEnumerator {
     /// Check if IPs match wildcard pattern
     fn is_wildcard_response(ips: &[IpAddr], wildcard_ips: &[IpAddr]) -> bool {
         // Check if there's significant overlap
-        let common: Vec<_> = ips.iter()
-            .filter(|ip| wildcard_ips.contains(ip))
-            .collect();
+        let common: Vec<_> = ips.iter().filter(|ip| wildcard_ips.contains(ip)).collect();
 
         !common.is_empty()
     }
@@ -262,35 +274,41 @@ impl SubdomainEnumerator {
     /// Attempt DNS zone transfer
     async fn attempt_zone_transfer(&self) -> Result<Vec<SubdomainResult>> {
         debug!("Attempting zone transfer for {}", self.config.domain);
-        
+
         // In a real implementation, this would:
         // 1. Query NS records for the domain
         // 2. Try AXFR on each nameserver
         // 3. Parse zone file if successful
-        
+
         // Placeholder - zone transfers rarely work these days
         Ok(Vec::new())
     }
 
     /// Enumerate subdomains from certificate transparency logs
     async fn enumerate_from_cert_transparency(&self) -> Result<Vec<SubdomainResult>> {
-        debug!("Querying certificate transparency logs for {}", self.config.domain);
-        
+        debug!(
+            "Querying certificate transparency logs for {}",
+            self.config.domain
+        );
+
         // In a real implementation, this would:
         // 1. Query crt.sh or similar CT log aggregator
         // 2. Parse JSON response
         // 3. Extract unique subdomains
         // 4. Resolve each to verify it's still active
-        
+
         // Placeholder for now
         Ok(Vec::new())
     }
 
     /// Perform reverse DNS lookups on discovered IPs
-    async fn reverse_dns_from_results(&self, results: &[SubdomainResult]) -> Result<Vec<SubdomainResult>> {
+    async fn reverse_dns_from_results(
+        &self,
+        results: &[SubdomainResult],
+    ) -> Result<Vec<SubdomainResult>> {
         debug!("Performing reverse DNS lookups");
-        
-        let mut reverse_results = Vec::new();
+
+        let reverse_results = Vec::new();
         let mut seen_ips = HashSet::new();
 
         for result in results {
@@ -326,10 +344,13 @@ impl SubdomainPermutations {
         let base = parts[0];
 
         // Common patterns
-        let prefixes = vec!["www", "api", "admin", "dev", "stage", "staging", 
-                           "test", "qa", "uat", "prod", "app", "mobile"];
-        let suffixes = vec!["dev", "test", "stage", "prod", "beta", "alpha", 
-                           "new", "old", "backup"];
+        let prefixes = vec![
+            "www", "api", "admin", "dev", "stage", "staging", "test", "qa", "uat", "prod", "app",
+            "mobile",
+        ];
+        let suffixes = vec![
+            "dev", "test", "stage", "prod", "beta", "alpha", "new", "old", "backup",
+        ];
 
         // Add prefix variations
         for prefix in &prefixes {
@@ -367,7 +388,10 @@ mod tests {
 
     #[test]
     fn test_discovery_source() {
-        assert_ne!(DiscoverySource::BruteForce, DiscoverySource::CertTransparency);
+        assert_ne!(
+            DiscoverySource::BruteForce,
+            DiscoverySource::CertTransparency
+        );
         assert_eq!(DiscoverySource::BruteForce, DiscoverySource::BruteForce);
     }
 
@@ -383,7 +407,7 @@ mod tests {
     fn test_is_wildcard_response() {
         let ips1 = vec!["192.168.1.1".parse().unwrap()];
         let ips2 = vec!["192.168.1.1".parse().unwrap()];
-        
+
         assert!(SubdomainEnumerator::is_wildcard_response(&ips1, &ips2));
     }
 
@@ -391,7 +415,7 @@ mod tests {
     fn test_is_not_wildcard_response() {
         let ips1 = vec!["192.168.1.1".parse().unwrap()];
         let ips2 = vec!["192.168.1.2".parse().unwrap()];
-        
+
         assert!(!SubdomainEnumerator::is_wildcard_response(&ips1, &ips2));
     }
 }

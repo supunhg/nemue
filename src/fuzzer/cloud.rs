@@ -3,9 +3,9 @@
 
 use anyhow::Result;
 use reqwest::{Client, StatusCode};
+use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use tracing::{debug, info};
-use serde::{Serialize, Deserialize};
 
 /// Cloud storage provider
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -92,7 +92,11 @@ impl CloudStorageFuzzer {
 
     /// Enumerate cloud storage buckets
     pub async fn enumerate(&self, wordlist: Vec<String>) -> Result<Vec<CloudStorageResult>> {
-        info!("Enumerating {} buckets for {:?}", wordlist.len(), self.config.provider);
+        info!(
+            "Enumerating {} buckets for {:?}",
+            wordlist.len(),
+            self.config.provider
+        );
 
         let mut results = Vec::new();
 
@@ -129,7 +133,7 @@ impl CloudStorageFuzzer {
 
         // Try standard S3 URL
         let url = format!("https://{}.s3.amazonaws.com", name);
-        
+
         match self.client.head(&url).send().await {
             Ok(response) => {
                 match response.status() {
@@ -151,9 +155,11 @@ impl CloudStorageFuzzer {
                 // Try region-specific URLs
                 for region in &self.config.aws_regions {
                     let regional_url = format!("https://{}.s3.{}.amazonaws.com", name, region);
-                    
+
                     if let Ok(response) = self.client.head(&regional_url).send().await {
-                        if response.status() == StatusCode::OK || response.status() == StatusCode::FORBIDDEN {
+                        if response.status() == StatusCode::OK
+                            || response.status() == StatusCode::FORBIDDEN
+                        {
                             result.exists = true;
                             result.region = Some(region.clone());
                             result.public_access = response.status() == StatusCode::OK;
@@ -175,7 +181,8 @@ impl CloudStorageFuzzer {
         // Check common files
         if result.exists && self.config.check_common_files {
             let region = result.region.clone();
-            self.check_common_s3_files(name, region.as_deref(), &mut result).await?;
+            self.check_common_s3_files(name, region.as_deref(), &mut result)
+                .await?;
         }
 
         Ok(result)
@@ -223,7 +230,12 @@ impl CloudStorageFuzzer {
     }
 
     /// Check for common sensitive files in S3
-    async fn check_common_s3_files(&self, name: &str, region: Option<&str>, result: &mut CloudStorageResult) -> Result<()> {
+    async fn check_common_s3_files(
+        &self,
+        name: &str,
+        region: Option<&str>,
+        result: &mut CloudStorageResult,
+    ) -> Result<()> {
         let common_files = vec![
             "backup.zip",
             "database.sql",
@@ -243,7 +255,7 @@ impl CloudStorageFuzzer {
 
         for file in common_files {
             let url = format!("{}/{}", base_url, file);
-            
+
             if let Ok(response) = self.client.head(&url).send().await {
                 if response.status().is_success() {
                     result.files.push(file.to_string());
@@ -271,21 +283,18 @@ impl CloudStorageFuzzer {
         // Azure Blob URL format: https://{account}.blob.core.windows.net/{container}
         let url = format!("https://{}.blob.core.windows.net/", name);
 
-        match self.client.head(&url).send().await {
-            Ok(response) => {
-                match response.status() {
-                    StatusCode::OK => {
-                        result.exists = true;
-                        result.public_access = true;
-                    }
-                    StatusCode::FORBIDDEN => {
-                        result.exists = true;
-                        result.public_access = false;
-                    }
-                    _ => {}
+        if let Ok(response) = self.client.head(&url).send().await {
+            match response.status() {
+                StatusCode::OK => {
+                    result.exists = true;
+                    result.public_access = true;
                 }
+                StatusCode::FORBIDDEN => {
+                    result.exists = true;
+                    result.public_access = false;
+                }
+                _ => {}
             }
-            Err(_) => {}
         }
 
         Ok(result)
@@ -308,28 +317,25 @@ impl CloudStorageFuzzer {
         // GCP Storage URL: https://storage.googleapis.com/{bucket}
         let url = format!("https://storage.googleapis.com/{}", name);
 
-        match self.client.get(&url).send().await {
-            Ok(response) => {
-                match response.status() {
-                    StatusCode::OK => {
-                        result.exists = true;
-                        result.public_access = true;
+        if let Ok(response) = self.client.get(&url).send().await {
+            match response.status() {
+                StatusCode::OK => {
+                    result.exists = true;
+                    result.public_access = true;
 
-                        // Try to list contents
-                        if self.config.check_listing {
-                            let body = response.text().await?;
-                            result.files = self.parse_gcp_listing(&body);
-                            result.listing_enabled = !result.files.is_empty();
-                        }
+                    // Try to list contents
+                    if self.config.check_listing {
+                        let body = response.text().await?;
+                        result.files = self.parse_gcp_listing(&body);
+                        result.listing_enabled = !result.files.is_empty();
                     }
-                    StatusCode::FORBIDDEN => {
-                        result.exists = true;
-                        result.public_access = false;
-                    }
-                    _ => {}
                 }
+                StatusCode::FORBIDDEN => {
+                    result.exists = true;
+                    result.public_access = false;
+                }
+                _ => {}
             }
-            Err(_) => {}
         }
 
         Ok(result)
@@ -360,9 +366,10 @@ impl CloudStorageFuzzer {
 
         for region in regions {
             let url = format!("https://{}.{}.digitaloceanspaces.com", name, region);
-            
+
             if let Ok(response) = self.client.head(&url).send().await {
-                if response.status() == StatusCode::OK || response.status() == StatusCode::FORBIDDEN {
+                if response.status() == StatusCode::OK || response.status() == StatusCode::FORBIDDEN
+                {
                     result.exists = true;
                     result.region = Some(region.to_string());
                     result.public_access = response.status() == StatusCode::OK;
@@ -384,13 +391,21 @@ impl BucketNameGenerator {
         let mut variations = Vec::new();
 
         // Clean base name
-        let clean = base_name.to_lowercase()
-            .replace(".", "-")
-            .replace("_", "-");
+        let clean = base_name.to_lowercase().replace(".", "-").replace("_", "-");
 
         // Environment variations
-        let envs = vec!["dev", "test", "stage", "staging", "prod", "production", 
-                       "qa", "uat", "demo", "backup"];
+        let envs = vec![
+            "dev",
+            "test",
+            "stage",
+            "staging",
+            "prod",
+            "production",
+            "qa",
+            "uat",
+            "demo",
+            "backup",
+        ];
         for env in envs {
             variations.push(format!("{}-{}", clean, env));
             variations.push(format!("{}{}", clean, env));
@@ -398,8 +413,10 @@ impl BucketNameGenerator {
         }
 
         // Type variations
-        let types = vec!["backups", "backup", "logs", "assets", "media", "images", 
-                        "files", "data", "uploads", "static", "public"];
+        let types = vec![
+            "backups", "backup", "logs", "assets", "media", "images", "files", "data", "uploads",
+            "static", "public",
+        ];
         for typ in types {
             variations.push(format!("{}-{}", clean, typ));
             variations.push(format!("{}{}", clean, typ));

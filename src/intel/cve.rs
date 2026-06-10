@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -97,12 +97,13 @@ impl CveDatabase {
                 if ver.major == 2 && ver.minor <= 4 && ver.patch < 50 {
                     results.push(CveInfo {
                         cve_id: "CVE-2021-44790".to_string(),
-                        description: "Apache HTTP Server 2.4.x < 2.4.51 buffer overflow in mod_lua".to_string(),
+                        description: "Apache HTTP Server 2.4.x < 2.4.51 buffer overflow in mod_lua"
+                            .to_string(),
                         severity: CveSeverity::Critical,
                         cvss_score: 9.8,
                         published_date: "2021-12-20".to_string(),
                         references: vec![
-                            "https://nvd.nist.gov/vuln/detail/CVE-2021-44790".to_string(),
+                            "https://nvd.nist.gov/vuln/detail/CVE-2021-44790".to_string()
                         ],
                     });
                 }
@@ -115,12 +116,13 @@ impl CveDatabase {
                 if ver.major <= 8 && ver.minor < 8 {
                     results.push(CveInfo {
                         cve_id: "CVE-2021-41617".to_string(),
-                        description: "OpenSSH < 8.8 privilege escalation via supplemental groups".to_string(),
+                        description: "OpenSSH < 8.8 privilege escalation via supplemental groups"
+                            .to_string(),
                         severity: CveSeverity::High,
                         cvss_score: 7.0,
                         published_date: "2021-09-26".to_string(),
                         references: vec![
-                            "https://nvd.nist.gov/vuln/detail/CVE-2021-41617".to_string(),
+                            "https://nvd.nist.gov/vuln/detail/CVE-2021-41617".to_string()
                         ],
                     });
                 }
@@ -128,19 +130,18 @@ impl CveDatabase {
         }
 
         // OpenSSL vulnerabilities
-        if service.to_lowercase().contains("openssl") || service.to_lowercase().contains("ssl") {
-            if version.contains("1.1.1") {
-                results.push(CveInfo {
-                    cve_id: "CVE-2022-0778".to_string(),
-                    description: "OpenSSL 1.1.1 infinite loop vulnerability (denial of service)".to_string(),
-                    severity: CveSeverity::High,
-                    cvss_score: 7.5,
-                    published_date: "2022-03-15".to_string(),
-                    references: vec![
-                        "https://nvd.nist.gov/vuln/detail/CVE-2022-0778".to_string(),
-                    ],
-                });
-            }
+        if (service.to_lowercase().contains("openssl") || service.to_lowercase().contains("ssl"))
+            && version.contains("1.1.1")
+        {
+            results.push(CveInfo {
+                cve_id: "CVE-2022-0778".to_string(),
+                description: "OpenSSL 1.1.1 infinite loop vulnerability (denial of service)"
+                    .to_string(),
+                severity: CveSeverity::High,
+                cvss_score: 7.5,
+                published_date: "2022-03-15".to_string(),
+                references: vec!["https://nvd.nist.gov/vuln/detail/CVE-2022-0778".to_string()],
+            });
         }
 
         // MySQL vulnerabilities
@@ -149,12 +150,13 @@ impl CveDatabase {
                 if ver.major == 5 || (ver.major == 8 && ver.minor == 0 && ver.patch < 28) {
                     results.push(CveInfo {
                         cve_id: "CVE-2021-2471".to_string(),
-                        description: "MySQL Server vulnerability in replication component".to_string(),
+                        description: "MySQL Server vulnerability in replication component"
+                            .to_string(),
                         severity: CveSeverity::Medium,
                         cvss_score: 4.9,
                         published_date: "2021-10-20".to_string(),
                         references: vec![
-                            "https://nvd.nist.gov/vuln/detail/CVE-2021-2471".to_string(),
+                            "https://nvd.nist.gov/vuln/detail/CVE-2021-2471".to_string()
                         ],
                     });
                 }
@@ -162,17 +164,21 @@ impl CveDatabase {
         }
 
         // PostgreSQL vulnerabilities
-        if service.to_lowercase().contains("postgresql") || service.to_lowercase().contains("postgres") {
+        if service.to_lowercase().contains("postgresql")
+            || service.to_lowercase().contains("postgres")
+        {
             if let Some(ver) = self.parse_version(version) {
                 if ver.major <= 13 {
                     results.push(CveInfo {
                         cve_id: "CVE-2021-32027".to_string(),
-                        description: "PostgreSQL buffer overflow in array subscripting calculations".to_string(),
+                        description:
+                            "PostgreSQL buffer overflow in array subscripting calculations"
+                                .to_string(),
                         severity: CveSeverity::High,
                         cvss_score: 8.8,
                         published_date: "2021-05-14".to_string(),
                         references: vec![
-                            "https://nvd.nist.gov/vuln/detail/CVE-2021-32027".to_string(),
+                            "https://nvd.nist.gov/vuln/detail/CVE-2021-32027".to_string()
                         ],
                     });
                 }
@@ -190,7 +196,7 @@ impl CveDatabase {
                         cvss_score: 8.1,
                         published_date: "2021-05-25".to_string(),
                         references: vec![
-                            "https://nvd.nist.gov/vuln/detail/CVE-2021-23017".to_string(),
+                            "https://nvd.nist.gov/vuln/detail/CVE-2021-23017".to_string()
                         ],
                     });
                 }
@@ -198,12 +204,13 @@ impl CveDatabase {
         }
 
         // Log4j vulnerabilities (Log4Shell)
-        if service.to_lowercase().contains("log4j") || service.to_lowercase().contains("java") {
-            if version.contains("2.") {
-                let ver = self.parse_version(version);
-                if let Some(v) = ver {
-                    if v.major == 2 && v.minor < 17 {
-                        results.push(CveInfo {
+        if (service.to_lowercase().contains("log4j") || service.to_lowercase().contains("java"))
+            && version.contains("2.")
+        {
+            let ver = self.parse_version(version);
+            if let Some(v) = ver {
+                if v.major == 2 && v.minor < 17 {
+                    results.push(CveInfo {
                             cve_id: "CVE-2021-44228".to_string(),
                             description: "Apache Log4j2 JNDI features do not protect against attacker controlled LDAP (Log4Shell)".to_string(),
                             severity: CveSeverity::Critical,
@@ -214,9 +221,9 @@ impl CveDatabase {
                                 "https://logging.apache.org/log4j/2.x/security.html".to_string(),
                             ],
                         });
-                    }
-                    if v.major == 2 && v.minor < 16 {
-                        results.push(CveInfo {
+                }
+                if v.major == 2 && v.minor < 16 {
+                    results.push(CveInfo {
                             cve_id: "CVE-2021-45046".to_string(),
                             description: "Apache Log4j2 DoS via crafted data in ThreadContext (incomplete fix for Log4Shell)".to_string(),
                             severity: CveSeverity::Critical,
@@ -226,7 +233,6 @@ impl CveDatabase {
                                 "https://nvd.nist.gov/vuln/detail/CVE-2021-45046".to_string(),
                             ],
                         });
-                    }
                 }
             }
         }
@@ -235,24 +241,25 @@ impl CveDatabase {
         if service.to_lowercase().contains("exchange") || service.to_lowercase().contains("smtp") {
             results.push(CveInfo {
                 cve_id: "CVE-2021-34473".to_string(),
-                description: "Microsoft Exchange Server Remote Code Execution (ProxyShell)".to_string(),
+                description: "Microsoft Exchange Server Remote Code Execution (ProxyShell)"
+                    .to_string(),
                 severity: CveSeverity::Critical,
                 cvss_score: 9.8,
                 published_date: "2021-08-12".to_string(),
                 references: vec![
                     "https://nvd.nist.gov/vuln/detail/CVE-2021-34473".to_string(),
-                    "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2021-34473".to_string(),
+                    "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2021-34473"
+                        .to_string(),
                 ],
             });
             results.push(CveInfo {
                 cve_id: "CVE-2021-34523".to_string(),
-                description: "Microsoft Exchange Server Elevation of Privilege (ProxyShell)".to_string(),
+                description: "Microsoft Exchange Server Elevation of Privilege (ProxyShell)"
+                    .to_string(),
                 severity: CveSeverity::Critical,
                 cvss_score: 9.8,
                 published_date: "2021-08-12".to_string(),
-                references: vec![
-                    "https://nvd.nist.gov/vuln/detail/CVE-2021-34523".to_string(),
-                ],
+                references: vec!["https://nvd.nist.gov/vuln/detail/CVE-2021-34523".to_string()],
             });
         }
 
@@ -260,28 +267,30 @@ impl CveDatabase {
         if service.to_lowercase().contains("print") || service.to_lowercase().contains("spooler") {
             results.push(CveInfo {
                 cve_id: "CVE-2021-34527".to_string(),
-                description: "Windows Print Spooler Remote Code Execution (PrintNightmare)".to_string(),
+                description: "Windows Print Spooler Remote Code Execution (PrintNightmare)"
+                    .to_string(),
                 severity: CveSeverity::Critical,
                 cvss_score: 8.8,
                 published_date: "2021-07-02".to_string(),
                 references: vec![
                     "https://nvd.nist.gov/vuln/detail/CVE-2021-34527".to_string(),
-                    "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2021-34527".to_string(),
+                    "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2021-34527"
+                        .to_string(),
                 ],
             });
         }
 
         // Active Directory (Zerologon)
-        if service.to_lowercase().contains("netlogon") || service.to_lowercase().contains("domain") {
+        if service.to_lowercase().contains("netlogon") || service.to_lowercase().contains("domain")
+        {
             results.push(CveInfo {
                 cve_id: "CVE-2020-1472".to_string(),
-                description: "Netlogon Elevation of Privilege Vulnerability (Zerologon)".to_string(),
+                description: "Netlogon Elevation of Privilege Vulnerability (Zerologon)"
+                    .to_string(),
                 severity: CveSeverity::Critical,
                 cvss_score: 10.0,
                 published_date: "2020-08-17".to_string(),
-                references: vec![
-                    "https://nvd.nist.gov/vuln/detail/CVE-2020-1472".to_string(),
-                ],
+                references: vec!["https://nvd.nist.gov/vuln/detail/CVE-2020-1472".to_string()],
             });
         }
 
@@ -289,7 +298,9 @@ impl CveDatabase {
         if service.to_lowercase().contains("vmware") || service.to_lowercase().contains("vcenter") {
             results.push(CveInfo {
                 cve_id: "CVE-2021-21985".to_string(),
-                description: "VMware vCenter Server RCE via vSphere Client (Virtual SAN Health Check)".to_string(),
+                description:
+                    "VMware vCenter Server RCE via vSphere Client (Virtual SAN Health Check)"
+                        .to_string(),
                 severity: CveSeverity::Critical,
                 cvss_score: 9.8,
                 published_date: "2021-05-25".to_string(),
@@ -319,13 +330,15 @@ impl CveDatabase {
         if service.to_lowercase().contains("spring") || service.to_lowercase().contains("tomcat") {
             results.push(CveInfo {
                 cve_id: "CVE-2022-22965".to_string(),
-                description: "Spring Framework RCE via Data Binding on JDK 9+ (Spring4Shell)".to_string(),
+                description: "Spring Framework RCE via Data Binding on JDK 9+ (Spring4Shell)"
+                    .to_string(),
                 severity: CveSeverity::Critical,
                 cvss_score: 9.8,
                 published_date: "2022-04-01".to_string(),
                 references: vec![
                     "https://nvd.nist.gov/vuln/detail/CVE-2022-22965".to_string(),
-                    "https://spring.io/blog/2022/03/31/spring-framework-rce-early-announcement".to_string(),
+                    "https://spring.io/blog/2022/03/31/spring-framework-rce-early-announcement"
+                        .to_string(),
                 ],
             });
         }
@@ -334,13 +347,12 @@ impl CveDatabase {
         if service.to_lowercase().contains("struts") {
             results.push(CveInfo {
                 cve_id: "CVE-2021-31805".to_string(),
-                description: "Apache Struts2 forced OGNL evaluation when evaluated raw attribute".to_string(),
+                description: "Apache Struts2 forced OGNL evaluation when evaluated raw attribute"
+                    .to_string(),
                 severity: CveSeverity::Critical,
                 cvss_score: 9.8,
                 published_date: "2021-04-13".to_string(),
-                references: vec![
-                    "https://nvd.nist.gov/vuln/detail/CVE-2021-31805".to_string(),
-                ],
+                references: vec!["https://nvd.nist.gov/vuln/detail/CVE-2021-31805".to_string()],
             });
         }
 
@@ -360,10 +372,12 @@ impl CveDatabase {
         }
 
         // Fortinet FortiOS (CVE-2022-40684)
-        if service.to_lowercase().contains("fortinet") || service.to_lowercase().contains("fortios") {
+        if service.to_lowercase().contains("fortinet") || service.to_lowercase().contains("fortios")
+        {
             results.push(CveInfo {
                 cve_id: "CVE-2022-40684".to_string(),
-                description: "Fortinet FortiOS & FortiProxy authentication bypass vulnerability".to_string(),
+                description: "Fortinet FortiOS & FortiProxy authentication bypass vulnerability"
+                    .to_string(),
                 severity: CveSeverity::Critical,
                 cvss_score: 9.6,
                 published_date: "2022-10-18".to_string(),
@@ -375,10 +389,12 @@ impl CveDatabase {
         }
 
         // Citrix ADC/Gateway (CVE-2023-3519)
-        if service.to_lowercase().contains("citrix") || service.to_lowercase().contains("netscaler") {
+        if service.to_lowercase().contains("citrix") || service.to_lowercase().contains("netscaler")
+        {
             results.push(CveInfo {
                 cve_id: "CVE-2023-3519".to_string(),
-                description: "Citrix ADC & Gateway unauthenticated remote code execution".to_string(),
+                description: "Citrix ADC & Gateway unauthenticated remote code execution"
+                    .to_string(),
                 severity: CveSeverity::Critical,
                 cvss_score: 9.8,
                 published_date: "2023-07-18".to_string(),
@@ -450,16 +466,19 @@ impl CveDatabase {
         }
 
         // Windows SMB MS08-067
-        if service.to_lowercase().contains("smb") || service.to_lowercase().contains("microsoft-ds") {
+        if service.to_lowercase().contains("smb") || service.to_lowercase().contains("microsoft-ds")
+        {
             results.push(CveInfo {
                 cve_id: "CVE-2008-4250".to_string(),
-                description: "Microsoft Windows Server Service RPC Request Handling RCE (MS08-067)".to_string(),
+                description: "Microsoft Windows Server Service RPC Request Handling RCE (MS08-067)"
+                    .to_string(),
                 severity: CveSeverity::Critical,
                 cvss_score: 10.0,
                 published_date: "2008-10-23".to_string(),
                 references: vec![
                     "https://nvd.nist.gov/vuln/detail/CVE-2008-4250".to_string(),
-                    "https://technet.microsoft.com/en-us/library/security/ms08-067.aspx".to_string(),
+                    "https://technet.microsoft.com/en-us/library/security/ms08-067.aspx"
+                        .to_string(),
                 ],
             });
         }
@@ -468,7 +487,8 @@ impl CveDatabase {
         if service.to_lowercase().contains("struts") || service.to_lowercase().contains("tomcat") {
             results.push(CveInfo {
                 cve_id: "CVE-2017-5638".to_string(),
-                description: "Apache Struts2 Jakarta Multipart Parser RCE (Equifax breach)".to_string(),
+                description: "Apache Struts2 Jakarta Multipart Parser RCE (Equifax breach)"
+                    .to_string(),
                 severity: CveSeverity::Critical,
                 cvss_score: 10.0,
                 published_date: "2017-03-06".to_string(),
@@ -483,7 +503,8 @@ impl CveDatabase {
         if service.to_lowercase().contains("ssl") || service.to_lowercase().contains("tls") {
             results.push(CveInfo {
                 cve_id: "CVE-2014-0160".to_string(),
-                description: "OpenSSL TLS Heartbeat Extension Information Disclosure (Heartbleed)".to_string(),
+                description: "OpenSSL TLS Heartbeat Extension Information Disclosure (Heartbleed)"
+                    .to_string(),
                 severity: CveSeverity::High,
                 cvss_score: 7.5,
                 published_date: "2014-04-07".to_string(),
@@ -513,7 +534,9 @@ impl CveDatabase {
         if service.to_lowercase().contains("cgi") || service.to_lowercase().contains("bash") {
             results.push(CveInfo {
                 cve_id: "CVE-2014-6271".to_string(),
-                description: "GNU Bash Remote Code Execution via Environment Variables (Shellshock)".to_string(),
+                description:
+                    "GNU Bash Remote Code Execution via Environment Variables (Shellshock)"
+                        .to_string(),
                 severity: CveSeverity::Critical,
                 cvss_score: 10.0,
                 published_date: "2014-09-24".to_string(),
@@ -564,7 +587,8 @@ impl CveDatabase {
                 published_date: "2009-09-28".to_string(),
                 references: vec![
                     "https://nvd.nist.gov/vuln/detail/CVE-2007-6750".to_string(),
-                    "https://web.archive.org/web/20150315054838/http://ha.ckers.org/slowloris/".to_string(),
+                    "https://web.archive.org/web/20150315054838/http://ha.ckers.org/slowloris/"
+                        .to_string(),
                 ],
             });
         }
@@ -579,7 +603,8 @@ impl CveDatabase {
                 published_date: "2017-01-27".to_string(),
                 references: vec![
                     "https://nvd.nist.gov/vuln/detail/CVE-2017-3241".to_string(),
-                    "https://mogwailabs.de/blog/2019/03/attacking-rmi-based-jmx-services/".to_string(),
+                    "https://mogwailabs.de/blog/2019/03/attacking-rmi-based-jmx-services/"
+                        .to_string(),
                 ],
             });
         }
@@ -630,7 +655,8 @@ impl CveDatabase {
         }
 
         // Microsoft Exchange ProxyLogon
-        if service.to_lowercase().contains("exchange") || service.to_lowercase().contains("outlook") {
+        if service.to_lowercase().contains("exchange") || service.to_lowercase().contains("outlook")
+        {
             results.push(CveInfo {
                 cve_id: "CVE-2021-26855".to_string(),
                 description: "Microsoft Exchange Server SSRF (ProxyLogon)".to_string(),
@@ -639,7 +665,8 @@ impl CveDatabase {
                 published_date: "2021-03-02".to_string(),
                 references: vec![
                     "https://nvd.nist.gov/vuln/detail/CVE-2021-26855".to_string(),
-                    "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2021-26855".to_string(),
+                    "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2021-26855"
+                        .to_string(),
                 ],
             });
         }
@@ -652,23 +679,20 @@ impl CveDatabase {
                 severity: CveSeverity::Critical,
                 cvss_score: 9.8,
                 published_date: "2024-03-01".to_string(),
-                references: vec![
-                    "https://nvd.nist.gov/vuln/detail/CVE-2024-27956".to_string(),
-                ],
+                references: vec!["https://nvd.nist.gov/vuln/detail/CVE-2024-27956".to_string()],
             });
         }
 
         // SolarWinds Orion
-        if service.to_lowercase().contains("solarwinds") || service.to_lowercase().contains("orion") {
+        if service.to_lowercase().contains("solarwinds") || service.to_lowercase().contains("orion")
+        {
             results.push(CveInfo {
                 cve_id: "CVE-2020-10148".to_string(),
                 description: "SolarWinds Orion API Authentication Bypass".to_string(),
                 severity: CveSeverity::Critical,
                 cvss_score: 9.8,
                 published_date: "2020-12-14".to_string(),
-                references: vec![
-                    "https://nvd.nist.gov/vuln/detail/CVE-2020-10148".to_string(),
-                ],
+                references: vec!["https://nvd.nist.gov/vuln/detail/CVE-2020-10148".to_string()],
             });
         }
 
@@ -680,9 +704,7 @@ impl CveDatabase {
                 severity: CveSeverity::Critical,
                 cvss_score: 10.0,
                 published_date: "2023-10-04".to_string(),
-                references: vec![
-                    "https://nvd.nist.gov/vuln/detail/CVE-2023-22515".to_string(),
-                ],
+                references: vec!["https://nvd.nist.gov/vuln/detail/CVE-2023-22515".to_string()],
             });
         }
 
@@ -694,23 +716,21 @@ impl CveDatabase {
                 severity: CveSeverity::Critical,
                 cvss_score: 9.8,
                 published_date: "2023-12-07".to_string(),
-                references: vec![
-                    "https://nvd.nist.gov/vuln/detail/CVE-2023-50164".to_string(),
-                ],
+                references: vec!["https://nvd.nist.gov/vuln/detail/CVE-2023-50164".to_string()],
             });
         }
 
         // Ivanti Connect Secure
-        if service.to_lowercase().contains("ivanti") || service.to_lowercase().contains("pulse secure") {
+        if service.to_lowercase().contains("ivanti")
+            || service.to_lowercase().contains("pulse secure")
+        {
             results.push(CveInfo {
                 cve_id: "CVE-2024-21887".to_string(),
                 description: "Ivanti Connect Secure Command Injection".to_string(),
                 severity: CveSeverity::Critical,
                 cvss_score: 9.1,
                 published_date: "2024-01-31".to_string(),
-                references: vec![
-                    "https://nvd.nist.gov/vuln/detail/CVE-2024-21887".to_string(),
-                ],
+                references: vec!["https://nvd.nist.gov/vuln/detail/CVE-2024-21887".to_string()],
             });
         }
 
@@ -728,7 +748,7 @@ impl CveDatabase {
             return None;
         }
 
-        let major = parts.get(0)?.parse().ok()?;
+        let major = parts.first()?.parse().ok()?;
         let minor = parts.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
         let patch = parts.get(2).and_then(|s| s.parse().ok()).unwrap_or(0);
 
@@ -793,7 +813,7 @@ mod tests {
     #[tokio::test]
     async fn test_cache_functionality() {
         let mut db = CveDatabase::new(true);
-        
+
         // First lookup
         let _ = db.lookup_vulnerabilities("Apache", "2.4.49").await.unwrap();
         let (entries, _) = db.cache_stats();

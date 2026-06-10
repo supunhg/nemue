@@ -2,8 +2,8 @@
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::sync::Arc;
-use tokio::sync::RwLock;
 use std::time::{Duration, Instant};
+use tokio::sync::RwLock;
 
 pub struct Cache<K, V> {
     data: Arc<RwLock<CacheData<K, V>>>,

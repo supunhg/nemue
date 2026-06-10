@@ -49,16 +49,16 @@ impl IcmpScanner {
     /// This is less stealthy but works without root privileges
     async fn tcp_ping_fallback(&self, target: IpAddr) -> Result<PingResult> {
         use tokio::net::TcpStream;
-        
+
         let start = std::time::Instant::now();
-        
+
         // Try common ports that are likely to be open
         let ports = [80, 443, 22, 21, 25];
-        
+
         for port in ports {
             let addr = std::net::SocketAddr::new(target, port);
             let timeout_duration = Duration::from_millis(self.timeout_ms / ports.len() as u64);
-            
+
             if let Ok(Ok(_)) = timeout(timeout_duration, TcpStream::connect(addr)).await {
                 let rtt = start.elapsed();
                 return Ok(PingResult {
@@ -144,7 +144,9 @@ mod tests {
     #[tokio::test]
     async fn test_is_alive_localhost() {
         let scanner = IcmpScanner::new(1000);
-        let alive = scanner.is_alive(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1))).await;
+        let alive = scanner
+            .is_alive(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)))
+            .await;
         assert!(alive.is_ok());
     }
 }

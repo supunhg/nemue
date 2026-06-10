@@ -1,43 +1,50 @@
--- Redis Information Disclosure
--- Extracts Redis server information
+local nmap = require "nmap"
+local shortport = require "shortport"
+local stdnse = require "stdnse"
 
 description = [[
-Connects to Redis and extracts configuration,
-checks for authentication, and tests common misconfigurations.
+Extracts information from a Redis server.
 ]]
 
-author = "Nemue Team"
-license = "MIT"
-categories = {"discovery", "intrusive", "database"}
+author = "Nemue"
+license = "Same as Nmap--See https://nmap.org/book/man-legal.html"
+categories = {"safe", "discovery"}
 
-portrule = function(port)
-    return port.protocol == "tcp" and 
-           (port.number == 6379 or port.service == "redis")
-end
+portrule = shortport.port_or_service(6379, "redis")
 
 action = function(host, port)
-    local result = {}
-    
-    table.insert(result, "Redis Server Information:")
-    table.insert(result, "  Version: 6.2.7")
-    table.insert(result, "  Mode: standalone")
-    table.insert(result, "  OS: Linux 5.15.0-56-generic x86_64")
-    
-    table.insert(result, "\nINFO Command Test:")
-    table.insert(result, "  Status: SUCCESS (No authentication required)")
-    
-    table.insert(result, "\nConfiguration:")
-    table.insert(result, "  Databases: 16")
-    table.insert(result, "  Keys: 1247")
-    table.insert(result, "  Protected Mode: disabled")
-    table.insert(result, "  Bind Address: 0.0.0.0")
-    
-    table.insert(result, "\nSecurity Analysis:")
-    table.insert(result, "  [!] CRITICAL: No authentication configured")
-    table.insert(result, "  [!] CRITICAL: Protected mode disabled")
-    table.insert(result, "  [!] CRITICAL: Bound to all interfaces")
-    table.insert(result, "  [!] Potential for remote code execution via CONFIG SET")
-    table.insert(result, "  Recommendation: Enable authentication, protected mode, bind to localhost")
-    
-    return table.concat(result, "\n")
+  local socket = nmap.new_socket()
+  local result = {}
+  local status, err = socket:connect(host, port)
+
+  if not status then
+    stdnse.debug1("Could not connect: %s", err)
+    return nil
+  end
+
+  socket:send("INFO server\r\n")
+  local response
+  status, response = socket:receive_lines(1)
+
+  if status and response then
+    table.insert(result, "Redis Information:")
+    local ver = response:match("redis_version:(%S+)")
+    if ver then
+      table.insert(result, "Version: " .. ver)
+    end
+    local mode = response:match("redis_mode:(%S+)")
+    if mode then
+      table.insert(result, "Mode: " .. mode)
+    end
+    local os = response:match("os:(%S+)")
+    if os then
+      table.insert(result, "OS: " .. os)
+    end
+    port.version.name = "redis"
+    port.version.product = "Redis"
+    nmap.set_port_version(host, port)
+  end
+
+  socket:close()
+  return stdnse.format_output(true, result)
 end

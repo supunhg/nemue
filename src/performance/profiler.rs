@@ -1,9 +1,9 @@
 // Performance profiler for bottleneck identification
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProfileEntry {
@@ -24,6 +24,12 @@ struct ProfileData {
     call_count: u64,
     min_time: Duration,
     max_time: Duration,
+}
+
+impl Default for Profiler {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Profiler {
@@ -162,10 +168,12 @@ mod tests {
     #[tokio::test]
     async fn test_profiler_basic() {
         let profiler = Profiler::new();
-        
-        profiler.profile("test_fn", async {
-            tokio::time::sleep(Duration::from_millis(10)).await;
-        }).await;
+
+        profiler
+            .profile("test_fn", async {
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            })
+            .await;
 
         let snapshot = profiler.snapshot().await;
         assert_eq!(snapshot.len(), 1);
@@ -177,11 +185,13 @@ mod tests {
     #[tokio::test]
     async fn test_profiler_multiple_calls() {
         let profiler = Profiler::new();
-        
+
         for _ in 0..5 {
-            profiler.profile("loop_fn", async {
-                tokio::time::sleep(Duration::from_millis(5)).await;
-            }).await;
+            profiler
+                .profile("loop_fn", async {
+                    tokio::time::sleep(Duration::from_millis(5)).await;
+                })
+                .await;
         }
 
         let snapshot = profiler.snapshot().await;
@@ -192,12 +202,12 @@ mod tests {
     #[tokio::test]
     async fn test_profiler_reset() {
         let profiler = Profiler::new();
-        
+
         profiler.profile("fn1", async {}).await;
         profiler.profile("fn2", async {}).await;
-        
+
         assert_eq!(profiler.snapshot().await.len(), 2);
-        
+
         profiler.reset().await;
         assert_eq!(profiler.snapshot().await.len(), 0);
     }
@@ -205,14 +215,18 @@ mod tests {
     #[tokio::test]
     async fn test_bottlenecks() {
         let profiler = Profiler::new();
-        
-        profiler.profile("fast", async {
-            tokio::time::sleep(Duration::from_millis(1)).await;
-        }).await;
-        
-        profiler.profile("slow", async {
-            tokio::time::sleep(Duration::from_millis(20)).await;
-        }).await;
+
+        profiler
+            .profile("fast", async {
+                tokio::time::sleep(Duration::from_millis(1)).await;
+            })
+            .await;
+
+        profiler
+            .profile("slow", async {
+                tokio::time::sleep(Duration::from_millis(20)).await;
+            })
+            .await;
 
         let bottlenecks = profiler.bottlenecks(10).await;
         assert_eq!(bottlenecks.len(), 1);
@@ -222,10 +236,12 @@ mod tests {
     #[tokio::test]
     async fn test_profiler_report() {
         let profiler = Profiler::new();
-        
-        profiler.profile("test1", async {
-            tokio::time::sleep(Duration::from_millis(5)).await;
-        }).await;
+
+        profiler
+            .profile("test1", async {
+                tokio::time::sleep(Duration::from_millis(5)).await;
+            })
+            .await;
 
         let report = profiler.report().await;
         assert!(report.contains("Performance Profile"));

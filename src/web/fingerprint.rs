@@ -1,8 +1,8 @@
 // Technology Fingerprinting
 // Identifies web technologies, frameworks, CMS, and JavaScript libraries
 
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Detected technology information
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -82,7 +82,10 @@ impl TechnologyFingerprinter {
         }
 
         // X-Powered-By header
-        if let Some(powered_by) = headers.get("x-powered-by").or_else(|| headers.get("X-Powered-By")) {
+        if let Some(powered_by) = headers
+            .get("x-powered-by")
+            .or_else(|| headers.get("X-Powered-By"))
+        {
             if powered_by.contains("PHP") {
                 techs.push(Technology {
                     name: "PHP".to_string(),
@@ -289,7 +292,7 @@ impl TechnologyFingerprinter {
                 .chars()
                 .take_while(|c| c.is_ascii_digit() || *c == '.')
                 .collect();
-            
+
             if !version.is_empty() {
                 return Some(version);
             }
@@ -321,7 +324,7 @@ mod tests {
     fn test_detect_nginx_from_header() {
         let mut headers = HashMap::new();
         headers.insert("Server".to_string(), "nginx/1.18.0".to_string());
-        
+
         let techs = TechnologyFingerprinter::detect_from_headers(&headers);
         assert!(!techs.is_empty());
         assert_eq!(techs[0].name, "nginx");
@@ -332,7 +335,7 @@ mod tests {
     fn test_detect_php_from_header() {
         let mut headers = HashMap::new();
         headers.insert("X-Powered-By".to_string(), "PHP/7.4.3".to_string());
-        
+
         let techs = TechnologyFingerprinter::detect_from_headers(&headers);
         assert!(!techs.is_empty());
         assert_eq!(techs[0].name, "PHP");
@@ -340,8 +343,9 @@ mod tests {
 
     #[test]
     fn test_detect_wordpress_from_body() {
-        let body = "<html><body><link href='/wp-content/themes/twentytwenty/style.css'/></body></html>";
-        
+        let body =
+            "<html><body><link href='/wp-content/themes/twentytwenty/style.css'/></body></html>";
+
         let techs = TechnologyFingerprinter::detect_from_body(body);
         assert!(!techs.is_empty());
         assert_eq!(techs[0].name, "WordPress");

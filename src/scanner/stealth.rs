@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use super::timing::TimingTemplate;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StealthOptions {
@@ -71,7 +71,7 @@ mod tests {
             .with_decoys(vec!["192.168.1.100".to_string()])
             .with_source_port(53)
             .randomize();
-        
+
         assert_eq!(opts.timing_template, TimingTemplate::Sneaky);
         assert_eq!(opts.decoy_addresses.len(), 1);
         assert_eq!(opts.source_port, Some(53));

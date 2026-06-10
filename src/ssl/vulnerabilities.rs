@@ -66,7 +66,9 @@ impl SslVulnerability {
 
     pub fn description(&self) -> &str {
         match self {
-            SslVulnerability::Heartbleed => "Memory disclosure vulnerability in OpenSSL heartbeat extension",
+            SslVulnerability::Heartbleed => {
+                "Memory disclosure vulnerability in OpenSSL heartbeat extension"
+            }
             SslVulnerability::Poodle => "Padding oracle attack against SSLv3",
             SslVulnerability::Beast => "Chosen plaintext attack against TLS 1.0 CBC mode",
             SslVulnerability::Crime => "TLS compression attack allowing session hijacking",
@@ -75,7 +77,9 @@ impl SslVulnerability {
             SslVulnerability::Logjam => "Diffie-Hellman downgrade attack",
             SslVulnerability::Drown => "Cross-protocol attack using SSLv2",
             SslVulnerability::Robot => "RSA padding oracle allowing private key recovery",
-            SslVulnerability::InsecureRenegotiation => "Man-in-the-middle attack during renegotiation",
+            SslVulnerability::InsecureRenegotiation => {
+                "Man-in-the-middle attack during renegotiation"
+            }
         }
     }
 
@@ -175,7 +179,7 @@ impl VulnerabilityScanner {
     pub async fn check_heartbleed(&self, target: SocketAddr) -> Result<VulnerabilityScanResult> {
         // TLS 1.2 ClientHello with heartbeat extension
         let client_hello = self.build_heartbeat_client_hello();
-        
+
         match timeout(self.timeout_duration, TcpStream::connect(target)).await {
             Ok(Ok(mut stream)) => {
                 // Send ClientHello
@@ -193,7 +197,7 @@ impl VulnerabilityScanner {
                     Ok(Ok(n)) if n > 0 => {
                         // Check if server supports heartbeat
                         let supports_heartbeat = self.check_heartbeat_support(&response[..n]);
-                        
+
                         if supports_heartbeat {
                             // Send malformed heartbeat request
                             let heartbeat_request = self.build_malformed_heartbeat();
@@ -201,7 +205,12 @@ impl VulnerabilityScanner {
 
                             // Check for vulnerable response
                             let mut heartbeat_response = vec![0u8; 65536];
-                            match timeout(Duration::from_secs(2), stream.read(&mut heartbeat_response)).await {
+                            match timeout(
+                                Duration::from_secs(2),
+                                stream.read(&mut heartbeat_response),
+                            )
+                            .await
+                            {
                                 Ok(Ok(n)) if n > 0 => {
                                     // Vulnerable if response is larger than expected
                                     let vulnerable = n > 100;
@@ -209,9 +218,15 @@ impl VulnerabilityScanner {
                                         vulnerability: SslVulnerability::Heartbleed,
                                         vulnerable,
                                         details: if vulnerable {
-                                            Some(format!("Server returned {} bytes (indicates memory leak)", n))
+                                            Some(format!(
+                                                "Server returned {} bytes (indicates memory leak)",
+                                                n
+                                            ))
                                         } else {
-                                            Some("Server supports heartbeat but not vulnerable".to_string())
+                                            Some(
+                                                "Server supports heartbeat but not vulnerable"
+                                                    .to_string(),
+                                            )
                                         },
                                     })
                                 }
@@ -225,7 +240,9 @@ impl VulnerabilityScanner {
                             Ok(VulnerabilityScanResult {
                                 vulnerability: SslVulnerability::Heartbleed,
                                 vulnerable: false,
-                                details: Some("Server does not support heartbeat extension".to_string()),
+                                details: Some(
+                                    "Server does not support heartbeat extension".to_string(),
+                                ),
                             })
                         }
                     }
@@ -248,7 +265,7 @@ impl VulnerabilityScanner {
     pub async fn check_poodle(&self, target: SocketAddr) -> Result<VulnerabilityScanResult> {
         // Try SSLv3 connection
         let sslv3_hello = self.build_sslv3_client_hello();
-        
+
         match timeout(self.timeout_duration, TcpStream::connect(target)).await {
             Ok(Ok(mut stream)) => {
                 if stream.write_all(&sslv3_hello).await.is_err() {
@@ -293,7 +310,7 @@ impl VulnerabilityScanner {
     pub async fn check_crime(&self, target: SocketAddr) -> Result<VulnerabilityScanResult> {
         // TLS ClientHello with compression
         let hello_with_compression = self.build_client_hello_with_compression();
-        
+
         match timeout(self.timeout_duration, TcpStream::connect(target)).await {
             Ok(Ok(mut stream)) => {
                 if stream.write_all(&hello_with_compression).await.is_err() {
@@ -338,7 +355,7 @@ impl VulnerabilityScanner {
     pub async fn check_freak(&self, target: SocketAddr) -> Result<VulnerabilityScanResult> {
         // ClientHello with export cipher suites
         let export_hello = self.build_export_cipher_hello();
-        
+
         match timeout(self.timeout_duration, TcpStream::connect(target)).await {
             Ok(Ok(mut stream)) => {
                 if stream.write_all(&export_hello).await.is_err() {
@@ -382,7 +399,7 @@ impl VulnerabilityScanner {
     pub async fn check_logjam(&self, target: SocketAddr) -> Result<VulnerabilityScanResult> {
         // ClientHello with export DH cipher suites
         let dh_export_hello = self.build_dh_export_hello();
-        
+
         match timeout(self.timeout_duration, TcpStream::connect(target)).await {
             Ok(Ok(mut stream)) => {
                 if stream.write_all(&dh_export_hello).await.is_err() {
@@ -426,7 +443,7 @@ impl VulnerabilityScanner {
     pub async fn check_drown(&self, target: SocketAddr) -> Result<VulnerabilityScanResult> {
         // Try SSLv2 connection
         let sslv2_hello = self.build_sslv2_client_hello();
-        
+
         match timeout(self.timeout_duration, TcpStream::connect(target)).await {
             Ok(Ok(mut stream)) => {
                 if stream.write_all(&sslv2_hello).await.is_err() {
@@ -467,7 +484,7 @@ impl VulnerabilityScanner {
     }
 
     // Helper functions to build TLS handshake messages
-    
+
     fn build_heartbeat_client_hello(&self) -> Vec<u8> {
         // Simplified TLS 1.2 ClientHello with heartbeat extension
         // In production, use proper TLS library
@@ -478,11 +495,9 @@ impl VulnerabilityScanner {
             0x00, 0x00, 0x3c, // Handshake length
             0x03, 0x03, // TLS 1.2
             // Random (32 bytes)
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, // Session ID length
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, // Session ID length
             0x00, 0x04, // Cipher suites length
             0x00, 0x2f, 0x00, 0x35, // AES128-SHA, AES256-SHA
             0x01, 0x00, // Compression: null
@@ -507,14 +522,11 @@ impl VulnerabilityScanner {
             0x16, 0x03, 0x00, // SSLv3 Handshake
             0x00, 0x30, // Length
             0x01, // ClientHello
-            0x00, 0x00, 0x2c,
-            0x03, 0x00, // SSLv3
+            0x00, 0x00, 0x2c, 0x03, 0x00, // SSLv3
             // Random + rest of handshake...
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, // Session ID
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, // Session ID
             0x00, 0x02, 0x00, 0x35, // Cipher: AES256-SHA
             0x01, 0x00, // Compression: null
         ]
@@ -532,40 +544,27 @@ impl VulnerabilityScanner {
             0x01, 0x00, 0x80, // RC4_128_WITH_MD5
             0x07, 0x00, 0xc0, // 3DES_168_WITH_MD5
             // Challenge (16 bytes)
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00,
         ]
     }
 
     fn build_client_hello_with_compression(&self) -> Vec<u8> {
         vec![
             0x16, 0x03, 0x03, // TLS 1.2
-            0x00, 0x35,
-            0x01, 0x00, 0x00, 0x31,
-            0x03, 0x03,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00,
-            0x00, 0x02, 0x00, 0x2f,
-            0x02, 0x01, 0x00, // Compression: DEFLATE, null
+            0x00, 0x35, 0x01, 0x00, 0x00, 0x31, 0x03, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x02, 0x00, 0x2f, 0x02, 0x01, 0x00, // Compression: DEFLATE, null
         ]
     }
 
     fn build_export_cipher_hello(&self) -> Vec<u8> {
         vec![
-            0x16, 0x03, 0x03,
-            0x00, 0x38,
-            0x01, 0x00, 0x00, 0x34,
-            0x03, 0x03,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00,
-            0x00, 0x04,
-            0x00, 0x03, // RSA_EXPORT_WITH_RC4_40_MD5
+            0x16, 0x03, 0x03, 0x00, 0x38, 0x01, 0x00, 0x00, 0x34, 0x03, 0x03, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x04, 0x00, 0x03, // RSA_EXPORT_WITH_RC4_40_MD5
             0x00, 0x06, // RSA_EXPORT_WITH_RC2_CBC_40_MD5
             0x01, 0x00,
         ]
@@ -573,17 +572,10 @@ impl VulnerabilityScanner {
 
     fn build_dh_export_hello(&self) -> Vec<u8> {
         vec![
-            0x16, 0x03, 0x03,
-            0x00, 0x36,
-            0x01, 0x00, 0x00, 0x32,
-            0x03, 0x03,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00,
-            0x00, 0x02,
-            0x00, 0x11, // DHE_RSA_EXPORT_WITH_DES40_CBC_SHA
+            0x16, 0x03, 0x03, 0x00, 0x36, 0x01, 0x00, 0x00, 0x32, 0x03, 0x03, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x02, 0x00, 0x11, // DHE_RSA_EXPORT_WITH_DES40_CBC_SHA
             0x01, 0x00,
         ]
     }
@@ -615,8 +607,7 @@ impl VulnerabilityScanner {
         // Check if server selected export cipher
         // Export cipher IDs: 0x0003, 0x0006, 0x0008, 0x0009, etc.
         data.windows(2).any(|w| {
-            w == [0x00, 0x03] || w == [0x00, 0x06] ||
-            w == [0x00, 0x08] || w == [0x00, 0x09]
+            w == [0x00, 0x03] || w == [0x00, 0x06] || w == [0x00, 0x08] || w == [0x00, 0x09]
         })
     }
 
@@ -678,7 +669,7 @@ mod tests {
     fn test_heartbeat_hello_format() {
         let scanner = VulnerabilityScanner::new(Duration::from_secs(5));
         let hello = scanner.build_heartbeat_client_hello();
-        
+
         // Should be TLS handshake
         assert_eq!(hello[0], 0x16);
         // Should be TLS 1.2
@@ -690,7 +681,7 @@ mod tests {
     fn test_sslv3_hello_format() {
         let scanner = VulnerabilityScanner::new(Duration::from_secs(5));
         let hello = scanner.build_sslv3_client_hello();
-        
+
         // Should be SSLv3
         assert_eq!(hello[1], 0x03);
         assert_eq!(hello[2], 0x00);
@@ -700,7 +691,7 @@ mod tests {
     fn test_sslv2_hello_format() {
         let scanner = VulnerabilityScanner::new(Duration::from_secs(5));
         let hello = scanner.build_sslv2_client_hello();
-        
+
         // Should have SSLv2 length indicator
         assert_eq!(hello[0] & 0x80, 0x80);
     }

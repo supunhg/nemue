@@ -2,6 +2,7 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 
+#[allow(dead_code)]
 pub struct ResourceManager {
     total_workers: usize,
     active_workers: Arc<AtomicUsize>,
@@ -105,7 +106,7 @@ impl RetryStrategy {
                     if attempt >= self.max_attempts {
                         return Err(e);
                     }
-                    
+
                     let delay = self.calculate_delay(attempt);
                     tokio::time::sleep(delay).await;
                 }
@@ -114,8 +115,7 @@ impl RetryStrategy {
     }
 
     fn calculate_delay(&self, attempt: u32) -> std::time::Duration {
-        let delay_ms = (self.base_delay_ms * 2u64.pow(attempt - 1))
-            .min(self.max_delay_ms);
+        let delay_ms = (self.base_delay_ms * 2u64.pow(attempt - 1)).min(self.max_delay_ms);
         std::time::Duration::from_millis(delay_ms)
     }
 
@@ -139,13 +139,13 @@ mod tests {
     #[test]
     fn test_resource_manager_scale_up() {
         let manager = ResourceManager::new(2, 8);
-        
+
         let count = manager.scale_up();
         assert_eq!(count, 4);
-        
+
         let count = manager.scale_up();
         assert_eq!(count, 8);
-        
+
         // Should not exceed max
         let count = manager.scale_up();
         assert_eq!(count, 8);
@@ -155,13 +155,13 @@ mod tests {
     fn test_resource_manager_scale_down() {
         let manager = ResourceManager::new(2, 8);
         manager.set_workers(8);
-        
+
         let count = manager.scale_down();
         assert_eq!(count, 4);
-        
+
         let count = manager.scale_down();
         assert_eq!(count, 2);
-        
+
         // Should not go below min
         let count = manager.scale_down();
         assert_eq!(count, 2);
@@ -170,11 +170,11 @@ mod tests {
     #[test]
     fn test_resource_manager_auto_scale() {
         let manager = ResourceManager::new(2, 8);
-        
+
         // High load should scale up
         manager.auto_scale(85.0);
         assert_eq!(manager.active_workers(), 4);
-        
+
         // Low load should scale down
         manager.auto_scale(15.0);
         assert_eq!(manager.active_workers(), 2);
@@ -184,7 +184,7 @@ mod tests {
     fn test_retry_strategy_creation() {
         let strategy = RetryStrategy::new(5);
         assert_eq!(strategy.max_attempts(), 5);
-        
+
         let strategy = RetryStrategy::with_delays(3, 50, 5000);
         assert_eq!(strategy.max_attempts(), 3);
     }
@@ -200,16 +200,18 @@ mod tests {
     async fn test_retry_strategy_eventual_success() {
         let strategy = RetryStrategy::with_delays(3, 10, 100);
         let mut attempts = 0;
-        
-        let result = strategy.execute(|| {
-            attempts += 1;
-            if attempts < 3 {
-                Err("not yet")
-            } else {
-                Ok(42)
-            }
-        }).await;
-        
+
+        let result = strategy
+            .execute(|| {
+                attempts += 1;
+                if attempts < 3 {
+                    Err("not yet")
+                } else {
+                    Ok(42)
+                }
+            })
+            .await;
+
         assert_eq!(result, Ok(42));
     }
 
@@ -217,12 +219,14 @@ mod tests {
     async fn test_retry_strategy_max_attempts() {
         let strategy = RetryStrategy::with_delays(2, 10, 100);
         let mut attempts = 0;
-        
-        let result = strategy.execute(|| {
-            attempts += 1;
-            Err::<i32, &str>("always fails")
-        }).await;
-        
+
+        let result = strategy
+            .execute(|| {
+                attempts += 1;
+                Err::<i32, &str>("always fails")
+            })
+            .await;
+
         assert!(result.is_err());
         assert_eq!(attempts, 2);
     }
@@ -230,10 +234,22 @@ mod tests {
     #[test]
     fn test_retry_delay_calculation() {
         let strategy = RetryStrategy::with_delays(5, 100, 5000);
-        
-        assert_eq!(strategy.calculate_delay(1), std::time::Duration::from_millis(100));
-        assert_eq!(strategy.calculate_delay(2), std::time::Duration::from_millis(200));
-        assert_eq!(strategy.calculate_delay(3), std::time::Duration::from_millis(400));
-        assert_eq!(strategy.calculate_delay(10), std::time::Duration::from_millis(5000)); // Capped
+
+        assert_eq!(
+            strategy.calculate_delay(1),
+            std::time::Duration::from_millis(100)
+        );
+        assert_eq!(
+            strategy.calculate_delay(2),
+            std::time::Duration::from_millis(200)
+        );
+        assert_eq!(
+            strategy.calculate_delay(3),
+            std::time::Duration::from_millis(400)
+        );
+        assert_eq!(
+            strategy.calculate_delay(10),
+            std::time::Duration::from_millis(5000)
+        ); // Capped
     }
 }

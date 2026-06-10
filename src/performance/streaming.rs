@@ -1,9 +1,9 @@
 // Streaming results to disk for large scans
+use anyhow::{Context, Result};
+use serde::Serialize;
 use std::path::PathBuf;
 use tokio::fs::{File, OpenOptions};
 use tokio::io::{AsyncWriteExt, BufWriter};
-use serde::Serialize;
-use anyhow::{Result, Context};
 
 pub struct StreamWriter {
     file: BufWriter<File>,
@@ -65,17 +65,36 @@ impl StreamWriter {
                 self.file.write_all(b"\n").await?;
             }
             OutputFormat::Csv | OutputFormat::Tsv => {
-                // For structured data, serialize as JSON then convert
-                let json = serde_json::to_string(item)?;
-                self.file.write_all(json.as_bytes()).await?;
-                self.file.write_all(b"\n").await?;
+                let delimiter = match self.format {
+                    OutputFormat::Csv => ",",
+                    OutputFormat::Tsv => "\t",
+                    _ => unreachable!(),
+                };
+                let json_value: serde_json::Value = serde_json::to_value(item)?;
+                if let Some(obj) = json_value.as_object() {
+                    let keys: Vec<&String> = obj.keys().collect();
+                    let line: Vec<String> = keys
+                        .iter()
+                        .map(|k| match obj.get(*k) {
+                            Some(serde_json::Value::String(s)) => s.clone(),
+                            Some(v) => v.to_string(),
+                            None => String::new(),
+                        })
+                        .collect();
+                    self.file.write_all(line.join(delimiter).as_bytes()).await?;
+                    self.file.write_all(b"\n").await?;
+                } else {
+                    let json = serde_json::to_string(item)?;
+                    self.file.write_all(json.as_bytes()).await?;
+                    self.file.write_all(b"\n").await?;
+                }
             }
         }
 
         self.items_written += 1;
 
         // Flush periodically
-        if self.items_written % 100 == 0 {
+        if self.items_written.is_multiple_of(100) {
             self.file.flush().await?;
         }
 
@@ -99,18 +118,13 @@ impl StreamWriter {
     }
 }
 
-impl Drop for StreamWriter {
-    fn drop(&mut self) {
-        // Best effort flush on drop
-        let _ = futures::executor::block_on(self.file.flush());
-    }
-}
+// BufWriter<File> implements Drop and will attempt to flush
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::tempdir;
     use serde::Deserialize;
+    use tempfile::tempdir;
 
     #[derive(Serialize, Deserialize, Debug, PartialEq)]
     struct TestRecord {

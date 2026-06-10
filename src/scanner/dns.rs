@@ -2,8 +2,8 @@ use anyhow::{anyhow, Result};
 use std::collections::HashMap;
 use std::net::{IpAddr, SocketAddr};
 use std::sync::Arc;
-use tokio::sync::Mutex;
 use std::time::Duration;
+use tokio::sync::Mutex;
 
 /// DNS resolution configuration
 #[derive(Debug, Clone)]
@@ -156,7 +156,10 @@ impl DnsResolver {
         let mut tasks = Vec::new();
 
         for hostname in hostnames {
-            let permit = semaphore.clone().acquire_owned().await.unwrap();
+            let permit = match semaphore.clone().acquire_owned().await {
+                Ok(p) => p,
+                Err(_) => break,
+            };
             let resolver = self.clone_for_task();
             let hostname_clone = hostname.clone();
 
@@ -186,7 +189,10 @@ impl DnsResolver {
         let mut tasks = Vec::new();
 
         for ip in ips {
-            let permit = semaphore.clone().acquire_owned().await.unwrap();
+            let permit = match semaphore.clone().acquire_owned().await {
+                Ok(p) => p,
+                Err(_) => break,
+            };
             let resolver = self.clone_for_task();
 
             let task = tokio::spawn(async move {
@@ -249,12 +255,12 @@ impl DnsResolver {
 
         tokio::time::timeout(timeout, async {
             // Use reverse DNS lookup via system resolver
-            let socket = SocketAddr::new(ip, 0);
-            
+            let _socket = SocketAddr::new(ip, 0);
+
             // Simple reverse lookup using DNS protocol
             // For production, we'd use trust-dns-resolver here
             // For now, we'll use a basic implementation
-            
+
             // Try to resolve using getaddrinfo in reverse
             // This is a placeholder - ideally use trust-dns-resolver crate
             Ok(format!("{}", ip)) // Fallback to IP string
@@ -267,7 +273,7 @@ impl DnsResolver {
     async fn builtin_lookup_hostname(&self, hostname: &str) -> Result<Vec<IpAddr>> {
         // For now, fallback to system resolver
         // In production, implement with trust-dns-resolver using custom servers
-        
+
         if !self.config.custom_servers.is_empty() {
             // Would query custom DNS servers here
             // For now, use system resolver with warning
@@ -281,7 +287,7 @@ impl DnsResolver {
     async fn builtin_reverse_lookup(&self, ip: IpAddr) -> Result<String> {
         // For now, fallback to system resolver
         // In production, implement with trust-dns-resolver
-        
+
         if !self.config.custom_servers.is_empty() {
             eprintln!("Warning: Custom DNS servers specified but trust-dns-resolver not implemented. Using system resolver.");
         }
@@ -345,7 +351,7 @@ mod tests {
         let config = DnsConfig::new()
             .with_dns_server("8.8.8.8".parse().unwrap())
             .with_dns_server("1.1.1.1".parse().unwrap());
-        
+
         assert_eq!(config.custom_servers.len(), 2);
         assert!(config.custom_servers.contains(&"8.8.8.8".parse().unwrap()));
     }
@@ -357,7 +363,7 @@ mod tests {
 
         let result = resolver.resolve_hostname("localhost").await;
         assert!(result.is_ok());
-        
+
         let ips = result.unwrap();
         assert!(!ips.is_empty());
         // localhost should resolve to 127.0.0.1 or ::1
@@ -381,14 +387,14 @@ mod tests {
 
         // First lookup (should cache)
         let result1 = resolver.resolve_hostname("localhost").await.unwrap();
-        
+
         // Check cache stats
         let (forward_count, _) = resolver.cache_stats().await;
         assert_eq!(forward_count, 1);
 
         // Second lookup (should use cache)
         let result2 = resolver.resolve_hostname("localhost").await.unwrap();
-        
+
         // Results should match
         assert_eq!(result1, result2);
 
@@ -405,7 +411,7 @@ mod tests {
 
         let ip: IpAddr = "127.0.0.1".parse().unwrap();
         let result = resolver.reverse_lookup(&ip).await;
-        
+
         // Reverse lookup should return something (or None, depending on system)
         // We just verify it doesn't panic
         assert!(result.is_some() || result.is_none());
@@ -416,9 +422,7 @@ mod tests {
         let config = DnsConfig::default();
         let resolver = DnsResolver::new(config);
 
-        let hostnames = vec![
-            "localhost".to_string(),
-        ];
+        let hostnames = vec!["localhost".to_string()];
 
         let results = resolver.resolve_hostnames(hostnames).await;
         assert!(results.contains_key("localhost"));

@@ -1,6 +1,5 @@
 //! X.509 Certificate parsing and validation
 
-use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use std::time::SystemTime;
 
@@ -87,7 +86,11 @@ impl Certificate {
         }
 
         // Check all parts except the first (wildcard)
-        pattern_parts.iter().skip(1).zip(hostname_parts.iter().skip(1)).all(|(p, h)| p == h)
+        pattern_parts
+            .iter()
+            .skip(1)
+            .zip(hostname_parts.iter().skip(1))
+            .all(|(p, h)| p == h)
     }
 }
 
@@ -116,7 +119,11 @@ impl CertificateChain {
     pub fn has_expired_certificate(&self) -> bool {
         self.leaf.is_expired()
             || self.intermediates.iter().any(|cert| cert.is_expired())
-            || self.root.as_ref().map(|cert| cert.is_expired()).unwrap_or(false)
+            || self
+                .root
+                .as_ref()
+                .map(|cert| cert.is_expired())
+                .unwrap_or(false)
     }
 
     /// Get the soonest expiry date in the chain
@@ -218,13 +225,19 @@ impl CertificateValidator {
             issues.push(CertificateIssue {
                 severity: IssueSeverity::Critical,
                 issue_type: IssueType::Expired,
-                description: format!("Certificate expired {} days ago", -chain.leaf.days_until_expiry()),
+                description: format!(
+                    "Certificate expired {} days ago",
+                    -chain.leaf.days_until_expiry()
+                ),
             });
         } else if chain.leaf.days_until_expiry() < 30 {
             issues.push(CertificateIssue {
                 severity: IssueSeverity::High,
                 issue_type: IssueType::Expired,
-                description: format!("Certificate expires in {} days", chain.leaf.days_until_expiry()),
+                description: format!(
+                    "Certificate expires in {} days",
+                    chain.leaf.days_until_expiry()
+                ),
             });
         }
 
@@ -265,11 +278,16 @@ impl CertificateValidator {
         }
 
         // Check signature algorithm
-        if chain.leaf.signature_algorithm.contains("MD5") || chain.leaf.signature_algorithm.contains("SHA1") {
+        if chain.leaf.signature_algorithm.contains("MD5")
+            || chain.leaf.signature_algorithm.contains("SHA1")
+        {
             issues.push(CertificateIssue {
                 severity: IssueSeverity::Medium,
                 issue_type: IssueType::WeakSignature,
-                description: format!("Weak signature algorithm: {}", chain.leaf.signature_algorithm),
+                description: format!(
+                    "Weak signature algorithm: {}",
+                    chain.leaf.signature_algorithm
+                ),
             });
         }
 
@@ -348,7 +366,7 @@ mod tests {
     fn test_weak_key_detection() {
         let mut cert = create_test_certificate();
         cert.key_size = 1024;
-        
+
         let chain = CertificateChain {
             leaf: cert,
             intermediates: vec![],
@@ -358,14 +376,16 @@ mod tests {
         };
 
         let issues = CertificateValidator::validate_chain(&chain, "example.com");
-        assert!(issues.iter().any(|i| matches!(i.issue_type, IssueType::WeakKey)));
+        assert!(issues
+            .iter()
+            .any(|i| matches!(i.issue_type, IssueType::WeakKey)));
     }
 
     #[test]
     fn test_self_signed_detection() {
         let mut cert = create_test_certificate();
         cert.self_signed = true;
-        
+
         let chain = CertificateChain {
             leaf: cert,
             intermediates: vec![],
@@ -375,7 +395,9 @@ mod tests {
         };
 
         let issues = CertificateValidator::validate_chain(&chain, "example.com");
-        assert!(issues.iter().any(|i| matches!(i.issue_type, IssueType::SelfSigned)));
+        assert!(issues
+            .iter()
+            .any(|i| matches!(i.issue_type, IssueType::SelfSigned)));
     }
 
     #[test]
@@ -390,6 +412,8 @@ mod tests {
         };
 
         let issues = CertificateValidator::validate_chain(&chain, "wrong.com");
-        assert!(issues.iter().any(|i| matches!(i.issue_type, IssueType::HostnameMismatch)));
+        assert!(issues
+            .iter()
+            .any(|i| matches!(i.issue_type, IssueType::HostnameMismatch)));
     }
 }

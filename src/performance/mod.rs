@@ -1,26 +1,30 @@
 // Performance monitoring and optimization module
-pub mod metrics;
-pub mod rate_limiter;
-pub mod memory;
-pub mod database;
-pub mod workers;
-pub mod lockfree;
-pub mod profiler;
-pub mod streaming;
-pub mod cache;
 pub mod batch;
+pub mod cache;
+pub mod database;
+pub mod lockfree;
+pub mod memory;
+pub mod metrics;
+pub mod profiler;
 pub mod qos;
+pub mod rate_limiter;
 pub mod resources;
+pub mod streaming;
+pub mod workers;
 
-pub use metrics::{MetricsCollector, PerformanceMetrics};
-pub use rate_limiter::AdaptiveRateLimiter;
-pub use memory::{BufferPool, PooledBuffer, ConnectionPool};
-pub use database::{ScanDatabase, ScanRecord, ScanStatus, Checkpoint};
-pub use workers::{WorkerPool, ConcurrencyLimiter};
-pub use lockfree::{LockFreeQueue, BoundedQueue, AtomicFlag};
-pub use profiler::{Profiler, ProfileEntry};
-pub use streaming::{StreamWriter, OutputFormat};
-pub use cache::{Cache, CacheStats};
 pub use batch::BatchProcessor;
-pub use qos::{BandwidthThrottle, TrafficShaper, Priority};
+pub use cache::{Cache, CacheStats};
+pub use database::{Checkpoint, ScanDatabase, ScanRecord, ScanStatus};
+pub use lockfree::{AtomicFlag, BoundedQueue, LockFreeQueue};
+pub use memory::{BufferPool, PoolStats as MemoryPoolStats, PooledBuffer};
+pub use metrics::{MetricsCollector, PerformanceMetrics};
+pub use profiler::{ProfileEntry, Profiler};
+pub use qos::{BandwidthThrottle, Priority, TrafficShaper};
+pub use rate_limiter::{
+    AdaptiveRateLimiter, ApiRateLimiter, ApiRateLimiterStats, CombinedRateLimiter,
+    GlobalRateLimiter, GlobalRateLimiterStats, PerTargetRateLimiter, PerTargetRateLimiterStats,
+    RateLimiterStats,
+};
 pub use resources::{ResourceManager, RetryStrategy};
+pub use streaming::{OutputFormat, StreamWriter};
+pub use workers::{ConcurrencyLimiter, WorkerPool};

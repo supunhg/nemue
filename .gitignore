@@ -1,7 +1,6 @@
 # Rust
 /target/
 **/*.rs.bk
-Cargo.lock
 
 # Debian packaging
 /build/
@@ -35,3 +34,12 @@ Thumbs.db
 # Temporary docs (auto-generated)
 PROJECT_STATUS.md
 RELEASE_CHECKLIST.md
+
+# Graphify outputs (large files, regenerate with /graphify)
+graphify-out/
+
+# Session files
+session-*.md
+
+# Local-only anchor file (for resuming development)
+ANCHOR.md

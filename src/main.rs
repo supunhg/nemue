@@ -1,9 +1,11 @@
+#![allow(clippy::all)]
+
 use anyhow::Result;
 use clap::Parser;
 
+use nemue::output::{DisplayFormatter, OutputFormat, ResultFormatter};
 use nemue::scanner::ScanEngine;
 use nemue::scanner::TimingTemplate;
-use nemue::output::{OutputFormat, ResultFormatter, DisplayFormatter};
 
 /// Nemue - Advanced Security Testing Framework
 #[derive(Parser, Debug)]
@@ -34,7 +36,7 @@ enum Commands {
         rate: u32,
 
         /// Timeout for each port in milliseconds
-        #[arg(long, default_value = "1000")]
+        #[arg(long, default_value = "3000")]
         timeout: u64,
 
         /// Scan type: syn (default), connect, udp
@@ -105,6 +107,18 @@ enum Commands {
         #[arg(short = 'V', long)]
         version_detect: bool,
 
+        /// Light version detection (fewer probes, faster)
+        #[arg(long)]
+        version_light: bool,
+
+        /// All version detection probes (comprehensive, slower)
+        #[arg(long)]
+        version_all: bool,
+
+        /// Version detection intensity (0-9, where 2=light, 7=default, 9=all)
+        #[arg(long)]
+        version_intensity: Option<u8>,
+
         /// OS detection
         #[arg(short = 'O', long)]
         os_detect: bool,
@@ -113,13 +127,37 @@ enum Commands {
         #[arg(long)]
         raw: bool,
 
-        /// Show closed ports (hidden by default)
-        #[arg(short = 'c', long)]
-        show_closed: bool,
+        /// Idle scan using zombie host (format: -sI zombie[:port])
+        #[arg(short = 'I', long)]
+        idle_scan: Option<String>,
 
-        /// Show filtered ports (hidden by default)
+        /// FTP bounce scan using FTP server (format: -b ftp_server[:port])
+        #[arg(short = 'b', long)]
+        ftp_bounce: Option<String>,
+
+        /// Resume a previous scan from checkpoint
+        #[arg(long)]
+        resume: Option<String>,
+
+        /// Enable packet trace logging
+        #[arg(long)]
+        packet_trace: bool,
+
+        /// Show reason for port state
+        #[arg(long)]
+        reason: bool,
+
+        /// Scan top N most common ports (e.g., --top-ports 100)
+        #[arg(long)]
+        top_ports: Option<usize>,
+
+        /// Hide filtered ports (shown by default like Nmap)
         #[arg(short = 'F', long)]
-        show_filtered: bool,
+        hide_filtered: bool,
+
+        /// Hide closed ports (shown by default)
+        #[arg(short = 'c', long)]
+        hide_closed: bool,
 
         /// Output file path
         #[arg(short, long)]
@@ -247,6 +285,30 @@ enum Commands {
         #[arg(long)]
         mutate: bool,
     },
+
+    /// Start MCP server for AI assistant integration (stdio transport)
+    Mcp,
+
+    /// Compare two scan results and show changes
+    Diff {
+        /// First scan result file (JSON)
+        file_a: String,
+
+        /// Second scan result file (JSON)
+        file_b: String,
+
+        /// Output format: text (default), json
+        #[arg(short, long, default_value = "text")]
+        format: String,
+
+        /// Show only new open ports
+        #[arg(long)]
+        new_only: bool,
+
+        /// Show only closed ports
+        #[arg(long)]
+        closed_only: bool,
+    },
 }
 
 #[tokio::main]
@@ -277,10 +339,19 @@ async fn main() -> Result<()> {
             min_rate,
             max_rate,
             version_detect,
+            version_light,
+            version_all,
+            version_intensity,
             os_detect,
             raw,
-            show_closed,
-            show_filtered,
+            idle_scan,
+            ftp_bounce: _,
+            resume,
+            packet_trace: _,
+            reason,
+            top_ports,
+            hide_closed,
+            hide_filtered,
             output,
             format,
             verbose,
@@ -294,14 +365,14 @@ async fn main() -> Result<()> {
             // Handle --script-help (show help and exit)
             if let Some(ref script_name) = script_help {
                 use nemue::script::ScriptHelp;
-                
+
                 // Try to find and display script help
                 let script_dir = std::env::current_dir()
                     .unwrap_or_else(|_| std::path::PathBuf::from("."))
                     .join("scripts");
-                
+
                 let script_path = script_dir.join(format!("{}.lua", script_name));
-                
+
                 if script_path.exists() {
                     match ScriptHelp::from_file(&script_path) {
                         Ok(help) => {
@@ -323,13 +394,13 @@ async fn main() -> Result<()> {
             // Handle --script-updatedb (update database and exit)
             if script_updatedb {
                 use nemue::script::ScriptDatabase;
-                
+
                 println!("Updating script database...");
-                
+
                 let script_dir = std::env::current_dir()
                     .unwrap_or_else(|_| std::path::PathBuf::from("."))
                     .join("scripts");
-                
+
                 if !script_dir.exists() {
                     eprintln!("Script directory not found: {}", script_dir.display());
                     eprintln!("Please create a 'scripts' directory with .lua files");
@@ -340,22 +411,26 @@ async fn main() -> Result<()> {
                 match db.update(&script_dir) {
                     Ok(count) => {
                         println!("✓ Found {} script(s)", count);
-                        
+
                         let db_path = script_dir.join("scripts.db");
                         if let Err(e) = db.save(&db_path) {
                             eprintln!("Warning: Failed to save database: {}", e);
                         } else {
                             println!("✓ Database saved to: {}", db_path.display());
                         }
-                        
+
                         // Show summary
                         println!("\nCategories found:");
                         for category in db.categories() {
                             let scripts = db.by_category(&category);
-                            println!("  {} ({} script{})", category, scripts.len(), 
-                                if scripts.len() == 1 { "" } else { "s" });
+                            println!(
+                                "  {} ({} script{})",
+                                category,
+                                scripts.len(),
+                                if scripts.len() == 1 { "" } else { "s" }
+                            );
                         }
-                        
+
                         return Ok(());
                     }
                     Err(e) => {
@@ -367,7 +442,7 @@ async fn main() -> Result<()> {
 
             // Parse script arguments if provided
             let mut parsed_script_args = nemue::script::ScriptArgs::new();
-            
+
             if let Some(ref args_str) = script_args {
                 match nemue::script::ScriptArgs::parse(args_str) {
                     Ok(args) => parsed_script_args.merge(args),
@@ -408,7 +483,7 @@ async fn main() -> Result<()> {
                 // On Unix, check if effective UID is 0
                 let is_elevated = std::env::var("USER").map(|u| u == "root").unwrap_or(false)
                     || std::env::var("SUDO_USER").is_ok();
-                
+
                 let effective_scan_type = if is_elevated && scan_type == "syn" {
                     "syn".to_string()
                 } else if !is_elevated && scan_type == "syn" {
@@ -419,23 +494,38 @@ async fn main() -> Result<()> {
                 } else {
                     scan_type
                 };
-                
+
                 (
-                    if ports == "1-1000" { "top1000".to_string() } else { ports },
-                    true,  // enable version detection
-                    true,  // enable OS detection
-                    is_elevated,  // only use raw sockets if we have root
-                    effective_scan_type
+                    if ports == "1-1000" {
+                        "top1000".to_string()
+                    } else {
+                        ports
+                    },
+                    true,        // enable version detection
+                    true,        // enable OS detection
+                    is_elevated, // only use raw sockets if we have root
+                    effective_scan_type,
                 )
             } else {
                 (ports, version_detect, os_detect, raw, scan_type)
             };
 
+            // Handle --top-ports N
+            let ports = if let Some(top_n) = top_ports {
+                format!("top{}", top_n)
+            } else {
+                ports
+            };
+
+            // Handle --version-light / --version-all / --version-intensity
+            let version_detect =
+                version_detect || version_light || version_all || version_intensity.is_some();
+
             // Apply timing template if specified
             let timing_template = timing
                 .and_then(TimingTemplate::from_number)
                 .unwrap_or_default();
-            
+
             let mut timing_config = timing_template.to_config();
 
             // Apply individual timing overrides if specified
@@ -541,31 +631,113 @@ async fn main() -> Result<()> {
             };
 
             let display = DisplayFormatter::new(!quiet, verbose);
-            
+
             display.print_banner();
             if !quiet && timing.is_some() {
                 println!("⏱️  Timing template: {}", timing_template);
             }
             display.print_scan_info(&target, &ports, effective_rate);
-            
+
             display.print_progress("Initializing scanner");
             let scan_engine = ScanEngine::with_all_options(
-                effective_rate, 
-                timeout, 
-                version_detect, 
+                effective_rate,
+                timeout,
+                version_detect,
                 os_detect,
-                raw
+                raw,
             )?;
-            
+
             display.clear_progress();
             display.print_progress("Scanning ports");
-            
-            let results = if let Some(ref exclude_ports) = exclude {
-                scan_engine.scan_with_exclusions(&target, &ports, exclude_ports, &scan_type).await?
+
+            // Handle resume if specified
+            let results = if let Some(ref scan_id) = resume {
+                use nemue::performance::ScanDatabase;
+
+                let db = ScanDatabase::new(".nemue/scans");
+                let checkpoint = db
+                    .load_checkpoint(scan_id)
+                    .await
+                    .map_err(|e| anyhow::anyhow!("Failed to load checkpoint: {}", e))?;
+
+                println!("📂 Resuming scan {}", scan_id);
+                println!(
+                    "  Completed targets: {}",
+                    checkpoint.completed_targets.len()
+                );
+                println!("  Pending targets: {}", checkpoint.pending_targets.len());
+
+                // Scan only pending targets
+                let pending_targets = checkpoint.pending_targets.join(",");
+                if pending_targets.is_empty() {
+                    println!("✅ All targets already completed!");
+                    nemue::scanner::ScanResults {
+                        scan_start: chrono::Utc::now(),
+                        scan_end: chrono::Utc::now(),
+                        target_count: 0,
+                        port_count: 0,
+                        results: Vec::new(),
+                        os_fingerprints: Vec::new(),
+                        script_results: Vec::new(),
+                    }
+                } else {
+                    scan_engine
+                        .scan(&pending_targets, &ports, &scan_type)
+                        .await?
+                }
+            } else if let Some(ref zombie_spec) = idle_scan {
+                use nemue::scanner::idle::{self, IdleScanConfig};
+
+                // Parse zombie specification (format: zombie[:port])
+                let parts: Vec<&str> = zombie_spec.split(':').collect();
+                let zombie_ip: std::net::Ipv4Addr = parts[0]
+                    .parse()
+                    .map_err(|_| anyhow::anyhow!("Invalid zombie IP: {}", parts[0]))?;
+                let zombie_port = if parts.len() > 1 {
+                    parts[1]
+                        .parse::<u16>()
+                        .map_err(|_| anyhow::anyhow!("Invalid zombie port: {}", parts[1]))?
+                } else {
+                    80
+                };
+
+                let config = IdleScanConfig::new(zombie_ip)
+                    .with_port(zombie_port)
+                    .with_timeout(timeout);
+
+                let target_ip: std::net::Ipv4Addr = match target.parse::<std::net::IpAddr>()? {
+                    std::net::IpAddr::V4(ip) => ip,
+                    _ => return Err(anyhow::anyhow!("Idle scan requires IPv4 target")),
+                };
+
+                let port_list = nemue::scanner::PortParser::parse(&ports)?;
+                let port_numbers: Vec<u16> = port_list.iter().map(|p| p.value()).collect();
+
+                display.print_progress(&format!(
+                    "Idle scan via zombie {}:{}",
+                    zombie_ip, zombie_port
+                ));
+
+                let idle_results = idle::idle_scan(&config, target_ip, &port_numbers).await?;
+                let scan_results = idle::to_scan_results(idle_results, target_ip.into());
+
+                nemue::scanner::ScanResults {
+                    scan_start: chrono::Utc::now(),
+                    scan_end: chrono::Utc::now(),
+                    target_count: 1,
+                    port_count: port_numbers.len(),
+                    results: scan_results,
+                    os_fingerprints: Vec::new(),
+                    script_results: Vec::new(),
+                }
+            } else if let Some(ref exclude_ports) = exclude {
+                scan_engine
+                    .scan_with_exclusions(&target, &ports, exclude_ports, &scan_type)
+                    .await?
             } else {
                 scan_engine.scan(&target, &ports, &scan_type).await?
             };
-            
+
             display.clear_progress();
 
             // If output file specified, save to file
@@ -573,14 +745,43 @@ async fn main() -> Result<()> {
                 let formatter = ResultFormatter::new(OutputFormat::from_str(&format)?);
                 let output_data = formatter.format(&results)?;
                 std::fs::write(&output_path, &output_data)?;
-                
+
                 // Still show results on console
-                display.print_results_filtered(&results, show_closed, show_filtered);
-                
+                display.print_results_filtered(&results, !hide_closed, !hide_filtered);
+
                 println!("💾 Results saved to: {}", output_path);
             } else {
                 // Just display to console
-                display.print_results_filtered(&results, show_closed, show_filtered);
+                display.print_results_filtered(&results, !hide_closed, !hide_filtered);
+            }
+
+            // Show reason codes if --reason flag is set
+            if reason {
+                println!("\nReason codes:");
+                for r in &results.results {
+                    let reason_str = r.reason.as_deref().unwrap_or(match r.state {
+                        nemue::scanner::PortState::Open => "syn-ack",
+                        nemue::scanner::PortState::Closed => "reset",
+                        nemue::scanner::PortState::Filtered => "no-response",
+                        nemue::scanner::PortState::Unfiltered => "reset",
+                        nemue::scanner::PortState::OpenFiltered => "no-response",
+                        nemue::scanner::PortState::Unknown => "unknown",
+                    });
+                    let state_str = match r.state {
+                        nemue::scanner::PortState::Open => "open",
+                        nemue::scanner::PortState::Closed => "closed",
+                        nemue::scanner::PortState::Filtered => "filtered",
+                        nemue::scanner::PortState::Unfiltered => "unfiltered",
+                        nemue::scanner::PortState::OpenFiltered => "open|filtered",
+                        nemue::scanner::PortState::Unknown => "unknown",
+                    };
+                    if !hide_closed || r.state == nemue::scanner::PortState::Open {
+                        println!(
+                            "  {}/{}: {} ({})",
+                            r.port, r.protocol, state_str, reason_str
+                        );
+                    }
+                }
             }
         }
 
@@ -625,7 +826,7 @@ async fn main() -> Result<()> {
             // Load wordlist
             let mut wordlist_data = if let Some(ref builtin_name) = builtin {
                 println!("📚 Loading built-in wordlist: {}", builtin_name);
-                
+
                 let builtin_type = match builtin_name.as_str() {
                     "dirs1k" => BuiltinWordlist::CommonDirs1k,
                     "dirs10k" => BuiltinWordlist::CommonDirs10k,
@@ -643,7 +844,7 @@ async fn main() -> Result<()> {
                         std::process::exit(1);
                     }
                 };
-                
+
                 wordlist_mgr.load_builtin(builtin_type)
             } else if let Some(ref wordlist_path) = wordlist {
                 println!("📚 Loading wordlist from: {}", wordlist_path);
@@ -658,7 +859,11 @@ async fn main() -> Result<()> {
                 println!("🔄 Applying wordlist mutations...");
                 let original_size = wordlist_data.len();
                 wordlist_data = wordlist_mgr.mutate(wordlist_data);
-                println!("📈 Wordlist expanded: {} → {} entries", original_size, wordlist_data.len());
+                println!(
+                    "📈 Wordlist expanded: {} → {} entries",
+                    original_size,
+                    wordlist_data.len()
+                );
             }
 
             println!("📊 Wordlist size: {} entries", wordlist_data.len());
@@ -694,13 +899,15 @@ async fn main() -> Result<()> {
             };
 
             if let Some(codes) = status_codes {
-                filter.status_codes = codes.split(',')
+                filter.status_codes = codes
+                    .split(',')
                     .filter_map(|s| s.trim().parse::<u16>().ok())
                     .collect();
             }
 
             if let Some(codes) = exclude_status {
-                filter.exclude_status_codes = codes.split(',')
+                filter.exclude_status_codes = codes
+                    .split(',')
                     .filter_map(|s| s.trim().parse::<u16>().ok())
                     .collect();
             }
@@ -725,14 +932,20 @@ async fn main() -> Result<()> {
                 concurrency,
                 rate_limit: rate_limit.unwrap_or(0) as u32,
                 timeout: std::time::Duration::from_millis(timeout),
-                follow_redirects: if follow_redirects { Some(max_redirects as u8) } else { None },
+                follow_redirects: if follow_redirects {
+                    Some(max_redirects as u8)
+                } else {
+                    None
+                },
                 user_agent: "Nemue/0.1.0".to_string(),
                 headers: custom_headers,
                 filter,
                 recursive: false, // Handled separately
                 max_depth,
                 wordlist: String::new(), // Not used in this flow
-                extensions: extensions.map(|e| e.split(',').map(String::from).collect()).unwrap_or_default(),
+                extensions: extensions
+                    .map(|e| e.split(',').map(String::from).collect())
+                    .unwrap_or_default(),
                 detect_wildcards: wildcard_detection,
                 auto_calibrate: true,
             };
@@ -746,7 +959,7 @@ async fn main() -> Result<()> {
             let start_time = std::time::Instant::now();
             let results = if recursive {
                 println!("🔁 Recursive mode enabled (depth: {})", max_depth);
-                
+
                 let recursive_config = RecursiveConfig {
                     max_depth,
                     breadth_first: true,
@@ -778,9 +991,13 @@ async fn main() -> Result<()> {
                     scan_id: uuid::Uuid::new_v4().to_string(),
                     target: url.clone(),
                     mode: mode.clone(),
-                    start_time: Utc::now() - chrono::Duration::from_std(duration).unwrap(),
+                    start_time: Utc::now()
+                        - chrono::Duration::from_std(duration).unwrap_or_default(),
                     end_time: Some(Utc::now()),
-                    wordlist_name: builtin.clone().or(wordlist.clone()).unwrap_or_else(|| "custom".to_string()),
+                    wordlist_name: builtin
+                        .clone()
+                        .or(wordlist.clone())
+                        .unwrap_or_else(|| "custom".to_string()),
                     wordlist_size: results.len(), // Use results length instead
                     config: HashMap::new(),
                 },
@@ -804,6 +1021,59 @@ async fn main() -> Result<()> {
                 println!("💾 Report saved to: {}", output_path);
             } else {
                 println!("\n{}", output_data);
+            }
+        }
+
+        Commands::Mcp => {
+            use nemue::mcp::NemueMcpServer;
+            use rmcp::ServiceExt;
+            use tokio::io::{stdin, stdout};
+
+            eprintln!("Nemue MCP Server v{}", env!("CARGO_PKG_VERSION"));
+            eprintln!("Transport: stdio");
+            eprintln!("Waiting for client connection...");
+
+            let server = NemueMcpServer::new()?;
+            let service = server.serve((stdin(), stdout())).await?;
+
+            eprintln!("Client connected. Server running.");
+            service.waiting().await?;
+        }
+
+        Commands::Diff {
+            file_a,
+            file_b,
+            format,
+            new_only,
+            closed_only,
+        } => {
+            use nemue::scanner::diff;
+
+            let scan_a = diff::load_scan(&file_a)?;
+            let scan_b = diff::load_scan(&file_b)?;
+
+            let mut diff_result = diff::compare_scans(&scan_a, &scan_b);
+
+            // Apply filters
+            if new_only {
+                diff_result.closed_ports.clear();
+                diff_result.changed_services.clear();
+                diff_result.removed_hosts.clear();
+            }
+            if closed_only {
+                diff_result.new_ports.clear();
+                diff_result.changed_services.clear();
+                diff_result.new_hosts.clear();
+            }
+
+            match format.as_str() {
+                "json" => {
+                    let json = serde_json::to_string_pretty(&diff_result)?;
+                    println!("{}", json);
+                }
+                _ => {
+                    println!("{}", diff::format_diff_text(&diff_result));
+                }
             }
         }
     }

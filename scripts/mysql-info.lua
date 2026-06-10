@@ -1,40 +1,42 @@
--- MySQL Information Disclosure
--- Extracts MySQL server information
+local nmap = require "nmap"
+local shortport = require "shortport"
+local stdnse = require "stdnse"
 
 description = [[
-Connects to MySQL server and extracts version information,
-configuration details, and security settings.
+Connects to MySQL and extracts detailed server information.
 ]]
 
-author = "Nemue Team"
-license = "MIT"
-categories = {"discovery", "safe", "database"}
+author = "Nemue"
+license = "Same as Nmap--See https://nmap.org/book/man-legal.html"
+categories = {"safe", "discovery"}
 
--- Port rule - run on MySQL ports
-portrule = function(port)
-    return port.protocol == "tcp" and 
-           (port.number == 3306 or port.service == "mysql")
-end
+portrule = shortport.port_or_service(3306, "mysql")
 
--- Main action
 action = function(host, port)
-    local result = {}
-    
-    table.insert(result, "MySQL Server Information:")
-    table.insert(result, "  Version: 8.0.32-0ubuntu0.22.04.2")
-    table.insert(result, "  Protocol: 10")
-    table.insert(result, "  Thread ID: 12")
-    table.insert(result, "  Server Capabilities: 0xf7ff")
-    
-    table.insert(result, "\nAuthentication:")
-    table.insert(result, "  Plugin: caching_sha2_password")
-    table.insert(result, "  Salt: 32 bytes")
-    
-    table.insert(result, "\nSecurity Analysis:")
-    table.insert(result, "  [+] Using secure authentication plugin")
-    table.insert(result, "  [+] No anonymous access")
-    table.insert(result, "  [!] Version information disclosed")
-    table.insert(result, "  Recommendation: Restrict MySQL access to trusted IPs only")
-    
-    return table.concat(result, "\n")
+  local socket = nmap.new_socket()
+  local result = {}
+  local status, err = socket:connect(host, port)
+
+  if not status then
+    stdnse.debug1("Could not connect: %s", err)
+    return nil
+  end
+
+  local response
+  status, response = socket:receive_lines(1)
+
+  if status and response then
+    table.insert(result, "MySQL Information:")
+    table.insert(result, "Banner: " .. response:sub(1, 80))
+    local version = response:match("(%d+%.%d+%.%d+%w*)")
+    if version then
+      table.insert(result, "Version: " .. version)
+    end
+    port.version.name = "mysql"
+    port.version.product = "MySQL"
+    nmap.set_port_version(host, port)
+  end
+
+  socket:close()
+  return stdnse.format_output(true, result)
 end

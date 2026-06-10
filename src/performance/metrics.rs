@@ -1,9 +1,9 @@
 // Performance monitoring and metrics collection
-use std::sync::Arc;
+use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
-use std::time::{Duration, Instant};
+use std::sync::Arc;
+use std::time::Instant;
 use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
 
 /// Real-time performance metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -12,7 +12,7 @@ pub struct PerformanceMetrics {
     pub packets_received: u64,
     pub bytes_sent: u64,
     pub bytes_received: u64,
-    pub scan_rate: f64,  // packets per second
+    pub scan_rate: f64, // packets per second
     pub active_connections: usize,
     pub memory_usage_mb: usize,
     pub cpu_usage_percent: f32,
@@ -30,6 +30,9 @@ pub struct MetricsCollector {
     errors: Arc<AtomicU64>,
     start_time: Instant,
     last_snapshot: Arc<RwLock<PerformanceMetrics>>,
+    // Windowed rate tracking
+    window_packets: Arc<AtomicU64>,
+    window_start: Arc<RwLock<Instant>>,
 }
 
 impl MetricsCollector {
@@ -54,11 +57,14 @@ impl MetricsCollector {
                 uptime_seconds: 0,
                 errors_count: 0,
             })),
+            window_packets: Arc::new(AtomicU64::new(0)),
+            window_start: Arc::new(RwLock::new(Instant::now())),
         }
     }
 
     pub fn increment_packets_sent(&self, count: u64) {
         self.packets_sent.fetch_add(count, Ordering::Relaxed);
+        self.window_packets.fetch_add(count, Ordering::Relaxed);
     }
 
     pub fn increment_packets_received(&self, count: u64) {
@@ -83,6 +89,27 @@ impl MetricsCollector {
 
     pub fn increment_errors(&self) {
         self.errors.fetch_add(1, Ordering::Relaxed);
+    }
+
+    /// Get packets per second over a sliding 1-second window
+    pub async fn packets_per_second(&self) -> f64 {
+        let mut window_start = self.window_start.write().await;
+        let elapsed = window_start.elapsed().as_secs_f64();
+
+        if elapsed >= 1.0 {
+            let packets = self.window_packets.swap(0, Ordering::Relaxed);
+            let pps = packets as f64 / elapsed;
+            *window_start = Instant::now();
+            pps
+        } else {
+            // Estimate based on current window
+            let packets = self.window_packets.load(Ordering::Relaxed);
+            if elapsed > 0.01 {
+                packets as f64 / elapsed
+            } else {
+                0.0
+            }
+        }
     }
 
     pub async fn snapshot(&self) -> PerformanceMetrics {
@@ -116,8 +143,26 @@ impl MetricsCollector {
     }
 
     fn get_memory_usage(&self) -> usize {
-        // Simplified - would use procfs or similar in production
-        0
+        // Linux: read RSS from /proc/self/status
+        #[cfg(target_os = "linux")]
+        {
+            if let Ok(status) = std::fs::read_to_string("/proc/self/status") {
+                for line in status.lines() {
+                    if line.starts_with("VmRSS:") {
+                        if let Some(kb_str) = line.split_whitespace().nth(1) {
+                            if let Ok(kb) = kb_str.parse::<usize>() {
+                                return kb / 1024; // Convert KB to MB
+                            }
+                        }
+                    }
+                }
+            }
+            0
+        }
+        #[cfg(not(target_os = "linux"))]
+        {
+            0
+        }
     }
 
     fn get_cpu_usage(&self) -> f32 {
@@ -182,7 +227,7 @@ mod tests {
         let collector = MetricsCollector::new();
         collector.increment_packets_sent(100);
         collector.add_bytes_sent(4096);
-        
+
         let metrics = collector.snapshot().await;
         assert_eq!(metrics.packets_sent, 100);
         assert_eq!(metrics.bytes_sent, 4096);

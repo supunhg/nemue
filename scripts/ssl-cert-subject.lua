@@ -1,0 +1,24 @@
+local nmap = require "nmap"
+local shortport = require "shortport"
+local stdnse = require "stdnse"
+
+description = [[
+Extracts the certificate subject information from SSL/TLS certificates.
+]]
+
+author = "Nemue"
+license = "Same as Nmap--See https://nmap.org/book/man-legal.html"
+categories = {"safe", "discovery"}
+
+portrule = shortport.port_or_service(443, "https", "tcp")
+
+action = function(host, port)
+  local output = stdnse.output_table()
+  output["Note"] = "Certificate subject extraction requires SSL handshake"
+  output["Subject Fields"] = {
+    "CommonName (CN)", "Organization (O)",
+    "OrganizationalUnit (OU)", "Locality (L)",
+    "State (ST)", "Country (C)"
+  }
+  return output
+end

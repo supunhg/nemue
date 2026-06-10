@@ -7,7 +7,7 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, info};
 
-use super::engine::{FuzzEngine, FuzzConfig, FuzzResult};
+use super::engine::{FuzzConfig, FuzzEngine, FuzzResult};
 use super::wordlist::WordlistManager;
 
 /// Recursive scanning configuration
@@ -47,6 +47,7 @@ impl Default for RecursiveConfig {
 }
 
 /// Recursive scanner for automatic subdirectory discovery
+#[allow(dead_code)]
 pub struct RecursiveScanner {
     /// Base fuzzing configuration
     fuzz_config: FuzzConfig,
@@ -62,10 +63,7 @@ pub struct RecursiveScanner {
 
 impl RecursiveScanner {
     /// Create a new recursive scanner
-    pub fn new(
-        fuzz_config: FuzzConfig,
-        recursive_config: RecursiveConfig,
-    ) -> Self {
+    pub fn new(fuzz_config: FuzzConfig, recursive_config: RecursiveConfig) -> Self {
         Self {
             fuzz_config,
             recursive_config,
@@ -77,8 +75,11 @@ impl RecursiveScanner {
 
     /// Start recursive scanning
     pub async fn scan(&self, initial_wordlist: Vec<String>) -> Result<Vec<FuzzResult>> {
-        info!("Starting recursive scan with depth {}", self.recursive_config.max_depth);
-        
+        info!(
+            "Starting recursive scan with depth {}",
+            self.recursive_config.max_depth
+        );
+
         let mut all_results = Vec::new();
 
         // Scan root level
@@ -87,7 +88,7 @@ impl RecursiveScanner {
 
         // Add discovered directories to queue
         for result in &root_results {
-            if self.should_recurse(&result) {
+            if self.should_recurse(result) {
                 let mut queue = self.scan_queue.write().await;
                 queue.push_back((result.path.clone(), 1));
             }
@@ -101,7 +102,7 @@ impl RecursiveScanner {
             }
 
             debug!("Recursively scanning: {} (depth {})", dir, depth);
-            
+
             let results = self.scan_directory(&dir, depth, &initial_wordlist).await?;
             all_results.extend(results.clone());
 
@@ -114,7 +115,10 @@ impl RecursiveScanner {
             }
         }
 
-        info!("Recursive scan complete. Total findings: {}", all_results.len());
+        info!(
+            "Recursive scan complete. Total findings: {}",
+            all_results.len()
+        );
         Ok(all_results)
     }
 
@@ -122,7 +126,7 @@ impl RecursiveScanner {
     async fn scan_directory(
         &self,
         base_path: &str,
-        depth: usize,
+        _depth: usize,
         wordlist: &[String],
     ) -> Result<Vec<FuzzResult>> {
         // Check if already discovered
@@ -143,8 +147,9 @@ impl RecursiveScanner {
         // Update base URL for this directory
         let mut config = self.fuzz_config.clone();
         if !base_path.is_empty() {
-            config.base_url = format!("{}/{}", 
-                config.base_url.trim_end_matches('/'), 
+            config.base_url = format!(
+                "{}/{}",
+                config.base_url.trim_end_matches('/'),
                 base_path.trim_start_matches('/')
             );
         }
@@ -168,7 +173,7 @@ impl RecursiveScanner {
 
         if self.recursive_config.generate_backups {
             // Generate backup file variants
-            let backup_results = self.generate_backup_variants(&results).await?;
+            let _backup_results = self.generate_backup_variants(&results).await?;
             // Would add backup_results to main results
         }
 
@@ -178,8 +183,9 @@ impl RecursiveScanner {
     /// Check if a result should trigger recursion
     fn should_recurse(&self, result: &FuzzResult) -> bool {
         // Only recurse for successful responses
-        if result.status_code < self.recursive_config.min_status 
-            || result.status_code > self.recursive_config.max_status {
+        if result.status_code < self.recursive_config.min_status
+            || result.status_code > self.recursive_config.max_status
+        {
             return false;
         }
 
@@ -190,7 +196,7 @@ impl RecursiveScanner {
     /// Pop next directory from queue (breadth-first or depth-first)
     async fn pop_from_queue(&self) -> Option<(String, usize)> {
         let mut queue = self.scan_queue.write().await;
-        
+
         if self.recursive_config.breadth_first {
             queue.pop_front()
         } else {
@@ -200,7 +206,7 @@ impl RecursiveScanner {
 
     /// Generate backup file variants for discovered files
     async fn generate_backup_variants(&self, results: &[FuzzResult]) -> Result<Vec<FuzzResult>> {
-        let mut variants = Vec::new();
+        let variants = Vec::new();
 
         for result in results {
             if result.path.ends_with('/') {
@@ -208,7 +214,7 @@ impl RecursiveScanner {
             }
 
             // Generate backup extensions
-            let backup_paths = vec![
+            let _backup_paths = [
                 format!("{}.bak", result.path),
                 format!("{}.old", result.path),
                 format!("{}.backup", result.path),
@@ -227,7 +233,7 @@ impl RecursiveScanner {
     }
 
     /// Extract paths from robots.txt
-    pub async fn extract_from_robots(&self, base_url: &str) -> Result<Vec<String>> {
+    pub async fn extract_from_robots(&self, _base_url: &str) -> Result<Vec<String>> {
         // Fetch robots.txt and extract disallowed paths
         // Placeholder implementation
         Ok(vec![
@@ -238,32 +244,32 @@ impl RecursiveScanner {
     }
 
     /// Extract paths from sitemap.xml
-    pub async fn extract_from_sitemap(&self, base_url: &str) -> Result<Vec<String>> {
+    pub async fn extract_from_sitemap(&self, _base_url: &str) -> Result<Vec<String>> {
         // Fetch sitemap.xml and extract all URLs
         // Placeholder implementation
         Ok(Vec::new())
     }
 
     /// Extract paths from JavaScript files
-    pub async fn extract_from_javascript(&self, js_content: &str) -> Vec<String> {
-        let mut paths = Vec::new();
+    pub async fn extract_from_javascript(&self, _js_content: &str) -> Vec<String> {
+        let paths = Vec::new();
 
         // Look for common patterns in JavaScript
         // - API endpoints: /api/v1/users
         // - Route definitions: router.get('/path')
         // - URL constants: const API_URL = '/api'
-        
+
         // Regex patterns for common JavaScript path patterns
-        let patterns = vec![
-            r#"['"](/[a-zA-Z0-9/_-]+)['"]"#,  // Quoted paths
-            r#"router\.(get|post|put|delete)\(['"]([^'"]+)['"]"#,  // Express.js routes
-            r#"fetch\(['"]([^'"]+)['"]"#,  // Fetch API calls
+        let _patterns = vec![
+            r#"['"](/[a-zA-Z0-9/_-]+)['"]"#,                      // Quoted paths
+            r#"router\.(get|post|put|delete)\(['"]([^'"]+)['"]"#, // Express.js routes
+            r#"fetch\(['"]([^'"]+)['"]"#,                         // Fetch API calls
             r#"axios\.(get|post|put|delete)\(['"]([^'"]+)['"]"#,  // Axios calls
         ];
 
         // This would use regex to extract paths
         // Placeholder for now
-        
+
         paths
     }
 }

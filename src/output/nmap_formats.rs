@@ -1,5 +1,5 @@
+use crate::scanner::{ScanResult, ScanResults};
 use anyhow::Result;
-use crate::scanner::{ScanResults, ScanResult};
 use std::collections::HashMap;
 use std::fmt::Write;
 
@@ -47,7 +47,7 @@ pub struct NormalOutputFormatter;
 impl NormalOutputFormatter {
     pub fn format(results: &ScanResults) -> Result<String> {
         let mut output = String::new();
-        
+
         // Header
         writeln!(output, "# Nemue scan report")?;
         writeln!(output, "# Scan started at: {}", results.scan_start)?;
@@ -57,17 +57,17 @@ impl NormalOutputFormatter {
         // Group results by target
         let mut by_target: HashMap<std::net::IpAddr, Vec<&ScanResult>> = HashMap::new();
         for result in &results.results {
-            by_target.entry(result.target).or_insert_with(Vec::new).push(result);
+            by_target.entry(result.target).or_default().push(result);
         }
 
         // Output each target
         for (target, ports) in by_target.iter() {
             writeln!(output, "Nmap scan report for {}", target)?;
             writeln!(output, "Host is up.")?;
-            
+
             if !ports.is_empty() {
                 writeln!(output, "PORT      STATE  SERVICE")?;
-                
+
                 for port in ports {
                     let service = port.service.as_deref().unwrap_or("unknown");
                     writeln!(
@@ -84,9 +84,12 @@ impl NormalOutputFormatter {
         }
 
         // Summary
-        writeln!(output, "# Nemue done: {} IP address(es) ({} host(s) up) scanned",
-                 results.target_count,
-                 by_target.len())?;
+        writeln!(
+            output,
+            "# Nemue done: {} IP address(es) ({} host(s) up) scanned",
+            results.target_count,
+            by_target.len()
+        )?;
 
         Ok(output)
     }
@@ -98,7 +101,7 @@ pub struct GrepableOutputFormatter;
 impl GrepableOutputFormatter {
     pub fn format(results: &ScanResults) -> Result<String> {
         let mut output = String::new();
-        
+
         // Header
         writeln!(output, "# Nemue grepable output")?;
         writeln!(output, "# Started {}", results.scan_start)?;
@@ -107,32 +110,35 @@ impl GrepableOutputFormatter {
         // Group by target
         let mut by_target: HashMap<std::net::IpAddr, Vec<&ScanResult>> = HashMap::new();
         for result in &results.results {
-            by_target.entry(result.target).or_insert_with(Vec::new).push(result);
+            by_target.entry(result.target).or_default().push(result);
         }
 
         // Output each host in grepable format
         for (target, ports) in by_target.iter() {
             write!(output, "Host: {} ()", target)?;
             write!(output, "\tStatus: Up")?;
-            
+
             if !ports.is_empty() {
                 write!(output, "\tPorts: ")?;
-                
-                let port_strings: Vec<String> = ports.iter().map(|p| {
-                    format!(
-                        "{}/{}/{}/{}/{}/{}",
-                        p.port,
-                        format_state(&p.state),
-                        p.protocol.to_string().to_lowercase(),
-                        "",  // owner (empty)
-                        p.service.as_deref().unwrap_or(""),
-                        ""   // version (empty for now)
-                    )
-                }).collect();
-                
+
+                let port_strings: Vec<String> = ports
+                    .iter()
+                    .map(|p| {
+                        format!(
+                            "{}/{}/{}/{}/{}/{}",
+                            p.port,
+                            format_state(&p.state),
+                            p.protocol.to_string().to_lowercase(),
+                            "", // owner (empty)
+                            p.service.as_deref().unwrap_or(""),
+                            "" // version (empty for now)
+                        )
+                    })
+                    .collect();
+
                 write!(output, "{}", port_strings.join(", "))?;
             }
-            
+
             writeln!(output)?;
         }
 
@@ -148,20 +154,20 @@ pub struct ReasonOutputFormatter;
 impl ReasonOutputFormatter {
     pub fn format(results: &ScanResults, reason: &str) -> Result<String> {
         let mut output = String::new();
-        
+
         writeln!(output, "# Nemue scan with reason codes")?;
         writeln!(output, "# Scan started: {}", results.scan_start)?;
         writeln!(output)?;
 
         let mut by_target: HashMap<std::net::IpAddr, Vec<&ScanResult>> = HashMap::new();
         for result in &results.results {
-            by_target.entry(result.target).or_insert_with(Vec::new).push(result);
+            by_target.entry(result.target).or_default().push(result);
         }
 
         for (target, ports) in by_target.iter() {
             writeln!(output, "Scan report for {}", target)?;
             writeln!(output, "PORT      STATE  SERVICE    REASON")?;
-            
+
             for port in ports {
                 let service = port.service.as_deref().unwrap_or("unknown");
                 writeln!(
@@ -192,12 +198,7 @@ pub struct ScanStatistics {
 }
 
 impl ScanStatistics {
-    pub fn new(
-        elapsed: u64,
-        completed: usize,
-        remaining: usize,
-        ports: usize,
-    ) -> Self {
+    pub fn new(elapsed: u64, completed: usize, remaining: usize, ports: usize) -> Self {
         let scan_rate = if elapsed > 0 {
             ports as f64 / elapsed as f64
         } else {
@@ -216,10 +217,7 @@ impl ScanStatistics {
     pub fn format(&self) -> String {
         format!(
             "Stats: {:.2}s elapsed; {} hosts completed ({} remaining), {:.2} ports/s",
-            self.elapsed_seconds,
-            self.targets_completed,
-            self.targets_remaining,
-            self.scan_rate
+            self.elapsed_seconds, self.targets_completed, self.targets_remaining, self.scan_rate
         )
     }
 
@@ -344,7 +342,7 @@ impl Default for OutputManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::scanner::{ScanResults, ScanResult, PortState, Protocol};
+    use crate::scanner::{PortState, Protocol, ScanResult, ScanResults};
     use chrono::Utc;
 
     fn create_test_results() -> ScanResults {
@@ -363,6 +361,7 @@ mod tests {
                     service: Some("http".to_string()),
                     service_info: None,
                     hostname: None,
+                    reason: None,
                     timestamp: now,
                 },
                 ScanResult {
@@ -373,6 +372,7 @@ mod tests {
                     service: Some("https".to_string()),
                     service_info: None,
                     hostname: None,
+                    reason: None,
                     timestamp: now,
                 },
             ],
@@ -383,10 +383,22 @@ mod tests {
 
     #[test]
     fn test_output_format_from_flag() {
-        assert_eq!(NmapOutputFormat::from_flag("-oN"), Some(NmapOutputFormat::Normal));
-        assert_eq!(NmapOutputFormat::from_flag("-oG"), Some(NmapOutputFormat::Grepable));
-        assert_eq!(NmapOutputFormat::from_flag("-oX"), Some(NmapOutputFormat::Xml));
-        assert_eq!(NmapOutputFormat::from_flag("-oA"), Some(NmapOutputFormat::All));
+        assert_eq!(
+            NmapOutputFormat::from_flag("-oN"),
+            Some(NmapOutputFormat::Normal)
+        );
+        assert_eq!(
+            NmapOutputFormat::from_flag("-oG"),
+            Some(NmapOutputFormat::Grepable)
+        );
+        assert_eq!(
+            NmapOutputFormat::from_flag("-oX"),
+            Some(NmapOutputFormat::Xml)
+        );
+        assert_eq!(
+            NmapOutputFormat::from_flag("-oA"),
+            Some(NmapOutputFormat::All)
+        );
         assert_eq!(NmapOutputFormat::from_flag("invalid"), None);
     }
 
@@ -402,7 +414,7 @@ mod tests {
     fn test_normal_output() {
         let results = create_test_results();
         let output = NormalOutputFormatter::format(&results).unwrap();
-        
+
         assert!(output.contains("Nmap scan report"));
         assert!(output.contains("192.168.1.1"));
         assert!(output.contains("80/tcp"));
@@ -415,7 +427,7 @@ mod tests {
     fn test_grepable_output() {
         let results = create_test_results();
         let output = GrepableOutputFormatter::format(&results).unwrap();
-        
+
         assert!(output.contains("Host: 192.168.1.1"));
         assert!(output.contains("Status: Up"));
         assert!(output.contains("Ports:"));
@@ -427,7 +439,7 @@ mod tests {
     fn test_reason_output() {
         let results = create_test_results();
         let output = ReasonOutputFormatter::format(&results, "syn-ack").unwrap();
-        
+
         assert!(output.contains("REASON"));
         assert!(output.contains("syn-ack"));
         assert!(output.contains("192.168.1.1"));
@@ -436,13 +448,13 @@ mod tests {
     #[test]
     fn test_scan_statistics() {
         let stats = ScanStatistics::new(10, 5, 15, 100);
-        
+
         assert_eq!(stats.elapsed_seconds, 10);
         assert_eq!(stats.targets_completed, 5);
         assert_eq!(stats.targets_remaining, 15);
         assert_eq!(stats.ports_scanned, 100);
         assert_eq!(stats.scan_rate, 10.0);
-        
+
         let formatted = stats.format();
         assert!(formatted.contains("10s") || formatted.contains("10.00s"));
         assert!(formatted.contains("5 hosts"));
@@ -453,7 +465,7 @@ mod tests {
     fn test_scan_statistics_verbose() {
         let stats = ScanStatistics::new(30, 10, 5, 300);
         let verbose = stats.format_verbose();
-        
+
         assert!(verbose.contains("Elapsed: 30s"));
         assert!(verbose.contains("Targets completed: 10"));
         assert!(verbose.contains("Scan rate: 10.00"));
@@ -464,7 +476,7 @@ mod tests {
         let manager = OutputManager::new()
             .with_format(NmapOutputFormat::Normal)
             .with_reason();
-        
+
         assert_eq!(manager.formats.len(), 1);
         assert!(manager.include_reason);
     }
@@ -475,10 +487,10 @@ mod tests {
         let manager = OutputManager::new()
             .with_format(NmapOutputFormat::Normal)
             .with_format(NmapOutputFormat::Grepable);
-        
+
         let outputs = manager.format_results(&results).unwrap();
         assert_eq!(outputs.len(), 2);
-        
+
         assert_eq!(outputs[0].0, NmapOutputFormat::Normal);
         assert_eq!(outputs[1].0, NmapOutputFormat::Grepable);
     }

@@ -1,7 +1,7 @@
 // Service catalog and asset inventory management
-use std::net::IpAddr;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
+use std::net::IpAddr;
 
 /// Service information
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -69,11 +69,14 @@ impl AssetInfo {
     pub fn has_vulnerable_services(&self) -> bool {
         self.services.iter().any(|s| {
             // Check for commonly vulnerable services
-            matches!(s.service_name.as_str(), 
+            matches!(
+                s.service_name.as_str(),
                 "telnet" | "ftp" | "rexec" | "rlogin" | "rsh" | "tftp"
-            ) || (s.service_name == "smb" && s.version.as_ref()
-                .map(|v| v.contains("1.0") || v.contains("2.0"))
-                .unwrap_or(false))
+            ) || (s.service_name == "smb"
+                && s.version
+                    .as_ref()
+                    .map(|v| v.contains("1.0") || v.contains("2.0"))
+                    .unwrap_or(false))
         })
     }
 
@@ -83,7 +86,9 @@ impl AssetInfo {
             return RiskLevel::High;
         }
 
-        let open_count = self.services.iter()
+        let open_count = self
+            .services
+            .iter()
             .filter(|s| s.state == ServiceState::Open)
             .count();
 
@@ -156,7 +161,9 @@ impl ServiceCatalog {
         for asset in self.assets.values() {
             // Count services
             for service in &asset.services {
-                *service_distribution.entry(service.service_name.clone()).or_insert(0) += 1;
+                *service_distribution
+                    .entry(service.service_name.clone())
+                    .or_insert(0) += 1;
             }
 
             // Count OS families
@@ -182,13 +189,14 @@ impl ServiceCatalog {
     /// Export as CSV
     pub fn to_csv(&self) -> String {
         let mut csv = String::from("IP,Hostname,MAC,Vendor,Type,OS,Services,Importance,Risk\n");
-        
+
         for asset in self.assets.values() {
-            let services: Vec<String> = asset.services
+            let services: Vec<String> = asset
+                .services
                 .iter()
                 .map(|s| format!("{}:{}", s.service_name, s.port))
                 .collect();
-            
+
             csv.push_str(&format!(
                 "{},{},{},{},{},{},{},{},{:?}\n",
                 asset.ip_address,
@@ -202,7 +210,7 @@ impl ServiceCatalog {
                 asset.risk_level()
             ));
         }
-        
+
         csv
     }
 }
@@ -302,7 +310,7 @@ mod tests {
         let asset = create_test_asset();
         let ip = asset.ip_address;
         catalog.add_asset(asset);
-        
+
         assert_eq!(catalog.assets.len(), 1);
         assert!(catalog.get_asset(&ip).is_some());
     }
@@ -311,10 +319,10 @@ mod tests {
     fn test_get_assets_by_service() {
         let mut catalog = ServiceCatalog::new();
         catalog.add_asset(create_test_asset());
-        
+
         let ssh_assets = catalog.get_assets_by_service("ssh");
         assert_eq!(ssh_assets.len(), 1);
-        
+
         let http_assets = catalog.get_assets_by_service("http");
         assert_eq!(http_assets.len(), 0);
     }
@@ -323,7 +331,7 @@ mod tests {
     fn test_generate_catalog_report() {
         let mut catalog = ServiceCatalog::new();
         catalog.add_asset(create_test_asset());
-        
+
         let report = catalog.generate_catalog();
         assert_eq!(report.total_assets, 1);
         assert_eq!(report.total_services, 2);
@@ -334,7 +342,7 @@ mod tests {
     fn test_export_csv() {
         let mut catalog = ServiceCatalog::new();
         catalog.add_asset(create_test_asset());
-        
+
         let csv = catalog.to_csv();
         assert!(csv.contains("IP,Hostname,MAC"));
         assert!(csv.contains("192.168.1.100"));

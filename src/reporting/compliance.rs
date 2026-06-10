@@ -1,5 +1,5 @@
 // Compliance framework mapping and reporting
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -79,12 +79,18 @@ pub enum ControlStatus {
     NotTested,
 }
 
+impl Default for ComplianceMapper {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ComplianceMapper {
     pub fn new() -> Self {
         let mut mapper = Self {
             frameworks: HashMap::new(),
         };
-        
+
         mapper.add_framework(Self::pci_dss_framework());
         mapper.add_framework(Self::nist_csf_framework());
         mapper.add_framework(Self::cis_controls_framework());
@@ -92,7 +98,7 @@ impl ComplianceMapper {
         mapper.add_framework(Self::hipaa_framework());
         mapper.add_framework(Self::soc2_framework());
         mapper.add_framework(Self::gdpr_framework());
-        
+
         mapper
     }
 
@@ -129,7 +135,8 @@ impl ComplianceMapper {
                     description: "Apply secure configurations to all system components".to_string(),
                     check_type: CheckType::Configuration,
                     severity: 8.0,
-                    remediation: "Remove default credentials and disable unnecessary services".to_string(),
+                    remediation: "Remove default credentials and disable unnecessary services"
+                        .to_string(),
                 },
                 Control {
                     id: "4.2".to_string(),
@@ -169,7 +176,8 @@ impl ComplianceMapper {
                 Control {
                     id: "DE.CM-1".to_string(),
                     name: "Network Monitoring".to_string(),
-                    description: "Network monitored to detect potential cybersecurity events".to_string(),
+                    description: "Network monitored to detect potential cybersecurity events"
+                        .to_string(),
                     check_type: CheckType::Audit,
                     severity: 8.0,
                     remediation: "Deploy network monitoring and intrusion detection".to_string(),
@@ -188,7 +196,8 @@ impl ComplianceMapper {
                 Control {
                     id: "7.1".to_string(),
                     name: "Vulnerability Management".to_string(),
-                    description: "Establish and maintain a vulnerability management process".to_string(),
+                    description: "Establish and maintain a vulnerability management process"
+                        .to_string(),
                     check_type: CheckType::Vulnerability,
                     severity: 9.0,
                     remediation: "Perform regular vulnerability assessments".to_string(),
@@ -223,15 +232,19 @@ impl ComplianceMapper {
                 Control {
                     id: "A.8.8".to_string(),
                     name: "Management of Technical Vulnerabilities".to_string(),
-                    description: "Information about technical vulnerabilities obtained in timely manner".to_string(),
+                    description:
+                        "Information about technical vulnerabilities obtained in timely manner"
+                            .to_string(),
                     check_type: CheckType::Vulnerability,
                     severity: 8.0,
-                    remediation: "Implement vulnerability management with regular scanning".to_string(),
+                    remediation: "Implement vulnerability management with regular scanning"
+                        .to_string(),
                 },
                 Control {
                     id: "A.8.24".to_string(),
                     name: "Use of Cryptography".to_string(),
-                    description: "Rules for effective use of cryptography shall be defined".to_string(),
+                    description: "Rules for effective use of cryptography shall be defined"
+                        .to_string(),
                     check_type: CheckType::Cryptography,
                     severity: 9.0,
                     remediation: "Enforce strong encryption standards".to_string(),
@@ -250,7 +263,8 @@ impl ComplianceMapper {
                 Control {
                     id: "164.312(a)(1)".to_string(),
                     name: "Access Control".to_string(),
-                    description: "Implement technical policies to allow only authorized access".to_string(),
+                    description: "Implement technical policies to allow only authorized access"
+                        .to_string(),
                     check_type: CheckType::Authentication,
                     severity: 9.0,
                     remediation: "Implement role-based access control".to_string(),
@@ -277,7 +291,8 @@ impl ComplianceMapper {
                 Control {
                     id: "CC6.1".to_string(),
                     name: "Access Controls".to_string(),
-                    description: "Restrict logical and physical access to authorized individuals".to_string(),
+                    description: "Restrict logical and physical access to authorized individuals"
+                        .to_string(),
                     check_type: CheckType::Authentication,
                     severity: 9.0,
                     remediation: "Implement MFA and network segmentation".to_string(),
@@ -304,7 +319,8 @@ impl ComplianceMapper {
                 Control {
                     id: "Art.32(1)(a)".to_string(),
                     name: "Pseudonymisation and Encryption".to_string(),
-                    description: "Implement appropriate technical measures including encryption".to_string(),
+                    description: "Implement appropriate technical measures including encryption"
+                        .to_string(),
                     check_type: CheckType::Cryptography,
                     severity: 9.0,
                     remediation: "Encrypt all personal data in transit and at rest".to_string(),
@@ -390,7 +406,7 @@ mod tests {
     #[test]
     fn test_add_framework() {
         let mut mapper = ComplianceMapper::new();
-        
+
         // Create custom framework
         let custom_framework = Framework {
             id: "custom".to_string(),
@@ -399,7 +415,7 @@ mod tests {
             description: "Custom test framework".to_string(),
             controls: vec![],
         };
-        
+
         mapper.add_framework(custom_framework);
         assert_eq!(mapper.list_frameworks().len(), 8);
         assert!(mapper.get_framework("custom").is_some());
@@ -440,7 +456,7 @@ mod tests {
     #[test]
     fn test_add_control_result() {
         let mut result = ComplianceResult::new("PCI-DSS".to_string(), "4.0".to_string());
-        
+
         result.add_result(ControlResult {
             control_id: "1.1".to_string(),
             status: ControlStatus::Pass,
@@ -455,7 +471,7 @@ mod tests {
     #[test]
     fn test_compliance_score_calculation() {
         let mut result = ComplianceResult::new("PCI-DSS".to_string(), "4.0".to_string());
-        
+
         result.add_result(ControlResult {
             control_id: "1.1".to_string(),
             status: ControlStatus::Pass,
@@ -476,7 +492,7 @@ mod tests {
     #[test]
     fn test_compliance_summary() {
         let mut result = ComplianceResult::new("PCI-DSS".to_string(), "4.0".to_string());
-        
+
         result.add_result(ControlResult {
             control_id: "1.1".to_string(),
             status: ControlStatus::Pass,
