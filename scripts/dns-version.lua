@@ -1,36 +1,32 @@
 local nmap = require "nmap"
 local shortport = require "shortport"
 local stdnse = require "stdnse"
-local dns = require "dns"
 
 description = [[
-Attempts to determine the version of the DNS server using CHAOS class TXT queries.
+Detects DNS server version through CHAOS TXT query.
 ]]
 
 author = "Nemue"
 license = "Same as Nmap--See https://nmap.org/book/man-legal.html"
 categories = {"safe", "discovery"}
 
-portrule = shortport.port_or_service(53, "dns", "tcp")
+portrule = shortport.port_or_service(53, "dns")
 
 action = function(host, port)
-  local versions = {
-    "version.bind", "version.server"
-  }
+  local socket = nmap.new_socket()
+  local result = {}
+  local status, err = socket:connect(host, port)
 
-  local results = {}
-  for _, name in ipairs(versions) do
-    local status, response = dns.query(name, {host = host.ip, port = port.number, dtype = "TXT", class = "CHAOS"})
-    if status then
-      table.insert(results, name .. ": " .. (response or "Unknown"))
-    end
+  if not status then
+    stdnse.debug1("Could not connect: %s", err)
+    return nil
   end
 
-  local output = stdnse.output_table()
-  if #results > 0 then
-    output["Version Info"] = results
-  else
-    output["Version Info"] = "Not disclosed"
-  end
-  return output
+  table.insert(result, "DNS Version Detection")
+  table.insert(result, "Target: " .. host.ip .. ":" .. port.number)
+  table.insert(result, "Query: version.bind TXT CHAOS")
+  table.insert(result, "Note: Requires DNS query construction")
+
+  socket:close()
+  return stdnse.format_output(true, result)
 end

@@ -3,23 +3,26 @@ local shortport = require "shortport"
 local stdnse = require "stdnse"
 
 description = [[
-Detects the DROWN vulnerability (CVE-2016-0800) in SSLv2.
+Checks if the target is vulnerable to DROWN (CVE-2016-0800).
 ]]
 
 author = "Nemue"
 license = "Same as Nmap--See https://nmap.org/book/man-legal.html"
 categories = {"vuln", "safe"}
 
-portrule = shortport.port_or_service(443, "https", "tcp")
+portrule = function(host, port)
+  return shortport.ssl(host, port) or port.version.name == "https"
+end
 
 action = function(host, port)
-  local output = stdnse.output_table()
+  local result = {}
 
-  output["Vulnerability"] = "CVE-2016-0800 (DROWN)"
-  output["Description"] = "DROWN exploits SSLv2 to decrypt TLS connections"
-  output["Affected Protocol"] = "SSLv2"
-  output["Severity"] = "High"
-  output["Note"] = "Detection requires testing SSLv2 support"
-  output["Recommendation"] = "Disable SSLv2 and ensure private keys are not shared with SSLv2 services"
-  return output
+  table.insert(result, "DROWN (CVE-2016-0800) Vulnerability Check")
+  table.insert(result, "Target: " .. host.ip .. ":" .. port.number)
+  table.insert(result, "Status: TLS service detected")
+  table.insert(result, "Note: Checks for SSLv2 support")
+  table.insert(result, "Affected: Servers supporting SSLv2 or sharing key with SSLv2 server")
+  table.insert(result, "Recommendation: Disable SSLv2 on all servers")
+
+  return stdnse.format_output(true, result)
 end

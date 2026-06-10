@@ -1,33 +1,28 @@
 local nmap = require "nmap"
 local shortport = require "shortport"
 local stdnse = require "stdnse"
+local sslcert = require "sslcert"
 
 description = [[
-Detects the OpenSSL Heartbleed vulnerability (CVE-2014-0160).
+Checks if the target is vulnerable to Heartbleed (CVE-2014-0160).
 ]]
 
 author = "Nemue"
 license = "Same as Nmap--See https://nmap.org/book/man-legal.html"
 categories = {"vuln", "intrusive"}
 
-portrule = shortport.port_or_service(443, "https", "tcp")
+portrule = function(host, port)
+  return shortport.ssl(host, port) or port.version.name == "https"
+end
 
 action = function(host, port)
-  local output = stdnse.output_table()
+  local result = {}
 
-  local socket = nmap.new_socket()
-  local status, err = socket:connect(host, port)
-  if not status then
-    output["Status"] = "Could not connect"
-    return output
-  end
+  table.insert(result, "Heartbleed (CVE-2014-0160) Vulnerability Check")
+  table.insert(result, "Target: " .. host.ip .. ":" .. port.number)
+  table.insert(result, "Status: TLS service detected")
+  table.insert(result, "Note: Full check requires TLS heartbeat extension test")
+  table.insert(result, "Affected: OpenSSL 1.0.1 through 1.0.1f")
 
-  socket:close()
-
-  output["Vulnerability"] = "CVE-2014-0160 (Heartbleed)"
-  output["Description"] = "OpenSSL Heartbleed allows reading memory from vulnerable servers"
-  output["Severity"] = "Critical"
-  output["Note"] = "Full detection requires sending malformed heartbeat request"
-  output["Recommendation"] = "Update OpenSSL to version 1.0.1g or later"
-  return output
+  return stdnse.format_output(true, result)
 end

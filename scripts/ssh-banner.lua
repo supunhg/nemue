@@ -1,34 +1,48 @@
--- SSH Banner Grabber
--- Extracts SSH version information from banner
+local nmap = require "nmap"
+local shortport = require "shortport"
+local stdnse = require "stdnse"
 
-name = "ssh-banner"
-description = "Grabs SSH banner and identifies version"
-author = "Nemue Team"
-categories = {"ssh", "discovery", "banner"}
+description = [[
+Extracts SSH banner and version information.
+]]
 
-function action(args)
-    local target = args.target
-    local port = args.port or 22
-    
-    nemue.log("Grabbing SSH banner from " .. target .. ":" .. port)
-    
-    -- Example banner
-    local banner = "SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.5"
-    
-    -- Check for known vulnerable versions
-    local is_vulnerable = banner:find("OpenSSH_7%.")
-    
-    if is_vulnerable then
-        return {
-            output = "SSH Banner: " .. banner,
-            vulnerability = "Potentially vulnerable OpenSSH 7.x detected",
-            severity = "medium"
-        }
-    else
-        return {
-            output = "SSH Banner: " .. banner,
-            vulnerability = nil,
-            severity = nil
-        }
+author = "Nemue"
+license = "Same as Nmap--See https://nmap.org/book/man-legal.html"
+categories = {"safe", "discovery"}
+
+portrule = shortport.port_or_service(22, "ssh")
+
+action = function(host, port)
+  local socket = nmap.new_socket()
+  local result = {}
+  local status, err = socket:connect(host, port)
+
+  if not status then
+    stdnse.debug1("Could not connect: %s", err)
+    return nil
+  end
+
+  local response
+  status, response = socket:receive_lines(1)
+
+  if status and response then
+    table.insert(result, "SSH Banner Extraction")
+    table.insert(result, "Banner: " .. response:gsub("\r?\n$", ""))
+
+    local proto = response:match("SSH%-(%d+%.%d+)")
+    if proto then
+      table.insert(result, "Protocol: " .. proto)
     end
+
+    local impl = response:match("SSH%d+%.%d+(%S+)")
+    if impl then
+      table.insert(result, "Implementation: " .. impl)
+    end
+
+    port.version.name = "ssh"
+    nmap.set_port_version(host, port)
+  end
+
+  socket:close()
+  return stdnse.format_output(true, result)
 end

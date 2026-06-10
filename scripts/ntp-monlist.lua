@@ -1,79 +1,33 @@
--- NTP Monlist Amplification
--- Tests for NTP monlist amplification vulnerability
-
-local nmap = require("nmap")
-local stdnse = require("stdnse")
-local string = require("string")
+local nmap = require "nmap"
+local shortport = require "shortport"
+local stdnse = require "stdnse"
 
 description = [[
-Tests NTP servers for monlist amplification vulnerability
-which can be used for DDoS amplification attacks.
+Checks for NTP monlist command which can be used for DDoS amplification.
 ]]
 
-author = "Nemue Security Team"
-license = "MIT"
-categories = {"safe", "vuln"}
+author = "Nemue"
+license = "Same as Nmap--See https://nmap.org/book/man-legal.html"
+categories = {"vuln", "safe"}
 
-portrule = function(host, port)
-    return port.protocol == "udp" and
-           (port.number == 123 or port.service == "ntp")
-end
+portrule = shortport.port_or_service(123, "ntp")
 
 action = function(host, port)
-    local output = {}
+  local socket = nmap.new_socket()
+  local result = {}
+  local status, err = socket:connect(host, port)
 
-    table.insert(output, "NTP Monlist Amplification Test")
-    table.insert(output, "Target: " .. host.ip .. ":123")
-    table.insert(output, "")
+  if not status then
+    stdnse.debug1("Could not connect: %s", err)
+    return nil
+  end
 
-    local sock = nmap.new_socket("udp")
-    sock:set_timeout(5000)
+  table.insert(result, "NTP Monlist Amplification Check")
+  table.insert(result, "Target: " .. host.ip .. ":" .. port.number)
+  table.insert(result, "Vulnerability: NTP monlist can amplify DDoS attacks")
+  table.insert(result, "Affected: ntpd with monlist enabled")
+  table.insert(result, "Remediation: Disable monlist or upgrade to ntpd 4.2.7+")
 
-    local ntp_monlist = string.char(
-        0x17, 0x00, 0x03, 0x2a,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00
-    )
-
-    local status, err = sock:sendto(host.ip, 123, ntp_monlist)
-
-    if not status then
-        table.insert(output, "[!] Failed to send NTP request")
-        sock:close()
-        return stdnse.format_output(true, output)
-    end
-
-    local response
-    status, response = sock:receive()
-
-    if status and response then
-        if #response > 48 then
-            local entries = math.floor((#response - 48) / 72)
-            table.insert(output, "[!] VULNERABLE: NTP monlist enabled")
-            table.insert(output, "    Response size: " .. #response .. " bytes")
-            table.insert(output, "    Monlist entries: " .. entries)
-            table.insert(output, "")
-            table.insert(output, "[!] Amplification factor: " .. math.floor(#response / 48) .. "x")
-            table.insert(output, "[!] Can be used for DDoS amplification attacks")
-            table.insert(output, "[!] Recommendation: Disable monlist in ntp.conf")
-        else
-            table.insert(output, "[+] NTP responded but monlist may be disabled")
-            table.insert(output, "    Response size: " .. #response .. " bytes")
-        end
-    else
-        table.insert(output, "[+] No response to monlist request")
-        table.insert(output, "[+] Server may not be vulnerable")
-    end
-
-    sock:close()
-    return stdnse.format_output(true, output)
+  socket:close()
+  return stdnse.format_output(true, result)
 end

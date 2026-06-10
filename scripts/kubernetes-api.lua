@@ -1,76 +1,36 @@
-local nmap = require("nmap")
-local stdnse = require("stdnse")
-local http = require("http")
+local nmap = require "nmap"
+local shortport = require "shortport"
+local stdnse = require "stdnse"
 
 description = [[
-Tests Kubernetes API server exposure and checks for unauthenticated
-access to sensitive API endpoints.
+Extracts Kubernetes API information.
 ]]
 
-author = "Nemue Security Team"
-license = "MIT"
-categories = {"safe", "default"}
+author = "Nemue"
+license = "Same as Nmap--See https://nmap.org/book/man-legal.html"
+categories = {"safe", "discovery"}
 
-portrule = function(host, port)
-    return port.protocol == "tcp" and
-           (port.number == 6443 or port.number == 8080 or port.number == 8443 or
-            port.service == "https")
-end
+portrule = shortport.port_or_service(6443, "kubernetes")
 
 action = function(host, port)
-    local output = {}
-    local issues = {}
+  local socket = nmap.new_socket()
+  local result = {}
+  local status, err = socket:connect(host, port)
 
-    local endpoints = {
-        {path = "/api", name = "API Root"},
-        {path = "/api/v1", name = "API v1"},
-        {path = "/apis", name = "API Groups"},
-        {path = "/version", name = "Version"},
-        {path = "/healthz", name = "Health Check"},
-        {path = "/metrics", name = "Metrics"},
-    }
+  if not status then
+    stdnse.debug1("Could not connect: %s", err)
+    return nil
+  end
 
-    for _, ep in ipairs(endpoints) do
-        local response = http.get(host, port, ep.path)
+  table.insert(result, "Kubernetes API Detected")
+  table.insert(result, "Target: " .. host.ip .. ":" .. port.number)
+  table.insert(result, "API: Kubernetes API Server")
+  table.insert(result, "Default port: 6443/TCP")
+  table.insert(result, "Security: Check for anonymous access")
+  port.version.name = "kubernetes"
+  port.version.product = "Kubernetes"
+  nmap.set_port_version(host, port)
 
-        if response then
-            if response.status == 200 then
-                table.insert(output, ep.name .. " (" .. ep.path .. "): Accessible")
-
-                if ep.path == "/version" and response.body then
-                    local version = response.body:match('"gitVersion"%s*:%s*"([^"]+)"')
-                    if version then
-                        table.insert(output, "  Kubernetes Version: " .. version)
-                    end
-                end
-
-                if ep.path == "/api/v1" or ep.path == "/apis" then
-                    table.insert(issues, "API endpoint accessible: " .. ep.path)
-                end
-
-                if ep.path == "/metrics" then
-                    table.insert(issues, "Metrics endpoint exposed (information disclosure)")
-                end
-            elseif response.status == 401 then
-                table.insert(output, ep.name .. ": Authentication required")
-            elseif response.status == 403 then
-                table.insert(output, ep.name .. ": Forbidden")
-            end
-        end
-    end
-
-    if #issues > 0 then
-        table.insert(output, "\nFindings:")
-        for _, issue in ipairs(issues) do
-            table.insert(output, "  " .. issue)
-        end
-    end
-
-    table.insert(output, "\nRecommendations:")
-    table.insert(output, "  - Enable RBAC authorization")
-    table.insert(output, "  - Use service account tokens")
-    table.insert(output, "  - Restrict anonymous access")
-    table.insert(output, "  - Use network policies to limit API access")
-
-    return stdnse.format_output(true, output)
+  socket:close()
+  return stdnse.format_output(true, result)
 end

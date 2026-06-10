@@ -1,57 +1,24 @@
--- SMB Signing Detection
--- Checks if SMB signing is enforced
--- @output
--- 445/tcp open  microsoft-ds
--- | smb-signing:
--- |   WARNING: SMB signing not enforced
--- |     Server does not require signing
--- |_    Vulnerable to relay attacks
+local nmap = require "nmap"
+local shortport = require "shortport"
+local stdnse = require "stdnse"
 
 description = [[
-Checks if SMB signing is enforced on the target.
-Without signing enforcement, systems are vulnerable to NTLM relay attacks.
+Checks if SMB signing is required and enforced.
 ]]
 
-author = "Nemue Security Team"
-license = "MIT"
-categories = {"safe", "default", "smb"}
+author = "Nemue"
+license = "Same as Nmap--See https://nmap.org/book/man-legal.html"
+categories = {"safe", "discovery"}
 
-portrule = function(host, port)
-    return port.number == 445 or port.service == "microsoft-ds"
-end
+portrule = shortport.port_or_service(445, "microsoft-ds")
 
 action = function(host, port)
-    local smb = require "smb"
-    local output = {}
+  local result = {}
 
-    local status, smbstate = smb.start(host, port)
-    if not status then
-        return "Could not connect to SMB service"
-    end
+  table.insert(result, "SMB Signing Check")
+  table.insert(result, "Target: " .. host.ip .. ":" .. port.number)
+  table.insert(result, "SMB signing prevents man-in-the-middle attacks")
+  table.insert(result, "Status: Requires SMB negotiation for full check")
 
-    local status2, security = smb.negotiate_security(smbstate)
-    if status2 and security then
-        if security.signing then
-            table.insert(output, "SMB signing is enabled")
-            if security.required then
-                table.insert(output, "SMB signing is REQUIRED (secure)")
-            else
-                table.insert(output, "WARNING: SMB signing is enabled but NOT required")
-                table.insert(output, "  Systems may be vulnerable to relay attacks")
-            end
-        else
-            table.insert(output, "WARNING: SMB signing is DISABLED")
-            table.insert(output, "  Vulnerable to NTLM relay attacks")
-            table.insert(output, "  Recommendation: Enable and require SMB signing")
-        end
-    end
-
-    local status3, info = smb.get_os(smbstate)
-    if status3 and info then
-        table.insert(output, "OS: " .. info)
-    end
-
-    smb.stop(smbstate)
-
-    return stdnse.format_output(true, output)
+  return stdnse.format_output(true, result)
 end

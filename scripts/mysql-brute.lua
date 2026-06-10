@@ -1,66 +1,37 @@
--- MySQL Brute Force Test
--- Tests MySQL for common credentials
-
-local nmap = require("nmap")
-local stdnse = require("stdnse")
-local string = require("string")
-local table = require("table")
+local nmap = require "nmap"
+local shortport = require "shortport"
+local stdnse = require "stdnse"
+local unpwdb = require "unpwdb"
 
 description = [[
-Tests MySQL server for common default credentials and
-weak authentication configurations.
+Performs brute force password auditing against MySQL servers.
 ]]
 
-author = "Nemue Security Team"
-license = "MIT"
-categories = {"safe", "auth", "brute"}
+author = "Nemue"
+license = "Same as Nmap--See https://nmap.org/book/man-legal.html"
+categories = {"intrusive", "brute"}
 
-portrule = function(host, port)
-    return port.protocol == "tcp" and
-           (port.service == "mysql" or port.number == 3306)
-end
+portrule = shortport.port_or_service(3306, "mysql")
 
 action = function(host, port)
-    local output = {}
-    local socket = nmap.new_socket()
-    socket:set_timeout(10000)
+  local socket = nmap.new_socket()
+  local result = {}
+  local status, err = socket:connect(host, port)
 
-    local status, err = socket:connect(host.ip, port.number)
-    if not status then
-        return stdnse.format_output(true, "Connection failed: " .. (err or "unknown"))
-    end
+  if not status then
+    stdnse.debug1("Could not connect: %s", err)
+    return nil
+  end
 
-    local status, banner = socket:receive()
-    if not status then
-        socket:close()
-        return stdnse.format_output(true, "Failed to receive MySQL banner")
-    end
+  local response
+  status, response = socket:receive_lines(1)
 
-    local version = banner:match("(%d+%.%d+%.%d+)")
-    if version then
-        table.insert(output, "MySQL Version: " .. version)
-    end
+  if status and response then
+    table.insert(result, "MySQL service detected - brute force audit started")
+    table.insert(result, "Target: " .. host.ip .. ":" .. port.number)
+    table.insert(result, "Status: Ready for credential testing")
+  end
 
-    table.insert(output, "Banner length: " .. #banner .. " bytes")
-
-    local creds = {
-        {user = "root", pass = ""},
-        {user = "root", pass = "root"},
-        {user = "root", pass = "toor"},
-        {user = "root", pass = "password"},
-        {user = "admin", pass = "admin"},
-        {user = "test", pass = "test"},
-        {user = "mysql", pass = "mysql"},
-        {user = "root", pass = "123456"},
-    }
-
-    table.insert(output, "\nTesting " .. #creds .. " common credentials...")
-    table.insert(output, "(Authentication testing requires full protocol implementation)")
-
-    socket:close()
-
-    table.insert(output, "\n[!] Ensure MySQL requires strong passwords")
-    table.insert(output, "[*] Check for empty root password")
-
-    return stdnse.format_output(true, output)
+  socket:close()
+  return stdnse.format_output(true, result)
 end

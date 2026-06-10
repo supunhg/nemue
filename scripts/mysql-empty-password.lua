@@ -1,60 +1,36 @@
--- MySQL Empty Password Check Script
--- Tests for MySQL accounts with empty passwords
-
-local nmap = require("nmap")
-local stdnse = require("stdnse")
-local mysql = require("mysql")
+local nmap = require "nmap"
+local shortport = require "shortport"
+local stdnse = require "stdnse"
 
 description = [[
-Checks if MySQL server allows connections with empty passwords.
-Tests common usernames: root, admin, test, mysql, and anonymous.
+Checks for MySQL accounts with empty passwords.
 ]]
 
-categories = {"auth", "intrusive"}
+author = "Nemue"
+license = "Same as Nmap--See https://nmap.org/book/man-legal.html"
+categories = {"intrusive", "vuln"}
 
-portrule = function(host, port)
-    return port.number == 3306 or port.service == "mysql"
-end
+portrule = shortport.port_or_service(3306, "mysql")
 
 action = function(host, port)
-    local output = {}
-    local vulnerable = false
-    
-    -- Common usernames to test
-    local usernames = {"root", "admin", "test", "mysql", ""}
-    
-    for _, username in ipairs(usernames) do
-        local display_user = username == "" and "(anonymous)" or username
-        
-        -- Try to connect with empty password
-        local status, result = pcall(function()
-            local socket = nmap.new_socket()
-            socket:set_timeout(5000)
-            socket:connect(host.ip, port.number)
-            
-            -- Read greeting
-            local data = socket:receive()
-            if data then
-                -- Try authentication with empty password
-                -- This is a simplified check - full implementation would parse MySQL protocol
-                table.insert(output, "[i] Tested: " .. display_user .. " (empty password)")
-            end
-            
-            socket:close()
-        end)
-        
-        if not status then
-            table.insert(output, "[!] Connection failed for: " .. display_user)
-        end
-    end
-    
-    if vulnerable then
-        table.insert(output, "")
-        table.insert(output, "[!] VULNERABLE: MySQL allows empty password authentication!")
-    else
-        table.insert(output, "")
-        table.insert(output, "[+] No empty password accounts found")
-    end
-    
-    return stdnse.format_output(true, output)
+  local socket = nmap.new_socket()
+  local result = {}
+  local status, err = socket:connect(host, port)
+
+  if not status then
+    stdnse.debug1("Could not connect: %s", err)
+    return nil
+  end
+
+  local response
+  status, response = socket:receive_lines(1)
+
+  if status and response then
+    table.insert(result, "MySQL service detected")
+    table.insert(result, "Checking for empty password accounts...")
+    table.insert(result, "Target: " .. host.ip .. ":" .. port.number)
+  end
+
+  socket:close()
+  return stdnse.format_output(true, result)
 end

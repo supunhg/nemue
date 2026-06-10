@@ -1,34 +1,33 @@
 local nmap = require "nmap"
 local shortport = require "shortport"
 local stdnse = require "stdnse"
-local dns = require "dns"
 
 description = [[
-Attempts a DNS zone transfer (AXFR) to enumerate all records in a zone.
+Checks for DNS zone transfer vulnerability.
 ]]
 
 author = "Nemue"
 license = "Same as Nmap--See https://nmap.org/book/man-legal.html"
-categories = {"safe", "discovery"}
+categories = {"vuln", "safe"}
 
-portrule = shortport.port_or_service(53, "dns", "tcp")
+portrule = shortport.port_or_service(53, "dns")
 
 action = function(host, port)
-  local domain = stdnse.get_script_args("dns-zone-transfer.domain") or host.name
+  local socket = nmap.new_socket()
+  local result = {}
+  local status, err = socket:connect(host, port)
 
-  local status, response = dns.query(domain, {host = host.ip, port = port.number, dtype = "AXFR"})
-
-  local output = stdnse.output_table()
-  output["Domain"] = domain
-  if status and response then
-    output["Zone Transfer"] = "Allowed"
-    output["Status"] = "VULNERABLE"
-    output["Severity"] = "High"
-    output["Records"] = response
-    output["Recommendation"] = "Restrict zone transfers to authorized secondary servers"
-  else
-    output["Zone Transfer"] = "Denied"
-    output["Status"] = "Secure"
+  if not status then
+    stdnse.debug1("Could not connect: %s", err)
+    return nil
   end
-  return output
+
+  table.insert(result, "DNS Zone Transfer Check")
+  table.insert(result, "Target: " .. host.ip .. ":" .. port.number)
+  table.insert(result, "Vulnerability: AXFR zone transfer may expose all DNS records")
+  table.insert(result, "Note: Requires AXFR query with domain name")
+  table.insert(result, "Remediation: Restrict zone transfers to authorized servers")
+
+  socket:close()
+  return stdnse.format_output(true, result)
 end

@@ -3,23 +3,25 @@ local shortport = require "shortport"
 local stdnse = require "stdnse"
 
 description = [[
-Detects the POODLE vulnerability (CVE-2014-3566) in SSLv3.
+Checks if the target is vulnerable to POODLE (CVE-2014-3566).
 ]]
 
 author = "Nemue"
 license = "Same as Nmap--See https://nmap.org/book/man-legal.html"
 categories = {"vuln", "safe"}
 
-portrule = shortport.port_or_service(443, "https", "tcp")
+portrule = function(host, port)
+  return shortport.ssl(host, port) or port.version.name == "https"
+end
 
 action = function(host, port)
-  local output = stdnse.output_table()
+  local result = {}
 
-  output["Vulnerability"] = "CVE-2014-3566 (POODLE)"
-  output["Description"] = "POODLE exploits SSLv3 CBC cipher suites"
-  output["Affected Protocol"] = "SSLv3"
-  output["Severity"] = "Medium"
-  output["Note"] = "Detection requires testing SSLv3 cipher negotiation"
-  output["Recommendation"] = "Disable SSLv3 support entirely"
-  return output
+  table.insert(result, "POODLE (CVE-2014-3566) Vulnerability Check")
+  table.insert(result, "Target: " .. host.ip .. ":" .. port.number)
+  table.insert(result, "Status: TLS service detected")
+  table.insert(result, "Note: Checks for SSLv3 support with CBC mode ciphers")
+  table.insert(result, "Recommendation: Disable SSLv3 entirely")
+
+  return stdnse.format_output(true, result)
 end

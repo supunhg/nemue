@@ -1,15 +1,70 @@
 {
   "scripts": [
     {
+      "name": "http-tomcat-info",
+      "path": "/home/ubuntu/github/nemue/scripts/http-tomcat-info.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T05:46:32.626790979Z"
+    },
+    {
+      "name": "http-smuggling",
+      "path": "/home/ubuntu/github/nemue/scripts/http-smuggling.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:58:34.249426578Z"
+    },
+    {
+      "name": "http-ruby-info",
+      "path": "/home/ubuntu/github/nemue/scripts/http-ruby-info.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T05:47:36.399848036Z"
+    },
+    {
+      "name": "app-backend\",",
+      "path": "/home/ubuntu/github/nemue/scripts/docker-containers.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "discovery",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:26:05.569651800Z"
+    },
+    {
+      "name": "vnc-brute",
+      "path": "/home/ubuntu/github/nemue/scripts/vnc-brute.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "intrusive",
+        "brute"
+      ],
+      "last_modified": "2026-06-10T05:54:55.931236120Z"
+    },
+    {
       "name": "http-headers",
       "path": "/home/ubuntu/github/nemue/scripts/http-headers.lua",
-      "description": "Analyzes HTTP response headers for security information",
-      "author": "Nemue Team",
+      "description": "[[",
+      "author": "Nemue",
       "categories": [
-        "http",
+        "safe",
         "discovery"
       ],
-      "last_modified": "2026-06-09T11:16:46.204443478Z"
+      "last_modified": "2026-06-10T05:56:01.069292791Z"
     },
     {
       "name": "ssh-hostkey",
@@ -36,6 +91,106 @@
       "last_modified": "2026-06-09T11:16:46.205081181Z"
     },
     {
+      "name": "snmp-community",
+      "path": "/home/ubuntu/github/nemue/scripts/snmp-community.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "default"
+      ],
+      "last_modified": "2026-06-09T15:20:39.383236653Z"
+    },
+    {
+      "name": "couchdb-unauth",
+      "path": "/home/ubuntu/github/nemue/scripts/couchdb-unauth.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "default"
+      ],
+      "last_modified": "2026-06-09T15:32:25.265304367Z"
+    },
+    {
+      "name": "http-methods",
+      "path": "/home/ubuntu/github/nemue/scripts/http-methods.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:56:08.762298796Z"
+    },
+    {
+      "name": "smb-eternalblue",
+      "path": "/home/ubuntu/github/nemue/scripts/smb-eternalblue.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "vuln",
+        "intrusive"
+      ],
+      "last_modified": "2026-06-10T05:56:27.904314747Z"
+    },
+    {
+      "name": "http-default-creds",
+      "path": "/home/ubuntu/github/nemue/scripts/http-default-creds.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "vuln",
+        "intrusive",
+        "exploit"
+      ],
+      "last_modified": "2026-06-10T05:48:02.417871094Z"
+    },
+    {
+      "name": "ssh-weak-keys",
+      "path": "/home/ubuntu/github/nemue/scripts/ssh-weak-keys.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:57:07.443349298Z"
+    },
+    {
+      "name": "aws-metadata",
+      "path": "/home/ubuntu/github/nemue/scripts/aws-metadata.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "default"
+      ],
+      "last_modified": "2026-06-09T15:31:39.571241029Z"
+    },
+    {
+      "name": "http-graphql",
+      "path": "/home/ubuntu/github/nemue/scripts/http-graphql.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:56:21.340309034Z"
+    },
+    {
+      "name": "redis-enum",
+      "path": "/home/ubuntu/github/nemue/scripts/redis-enum.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T04:17:59.924537912Z"
+    },
+    {
       "name": "name,",
       "path": "/home/ubuntu/github/nemue/scripts/smb-enum-shares.lua",
       "description": "[[",
@@ -46,6 +201,17 @@
         "default"
       ],
       "last_modified": "2026-06-09T11:16:46.205081181Z"
+    },
+    {
+      "name": "http-missing-xframe",
+      "path": "/home/ubuntu/github/nemue/scripts/http-missing-xframe.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T05:50:42.241010775Z"
     },
     {
       "name": "memcached-stats",
@@ -60,6 +226,61 @@
       "last_modified": "2026-06-09T11:16:46.204443478Z"
     },
     {
+      "name": "mqtt-info",
+      "path": "/home/ubuntu/github/nemue/scripts/mqtt-info.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:59:40.320485759Z"
+    },
+    {
+      "name": "ntp-version",
+      "path": "/home/ubuntu/github/nemue/scripts/ntp-version.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:55:33.479269480Z"
+    },
+    {
+      "name": "bgp-enum",
+      "path": "/home/ubuntu/github/nemue/scripts/bgp-enum.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T04:16:59.417501561Z"
+    },
+    {
+      "name": "redis-pubsub-monitor",
+      "path": "/home/ubuntu/github/nemue/scripts/redis-pubsub-monitor.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "discovery",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T02:17:16.135069929Z"
+    },
+    {
+      "name": "http-request-smuggling",
+      "path": "/home/ubuntu/github/nemue/scripts/http-request-smuggling.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-09T16:52:34.811289873Z"
+    },
+    {
       "name": "ftp-proftpd-backdoor",
       "path": "/home/ubuntu/github/nemue/scripts/ftp-proftpd-backdoor.lua",
       "description": "[[",
@@ -70,6 +291,50 @@
         "exploit"
       ],
       "last_modified": "2026-06-09T11:16:46.204443478Z"
+    },
+    {
+      "name": "http-csrf",
+      "path": "/home/ubuntu/github/nemue/scripts/http-csrf.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-09T16:51:40.351213038Z"
+    },
+    {
+      "name": "elasticsearch-unauth",
+      "path": "/home/ubuntu/github/nemue/scripts/elasticsearch-unauth.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "default"
+      ],
+      "last_modified": "2026-06-09T15:32:18.610294510Z"
+    },
+    {
+      "name": "http-missing-xxss",
+      "path": "/home/ubuntu/github/nemue/scripts/http-missing-xxss.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T05:50:51.274018088Z"
+    },
+    {
+      "name": "smtp-open-relay",
+      "path": "/home/ubuntu/github/nemue/scripts/smtp-open-relay.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "intrusive",
+        "vuln"
+      ],
+      "last_modified": "2026-06-10T05:48:27.313892953Z"
     },
     {
       "name": "docker-api-enum",
@@ -83,6 +348,18 @@
       "last_modified": "2026-06-09T11:16:46.204443478Z"
     },
     {
+      "name": "http-heartbleed",
+      "path": "/home/ubuntu/github/nemue/scripts/http-heartbleed.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "vuln",
+        "safe",
+        "default"
+      ],
+      "last_modified": "2026-06-09T16:14:41.853077636Z"
+    },
+    {
       "name": "ssl-enum-ciphers",
       "path": "/home/ubuntu/github/nemue/scripts/ssl-enum-ciphers.lua",
       "description": "[[",
@@ -93,6 +370,28 @@
         "default"
       ],
       "last_modified": "2026-06-09T11:16:46.205081181Z"
+    },
+    {
+      "name": "ssh-hostkey-info",
+      "path": "/home/ubuntu/github/nemue/scripts/ssh-hostkey-info.lua",
+      "description": "[[",
+      "author": "",
+      "categories": [
+        "safe",
+        "default"
+      ],
+      "last_modified": "2026-06-09T13:56:30.557545964Z"
+    },
+    {
+      "name": "ntp-monlist",
+      "path": "/home/ubuntu/github/nemue/scripts/ntp-monlist.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:58:11.466405795Z"
     },
     {
       "name": "http-slowloris-check",
@@ -130,6 +429,52 @@
       "last_modified": "2026-06-09T11:16:46.204443478Z"
     },
     {
+      "name": "http-ssrf",
+      "path": "/home/ubuntu/github/nemue/scripts/http-ssrf.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:58:40.257432058Z"
+    },
+    {
+      "name": "http-proxylogon",
+      "path": "/home/ubuntu/github/nemue/scripts/http-proxylogon.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:56:53.105336880Z"
+    },
+    {
+      "name": "http-ldap-injection",
+      "path": "/home/ubuntu/github/nemue/scripts/http-ldap-injection.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "vuln",
+        "intrusive",
+        "exploit"
+      ],
+      "last_modified": "2026-06-10T05:48:39.928904064Z"
+    },
+    {
+      "name": "redis-databases",
+      "path": "/home/ubuntu/github/nemue/scripts/redis-databases.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "discovery",
+        "safe",
+        "database"
+      ],
+      "last_modified": "2026-06-10T05:25:51.489638689Z"
+    },
+    {
       "name": "docker-version",
       "path": "/home/ubuntu/github/nemue/scripts/docker-version.lua",
       "description": "[[",
@@ -141,40 +486,326 @@
       "last_modified": "2026-06-09T11:16:46.204443478Z"
     },
     {
+      "name": "http-missing-csp",
+      "path": "/home/ubuntu/github/nemue/scripts/http-missing-csp.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T05:50:19.191991114Z"
+    },
+    {
+      "name": "docker-enum",
+      "path": "/home/ubuntu/github/nemue/scripts/docker-enum.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T04:18:14.712546647Z"
+    },
+    {
+      "name": "http-enum-sessions",
+      "path": "/home/ubuntu/github/nemue/scripts/http-enum-sessions.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "discovery",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:52:09.905085150Z"
+    },
+    {
+      "name": "ssh-ciphers",
+      "path": "/home/ubuntu/github/nemue/scripts/ssh-ciphers.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:46:34.545792693Z"
+    },
+    {
+      "name": "dns-reverse",
+      "path": "/home/ubuntu/github/nemue/scripts/dns-reverse.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:49:02.193923600Z"
+    },
+    {
+      "name": "http-ssrf-check",
+      "path": "/home/ubuntu/github/nemue/scripts/http-ssrf-check.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "default"
+      ],
+      "last_modified": "2026-06-09T15:31:51.400257688Z"
+    },
+    {
       "name": "smtp-enum-users",
       "path": "/home/ubuntu/github/nemue/scripts/smtp-enum-users.lua",
       "description": "[[",
-      "author": "Nemue Team",
+      "author": "Nemue",
       "categories": [
+        "safe",
+        "auth"
+      ],
+      "last_modified": "2026-06-10T05:48:43.180906927Z"
+    },
+    {
+      "name": "snmp-software",
+      "path": "/home/ubuntu/github/nemue/scripts/snmp-software.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "discovery",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:24:07.629542364Z"
+    },
+    {
+      "name": "http-content-security",
+      "path": "/home/ubuntu/github/nemue/scripts/http-content-security.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "default"
+      ],
+      "last_modified": "2026-06-09T15:29:58.007073365Z"
+    },
+    {
+      "name": "http-file-inclusion",
+      "path": "/home/ubuntu/github/nemue/scripts/http-file-inclusion.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "vuln",
         "intrusive",
-        "auth",
+        "exploit"
+      ],
+      "last_modified": "2026-06-10T05:48:16.329883309Z"
+    },
+    {
+      "name": "http-websocket",
+      "path": "/home/ubuntu/github/nemue/scripts/http-websocket.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
         "discovery"
       ],
-      "last_modified": "2026-06-09T11:16:46.205081181Z"
+      "last_modified": "2026-06-10T05:56:17.764305922Z"
+    },
+    {
+      "name": "http-template-injection",
+      "path": "/home/ubuntu/github/nemue/scripts/http-template-injection.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "vuln",
+        "intrusive",
+        "exploit"
+      ],
+      "last_modified": "2026-06-10T05:49:20.545939801Z"
+    },
+    {
+      "name": "ssh-banners",
+      "path": "/home/ubuntu/github/nemue/scripts/ssh-banners.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:46:46.935803874Z"
+    },
+    {
+      "name": "ike-version",
+      "path": "/home/ubuntu/github/nemue/scripts/ike-version.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:55:25.166262063Z"
+    },
+    {
+      "name": "http-enum-vhosts",
+      "path": "/home/ubuntu/github/nemue/scripts/http-enum-vhosts.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "discovery",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:51:40.587059497Z"
+    },
+    {
+      "name": "http-x-debug",
+      "path": "/home/ubuntu/github/nemue/scripts/http-x-debug.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:23:18.544494678Z"
     },
     {
       "name": "http-cors",
       "path": "/home/ubuntu/github/nemue/scripts/http-cors.lua",
       "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:55:45.722280321Z"
+    },
+    {
+      "name": "ldap-anonymous",
+      "path": "/home/ubuntu/github/nemue/scripts/ldap-anonymous.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:55:19.687257201Z"
+    },
+    {
+      "name": "kubernetes-api",
+      "path": "/home/ubuntu/github/nemue/scripts/kubernetes-api.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T06:00:09.342515023Z"
+    },
+    {
+      "name": "http-cors-preflight",
+      "path": "/home/ubuntu/github/nemue/scripts/http-cors-preflight.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:21:49.907417024Z"
+    },
+    {
+      "name": "http-cache-poisoning",
+      "path": "/home/ubuntu/github/nemue/scripts/http-cache-poisoning.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-09T16:52:43.320301738Z"
+    },
+    {
+      "name": "http-file-upload",
+      "path": "/home/ubuntu/github/nemue/scripts/http-file-upload.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T04:16:26.057481503Z"
+    },
+    {
+      "name": "http-websocket-hijack",
+      "path": "/home/ubuntu/github/nemue/scripts/http-websocket-hijack.lua",
+      "description": "[[",
       "author": "Nemue Security Team",
       "categories": [
         "vuln",
-        "safe",
-        "default"
+        "intrusive",
+        "exploit"
       ],
-      "last_modified": "2026-06-09T11:16:46.204443478Z"
+      "last_modified": "2026-06-10T05:49:44.803960829Z"
+    },
+    {
+      "name": "smtp-rcpt",
+      "path": "/home/ubuntu/github/nemue/scripts/smtp-rcpt.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "auth"
+      ],
+      "last_modified": "2026-06-10T05:48:22.731888930Z"
+    },
+    {
+      "name": "ssh-kex-algorithms",
+      "path": "/home/ubuntu/github/nemue/scripts/ssh-kex-algorithms.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:46:30.919789459Z"
+    },
+    {
+      "name": "http-missing-cto",
+      "path": "/home/ubuntu/github/nemue/scripts/http-missing-cto.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T05:50:46.374014122Z"
+    },
+    {
+      "name": "telnet-banner",
+      "path": "/home/ubuntu/github/nemue/scripts/telnet-banner.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:59:11.063459547Z"
+    },
+    {
+      "name": "ssl-cert-serial",
+      "path": "/home/ubuntu/github/nemue/scripts/ssl-cert-serial.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:47:05.529820612Z"
     },
     {
       "name": "dns-zone-transfer",
       "path": "/home/ubuntu/github/nemue/scripts/dns-zone-transfer.lua",
       "description": "[[",
-      "author": "Nemue Team",
+      "author": "Nemue",
       "categories": [
-        "intrusive",
         "vuln",
-        "discovery"
+        "safe"
       ],
-      "last_modified": "2026-06-09T11:16:46.204443478Z"
+      "last_modified": "2026-06-10T05:59:19.842467383Z"
     },
     {
       "name": "mssql-info",
@@ -201,16 +832,218 @@
       "last_modified": "2026-06-09T11:16:46.205081181Z"
     },
     {
+      "name": "http-server-side-template",
+      "path": "/home/ubuntu/github/nemue/scripts/http-server-side-template.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "vuln",
+        "intrusive",
+        "http"
+      ],
+      "last_modified": "2026-06-10T04:21:58.533682328Z"
+    },
+    {
+      "name": "ssh-compression",
+      "path": "/home/ubuntu/github/nemue/scripts/ssh-compression.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:46:41.026798541Z"
+    },
+    {
+      "name": "http-crlf-injection",
+      "path": "/home/ubuntu/github/nemue/scripts/http-crlf-injection.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "vuln",
+        "intrusive",
+        "exploit"
+      ],
+      "last_modified": "2026-06-10T05:49:02.264923663Z"
+    },
+    {
+      "name": "http-business-logic",
+      "path": "/home/ubuntu/github/nemue/scripts/http-business-logic.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "vuln",
+        "intrusive",
+        "http"
+      ],
+      "last_modified": "2026-06-10T04:22:26.571698788Z"
+    },
+    {
+      "name": "vnc-no-auth",
+      "path": "/home/ubuntu/github/nemue/scripts/vnc-no-auth.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "auth",
+        "vuln"
+      ],
+      "last_modified": "2026-06-09T15:39:14.288913147Z"
+    },
+    {
+      "name": "sip-brute",
+      "path": "/home/ubuntu/github/nemue/scripts/sip-brute.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "intrusive",
+        "brute"
+      ],
+      "last_modified": "2026-06-10T05:55:11.751250157Z"
+    },
+    {
+      "name": "docker-api-check",
+      "path": "/home/ubuntu/github/nemue/scripts/docker-api-check.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "default"
+      ],
+      "last_modified": "2026-06-09T15:31:25.759213621Z"
+    },
+    {
+      "name": "ssl-renegotiation",
+      "path": "/home/ubuntu/github/nemue/scripts/ssl-renegotiation.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:58:54.279444549Z"
+    },
+    {
+      "name": "mysql-empty-password",
+      "path": "/home/ubuntu/github/nemue/scripts/mysql-empty-password.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "intrusive",
+        "vuln"
+      ],
+      "last_modified": "2026-06-10T05:54:13.758193809Z"
+    },
+    {
       "name": "cassandra-info",
       "path": "/home/ubuntu/github/nemue/scripts/cassandra-info.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:57:39.663377393Z"
+    },
+    {
+      "name": "http-open-redirect",
+      "path": "/home/ubuntu/github/nemue/scripts/http-open-redirect.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-09T16:52:08.682253321Z"
+    },
+    {
+      "name": "dns-chaos",
+      "path": "/home/ubuntu/github/nemue/scripts/dns-chaos.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:49:11.153931497Z"
+    },
+    {
+      "name": "mysql-databases",
+      "path": "/home/ubuntu/github/nemue/scripts/mysql-databases.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "discovery",
+        "safe",
+        "database"
+      ],
+      "last_modified": "2026-06-10T05:25:06.688597359Z"
+    },
+    {
+      "name": "http-robots",
+      "path": "/home/ubuntu/github/nemue/scripts/http-robots.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:55:36.333272035Z"
+    },
+    {
+      "name": "dns-recursion",
+      "path": "/home/ubuntu/github/nemue/scripts/dns-recursion.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:48:51.127913892Z"
+    },
+    {
+      "name": "bgp-version",
+      "path": "/home/ubuntu/github/nemue/scripts/bgp-version.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-09T16:52:58.072321449Z"
+    },
+    {
+      "name": "http-waf-detect",
+      "path": "/home/ubuntu/github/nemue/scripts/http-waf-detect.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T04:18:57.460572430Z"
+    },
+    {
+      "name": "http-hsts-check",
+      "path": "/home/ubuntu/github/nemue/scripts/http-hsts-check.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "default"
+      ],
+      "last_modified": "2026-06-09T15:29:51.278063405Z"
+    },
+    {
+      "name": "name,",
+      "path": "/home/ubuntu/github/nemue/scripts/http-enum-cookies.lua",
       "description": "[[",
       "author": "Nemue Security Team",
       "categories": [
         "discovery",
-        "safe",
-        "default"
+        "safe"
       ],
-      "last_modified": "2026-06-09T11:16:46.204308919Z"
+      "last_modified": "2026-06-10T05:52:02.689078829Z"
     },
     {
       "name": "kubernetes-api-check",
@@ -224,6 +1057,205 @@
       "last_modified": "2026-06-09T11:16:46.204443478Z"
     },
     {
+      "name": "http-backdoor",
+      "path": "/home/ubuntu/github/nemue/scripts/http-backdoor.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "vuln",
+        "intrusive",
+        "exploit"
+      ],
+      "last_modified": "2026-06-10T05:47:54.583864206Z"
+    },
+    {
+      "name": "http-options",
+      "path": "/home/ubuntu/github/nemue/scripts/http-options.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:56:13.945302841Z"
+    },
+    {
+      "name": "memcached-info",
+      "path": "/home/ubuntu/github/nemue/scripts/memcached-info.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:55:30.729267020Z"
+    },
+    {
+      "name": "smb-vuln",
+      "path": "/home/ubuntu/github/nemue/scripts/smb-vuln.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:56:33.106319279Z"
+    },
+    {
+      "name": "http-etag",
+      "path": "/home/ubuntu/github/nemue/scripts/http-etag.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:22:08.036430682Z"
+    },
+    {
+      "name": "sip-user-agent",
+      "path": "/home/ubuntu/github/nemue/scripts/sip-user-agent.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:57:56.154392034Z"
+    },
+    {
+      "name": "mysql-users",
+      "path": "/home/ubuntu/github/nemue/scripts/mysql-users.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "intrusive",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:54:23.127202213Z"
+    },
+    {
+      "name": "ldap-ssl",
+      "path": "/home/ubuntu/github/nemue/scripts/ldap-ssl.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:58:05.265400209Z"
+    },
+    {
+      "name": "http-location",
+      "path": "/home/ubuntu/github/nemue/scripts/http-location.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:22:37.844456989Z"
+    },
+    {
+      "name": "http-missing-referrer",
+      "path": "/home/ubuntu/github/nemue/scripts/http-missing-referrer.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T05:50:55.681021647Z"
+    },
+    {
+      "name": "http-weblogic-info",
+      "path": "/home/ubuntu/github/nemue/scripts/http-weblogic-info.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T05:46:38.474796238Z"
+    },
+    {
+      "name": "mysql-audit",
+      "path": "/home/ubuntu/github/nemue/scripts/mysql-audit.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:54:07.967188614Z"
+    },
+    {
+      "name": "ftp-brute",
+      "path": "/home/ubuntu/github/nemue/scripts/ftp-brute.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "intrusive",
+        "auth"
+      ],
+      "last_modified": "2026-06-10T05:47:52.589862433Z"
+    },
+    {
+      "name": "dicom-info",
+      "path": "/home/ubuntu/github/nemue/scripts/dicom-info.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:59:22.618469855Z"
+    },
+    {
+      "name": "wireguard-info",
+      "path": "/home/ubuntu/github/nemue/scripts/wireguard-info.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:59:54.434498692Z"
+    },
+    {
+      "name": "ftp-syst",
+      "path": "/home/ubuntu/github/nemue/scripts/ftp-syst.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:47:41.092852208Z"
+    },
+    {
+      "name": "http-api-discovery",
+      "path": "/home/ubuntu/github/nemue/scripts/http-api-discovery.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "discovery",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T02:15:34.008010728Z"
+    },
+    {
+      "name": "ftp-writable",
+      "path": "/home/ubuntu/github/nemue/scripts/ftp-writable.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "intrusive",
+        "vuln"
+      ],
+      "last_modified": "2026-06-10T05:47:57.398866685Z"
+    },
+    {
       "name": "http-git-disclosure",
       "path": "/home/ubuntu/github/nemue/scripts/http-git-disclosure.lua",
       "description": "[[",
@@ -235,16 +1267,182 @@
       "last_modified": "2026-06-09T11:16:46.204443478Z"
     },
     {
+      "name": "snmp-sysdescr",
+      "path": "/home/ubuntu/github/nemue/scripts/snmp-sysdescr.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:57:59.103394681Z"
+    },
+    {
+      "name": "http-php-info",
+      "path": "/home/ubuntu/github/nemue/scripts/http-php-info.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T05:47:09.146823832Z"
+    },
+    {
       "name": "ssl-poodle",
       "path": "/home/ubuntu/github/nemue/scripts/ssl-poodle.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:56:41.310326527Z"
+    },
+    {
+      "name": "mysql-version",
+      "path": "/home/ubuntu/github/nemue/scripts/mysql-version.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "default"
+      ],
+      "last_modified": "2026-06-09T15:21:57.623356819Z"
+    },
+    {
+      "name": "snmp-uptime",
+      "path": "/home/ubuntu/github/nemue/scripts/snmp-uptime.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "discovery",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:24:17.256551432Z"
+    },
+    {
+      "name": "redis-pubsub",
+      "path": "/home/ubuntu/github/nemue/scripts/redis-pubsub.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "discovery",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T02:16:47.903053170Z"
+    },
+    {
+      "name": "http-directory-listing",
+      "path": "/home/ubuntu/github/nemue/scripts/http-directory-listing.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T04:16:20.355478229Z"
+    },
+    {
+      "name": "imap-banner",
+      "path": "/home/ubuntu/github/nemue/scripts/imap-banner.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:59:07.818456641Z"
+    },
+    {
+      "name": "http-dir-traversal",
+      "path": "/home/ubuntu/github/nemue/scripts/http-dir-traversal.lua",
       "description": "[[",
       "author": "Nemue Security Team",
       "categories": [
         "vuln",
-        "safe",
-        "default"
+        "intrusive",
+        "exploit"
       ],
-      "last_modified": "2026-06-09T11:16:46.205081181Z"
+      "last_modified": "2026-06-10T05:48:09.932877693Z"
+    },
+    {
+      "name": "redis-config",
+      "path": "/home/ubuntu/github/nemue/scripts/redis-config.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:57:31.305370044Z"
+    },
+    {
+      "name": "smb-shares",
+      "path": "/home/ubuntu/github/nemue/scripts/smb-shares.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:58:44.558435922Z"
+    },
+    {
+      "name": "http-sitemap",
+      "path": "/home/ubuntu/github/nemue/scripts/http-sitemap.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:55:39.241274637Z"
+    },
+    {
+      "name": "redis-commands",
+      "path": "/home/ubuntu/github/nemue/scripts/redis-commands.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "default",
+        "vuln"
+      ],
+      "last_modified": "2026-06-09T15:39:21.947927886Z"
+    },
+    {
+      "name": "consul-info",
+      "path": "/home/ubuntu/github/nemue/scripts/consul-info.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T06:00:21.603528342Z"
+    },
+    {
+      "name": "ssh-auth-bypass",
+      "path": "/home/ubuntu/github/nemue/scripts/ssh-auth-bypass.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "vuln",
+        "intrusive"
+      ],
+      "last_modified": "2026-06-10T02:15:55.077022485Z"
+    },
+    {
+      "name": "rdp-security",
+      "path": "/home/ubuntu/github/nemue/scripts/rdp-security.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:57:51.317387723Z"
     },
     {
       "name": "module_name,",
@@ -258,6 +1456,28 @@
       "last_modified": "2026-06-09T11:16:46.204443478Z"
     },
     {
+      "name": "smb-signing",
+      "path": "/home/ubuntu/github/nemue/scripts/smb-signing.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:56:30.163316714Z"
+    },
+    {
+      "name": "http-apache-info",
+      "path": "/home/ubuntu/github/nemue/scripts/http-apache-info.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T05:46:15.684775889Z"
+    },
+    {
       "name": "author,",
       "path": "/home/ubuntu/github/nemue/scripts/http-wordpress-enum.lua",
       "description": "[[",
@@ -267,6 +1487,28 @@
         "intrusive"
       ],
       "last_modified": "2026-06-09T11:16:46.204443478Z"
+    },
+    {
+      "name": "ntp-info",
+      "path": "/home/ubuntu/github/nemue/scripts/ntp-info.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:58:08.067402723Z"
+    },
+    {
+      "name": "http-log4shell",
+      "path": "/home/ubuntu/github/nemue/scripts/http-log4shell.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:56:47.239331766Z"
     },
     {
       "name": "nfs-showmount",
@@ -281,6 +1523,73 @@
       "last_modified": "2026-06-09T11:16:46.204443478Z"
     },
     {
+      "name": "postgres-audit",
+      "path": "/home/ubuntu/github/nemue/scripts/postgres-audit.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:54:25.890204658Z"
+    },
+    {
+      "name": "http-content-type",
+      "path": "/home/ubuntu/github/nemue/scripts/http-content-type.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:21:57.284422197Z"
+    },
+    {
+      "name": "http-nosql-injection",
+      "path": "/home/ubuntu/github/nemue/scripts/http-nosql-injection.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "vuln",
+        "intrusive",
+        "exploit"
+      ],
+      "last_modified": "2026-06-10T05:49:54.893969675Z"
+    },
+    {
+      "name": "docker-images",
+      "path": "/home/ubuntu/github/nemue/scripts/docker-images.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "discovery",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:26:19.205664625Z"
+    },
+    {
+      "name": "http-connectwise",
+      "path": "/home/ubuntu/github/nemue/scripts/http-connectwise.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:57:03.304345717Z"
+    },
+    {
+      "name": "ftp-version",
+      "path": "/home/ubuntu/github/nemue/scripts/ftp-version.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:47:34.615846450Z"
+    },
+    {
       "name": "rdp-enum-encryption",
       "path": "/home/ubuntu/github/nemue/scripts/rdp-enum-encryption.lua",
       "description": "[[",
@@ -290,6 +1599,17 @@
         "safe"
       ],
       "last_modified": "2026-06-09T11:16:46.204443478Z"
+    },
+    {
+      "name": "ftp-anonymous",
+      "path": "/home/ubuntu/github/nemue/scripts/ftp-anonymous.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "auth"
+      ],
+      "last_modified": "2026-06-10T05:47:31.982844107Z"
     },
     {
       "name": "rdp-ntlm-info",
@@ -304,6 +1624,28 @@
       "last_modified": "2026-06-09T11:16:46.204443478Z"
     },
     {
+      "name": "snmp-trap",
+      "path": "/home/ubuntu/github/nemue/scripts/snmp-trap.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "discovery",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T02:17:32.314079729Z"
+    },
+    {
+      "name": "http-java-info",
+      "path": "/home/ubuntu/github/nemue/scripts/http-java-info.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T05:47:44.358855113Z"
+    },
+    {
       "name": "smb-os-discovery",
       "path": "/home/ubuntu/github/nemue/scripts/smb-os-discovery.lua",
       "description": "[[",
@@ -315,28 +1657,214 @@
       "last_modified": "2026-06-09T11:16:46.205081181Z"
     },
     {
+      "name": "modbus-info",
+      "path": "/home/ubuntu/github/nemue/scripts/modbus-info.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:59:25.368472304Z"
+    },
+    {
+      "name": "http-x-aspnet-version",
+      "path": "/home/ubuntu/github/nemue/scripts/http-x-aspnet-version.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:23:07.132483619Z"
+    },
+    {
+      "name": "http-iis-info",
+      "path": "/home/ubuntu/github/nemue/scripts/http-iis-info.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T05:46:26.197785254Z"
+    },
+    {
+      "name": "http-prototype-pollution",
+      "path": "/home/ubuntu/github/nemue/scripts/http-prototype-pollution.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "vuln",
+        "intrusive",
+        "http"
+      ],
+      "last_modified": "2026-06-10T04:21:50.959677718Z"
+    },
+    {
+      "name": "snmp-enum",
+      "path": "/home/ubuntu/github/nemue/scripts/snmp-enum.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T04:17:32.108521338Z"
+    },
+    {
+      "name": "http-insecure-redirect",
+      "path": "/home/ubuntu/github/nemue/scripts/http-insecure-redirect.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T05:50:13.727986314Z"
+    },
+    {
       "name": "redis-info",
       "path": "/home/ubuntu/github/nemue/scripts/redis-info.lua",
       "description": "[[",
-      "author": "Nemue Team",
+      "author": "Nemue",
       "categories": [
-        "discovery",
-        "intrusive",
-        "database"
+        "safe",
+        "discovery"
       ],
-      "last_modified": "2026-06-09T11:16:46.204443478Z"
+      "last_modified": "2026-06-10T05:54:44.290222702Z"
+    },
+    {
+      "name": "postgres-enum",
+      "path": "/home/ubuntu/github/nemue/scripts/postgres-enum.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:54:31.073209246Z"
+    },
+    {
+      "name": "ftp-encryption",
+      "path": "/home/ubuntu/github/nemue/scripts/ftp-encryption.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:47:44.018854811Z"
+    },
+    {
+      "name": "ssl-cipher-suite",
+      "path": "/home/ubuntu/github/nemue/scripts/ssl-cipher-suite.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:47:14.320828422Z"
+    },
+    {
+      "name": "mongodb-brute",
+      "path": "/home/ubuntu/github/nemue/scripts/mongodb-brute.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "intrusive",
+        "brute"
+      ],
+      "last_modified": "2026-06-10T05:54:49.328228956Z"
+    },
+    {
+      "name": "ssl-weak-ciphers",
+      "path": "/home/ubuntu/github/nemue/scripts/ssl-weak-ciphers.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:57:10.706352117Z"
+    },
+    {
+      "name": "http-moveit",
+      "path": "/home/ubuntu/github/nemue/scripts/http-moveit.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:56:56.752340041Z"
+    },
+    {
+      "name": "http-hpp",
+      "path": "/home/ubuntu/github/nemue/scripts/http-hpp.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:58:31.510424080Z"
     },
     {
       "name": "ssh-auth-methods",
       "path": "/home/ubuntu/github/nemue/scripts/ssh-auth-methods.lua",
       "description": "[[",
-      "author": "Nemue Team",
+      "author": "Nemue",
       "categories": [
-        "discovery",
         "safe",
-        "auth"
+        "discovery"
       ],
-      "last_modified": "2026-06-09T11:16:46.205081181Z"
+      "last_modified": "2026-06-10T05:46:23.418782778Z"
+    },
+    {
+      "name": "http-nodejs-info",
+      "path": "/home/ubuntu/github/nemue/scripts/http-nodejs-info.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T05:46:56.301812310Z"
+    },
+    {
+      "name": "openvpn-info",
+      "path": "/home/ubuntu/github/nemue/scripts/openvpn-info.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:59:51.603496069Z"
+    },
+    {
+      "name": "rtsp-info",
+      "path": "/home/ubuntu/github/nemue/scripts/rtsp-info.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T06:00:00.154503992Z"
+    },
+    {
+      "name": "smtp-banner",
+      "path": "/home/ubuntu/github/nemue/scripts/smtp-banner.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:59:01.600451072Z"
     },
     {
       "name": "dns-zone-transfer-check",
@@ -349,6 +1877,39 @@
         "default"
       ],
       "last_modified": "2026-06-09T11:16:46.204443478Z"
+    },
+    {
+      "name": "http-host-header",
+      "path": "/home/ubuntu/github/nemue/scripts/http-host-header.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:58:28.569421397Z"
+    },
+    {
+      "name": "http-enum-users",
+      "path": "/home/ubuntu/github/nemue/scripts/http-enum-users.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "discovery",
+        "intrusive"
+      ],
+      "last_modified": "2026-06-10T05:51:10.921034035Z"
+    },
+    {
+      "name": "rdp-nla",
+      "path": "/home/ubuntu/github/nemue/scripts/rdp-nla.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:57:48.349385093Z"
     },
     {
       "name": "http-sql-injection",
@@ -374,6 +1935,72 @@
       "last_modified": "2026-06-09T11:16:46.204443478Z"
     },
     {
+      "name": "rdp-encryption",
+      "path": "/home/ubuntu/github/nemue/scripts/rdp-encryption.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:55:02.209241690Z"
+    },
+    {
+      "name": "http-well-known",
+      "path": "/home/ubuntu/github/nemue/scripts/http-well-known.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:55:42.317277390Z"
+    },
+    {
+      "name": "http-security-headers",
+      "path": "/home/ubuntu/github/nemue/scripts/http-security-headers.lua",
+      "description": "[[",
+      "author": "",
+      "categories": [
+        "safe",
+        "default"
+      ],
+      "last_modified": "2026-06-09T13:56:42.320564092Z"
+    },
+    {
+      "name": "http-server-banner",
+      "path": "/home/ubuntu/github/nemue/scripts/http-server-banner.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:22:57.011474269Z"
+    },
+    {
+      "name": "ftp-backdoor",
+      "path": "/home/ubuntu/github/nemue/scripts/ftp-backdoor.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "vuln",
+        "intrusive"
+      ],
+      "last_modified": "2026-06-10T05:48:02.040870763Z"
+    },
+    {
+      "name": "ssl-cert-fingerprint",
+      "path": "/home/ubuntu/github/nemue/scripts/ssl-cert-fingerprint.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:47:07.689822540Z"
+    },
+    {
       "name": "ssl-version-check",
       "path": "/home/ubuntu/github/nemue/scripts/ssl-version-check.lua",
       "description": "Checks for weak SSL/TLS versions (SSLv2, SSLv3, TLSv1.0)",
@@ -386,16 +2013,207 @@
       "last_modified": "2026-06-09T11:16:46.205081181Z"
     },
     {
+      "name": "http-header-injection",
+      "path": "/home/ubuntu/github/nemue/scripts/http-header-injection.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "vuln",
+        "intrusive",
+        "exploit"
+      ],
+      "last_modified": "2026-06-10T05:48:54.971917258Z"
+    },
+    {
       "name": "mysql-info",
       "path": "/home/ubuntu/github/nemue/scripts/mysql-info.lua",
       "description": "[[",
-      "author": "Nemue Team",
+      "author": "Nemue",
       "categories": [
-        "discovery",
         "safe",
-        "database"
+        "discovery"
       ],
-      "last_modified": "2026-06-09T11:16:46.204443478Z"
+      "last_modified": "2026-06-10T05:54:20.641199984Z"
+    },
+    {
+      "name": "xmpp-info",
+      "path": "/home/ubuntu/github/nemue/scripts/xmpp-info.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:59:57.339501384Z"
+    },
+    {
+      "name": "ntp-ntpmon",
+      "path": "/home/ubuntu/github/nemue/scripts/ntp-ntpmon.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:23:33.439508702Z"
+    },
+    {
+      "name": "ssh-weak-algorithms",
+      "path": "/home/ubuntu/github/nemue/scripts/ssh-weak-algorithms.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "vuln"
+      ],
+      "last_modified": "2026-06-10T05:46:51.055807590Z"
+    },
+    {
+      "name": "http-xml-injection",
+      "path": "/home/ubuntu/github/nemue/scripts/http-xml-injection.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "vuln",
+        "intrusive",
+        "exploit"
+      ],
+      "last_modified": "2026-06-10T05:48:48.015911164Z"
+    },
+    {
+      "name": "http-mass-assignment",
+      "path": "/home/ubuntu/github/nemue/scripts/http-mass-assignment.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "vuln",
+        "intrusive",
+        "http"
+      ],
+      "last_modified": "2026-06-10T04:22:17.006693421Z"
+    },
+    {
+      "name": "http-insecure-deserialization",
+      "path": "/home/ubuntu/github/nemue/scripts/http-insecure-deserialization.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "vuln",
+        "intrusive",
+        "http"
+      ],
+      "last_modified": "2026-06-10T04:22:06.965687462Z"
+    },
+    {
+      "name": "redis-unprotected",
+      "path": "/home/ubuntu/github/nemue/scripts/redis-unprotected.lua",
+      "description": "[[",
+      "author": "",
+      "categories": [
+        "auth",
+        "default",
+        "safe"
+      ],
+      "last_modified": "2026-06-09T13:56:54.591582935Z"
+    },
+    {
+      "name": "http-aspnet-info",
+      "path": "/home/ubuntu/github/nemue/scripts/http-aspnet-info.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T05:47:17.323831085Z"
+    },
+    {
+      "name": "http-citrix",
+      "path": "/home/ubuntu/github/nemue/scripts/http-citrix.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:56:59.789342672Z"
+    },
+    {
+      "name": "postgres-brute",
+      "path": "/home/ubuntu/github/nemue/scripts/postgres-brute.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "intrusive",
+        "brute"
+      ],
+      "last_modified": "2026-06-10T05:54:28.422206899Z"
+    },
+    {
+      "name": "http-backup-files",
+      "path": "/home/ubuntu/github/nemue/scripts/http-backup-files.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:58:21.441414895Z"
+    },
+    {
+      "name": "couchbase-info",
+      "path": "/home/ubuntu/github/nemue/scripts/couchbase-info.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:57:45.405382483Z"
+    },
+    {
+      "name": "smb-protocols",
+      "path": "/home/ubuntu/github/nemue/scripts/smb-protocols.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:58:47.017438104Z"
+    },
+    {
+      "name": "ike-brute",
+      "path": "/home/ubuntu/github/nemue/scripts/ike-brute.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "intrusive",
+        "brute"
+      ],
+      "last_modified": "2026-06-10T05:55:27.569264195Z"
+    },
+    {
+      "name": "ftp-bounce",
+      "path": "/home/ubuntu/github/nemue/scripts/ftp-bounce.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "vuln"
+      ],
+      "last_modified": "2026-06-10T05:47:48.231858558Z"
+    },
+    {
+      "name": "redis-brute",
+      "path": "/home/ubuntu/github/nemue/scripts/redis-brute.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "intrusive",
+        "brute"
+      ],
+      "last_modified": "2026-06-10T05:54:40.454217941Z"
     },
     {
       "name": "rmi-vuln-classloader",
@@ -409,39 +2227,213 @@
       "last_modified": "2026-06-09T11:16:46.204443478Z"
     },
     {
-      "name": "couchdb-info",
-      "path": "/home/ubuntu/github/nemue/scripts/couchdb-info.lua",
+      "name": "ftp-features",
+      "path": "/home/ubuntu/github/nemue/scripts/ftp-features.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:47:37.914849382Z"
+    },
+    {
+      "name": "http-perl-info",
+      "path": "/home/ubuntu/github/nemue/scripts/http-perl-info.lua",
       "description": "[[",
       "author": "Nemue Security Team",
       "categories": [
-        "discovery",
         "safe",
-        "default"
+        "web"
       ],
-      "last_modified": "2026-06-09T11:16:46.204443478Z"
+      "last_modified": "2026-06-10T05:47:29.920842274Z"
+    },
+    {
+      "name": "smtp-brute",
+      "path": "/home/ubuntu/github/nemue/scripts/smtp-brute.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "intrusive",
+        "auth"
+      ],
+      "last_modified": "2026-06-10T05:48:38.572902870Z"
+    },
+    {
+      "name": "http-last-modified",
+      "path": "/home/ubuntu/github/nemue/scripts/http-last-modified.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:22:27.889448119Z"
+    },
+    {
+      "name": "http-missing-headers",
+      "path": "/home/ubuntu/github/nemue/scripts/http-missing-headers.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T04:16:38.947489165Z"
+    },
+    {
+      "name": "pop3-banner",
+      "path": "/home/ubuntu/github/nemue/scripts/pop3-banner.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:59:04.685453835Z"
+    },
+    {
+      "name": "http-nginx-info",
+      "path": "/home/ubuntu/github/nemue/scripts/http-nginx-info.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T05:46:20.764780414Z"
+    },
+    {
+      "name": "couchdb-info",
+      "path": "/home/ubuntu/github/nemue/scripts/couchdb-info.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:57:36.842374901Z"
+    },
+    {
+      "name": "http-weak-csp",
+      "path": "/home/ubuntu/github/nemue/scripts/http-weak-csp.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T05:50:27.269998128Z"
     },
     {
       "name": "ssl-cert-info",
       "path": "/home/ubuntu/github/nemue/scripts/ssl-cert-info.lua",
       "description": "[[",
-      "author": "Nemue Team",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:58:49.191440034Z"
+    },
+    {
+      "name": "http-jboss-info",
+      "path": "/home/ubuntu/github/nemue/scripts/http-jboss-info.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T05:46:44.474801653Z"
+    },
+    {
+      "name": "http-hsts",
+      "path": "/home/ubuntu/github/nemue/scripts/http-hsts.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:55:53.206286413Z"
+    },
+    {
+      "name": "http-cors-misconfig",
+      "path": "/home/ubuntu/github/nemue/scripts/http-cors-misconfig.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "default"
+      ],
+      "last_modified": "2026-06-09T15:30:05.683084818Z"
+    },
+    {
+      "name": "docker-escape",
+      "path": "/home/ubuntu/github/nemue/scripts/docker-escape.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-09T16:55:12.598509572Z"
+    },
+    {
+      "name": "ssh-hostkey-type",
+      "path": "/home/ubuntu/github/nemue/scripts/ssh-hostkey-type.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:46:26.753785749Z"
+    },
+    {
+      "name": "http-enum-apis",
+      "path": "/home/ubuntu/github/nemue/scripts/http-enum-apis.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
       "categories": [
         "discovery",
-        "safe",
-        "ssl"
+        "safe"
       ],
-      "last_modified": "2026-06-09T11:16:46.205081181Z"
+      "last_modified": "2026-06-10T05:51:17.757039860Z"
+    },
+    {
+      "name": "ftp-banner",
+      "path": "/home/ubuntu/github/nemue/scripts/ftp-banner.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:58:58.537448329Z"
+    },
+    {
+      "name": "http-enum-params",
+      "path": "/home/ubuntu/github/nemue/scripts/http-enum-params.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "discovery",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:51:49.208067031Z"
     },
     {
       "name": "elasticsearch-info",
       "path": "/home/ubuntu/github/nemue/scripts/elasticsearch-info.lua",
       "description": "[[",
-      "author": "Nemue Team",
+      "author": "Nemue",
       "categories": [
-        "discovery",
-        "safe"
+        "safe",
+        "discovery"
       ],
-      "last_modified": "2026-06-09T11:16:46.204443478Z"
+      "last_modified": "2026-06-10T05:57:42.502379909Z"
     },
     {
       "name": "postgresql-info",
@@ -456,6 +2448,17 @@
       "last_modified": "2026-06-09T11:16:46.204443478Z"
     },
     {
+      "name": "mysql-brute",
+      "path": "/home/ubuntu/github/nemue/scripts/mysql-brute.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "intrusive",
+        "brute"
+      ],
+      "last_modified": "2026-06-10T05:54:11.045191375Z"
+    },
+    {
       "name": "smb-enum-users",
       "path": "/home/ubuntu/github/nemue/scripts/smb-enum-users.lua",
       "description": "Built-in account for guest access\",",
@@ -465,6 +2468,17 @@
         "auth"
       ],
       "last_modified": "2026-06-09T11:16:46.205081181Z"
+    },
+    {
+      "name": "kafka-info",
+      "path": "/home/ubuntu/github/nemue/scripts/kafka-info.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T06:00:18.240524509Z"
     },
     {
       "name": "http-vuln-cve2017-5638",
@@ -479,15 +2493,159 @@
       "last_modified": "2026-06-09T11:16:46.204443478Z"
     },
     {
-      "name": "http-robots-txt",
-      "path": "/home/ubuntu/github/nemue/scripts/http-robots-txt.lua",
+      "name": "http-enum-headers",
+      "path": "/home/ubuntu/github/nemue/scripts/http-enum-headers.lua",
       "description": "[[",
-      "author": "Nemue Team",
+      "author": "Nemue Security Team",
       "categories": [
         "discovery",
         "safe"
       ],
-      "last_modified": "2026-06-09T11:16:46.204443478Z"
+      "last_modified": "2026-06-10T05:51:55.345072399Z"
+    },
+    {
+      "name": "http-weak-hsts",
+      "path": "/home/ubuntu/github/nemue/scripts/http-weak-hsts.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T05:50:37.348006814Z"
+    },
+    {
+      "name": "s7comm-info",
+      "path": "/home/ubuntu/github/nemue/scripts/s7comm-info.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:59:31.397477683Z"
+    },
+    {
+      "name": "http-python-info",
+      "path": "/home/ubuntu/github/nemue/scripts/http-python-info.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T05:47:02.699818066Z"
+    },
+    {
+      "name": "http-dirlist",
+      "path": "/home/ubuntu/github/nemue/scripts/http-dirlist.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:58:14.612408665Z"
+    },
+    {
+      "name": "ssh-hostkey-algos",
+      "path": "/home/ubuntu/github/nemue/scripts/ssh-hostkey-algos.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "default"
+      ],
+      "last_modified": "2026-06-09T15:38:42.579864264Z"
+    },
+    {
+      "name": "sip-methods",
+      "path": "/home/ubuntu/github/nemue/scripts/sip-methods.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:55:09.208247901Z"
+    },
+    {
+      "name": "http-robots-txt",
+      "path": "/home/ubuntu/github/nemue/scripts/http-robots-txt.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "default",
+        "discovery"
+      ],
+      "last_modified": "2026-06-09T15:38:24.871837013Z"
+    },
+    {
+      "name": "ssl-protocol-version",
+      "path": "/home/ubuntu/github/nemue/scripts/ssl-protocol-version.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:47:10.791825291Z"
+    },
+    {
+      "name": "rdp-bluekeep",
+      "path": "/home/ubuntu/github/nemue/scripts/rdp-bluekeep.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "vuln",
+        "intrusive"
+      ],
+      "last_modified": "2026-06-10T05:56:35.754321618Z"
+    },
+    {
+      "name": "bacnet-info",
+      "path": "/home/ubuntu/github/nemue/scripts/bacnet-info.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:59:28.440475040Z"
+    },
+    {
+      "name": "kubernetes-rbac",
+      "path": "/home/ubuntu/github/nemue/scripts/kubernetes-rbac.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-09T16:55:27.339530352Z"
+    },
+    {
+      "name": "ssl-cert-expiry",
+      "path": "/home/ubuntu/github/nemue/scripts/ssl-cert-expiry.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:46:59.277814987Z"
+    },
+    {
+      "name": "rabbitmq-info",
+      "path": "/home/ubuntu/github/nemue/scripts/rabbitmq-info.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T06:00:15.480522027Z"
     },
     {
       "name": "ftp-vsftpd-backdoor",
@@ -526,6 +2684,39 @@
       "last_modified": "2026-06-09T11:16:46.204443478Z"
     },
     {
+      "name": "http-directory-traversal",
+      "path": "/home/ubuntu/github/nemue/scripts/http-directory-traversal.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "default"
+      ],
+      "last_modified": "2026-06-09T15:29:39.792046423Z"
+    },
+    {
+      "name": "rdp-ntlm",
+      "path": "/home/ubuntu/github/nemue/scripts/rdp-ntlm.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:55:04.741243937Z"
+    },
+    {
+      "name": "http-mixed-content",
+      "path": "/home/ubuntu/github/nemue/scripts/http-mixed-content.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T05:50:06.728980167Z"
+    },
+    {
       "name": "smb-vuln-ms08-067",
       "path": "/home/ubuntu/github/nemue/scripts/smb-vuln-ms08-067.lua",
       "description": "[[",
@@ -550,16 +2741,105 @@
       "last_modified": "2026-06-09T11:16:46.205081181Z"
     },
     {
+      "name": "dns-tsig",
+      "path": "/home/ubuntu/github/nemue/scripts/dns-tsig.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:49:17.062936713Z"
+    },
+    {
+      "name": "teamviewer-info",
+      "path": "/home/ubuntu/github/nemue/scripts/teamviewer-info.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T06:00:03.352507042Z"
+    },
+    {
       "name": "ssl-heartbleed",
       "path": "/home/ubuntu/github/nemue/scripts/ssl-heartbleed.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "vuln",
+        "intrusive"
+      ],
+      "last_modified": "2026-06-10T05:56:38.702324222Z"
+    },
+    {
+      "name": "http-csp-bypass",
+      "path": "/home/ubuntu/github/nemue/scripts/http-csp-bypass.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T04:16:08.237469158Z"
+    },
+    {
+      "name": "smtp-enum",
+      "path": "/home/ubuntu/github/nemue/scripts/smtp-enum.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "auth",
+        "intrusive"
+      ],
+      "last_modified": "2026-06-10T02:16:13.707033257Z"
+    },
+    {
+      "name": "http-code-injection",
+      "path": "/home/ubuntu/github/nemue/scripts/http-code-injection.lua",
       "description": "[[",
       "author": "Nemue Security Team",
       "categories": [
         "vuln",
-        "safe",
-        "default"
+        "intrusive",
+        "exploit"
       ],
-      "last_modified": "2026-06-09T11:16:46.205081181Z"
+      "last_modified": "2026-06-10T05:48:31.662896781Z"
+    },
+    {
+      "name": "http-xxe",
+      "path": "/home/ubuntu/github/nemue/scripts/http-xxe.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:58:37.421429472Z"
+    },
+    {
+      "name": "ssh-versions",
+      "path": "/home/ubuntu/github/nemue/scripts/ssh-versions.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:46:44.006801231Z"
+    },
+    {
+      "name": "http-graphQL-injection",
+      "path": "/home/ubuntu/github/nemue/scripts/http-graphQL-injection.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "vuln",
+        "intrusive",
+        "exploit"
+      ],
+      "last_modified": "2026-06-10T05:49:37.487954613Z"
     },
     {
       "name": "oracle-info",
@@ -574,28 +2854,214 @@
       "last_modified": "2026-06-09T11:16:46.204443478Z"
     },
     {
+      "name": "http-csp",
+      "path": "/home/ubuntu/github/nemue/scripts/http-csp.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:55:57.009289508Z"
+    },
+    {
       "name": "http-cookie-flags",
       "path": "/home/ubuntu/github/nemue/scripts/http-cookie-flags.lua",
       "description": "[[",
       "author": "Nemue Security Team",
       "categories": [
-        "vuln",
         "safe",
-        "default"
+        "web"
       ],
-      "last_modified": "2026-06-09T11:16:46.204443478Z"
+      "last_modified": "2026-06-10T04:16:14.621474215Z"
+    },
+    {
+      "name": "ssh-mac-algorithms",
+      "path": "/home/ubuntu/github/nemue/scripts/ssh-mac-algorithms.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:46:38.495796257Z"
+    },
+    {
+      "name": "snmp-processes",
+      "path": "/home/ubuntu/github/nemue/scripts/snmp-processes.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "discovery",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:23:58.046533347Z"
+    },
+    {
+      "name": "ssl-cert-subject",
+      "path": "/home/ubuntu/github/nemue/scripts/ssl-cert-subject.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:47:03.638818911Z"
+    },
+    {
+      "name": "ldap-search",
+      "path": "/home/ubuntu/github/nemue/scripts/ldap-search.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:55:22.481259680Z"
     },
     {
       "name": "vnc-info",
       "path": "/home/ubuntu/github/nemue/scripts/vnc-info.lua",
       "description": "[[",
-      "author": "Nemue Security Team",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:54:59.499239286Z"
+    },
+    {
+      "name": "coap-info",
+      "path": "/home/ubuntu/github/nemue/scripts/coap-info.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:59:37.130482871Z"
+    },
+    {
+      "name": "postgres-databases",
+      "path": "/home/ubuntu/github/nemue/scripts/postgres-databases.lua",
+      "description": "[[",
+      "author": "Nemue Security",
       "categories": [
         "discovery",
         "safe",
-        "default"
+        "database"
       ],
-      "last_modified": "2026-06-09T11:16:46.205081181Z"
+      "last_modified": "2026-06-10T05:25:27.080616225Z"
+    },
+    {
+      "name": "etcd-info",
+      "path": "/home/ubuntu/github/nemue/scripts/etcd-info.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T06:00:25.153532841Z"
+    },
+    {
+      "name": "dhcp-info",
+      "path": "/home/ubuntu/github/nemue/scripts/dhcp-info.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T04:17:12.538509345Z"
+    },
+    {
+      "name": "http-trace",
+      "path": "/home/ubuntu/github/nemue/scripts/http-trace.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:56:11.561300980Z"
+    },
+    {
+      "name": "http-server-info",
+      "path": "/home/ubuntu/github/nemue/scripts/http-server-info.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T04:16:45.042492996Z"
+    },
+    {
+      "name": "ssl-drown",
+      "path": "/home/ubuntu/github/nemue/scripts/ssl-drown.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:56:44.286329157Z"
+    },
+    {
+      "name": "ssh-default-creds",
+      "path": "/home/ubuntu/github/nemue/scripts/ssh-default-creds.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "intrusive",
+        "auth"
+      ],
+      "last_modified": "2026-06-10T05:46:54.698810867Z"
+    },
+    {
+      "name": "vnc-crack",
+      "path": "/home/ubuntu/github/nemue/scripts/vnc-crack.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "brute",
+        "intrusive"
+      ],
+      "last_modified": "2026-06-10T02:16:36.544046548Z"
+    },
+    {
+      "name": "dns-cache-snoop",
+      "path": "/home/ubuntu/github/nemue/scripts/dns-cache-snoop.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:49:05.434926458Z"
+    },
+    {
+      "name": "http-enum-tokens",
+      "path": "/home/ubuntu/github/nemue/scripts/http-enum-tokens.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "discovery",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:52:19.408092794Z"
+    },
+    {
+      "name": "postgres-ssl",
+      "path": "/home/ubuntu/github/nemue/scripts/postgres-ssl.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:57:28.425367518Z"
     },
     {
       "name": "http-shellshock",
@@ -610,16 +3076,149 @@
       "last_modified": "2026-06-09T11:16:46.204443478Z"
     },
     {
+      "name": "docker-api",
+      "path": "/home/ubuntu/github/nemue/scripts/docker-api.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T06:00:06.313510988Z"
+    },
+    {
       "name": "ssh-banner",
       "path": "/home/ubuntu/github/nemue/scripts/ssh-banner.lua",
-      "description": "Grabs SSH banner and identifies version",
-      "author": "Nemue Team",
+      "description": "[[",
+      "author": "Nemue",
       "categories": [
-        "ssh",
-        "discovery",
-        "banner"
+        "safe",
+        "discovery"
       ],
-      "last_modified": "2026-06-09T11:16:46.205081181Z"
+      "last_modified": "2026-06-10T05:59:14.629462740Z"
+    },
+    {
+      "name": "http-missing-hsts",
+      "path": "/home/ubuntu/github/nemue/scripts/http-missing-hsts.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T05:50:31.158001497Z"
+    },
+    {
+      "name": "http-xss-check",
+      "path": "/home/ubuntu/github/nemue/scripts/http-xss-check.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "default"
+      ],
+      "last_modified": "2026-06-09T15:29:34.378038433Z"
+    },
+    {
+      "name": "http-technology",
+      "path": "/home/ubuntu/github/nemue/scripts/http-technology.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:58:18.321412048Z"
+    },
+    {
+      "name": "dns-version",
+      "path": "/home/ubuntu/github/nemue/scripts/dns-version.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:59:17.220465047Z"
+    },
+    {
+      "name": "mongodb-unauth",
+      "path": "/home/ubuntu/github/nemue/scripts/mongodb-unauth.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "default"
+      ],
+      "last_modified": "2026-06-09T15:31:19.201196463Z"
+    },
+    {
+      "name": "postgres-info",
+      "path": "/home/ubuntu/github/nemue/scripts/postgres-info.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:54:33.742211608Z"
+    },
+    {
+      "name": "postgres-users",
+      "path": "/home/ubuntu/github/nemue/scripts/postgres-users.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "discovery",
+        "safe",
+        "database"
+      ],
+      "last_modified": "2026-06-10T05:25:37.962626252Z"
+    },
+    {
+      "name": "http-cookies",
+      "path": "/home/ubuntu/github/nemue/scripts/http-cookies.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:56:05.164295988Z"
+    },
+    {
+      "name": "http-ssi-injection",
+      "path": "/home/ubuntu/github/nemue/scripts/http-ssi-injection.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "vuln",
+        "intrusive",
+        "exploit"
+      ],
+      "last_modified": "2026-06-10T05:49:13.623933674Z"
+    },
+    {
+      "name": "http-ssl-redirect",
+      "path": "/home/ubuntu/github/nemue/scripts/http-ssl-redirect.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "default"
+      ],
+      "last_modified": "2026-06-09T15:29:45.187054388Z"
+    },
+    {
+      "name": "http-glassfish-info",
+      "path": "/home/ubuntu/github/nemue/scripts/http-glassfish-info.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T05:46:50.018806657Z"
     },
     {
       "name": "mongodb-info",
@@ -634,6 +3233,50 @@
       "last_modified": "2026-06-09T11:16:46.204443478Z"
     },
     {
+      "name": "mysql-enum",
+      "path": "/home/ubuntu/github/nemue/scripts/mysql-enum.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:54:16.895196623Z"
+    },
+    {
+      "name": "dns-nsid",
+      "path": "/home/ubuntu/github/nemue/scripts/dns-nsid.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:49:07.900928630Z"
+    },
+    {
+      "name": "dns-any",
+      "path": "/home/ubuntu/github/nemue/scripts/dns-any.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:49:14.018934022Z"
+    },
+    {
+      "name": "http-security-headers-check",
+      "path": "/home/ubuntu/github/nemue/scripts/http-security-headers-check.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "default"
+      ],
+      "last_modified": "2026-06-09T15:21:52.049348493Z"
+    },
+    {
       "name": "http-title",
       "path": "/home/ubuntu/github/nemue/scripts/http-title.lua",
       "description": "[[",
@@ -646,16 +3289,335 @@
       "last_modified": "2026-06-09T11:16:46.204443478Z"
     },
     {
-      "name": "ldap-rootdse",
-      "path": "/home/ubuntu/github/nemue/scripts/ldap-rootdse.lua",
+      "name": "snmp-brute",
+      "path": "/home/ubuntu/github/nemue/scripts/snmp-brute.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "intrusive",
+        "brute"
+      ],
+      "last_modified": "2026-06-10T05:55:14.256252381Z"
+    },
+    {
+      "name": "redis-audit",
+      "path": "/home/ubuntu/github/nemue/scripts/redis-audit.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:54:37.139214614Z"
+    },
+    {
+      "name": "http-internal-ip",
+      "path": "/home/ubuntu/github/nemue/scripts/http-internal-ip.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T04:16:33.018485500Z"
+    },
+    {
+      "name": "http-source-disclosure",
+      "path": "/home/ubuntu/github/nemue/scripts/http-source-disclosure.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:58:24.970418114Z"
+    },
+    {
+      "name": "http-vhost-enum",
+      "path": "/home/ubuntu/github/nemue/scripts/http-vhost-enum.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T04:16:51.640497068Z"
+    },
+    {
+      "name": "mongodb-audit",
+      "path": "/home/ubuntu/github/nemue/scripts/mongodb-audit.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:54:46.659225643Z"
+    },
+    {
+      "name": "http-command-injection",
+      "path": "/home/ubuntu/github/nemue/scripts/http-command-injection.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "vuln",
+        "intrusive",
+        "exploit"
+      ],
+      "last_modified": "2026-06-10T05:48:24.637890603Z"
+    },
+    {
+      "name": "http-enum-endpoints",
+      "path": "/home/ubuntu/github/nemue/scripts/http-enum-endpoints.lua",
       "description": "[[",
       "author": "Nemue Security Team",
       "categories": [
         "discovery",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:51:24.986046022Z"
+    },
+    {
+      "name": "ssh-encryption",
+      "path": "/home/ubuntu/github/nemue/scripts/ssh-encryption.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:24:43.103575535Z"
+    },
+    {
+      "name": "dns-brute",
+      "path": "/home/ubuntu/github/nemue/scripts/dns-brute.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "intrusive",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:48:59.774921469Z"
+    },
+    {
+      "name": "http-clickjacking",
+      "path": "/home/ubuntu/github/nemue/scripts/http-clickjacking.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:55:49.752283602Z"
+    },
+    {
+      "name": "ssl-cert-issuer",
+      "path": "/home/ubuntu/github/nemue/scripts/ssl-cert-issuer.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:47:01.542817025Z"
+    },
+    {
+      "name": "http-xxe-check",
+      "path": "/home/ubuntu/github/nemue/scripts/http-xxe-check.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
         "safe",
         "default"
       ],
-      "last_modified": "2026-06-09T11:16:46.204443478Z"
+      "last_modified": "2026-06-09T15:31:56.296264268Z"
+    },
+    {
+      "name": "smb-anonymous",
+      "path": "/home/ubuntu/github/nemue/scripts/smb-anonymous.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:58:42.378433986Z"
+    },
+    {
+      "name": "smtp-vrfy",
+      "path": "/home/ubuntu/github/nemue/scripts/smtp-vrfy.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "auth"
+      ],
+      "last_modified": "2026-06-10T05:48:14.455881663Z"
+    },
+    {
+      "name": "ldap-rootdse",
+      "path": "/home/ubuntu/github/nemue/scripts/ldap-rootdse.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:58:02.241397496Z"
+    },
+    {
+      "name": "smtp-ehlo",
+      "path": "/home/ubuntu/github/nemue/scripts/smtp-ehlo.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:48:10.042877789Z"
+    },
+    {
+      "name": "http-options-method",
+      "path": "/home/ubuntu/github/nemue/scripts/http-options-method.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "default"
+      ],
+      "last_modified": "2026-06-09T15:30:11.259093177Z"
+    },
+    {
+      "name": "smtp-auth",
+      "path": "/home/ubuntu/github/nemue/scripts/smtp-auth.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:48:34.509899290Z"
+    },
+    {
+      "name": "ssl-enum-protocols",
+      "path": "/home/ubuntu/github/nemue/scripts/ssl-enum-protocols.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:58:51.726442284Z"
+    },
+    {
+      "name": "http-expires",
+      "path": "/home/ubuntu/github/nemue/scripts/http-expires.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:22:17.234438653Z"
+    },
+    {
+      "name": "mysql-ssl",
+      "path": "/home/ubuntu/github/nemue/scripts/mysql-ssl.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:57:25.787365203Z"
+    },
+    {
+      "name": "kubernetes-enum",
+      "path": "/home/ubuntu/github/nemue/scripts/kubernetes-enum.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T04:18:22.660551295Z"
+    },
+    {
+      "name": "http-jwt",
+      "path": "/home/ubuntu/github/nemue/scripts/http-jwt.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:56:25.151312351Z"
+    },
+    {
+      "name": "smb-signing-check",
+      "path": "/home/ubuntu/github/nemue/scripts/smb-signing-check.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "default"
+      ],
+      "last_modified": "2026-06-09T15:22:02.864364136Z"
+    },
+    {
+      "name": "snmp-interfaces",
+      "path": "/home/ubuntu/github/nemue/scripts/snmp-interfaces.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "discovery",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:23:46.769521884Z"
+    },
+    {
+      "name": "smtp-expn",
+      "path": "/home/ubuntu/github/nemue/scripts/smtp-expn.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "auth"
+      ],
+      "last_modified": "2026-06-10T05:48:18.476885193Z"
+    },
+    {
+      "name": "http2-misconfig",
+      "path": "/home/ubuntu/github/nemue/scripts/http2-misconfig.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-09T16:56:05.418584050Z"
+    },
+    {
+      "name": "http-cors-check",
+      "path": "/home/ubuntu/github/nemue/scripts/http-cors-check.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "default"
+      ],
+      "last_modified": "2026-06-09T15:20:09.638190823Z"
+    },
+    {
+      "name": "zookeeper-info",
+      "path": "/home/ubuntu/github/nemue/scripts/zookeeper-info.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T06:00:12.355519037Z"
     },
     {
       "name": "tomcat-manager-check",
@@ -669,16 +3631,103 @@
       "last_modified": "2026-06-09T11:16:46.205081181Z"
     },
     {
+      "name": "http-powered-by",
+      "path": "/home/ubuntu/github/nemue/scripts/http-powered-by.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:22:46.840465002Z"
+    },
+    {
+      "name": "ssh-mac",
+      "path": "/home/ubuntu/github/nemue/scripts/ssh-mac.lua",
+      "description": "[[",
+      "author": "Nemue Security",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:24:52.213583966Z"
+    },
+    {
+      "name": "http-trace-method",
+      "path": "/home/ubuntu/github/nemue/scripts/http-trace-method.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "default"
+      ],
+      "last_modified": "2026-06-09T15:30:18.325103775Z"
+    },
+    {
+      "name": "mongodb-enum",
+      "path": "/home/ubuntu/github/nemue/scripts/mongodb-enum.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:57:33.740372180Z"
+    },
+    {
       "name": "snmp-info",
       "path": "/home/ubuntu/github/nemue/scripts/snmp-info.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:55:17.119254923Z"
+    },
+    {
+      "name": "vnc-auth",
+      "path": "/home/ubuntu/github/nemue/scripts/vnc-auth.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:54:52.907233398Z"
+    },
+    {
+      "name": "http-spring4shell",
+      "path": "/home/ubuntu/github/nemue/scripts/http-spring4shell.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "vuln",
+        "safe"
+      ],
+      "last_modified": "2026-06-10T05:56:50.125334298Z"
+    },
+    {
+      "name": "http-cgi-info",
+      "path": "/home/ubuntu/github/nemue/scripts/http-cgi-info.lua",
+      "description": "[[",
+      "author": "Nemue Security Team",
+      "categories": [
+        "safe",
+        "web"
+      ],
+      "last_modified": "2026-06-10T05:47:23.548836609Z"
+    },
+    {
+      "name": "http-enum-subdomains",
+      "path": "/home/ubuntu/github/nemue/scripts/http-enum-subdomains.lua",
       "description": "[[",
       "author": "Nemue Security Team",
       "categories": [
         "discovery",
-        "safe",
-        "default"
+        "safe"
       ],
-      "last_modified": "2026-06-09T11:16:46.205081181Z"
+      "last_modified": "2026-06-10T05:51:33.222053136Z"
     },
     {
       "name": "db-default-creds",
@@ -692,7 +3741,29 @@
         "brute"
       ],
       "last_modified": "2026-06-09T11:16:46.204443478Z"
+    },
+    {
+      "name": "smtp-starttls",
+      "path": "/home/ubuntu/github/nemue/scripts/smtp-starttls.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:48:30.877896092Z"
+    },
+    {
+      "name": "enip-info",
+      "path": "/home/ubuntu/github/nemue/scripts/enip-info.lua",
+      "description": "[[",
+      "author": "Nemue",
+      "categories": [
+        "safe",
+        "discovery"
+      ],
+      "last_modified": "2026-06-10T05:59:34.293480304Z"
     }
   ],
-  "last_updated": "2026-06-09T13:18:07.042370964Z"
+  "last_updated": "2026-06-10T06:00:27.938694799Z"
 }

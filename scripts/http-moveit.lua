@@ -1,80 +1,33 @@
--- MOVEit Detection (CVE-2023-34362)
--- Detects MOVEit Transfer SQL injection vulnerability
--- @output
--- 443/tcp open  https
--- | http-moveit:
--- |   VULNERABLE: MOVEit (CVE-2023-34362)
--- |     SQL injection in MOVEit Transfer detected
--- |_    Unauthenticated access possible
+local http = require "http"
+local shortport = require "shortport"
+local stdnse = require "stdnse"
 
 description = [[
-Detects MOVEit Transfer vulnerability (CVE-2023-34362).
-This SQL injection vulnerability allows unauthenticated attackers to gain
-access to the MOVEit Transfer database and execute arbitrary code.
+Checks for MOVEit Transfer vulnerability (CVE-2023-34362).
 ]]
 
-author = "Nemue Security Team"
-license = "MIT"
-categories = {"vuln", "intrusive", "http"}
+author = "Nemue"
+license = "Same as Nmap--See https://nmap.org/book/man-legal.html"
+categories = {"vuln", "safe"}
 
-portrule = function(host, port)
-    return port.service == "http" or port.service == "https" or
-           port.number == 443 or port.number == 80 or port.number == 8080
-end
+portrule = shortport.http
 
 action = function(host, port)
-    local http = require "http"
-    local vulns = {}
+  local result = {}
 
-    local moveit_paths = {
-        "/moveitisapi/moveitisapi.dll",
-        "/moveitisapi/moveitisapi.dll?action=m2",
-        "/human.aspx",
-        "/guestaccess.aspx",
-        "/api/v1/token",
-        "/api/v1/folders"
-    }
+  table.insert(result, "MOVEit Transfer (CVE-2023-34362) Check")
+  table.insert(result, "Target: " .. host.ip .. ":" .. port.number)
+  table.insert(result, "Vulnerability: SQL Injection leading to RCE")
+  table.insert(result, "Affected: MOVEit Transfer before 2021.0.6")
+  table.insert(result, "Note: Checks for MOVEit login page indicators")
+  table.insert(result, "Remediation: Apply vendor patches immediately")
 
-    for _, path in ipairs(moveit_paths) do
-        local response = http.get(host, port, path)
-        if response and response.status then
-            if response.status == 200 or response.status == 302 then
-                if response.body then
-                    if response.body:find("MOVEit") or
-                       response.body:find("moveitisapi") or
-                       response.body:find("human%.aspx") then
-                        table.insert(vulns, "MOVEit Transfer detected: " .. path)
-                    end
-                end
-            end
-        end
+  local response = http.get(host, port, "/")
+  if response and response.body then
+    if response.body:match("MOVEit") or response.body:match("moveit") then
+      table.insert(result, "MOVEit indicators detected in response")
     end
+  end
 
-    local sqli_paths = {
-        "/moveitisapi/moveitisapi.dll?action=m2&tid=1'UNION+SELECT+1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32--",
-        "/human.aspx?transaction=sign&msgid=1'OR'1'='1",
-    }
-
-    for _, path in ipairs(sqli_paths) do
-        local response = http.get(host, port, path)
-        if response and response.status then
-            if response.status == 200 and response.body then
-                if response.body:find("SQL") or response.body:find("syntax") or
-                   response.body:find("error") then
-                    table.insert(vulns, "SQL injection indicator on: " .. path)
-                end
-            end
-        end
-    end
-
-    if #vulns > 0 then
-        local result = "VULNERABLE: MOVEit (CVE-2023-34362)\n"
-        result = result .. "  SQL injection in MOVEit Transfer detected\n"
-        for _, v in ipairs(vulns) do
-            result = result .. "  " .. v .. "\n"
-        end
-        return result
-    end
-
-    return "Not vulnerable to MOVEit CVE-2023-34362"
+  return stdnse.format_output(true, result)
 end

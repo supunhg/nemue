@@ -1,68 +1,44 @@
--- HTTP Clickjacking Protection Check
--- Checks for X-Frame-Options and CSP frame-ancestors
-
-local nmap = require("nmap")
-local stdnse = require("stdnse")
-local http = require("http")
+local http = require "http"
+local shortport = require "shortport"
+local stdnse = require "stdnse"
 
 description = [[
-Checks if the target has clickjacking protection by examining
-X-Frame-Options and Content-Security-Policy frame-ancestors headers.
+Checks for Clickjacking protection via X-Frame-Options and CSP frame-ancestors.
 ]]
 
-author = "Nemue Security Team"
-license = "MIT"
-categories = {"safe", "default"}
+author = "Nemue"
+license = "Same as Nmap--See https://nmap.org/book/man-legal.html"
+categories = {"safe", "discovery"}
 
-portrule = function(host, port)
-    return port.protocol == "tcp" and
-           (port.service == "http" or port.service == "https" or
-            port.number == 80 or port.number == 443 or port.number == 8080)
-end
+portrule = shortport.http
 
 action = function(host, port)
-    local output = {}
-    local issues = {}
+  local result = {}
+  local response = http.get(host, port, "/")
 
-    local response = http.get(host, port, "/")
+  if response then
+    local xfo = response.header["x-frame-options"]
+    local csp = response.header["content-security-policy"]
 
-    if response and response.header then
-        local xfo = response.header["x-frame-options"]
-        local csp = response.header["content-security-policy"]
+    table.insert(result, "Clickjacking Protection:")
 
-        if not xfo then
-            table.insert(issues, "Missing X-Frame-Options header")
-        else
-            local xfo_upper = xfo:upper()
-            if xfo_upper ~= "DENY" and xfo_upper ~= "SAMEORIGIN" then
-                table.insert(issues, "Weak X-Frame-Options value: " .. xfo)
-            end
-        end
-
-        local has_frame_ancestors = false
-        if csp then
-            if csp:lower():find("frame%-ancestors") then
-                has_frame_ancestors = true
-            end
-        end
-
-        if not has_frame_ancestors then
-            table.insert(issues, "Missing CSP frame-ancestors directive")
-        end
-
-        if not xfo and not has_frame_ancestors then
-            table.insert(issues, "CRITICAL: No clickjacking protection found")
-        end
-    end
-
-    if #issues > 0 then
-        table.insert(output, "Clickjacking Protection Issues:")
-        for _, issue in ipairs(issues) do
-            table.insert(output, "  " .. issue)
-        end
+    if xfo then
+      table.insert(result, "X-Frame-Options: " .. xfo)
     else
-        table.insert(output, "Clickjacking protection is properly configured")
+      table.insert(result, "X-Frame-Options: NOT SET (vulnerable)")
     end
 
-    return stdnse.format_output(true, output)
+    if csp and csp:match("frame%-ancestors") then
+      local fa = csp:match("frame%-ancestors%s+(%S+)")
+      table.insert(result, "CSP frame-ancestors: " .. (fa or "present"))
+    else
+      table.insert(result, "CSP frame-ancestors: NOT SET")
+    end
+
+    if not xfo and not (csp and csp:match("frame%-ancestors")) then
+      table.insert(result, "WARNING: Site may be vulnerable to Clickjacking")
+    end
+  end
+
+  return stdnse.format_output(true, result)
 end

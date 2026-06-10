@@ -1,93 +1,51 @@
--- SSH Weak Key Detection
--- Checks for weak SSH host keys and algorithms
--- @output
--- 22/tcp open  ssh
--- | ssh-weak-keys:
--- |   WARNING: Weak SSH configuration detected
--- |     Weak algorithms: diffie-hellman-group1-sha1
--- |_    Key size: 1024 bits (should be >= 2048)
+local nmap = require "nmap"
+local shortport = require "shortport"
+local stdnse = require "stdnse"
 
 description = [[
-Detects weak SSH host keys and algorithms.
-Checks for deprecated algorithms, small key sizes, and known weak configurations.
+Checks for weak SSH host keys.
 ]]
 
-author = "Nemue Security Team"
-license = "MIT"
-categories = {"safe", "default", "ssh"}
+author = "Nemue"
+license = "Same as Nmap--See https://nmap.org/book/man-legal.html"
+categories = {"vuln", "safe"}
 
-portrule = function(host, port)
-    return port.number == 22 or port.service == "ssh"
-end
+portrule = shortport.port_or_service(22, "ssh")
 
 action = function(host, port)
-    local nmap = require "nmap"
-    local output = {}
+  local socket = nmap.new_socket()
+  local result = {}
+  local status, err = socket:connect(host, port)
 
-    local socket = nmap.new_socket()
-    local status, err = socket:connect(host.ip, port.number)
-    if not status then
-        return "Could not connect to SSH service"
-    end
+  if not status then
+    stdnse.debug1("Could not connect: %s", err)
+    return nil
+  end
 
-    local banner
-    status, banner = socket:receive_lines(1)
-    if status and banner then
-        table.insert(output, "SSH Banner: " .. banner)
+  local response
+  status, response = socket:receive_lines(1)
 
-        if banner:find("OpenSSH") then
-            local version = banner:match("OpenSSH_(%d+%.%d+)")
-            if version then
-                local major, minor = version:match("(%d+)%.(%d+)")
-                if tonumber(major) < 7 then
-                    table.insert(output, "WARNING: Old OpenSSH version: " .. version)
-                end
-            end
+  if status and response then
+    table.insert(result, "SSH Weak Key Check")
+    table.insert(result, "Target: " .. host.ip .. ":" .. port.number)
+
+    if response:match("SSH") then
+      local version = response:match("SSH[%-%d]+%.%d+")
+      if version then
+        table.insert(result, "Protocol: " .. version)
+      end
+
+      if response:match("OpenSSH") then
+        local ossh = response:match("OpenSSH[_%s]+(%d+%.%d+)")
+        if ossh then
+          table.insert(result, "OpenSSH version: " .. ossh)
         end
+      end
     end
 
-    socket:close()
+    table.insert(result, "Note: Key strength analysis requires host key exchange")
+  end
 
-    local ssh2 = nmap.new_socket()
-    status, err = ssh2:connect(host.ip, port.number)
-    if status then
-        local ssh_banner
-        status, ssh_banner = ssh2:receive_lines(1)
-        if status then
-            local kex_init = string.char(
-                0x00, 0x00, 0x01, 0x0c,
-                0x05, 0x14,
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-            )
-            ssh2:send(kex_init)
-        end
-        ssh2:close()
-    end
-
-    local weak_algorithms = {
-        "diffie-hellman-group1-sha1",
-        "diffie-hellman-group14-sha1",
-        "ssh-dss",
-        "arcfour",
-        "blowfish-cbc",
-        "3des-cbc",
-        "hmac-sha1",
-        "hmac-md5",
-    }
-
-    table.insert(output, "\nWeak algorithms to check for:")
-    for _, algo in ipairs(weak_algorithms) do
-        table.insert(output, "  - " .. algo .. " (weak)")
-    end
-
-    table.insert(output, "\nRecommendation: Use modern algorithms:")
-    table.insert(output, "  - curve25519-sha256")
-    table.insert(output, "  - ecdsa-sha2-nistp256")
-    table.insert(output, "  - aes256-gcm@openssh.com")
-    table.insert(output, "  - hmac-sha2-256")
-
-    return stdnse.format_output(true, output)
+  socket:close()
+  return stdnse.format_output(true, result)
 end

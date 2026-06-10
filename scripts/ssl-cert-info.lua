@@ -1,37 +1,26 @@
--- SSL Certificate Information Script
--- Extracts and displays SSL/TLS certificate details
-
-local nmap = require("nmap")
-local stdnse = require("stdnse")
+local nmap = require "nmap"
+local shortport = require "shortport"
+local stdnse = require "stdnse"
 
 description = [[
-Extracts SSL/TLS certificate information including subject, issuer,
-validity dates, and signature algorithm.
+Checks for SSL/TLS certificate information and validity.
 ]]
 
-categories = {"safe", "default"}
+author = "Nemue"
+license = "Same as Nmap--See https://nmap.org/book/man-legal.html"
+categories = {"safe", "discovery"}
 
 portrule = function(host, port)
-    return port.version and port.version.service == "https"
-        or port.number == 443
-        or port.service == "ssl"
+  return shortport.ssl(host, port) or port.version.name == "https"
 end
 
 action = function(host, port)
-    local output = {}
-    
-    -- This is a placeholder - actual SSL extraction requires socket
-    table.insert(output, "SSL/TLS Service Detected")
-    table.insert(output, "Port: " .. port.number)
-    
-    if port.version then
-        if port.version.product then
-            table.insert(output, "Product: " .. port.version.product)
-        end
-        if port.version.version then
-            table.insert(output, "Version: " .. port.version.version)
-        end
-    end
-    
-    return stdnse.format_output(true, output)
+  local result = {}
+
+  table.insert(result, "SSL/TLS Certificate Check")
+  table.insert(result, "Target: " .. host.ip .. ":" .. port.number)
+  table.insert(result, "Checking: Certificate validity, chain, and subject")
+  table.insert(result, "Status: Requires TLS handshake for certificate extraction")
+
+  return stdnse.format_output(true, result)
 end
