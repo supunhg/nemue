@@ -1,13 +1,13 @@
 # Nemue Benchmark Results
 
 **Last Updated**: June 2026
-**Status**: Comprehensive benchmark suite operational (22 groups)
+**Status**: Comprehensive benchmark suite operational (22 groups, 176 benchmarks)
 
 ---
 
 ## Executive Summary
 
-Nemue v0.2.1 features a comprehensive Criterion-based benchmark suite covering **22 benchmark groups** across all major subsystems. The benchmarks are designed for competitive comparison with Nmap, Rustscan, and other scanners, with particular focus on service detection and OS fingerprinting performance — Nemue's key competitive advantages.
+Nemue v0.2.1 features a comprehensive Criterion-based benchmark suite covering **22 benchmark groups** and **176 individual benchmarks** across all major subsystems. The benchmarks are designed for competitive comparison with Nmap, Rustscan, and other scanners, with particular focus on service detection and OS fingerprinting performance — Nemue's key competitive advantages.
 
 ---
 
@@ -135,6 +135,38 @@ open target/criterion/report/index.html
 # View performance history
 cat benchmark-results/performance_log.csv
 ```
+
+### Benchmark Comparison Script
+
+The `scripts/compare_benchmarks.sh` script tracks performance over time and detects regressions:
+
+```bash
+# Run benchmarks and save as a named baseline
+./scripts/compare_benchmarks.sh --run --save v0.2.1
+
+# Compare current results against latest baseline
+./scripts/compare_benchmarks.sh
+
+# Compare against a specific baseline
+./scripts/compare_benchmarks.sh --baseline v0.2.0
+
+# Filter to a specific benchmark group
+./scripts/compare_benchmarks.sh --baseline v0.2.0 --group service_detection
+
+# Show performance trend over time
+./scripts/compare_benchmarks.sh --trend
+
+# List all saved baselines
+./scripts/compare_benchmarks.sh --list
+
+# Output comparison as CSV for scripting
+./scripts/compare_benchmarks.sh --csv > comparison.csv
+
+# Set custom regression threshold (default: 5%)
+./scripts/compare_benchmarks.sh --threshold 10.0
+```
+
+**How it works**: The script parses Criterion's `estimates.json` files (bootstrap mean point estimates) from baseline and current runs. It computes percentage change for each benchmark and flags regressions exceeding the threshold. Reports are saved to `benchmark-results/`.
 
 ---
 
@@ -384,6 +416,8 @@ The most critical benchmarks for competitive comparison with Nmap:
 
 ## Changelog
 
+- **2026-06**: Added `scripts/compare_benchmarks.sh` for baseline comparison and regression tracking
+- **2026-06**: Updated benchmark count to 176 individual benchmarks across 22 groups
 - **2026-06**: Added performance infrastructure benchmarks (lock-free queues, atomic ops, metrics)
 - **2026-06**: Added scan diff benchmarks (small + large comparisons)
 - **2026-06**: Added target scaling benchmarks (CIDR /30 to /24)
