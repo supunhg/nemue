@@ -2167,6 +2167,878 @@ pub fn iot_more_signatures() -> Vec<MatchPattern> {
     ]
 }
 
+/// Get additional web framework signatures - Python, Node, Ruby, PHP, Java, Go, Rust
+pub fn web_frameworks_extra_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Django extra
+        m("http", r"Server: Django/(\d+\.\d+\.\d+)", "Django", Some("$1")),
+        m("http", r"X-Frame-Options: DENY.*django", "Django", None),
+        m("http", r"Set-Cookie:.*csrftoken", "Django", None),
+        m("http", r"Set-Cookie:.*sessionid", "Django", None),
+        m("http", r"X-Content-Type-Options:.*Server:.*WSGIServer", "Django", None),
+
+        // Flask extra
+        m("http", r"Server: Werkzeug/(\d+\.\d+) Python/(\d+\.\d+)", "Flask", Some("$1")),
+        m("http", r"X-Powered-By: Flask/(\d+\.\d+)", "Flask", Some("$1")),
+        m("http", r"Set-Cookie:.*session=.*httponly.*Secure", "Flask", None),
+        m("http", r"Server: CherryPy/(\d+\.\d+) Python/(\d+\.\d+)", "CherryPy", Some("$1")),
+
+        // FastAPI extra
+        m("http", r"Server: uvicorn/(\d+\.\d+) Python/(\d+\.\d+)", "FastAPI/uvicorn", Some("$1")),
+        m("http", r"X-Process-Time:", "FastAPI", None),
+        m("http", r"openapi.json", "FastAPI", None),
+        m("http", r"docs", "FastAPI", None),
+
+        // Tornado extra
+        m("http", r"Server: TornadoServer/(\d+\.\d+\.\d+)", "Tornado", Some("$1")),
+        m("http", r"X-Powered-By: Tornado", "Tornado", None),
+
+        // Pyramid
+        m("http", r"Server: Pyramid/(\d+\.\d+)", "Pyramid", Some("$1")),
+        m("http", r"X-Powered-By: Pyramid", "Pyramid", None),
+        m("http", r"Set-Cookie:.*pyramid_session", "Pyramid", None),
+
+        // Zope extra
+        m("http", r"Server: Zope/(\d+\.\d+)", "Zope", Some("$1")),
+        m("http", r"X-Powered-By: Zope/(\d+\.\d+)", "Zope", Some("$1")),
+
+        // web2py extra
+        m("http", r"Set-Cookie:.*w2p_session", "web2py", None),
+
+        // Dash (Plotly)
+        m("http", r"X-Powered-By: Dash", "Plotly Dash", None),
+        m("http", r"Server: Dash", "Plotly Dash", None),
+
+        // Streamlit
+        m("http", r"Server: Streamlit", "Streamlit", None),
+        m("http", r"X-Powered-By: Streamlit", "Streamlit", None),
+
+        // Gradio
+        m("http", r"Server: Gradio", "Gradio", None),
+        m("http", r"X-Powered-By: Gradio", "Gradio", None),
+
+        // Express extra
+        m("http", r"X-Powered-By: Express/(\d+\.\d+\.\d+)", "Express.js", Some("$1")),
+        m("http", r"Set-Cookie:.*connect.sid", "Express.js", None),
+        m("http", r"Server: Express/(\d+\.\d+)", "Express.js", Some("$1")),
+
+        // Koa extra
+        m("http", r"X-Powered-By: Koa/(\d+\.\d+)", "Koa", Some("$1")),
+        m("http", r"Set-Cookie:.*koa:sess", "Koa", None),
+
+        // Hapi extra
+        m("http", r"Server: hapi/(\d+\.\d+)", "hapi", Some("$1")),
+        m("http", r"X-Powered-By: hapi", "hapi", None),
+
+        // NestJS extra
+        m("http", r"X-Powered-By: NestJS/(\d+\.\d+)", "NestJS", Some("$1")),
+        m("http", r"Server: NestJS", "NestJS", None),
+
+        // Fastify extra
+        m("http", r"Server: fastify/(\d+\.\d+)", "Fastify", Some("$1")),
+        m("http", r"X-Powered-By: fastify", "Fastify", None),
+
+        // Sails.js
+        m("http", r"X-Powered-By: Sails.js", "Sails.js", None),
+        m("http", r"Set-Cookie:.*sails.sid", "Sails.js", None),
+
+        // AdonisJS
+        m("http", r"X-Powered-By: AdonisJs", "AdonisJS", None),
+        m("http", r"Set-Cookie:.*adonis-session", "AdonisJS", None),
+
+        // FeathersJS
+        m("http", r"X-Powered-By: FeathersJS", "FeathersJS", None),
+
+        // LoopBack
+        m("http", r"X-Powered-By: LoopBack", "LoopBack", None),
+
+        // Restify
+        m("http", r"Server: restify", "Restify", None),
+        m("http", r"X-Powered-By: Restify", "Restify", None),
+
+        // Meteor
+        m("http", r"X-Powered-By: Meteor", "Meteor", None),
+        m("http", r"Set-Cookie:.*meteor_login_token", "Meteor", None),
+
+        // Strapi
+        m("http", r"X-Powered-By: Strapi", "Strapi", None),
+        m("http", r"Server: Strapi", "Strapi", None),
+
+        // KeystoneJS
+        m("http", r"X-Powered-By: KeystoneJS", "KeystoneJS", None),
+
+        // Rails extra
+        m("http", r"X-Powered-By: Ruby on Rails", "Ruby on Rails", None),
+        m("http", r"Set-Cookie:.*_session_id", "Ruby on Rails", None),
+        m("http", r"X-Runtime:", "Ruby on Rails", None),
+        m("http", r"X-Request-Id:", "Ruby on Rails", None),
+        m("http", r"Server: Puma/(\d+\.\d+\.\d+)", "Puma", Some("$1")),
+        m("http", r"X-Powered-By: Rails", "Ruby on Rails", None),
+        m("http", r"Set-Cookie:.*_rails_session", "Ruby on Rails", None),
+
+        // Sinatra extra
+        m("http", r"Server: Sinatra/(\d+\.\d+)", "Sinatra", Some("$1")),
+        m("http", r"X-Powered-By: Sinatra/(\d+\.\d+)", "Sinatra", Some("$1")),
+
+        // Puma extra
+        m("http", r"Server: Puma (\d+\.\d+) .*Rails", "Puma (Rails)", Some("$1")),
+        m("http", r"X-Powered-By: Puma", "Puma", None),
+
+        // Unicorn extra
+        m("http", r"Server: Unicorn/(\d+\.\d+)", "Unicorn", Some("$1")),
+        m("http", r"X-Powered-By: Unicorn", "Unicorn", None),
+
+        // Thin extra
+        m("http", r"Server: thin/(\d+\.\d+)", "Thin", Some("$1")),
+        m("http", r"X-Powered-By: Thin", "Thin", None),
+
+        // Passenger extra
+        m("http", r"Server: Phusion Passenger/(\d+\.\d+)", "Phusion Passenger", Some("$1")),
+        m("http", r"X-Powered-By: Phusion Passenger/(\d+\.\d+)", "Phusion Passenger", Some("$1")),
+
+        // Grape
+        m("http", r"X-Powered-By: Grape/(\d+\.\d+)", "Grape", Some("$1")),
+
+        // Hanami
+        m("http", r"X-Powered-By: Hanami", "Hanami", None),
+        m("http", r"Set-Cookie:.*hanami_session", "Hanami", None),
+
+        // Camping
+        m("http", r"X-Powered-By: Camping", "Camping", None),
+
+        // Ramaze
+        m("http", r"X-Powered-By: Ramaze", "Ramaze", None),
+
+        // Laravel extra
+        m("http", r"Set-Cookie:.*laravel_session", "Laravel", None),
+        m("http", r"X-Powered-By: Laravel/(\d+\.\d+)", "Laravel", Some("$1")),
+        m("http", r"Set-Cookie:.*XSRF-TOKEN", "Laravel", None),
+        m("http", r"X-RateLimit-Limit:", "Laravel", None),
+
+        // Symfony extra
+        m("http", r"X-Powered-By: Symfony/(\d+\.\d+)", "Symfony", Some("$1")),
+        m("http", r"Set-Cookie:.*PHPSESSID", "PHP", None),
+        m("http", r"X-Debug-Token:", "Symfony", None),
+        m("http", r"X-Symfony-Cache:", "Symfony", None),
+
+        // CodeIgniter extra
+        m("http", r"X-Powered-By: CodeIgniter/(\d+\.\d+)", "CodeIgniter", Some("$1")),
+        m("http", r"Set-Cookie:.*ci_session", "CodeIgniter", None),
+
+        // CakePHP extra
+        m("http", r"X-Powered-By: CakePHP/(\d+\.\d+)", "CakePHP", Some("$1")),
+        m("http", r"Set-Cookie:.*CAKEPHP", "CakePHP", None),
+
+        // Zend/Laminas extra
+        m("http", r"X-Powered-By: Zend Framework/(\d+\.\d+)", "Zend Framework", Some("$1")),
+        m("http", r"X-Powered-By: Laminas/(\d+\.\d+)", "Laminas", Some("$1")),
+
+        // Yii
+        m("http", r"X-Powered-By: Yii/(\d+\.\d+)", "Yii", Some("$1")),
+        m("http", r"Set-Cookie:.*YII_CSRF_TOKEN", "Yii", None),
+
+        // Slim extra
+        m("http", r"X-Powered-By: Slim/(\d+\.\d+)", "Slim Framework", Some("$1")),
+        m("http", r"Server: Slim", "Slim Framework", None),
+
+        // Lumen
+        m("http", r"X-Powered-By: Lumen/(\d+\.\d+)", "Lumen", Some("$1")),
+
+        // Phalcon
+        m("http", r"X-Powered-By: Phalcon", "Phalcon", None),
+
+        // FuelPHP
+        m("http", r"X-Powered-By: FuelPHP", "FuelPHP", None),
+
+        // Nette
+        m("http", r"X-Powered-By: Nette Framework", "Nette Framework", None),
+        m("http", r"Set-Cookie:.*nette-browser", "Nette Framework", None),
+
+        // October CMS
+        m("http", r"X-Powered-By: October CMS", "October CMS", None),
+
+        // Craft CMS
+        m("http", r"Set-Cookie:.*CraftSessionId", "Craft CMS", None),
+        m("http", r"X-Powered-By: Craft CMS", "Craft CMS", None),
+
+        // Gin extra
+        m("http", r"Server: Gin/(\d+\.\d+)", "Gin", Some("$1")),
+        m("http", r"X-Powered-By: Gin", "Gin", None),
+
+        // Echo extra
+        m("http", r"Server: Echo/(\d+\.\d+)", "Echo", Some("$1")),
+        m("http", r"X-Powered-By: Echo", "Echo", None),
+
+        // Fiber extra
+        m("http", r"Server: Fiber/(\d+\.\d+)", "Fiber", Some("$1")),
+        m("http", r"X-Powered-By: Fiber", "Fiber", None),
+
+        // Chi
+        m("http", r"Server: Chi", "Chi", None),
+        m("http", r"X-Powered-By: Chi", "Chi", None),
+
+        // Buffalo extra
+        m("http", r"X-Powered-By: Buffalo", "Buffalo", None),
+
+        // Beego
+        m("http", r"Server: BeegoServer/(\d+\.\d+)", "Beego", Some("$1")),
+        m("http", r"X-Powered-By: Beego", "Beego", None),
+
+        // Iris
+        m("http", r"Server: Iris", "Iris", None),
+        m("http", r"X-Powered-By: Iris", "Iris", None),
+
+        // Revel
+        m("http", r"Server: Revel", "Revel", None),
+        m("http", r"X-Powered-By: Revel", "Revel", None),
+
+        // Martini
+        m("http", r"Server: Martini", "Martini", None),
+
+        // Gorilla
+        m("http", r"X-Powered-By: Gorilla", "Gorilla", None),
+
+        // Actix extra
+        m("http", r"Server: actix-web/(\d+\.\d+)", "Actix Web", Some("$1")),
+        m("http", r"Server: Actix", "Actix Web", None),
+        m("http", r"X-Powered-By: Actix", "Actix Web", None),
+
+        // Axum extra
+        m("http", r"Server: axum/(\d+\.\d+)", "Axum", Some("$1")),
+        m("http", r"X-Powered-By: Axum", "Axum", None),
+
+        // Rocket extra
+        m("http", r"Server: Rocket/(\d+\.\d+)", "Rocket", Some("$1")),
+        m("http", r"X-Powered-By: Rocket", "Rocket", None),
+
+        // Warp extra
+        m("http", r"Server: warp/(\d+\.\d+)", "Warp", Some("$1")),
+        m("http", r"X-Powered-By: Warp", "Warp", None),
+
+        // Tide
+        m("http", r"Server: Tide", "Tide", None),
+        m("http", r"X-Powered-By: Tide", "Tide", None),
+
+        // Hyper
+        m("http", r"Server: hyper/(\d+\.\d+)", "hyper", Some("$1")),
+
+        // Spring Boot extra
+        m("http", r"X-Application-Context:.*Spring", "Spring Boot", None),
+        m("http", r"Set-Cookie:.*JSESSIONID", "Java", None),
+        m("http", r"Server: Apache-Coyote/(\d+\.\d+)", "Apache Tomcat", Some("$1")),
+        m("http", r"X-Powered-By: Spring/(\d+\.\d+)", "Spring Framework", Some("$1")),
+        m("http", r"X-Powered-By: Spring Boot/(\d+\.\d+)", "Spring Boot", Some("$1")),
+
+        // Struts extra
+        m("http", r"X-Powered-By: Struts/(\d+\.\d+)", "Apache Struts", Some("$1")),
+        m("http", r"Server: Struts", "Apache Struts", None),
+
+        // Play extra
+        m("http", r"X-Powered-By: Play/(\d+\.\d+)", "Play Framework", Some("$1")),
+        m("http", r"Set-Cookie:.*PLAY_SESSION", "Play Framework", None),
+        m("http", r"Server: Play Framework/(\d+\.\d+)", "Play Framework", Some("$1")),
+
+        // Vert.x extra
+        m("http", r"Server: Vert\.x-Web/(\d+\.\d+)", "Vert.x-Web", Some("$1")),
+        m("http", r"X-Powered-By: Vert\.x/(\d+\.\d+)", "Vert.x", Some("$1")),
+
+        // Micronaut extra
+        m("http", r"X-Micronaut-Request-Id:", "Micronaut", None),
+        m("http", r"Server: Micronaut/(\d+\.\d+)", "Micronaut", Some("$1")),
+
+        // Quarkus extra
+        m("http", r"X-Powered-By: Quarkus/(\d+\.\d+)", "Quarkus", Some("$1")),
+        m("http", r"Server: Quarkus/(\d+\.\d+)", "Quarkus", Some("$1")),
+
+        // Dropwizard extra
+        m("http", r"Server: Dropwizard/(\d+\.\d+)", "Dropwizard", Some("$1")),
+        m("http", r"X-Powered-By: Dropwizard/(\d+\.\d+)", "Dropwizard", Some("$1")),
+
+        // Grails extra
+        m("http", r"X-Powered-By: Grails/(\d+\.\d+)", "Grails", Some("$1")),
+
+        // Kestrel extra
+        m("http", r"Server: Kestrel/(\d+\.\d+)", "Kestrel", Some("$1")),
+        m("http", r"X-Powered-By: Kestrel", "Kestrel", None),
+
+        // ASP.NET Core extra
+        m("http", r"Server: Microsoft-IIS/(\d+\.\d+).*ASP\.NET", "ASP.NET Core", Some("$1")),
+        m("http", r"X-Powered-By: ASP\.NET Core/(\d+\.\d+)", "ASP.NET Core", Some("$1")),
+
+        // Nancy
+        m("http", r"X-Powered-By: Nancy/(\d+\.\d+)", "Nancy", Some("$1")),
+    ]
+}
+
+/// Get additional database signatures - more variants and versions
+pub fn database_variants_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Percona MySQL extra
+        m("mysql", r"(\d+\.\d+\.\d+)-percona-sql", "Percona Server", Some("$1")),
+        m("mysql", r"Percona Server.*(\d+\.\d+\.\d+)", "Percona Server", Some("$1")),
+        m("mysql", r"Percona XtraDB Cluster", "Percona XtraDB Cluster", None),
+        m("mysql", r"(\d+\.\d+\.\d+)-PXC", "Percona XtraDB Cluster", Some("$1")),
+
+        // MariaDB extra
+        m("mysql", r"(\d+\.\d+\.\d+)-MariaDB-.*log", "MariaDB", Some("$1")),
+        m("mysql", r"MariaDB (\d+\.\d+\.\d+)", "MariaDB", Some("$1")),
+        m("mysql", r"MariaDB Galera cluster", "MariaDB Galera", None),
+        m("mysql", r"(\d+\.\d+\.\d+)-MariaDB-.*MariaDB Server", "MariaDB", Some("$1")),
+
+        // Aurora extra
+        m("mysql", r"Amazon Aurora MySQL", "Amazon Aurora MySQL", None),
+        m("mysql", r"Aurora MySQL (\d+\.\d+)", "Amazon Aurora MySQL", Some("$1")),
+
+        // MySQL HeatWave
+        m("mysql", r"MySQL.*HeatWave", "MySQL HeatWave", None),
+
+        // Citus extra
+        m("postgres", r"citus/(\d+\.\d+)", "Citus", Some("$1")),
+        m("postgres", r"PostgreSQL.*Citus", "Citus", None),
+
+        // TimescaleDB extra
+        m("postgres", r"timescaledb/(\d+\.\d+\.\d+)", "TimescaleDB", Some("$1")),
+        m("postgres", r"PostgreSQL.*TimescaleDB", "TimescaleDB", None),
+
+        // CockroachDB extra
+        m("postgres", r"CockroachDB CCL v(\d+\.\d+)", "CockroachDB", Some("$1")),
+        m("postgres", r"cockroachdb/(\d+\.\d+)", "CockroachDB", Some("$1")),
+
+        // Greenplum extra
+        m("postgres", r"Greenplum Database (\d+\.\d+)", "Greenplum", Some("$1")),
+        m("postgres", r"Pivotal Greenplum", "Greenplum", None),
+
+        // YugabyteDB extra
+        m("postgres", r"YugabyteDB (\d+\.\d+)", "YugabyteDB", Some("$1")),
+        m("cassandra", r"Yugabyte", "YugabyteDB", None),
+
+        // EnterpriseDB extra
+        m("postgres", r"EnterpriseDB (\d+\.\d+)", "EnterpriseDB", Some("$1")),
+        m("postgres", r"Postgres Plus", "EnterpriseDB", None),
+
+        // Aurora PostgreSQL
+        m("postgres", r"Amazon Aurora PostgreSQL", "Amazon Aurora PostgreSQL", None),
+        m("postgres", r"Aurora PostgreSQL (\d+\.\d+)", "Amazon Aurora PostgreSQL", Some("$1")),
+
+        // MongoDB extra
+        m("mongodb", r"MongoDB (\d+\.\d+\.\d+).*replica set", "MongoDB Replica Set", Some("$1")),
+        m("mongodb", r"MongoDB (\d+\.\d+\.\d+).*sharded", "MongoDB Sharded", Some("$1")),
+        m("mongodb", r"MongoDB Atlas", "MongoDB Atlas", None),
+        m("mongodb", r"mongod.*(\d+\.\d+\.\d+)", "MongoDB", Some("$1")),
+        m("mongodb", r"Percona Server for MongoDB (\d+\.\d+)", "Percona MongoDB", Some("$1")),
+
+        // KeyDB extra
+        m("redis", r"KeyDB v(\d+\.\d+\.\d+)", "KeyDB", Some("$1")),
+        m("redis", r"keydb_version:(\d+\.\d+\.\d+)", "KeyDB", Some("$1")),
+
+        // Dragonfly
+        m("redis", r"dragonfly", "Dragonfly", None),
+        m("redis", r"Dragonfly v(\d+\.\d+\.\d+)", "Dragonfly", Some("$1")),
+        m("redis", r"dfly_version:(\d+\.\d+\.\d+)", "Dragonfly", Some("$1")),
+
+        // Valkey extra
+        m("redis", r"valkey_version:(\d+\.\d+\.\d+)", "Valkey", Some("$1")),
+        m("redis", r"Valkey v(\d+\.\d+\.\d+)", "Valkey", Some("$1")),
+
+        // Redis Sentinel
+        m("redis", r"redis_sentinel", "Redis Sentinel", None),
+
+        // Redis Cluster
+        m("redis", r"redis_cluster", "Redis Cluster", None),
+
+        // Elasticsearch extra
+        m("elasticsearch", r"elasticsearch/(\d+\.\d+\.\d+).*cluster", "Elasticsearch", Some("$1")),
+        m("elasticsearch", r"You Know, for Search", "Elasticsearch", None),
+        m("elasticsearch", r"tagline.*elasticsearch", "Elasticsearch", None),
+        m("http", r"X-elastic-product: Elasticsearch", "Elasticsearch", None),
+
+        // OpenSearch extra
+        m("elasticsearch", r"opensearch/(\d+\.\d+\.\d+)", "OpenSearch", Some("$1")),
+        m("elasticsearch", r"OpenSearch (\d+\.\d+\.\d+)", "OpenSearch", Some("$1")),
+        m("http", r"X-elastic-product: OpenSearch", "OpenSearch", None),
+
+        // Cassandra extra
+        m("cassandra", r"Apache Cassandra (\d+\.\d+\.\d+)", "Apache Cassandra", Some("$1")),
+        m("cassandra", r"thrift/(\d+\.\d+\.\d+)", "Apache Cassandra", Some("$1")),
+        m("cassandra", r"cql/(\d+\.\d+)", "Apache Cassandra", Some("$1")),
+        m("cassandra", r"ScyllaDB (\d+\.\d+\.\d+)", "ScyllaDB", Some("$1")),
+        m("cassandra", r"Scylla (\d+\.\d+)", "ScyllaDB", Some("$1")),
+
+        // CouchDB extra
+        m("couchdb", r"Apache CouchDB/(\d+\.\d+\.\d+)", "Apache CouchDB", Some("$1")),
+        m("couchdb", r"Apache CouchDB (\d+\.\d+\.\d+)", "Apache CouchDB", Some("$1")),
+        m("http", r"Server: CouchDB/(\d+\.\d+)", "CouchDB", Some("$1")),
+        m("http", r"X-CouchDB", "CouchDB", None),
+
+        // ClickHouse extra
+        m("clickhouse", r"ClickHouse server version (\d+\.\d+\.\d+)", "ClickHouse", Some("$1")),
+        m("http", r"X-ClickHouse-Format:", "ClickHouse", None),
+        m("http", r"X-ClickHouse-Timezone:", "ClickHouse", None),
+
+        // InfluxDB extra
+        m("influxdb", r"InfluxDB (\d+\.\d+\.\d+)", "InfluxDB", Some("$1")),
+        m("influxdb", r"InfluxDB OSS", "InfluxDB OSS", None),
+        m("influxdb", r"InfluxDB Enterprise", "InfluxDB Enterprise", None),
+        m("http", r"X-Influxdb-Build: OSS", "InfluxDB OSS", None),
+
+        // Prometheus extra
+        m("prometheus", r"Prometheus (\d+\.\d+\.\d+)", "Prometheus", Some("$1")),
+        m("http", r"X-Prometheus", "Prometheus", None),
+
+        // VictoriaMetrics
+        m("http", r"X-VictoriaMetrics", "VictoriaMetrics", None),
+        m("vmselect", r"VictoriaMetrics", "VictoriaMetrics", None),
+
+        // Memcached extra
+        m("memcached", r"memcached (\d+\.\d+\.\d+)", "Memcached", Some("$1")),
+        m("memcached", r"Memcached (\d+\.\d+\.\d+)", "Memcached", Some("$1")),
+
+        // Aerospike extra
+        m("aerospike", r"Aerospike (\d+\.\d+\.\d+)", "Aerospike", Some("$1")),
+        m("aerospike", r"ASDB (\d+\.\d+)", "Aerospike", Some("$1")),
+
+        // Couchbase extra
+        m("couchbase", r"Couchbase Server (\d+\.\d+)", "Couchbase", Some("$1")),
+        m("http", r"X-Couchbase-.*:.*(\d+\.\d+)", "Couchbase", Some("$1")),
+
+        // Neo4j extra
+        m("neo4j", r"Neo4j/(\d+\.\d+\.\d+)", "Neo4j", Some("$1")),
+        m("bolt", r"Neo4j/(\d+\.\d+)", "Neo4j", Some("$1")),
+        m("http", r"X-Neo4j-Version:", "Neo4j", None),
+
+        // ArangoDB extra
+        m("arangodb", r"ArangoDB (\d+\.\d+\.\d+)", "ArangoDB", Some("$1")),
+        m("http", r"X-ArangoDB-Version:", "ArangoDB", None),
+
+        // RethinkDB extra
+        m("rethinkdb", r"RethinkDB (\d+\.\d+\.\d+)", "RethinkDB", Some("$1")),
+
+        // RavenDB extra
+        m("ravendb", r"RavenDB/(\d+\.\d+)", "RavenDB", Some("$1")),
+        m("http", r"RavenDB/(\d+\.\d+)", "RavenDB", Some("$1")),
+
+        // OrientDB extra
+        m("orientdb", r"OrientDB (\d+\.\d+\.\d+)", "OrientDB", Some("$1")),
+
+        // Firebird extra
+        m("firebird", r"Firebird/(\d+\.\d+\.\d+)", "Firebird", Some("$1")),
+        m("firebird", r"Firebird SQL", "Firebird", None),
+
+        // SQLite
+        m("sqlite", r"SQLite (\d+\.\d+\.\d+)", "SQLite", Some("$1")),
+        m("sqlite", r"SQLite3", "SQLite", None),
+
+        // HBase
+        m("hbase", r"Apache HBase", "Apache HBase", None),
+        m("hbase", r"HBase (\d+\.\d+\.\d+)", "Apache HBase", Some("$1")),
+
+        // Solr
+        m("solr", r"Apache Solr", "Apache Solr", None),
+        m("solr", r"Solr/(\d+\.\d+\.\d+)", "Apache Solr", Some("$1")),
+        m("http", r"X-Solr", "Apache Solr", None),
+
+        // Presto/Trino
+        m("presto", r"Presto", "Presto", None),
+        m("trino", r"Trino", "Trino", None),
+        m("http", r"X-Presto", "Presto", None),
+        m("http", r"X-Trino", "Trino", None),
+
+        // DynamoDB
+        m("dynamodb", r"DynamoDB", "Amazon DynamoDB", None),
+        m("http", r"X-Amz-Target:.*DynamoDB", "Amazon DynamoDB", None),
+    ]
+}
+
+/// Get additional network equipment signatures
+pub fn network_equip_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Cisco IOS versions extra
+        m("telnet", r"Cisco IOS Software,.*Version (\d+\.\d+)", "Cisco IOS", Some("$1")),
+        m("telnet", r"Cisco Internetwork Operating System Software", "Cisco IOS", None),
+        m("ssh", r"SSH-2.0-Cisco-1\.25", "Cisco IOS SSH", None),
+        m("http", r"cisco-IOS/(\d+\.\d+)", "Cisco IOS HTTP", Some("$1")),
+        m("telnet", r"Cisco Catalyst", "Cisco Catalyst", None),
+        m("telnet", r"Cisco Systems.*Switch", "Cisco Switch", None),
+        m("telnet", r"Cisco.*Router", "Cisco Router", None),
+
+        // Cisco Meraki extra
+        m("http", r"Meraki Dashboard", "Cisco Meraki", None),
+        m("http", r"Server: Meraki/(\d+)", "Cisco Meraki", Some("$1")),
+
+        // Cisco WLC
+        m("ssh", r"SSH-2.0-Cisco.*WLC", "Cisco WLC", None),
+        m("http", r"Cisco Controller", "Cisco WLC", None),
+
+        // Cisco ASA extra
+        m("ssh", r"SSH-2.0-Cisco-.*Adaptive", "Cisco ASA", None),
+        m("http", r"Cisco ASA", "Cisco ASA", None),
+        m("telnet", r"Cisco Adaptive Security Appliance", "Cisco ASA", None),
+
+        // Juniper Junos extra
+        m("ssh", r"SSH-2.0-JUNOS (\d+\.\d+)", "Juniper Junos", Some("$1")),
+        m("telnet", r"Juniper Networks.*JUNOS Software", "Juniper Junos", None),
+        m("telnet", r"Juniper.*MX", "Juniper MX", None),
+        m("telnet", r"Juniper.*SRX", "Juniper SRX", None),
+        m("telnet", r"Juniper.*EX", "Juniper EX", None),
+        m("telnet", r"Juniper.*QFX", "Juniper QFX", None),
+
+        // Juniper Mist
+        m("https", r"Mist Systems", "Juniper Mist", None),
+
+        // Fortinet FortiOS extra
+        m("ssh", r"SSH-2.0-FortiOS v(\d+\.\d+)", "Fortinet FortiOS", Some("$1")),
+        m("https", r"FortiGate/(\d+\.\d+)", "Fortinet FortiGate", Some("$1")),
+        m("http", r"Server: Fortinet/(\d+\.\d+)", "Fortinet", Some("$1")),
+        m("https", r"FortiAnalyzer", "FortiAnalyzer", None),
+        m("https", r"FortiManager", "FortiManager", None),
+        m("https", r"FortiWeb", "FortiWeb", None),
+        m("https", r"FortiMail", "FortiMail", None),
+        m("https", r"FortiSwitch", "FortiSwitch", None),
+        m("https", r"FortiAP", "FortiAP", None),
+
+        // Palo Alto PAN-OS extra
+        m("ssh", r"SSH-2.0-PAN-OS (\d+\.\d+)", "Palo Alto PAN-OS", Some("$1")),
+        m("https", r"PAN-OS (\d+\.\d+)", "Palo Alto PAN-OS", Some("$1")),
+        m("http", r"Server: PanWeb Server/", "Palo Alto PAN-OS", None),
+        m("https", r"GlobalProtect", "Palo Alto GlobalProtect", None),
+        m("https", r"Panorama", "Palo Alto Panorama", None),
+
+        // Arista EOS extra
+        m("ssh", r"SSH-2.0-Arista.*EOS v(\d+\.\d+)", "Arista EOS", Some("$1")),
+        m("telnet", r"Arista Networks EOS", "Arista EOS", None),
+        m("http", r"Arista EOS", "Arista EOS", None),
+
+        // Dell Networking OS extra
+        m("ssh", r"SSH-2.0-OpenSSH.*Dell EMC", "Dell EMC SSH", None),
+        m("telnet", r"Dell Networking OS (\d+\.\d+)", "Dell Networking OS", Some("$1")),
+        m("telnet", r"PowerConnect (\d+)", "Dell PowerConnect", Some("$1")),
+        m("telnet", r"OS10 Enterprise", "Dell OS10", None),
+        m("telnet", r"Dell Force10", "Dell Force10", None),
+
+        // HPE ArubaOS extra
+        m("ssh", r"SSH-2.0-ArubaOS (\d+\.\d+)", "ArubaOS", Some("$1")),
+        m("telnet", r"ArubaOS (\d+\.\d+)", "ArubaOS", Some("$1")),
+        m("ssh", r"SSH-2.0-HP ProCurve", "HP ProCurve", None),
+        m("telnet", r"HP.*ProCurve Switch", "HP ProCurve", None),
+        m("ssh", r"SSH-2.0-HPE OfficeConnect", "HPE OfficeConnect", None),
+        m("telnet", r"HPE.*FlexNetwork", "HPE FlexNetwork", None),
+
+        // Huawei VRP extra
+        m("ssh", r"SSH-2.0-SSH_.*VRP (\d+\.\d+)", "Huawei VRP", Some("$1")),
+        m("telnet", r"Huawei.*VRP.*Version (\d+\.\d+)", "Huawei VRP", Some("$1")),
+        m("telnet", r"AR Series", "Huawei AR Router", None),
+        m("telnet", r"S Series Switch", "Huawei S Series Switch", None),
+        m("telnet", r"NE Series Router", "Huawei NE Router", None),
+        m("http", r"Huawei.*Home Gateway", "Huawei Home Gateway", None),
+
+        // MikroTik extra
+        m("ssh", r"SSH-2.0-ROSSSH.*(\d+\.\d+)", "MikroTik RouterOS", Some("$1")),
+        m("telnet", r"MikroTik.*RouterOS (\d+\.\d+)", "MikroTik RouterOS", Some("$1")),
+        m("http", r"RouterOS (\d+\.\d+)", "MikroTik RouterOS", Some("$1")),
+        m("http", r"MikroTik.*RouterOS", "MikroTik RouterOS", None),
+        m("mikrotik", r"RouterOS", "MikroTik RouterOS", None),
+
+        // Ubiquiti extra
+        m("ssh", r"SSH-2.0-Ubiquiti Networks", "Ubiquiti SSH", None),
+        m("ssh", r"SSH-2.0-EdgeMax", "Ubiquiti EdgeRouter SSH", None),
+        m("http", r"UBNT.*airOS", "Ubiquiti airOS", None),
+        m("http", r"airOS/(\d+\.\d+)", "Ubiquiti airOS", Some("$1")),
+        m("http", r"UniFi Network", "Ubiquiti UniFi", None),
+        m("http", r"EdgeRouter", "Ubiquiti EdgeRouter", None),
+        m("http", r"EdgeSwitch", "Ubiquiti EdgeSwitch", None),
+
+        // Check Point extra
+        m("ssh", r"SSH-2.0-CP.*Gaia", "Check Point Gaia SSH", None),
+        m("https", r"Check Point.*Gateway", "Check Point Gateway", None),
+        m("http", r"Server: Check Point", "Check Point HTTP", None),
+        m("https", r"Check Point Mobile Access", "Check Point VPN", None),
+
+        // SonicWall extra
+        m("ssh", r"SSH-2.0-SonicWall.*(\d+\.\d+)", "SonicWall", Some("$1")),
+        m("http", r"Server: SonicWALL/(\d+)", "SonicWall", Some("$1")),
+        m("https", r"SonicWall.*NSA", "SonicWall NSA", None),
+        m("https", r"SonicWall.*TZ", "SonicWall TZ", None),
+
+        // Barracuda extra
+        m("ssh", r"SSH-2.0-Barracuda.*(\d+\.\d+)", "Barracuda", Some("$1")),
+        m("http", r"Server: BarracudaHTTP/(\d+)", "Barracuda", Some("$1")),
+        m("https", r"Barracuda.*Web Application Firewall", "Barracuda WAF", None),
+
+        // Citrix NetScaler/ADC extra
+        m("ssh", r"SSH-2.0-NS", "Citrix ADC SSH", None),
+        m("http", r"Server: NetScaler/(\d+\.\d+)", "Citrix NetScaler", Some("$1")),
+        m("http", r"ns_af=.*NSC_", "Citrix NetScaler", None),
+        m("https", r"Citrix ADC", "Citrix ADC", None),
+
+        // F5 BIG-IP extra
+        m("ssh", r"SSH-2.0-OpenSSH.*f5.*BIG-IP", "F5 BIG-IP SSH", None),
+        m("http", r"Server: BigIP/(\d+\.\d+)", "F5 BIG-IP", Some("$1")),
+        m("http", r"BIGipServer.*!encoded", "F5 BIG-IP", None),
+        m("http", r"X-Cnection: close", "F5 BIG-IP", None),
+        m("https", r"F5 BIG-IP", "F5 BIG-IP", None),
+        m("https", r"Big-IP", "F5 BIG-IP", None),
+
+        // A10 Networks extra
+        m("ssh", r"SSH-2.0-A10.*(\d+\.\d+)", "A10 Networks", Some("$1")),
+        m("http", r"A10.*Thunder", "A10 Thunder", None),
+        m("https", r"ACOS", "A10 ACOS", None),
+
+        // Brocade extra
+        m("ssh", r"SSH-2.0-Brocade.*(\d+\.\d+)", "Brocade", Some("$1")),
+        m("telnet", r"Brocade.*FabricOS", "Brocade FabricOS", None),
+        m("telnet", r"FabricOS.*v(\d+\.\d+)", "Brocade FabricOS", Some("$1")),
+
+        // Extreme Networks extra
+        m("ssh", r"SSH-2.0-ExtremeXOS.*(\d+\.\d+)", "Extreme Networks", Some("$1")),
+        m("telnet", r"ExtremeXOS.*(\d+\.\d+)", "Extreme Networks", Some("$1")),
+        m("telnet", r"Extreme.*SLX", "Extreme SLX", None),
+
+        // Ruckus extra
+        m("ssh", r"SSH-2.0-Ruckus.*(\d+\.\d+)", "Ruckus", Some("$1")),
+        m("http", r"Ruckus Wireless", "Ruckus Wireless", None),
+        m("http", r"Ruckus.*ZoneFlex", "Ruckus ZoneFlex", None),
+        m("http", r"Ruckus.*Unleashed", "Ruckus Unleashed", None),
+
+        // Zyxel extra
+        m("ssh", r"SSH-2.0-Zyxel.*(\d+\.\d+)", "Zyxel", Some("$1")),
+        m("telnet", r"ZyXEL.*(\d+\.\d+)", "Zyxel", Some("$1")),
+        m("http", r"ZyXEL.*Router", "Zyxel Router", None),
+        m("http", r"ZyWALL", "Zyxel ZyWALL", None),
+
+        // DrayTek extra
+        m("ssh", r"SSH-2.0-DrayTek.*(\d+\.\d+)", "DrayTek", Some("$1")),
+        m("telnet", r"DrayTek.*Vigor (\d+)", "DrayTek Vigor", Some("$1")),
+        m("http", r"DrayTek.*Vigor (\d+)", "DrayTek Vigor", Some("$1")),
+
+        // TP-Link extra
+        m("ssh", r"SSH-2.0-TP-LINK.*(\d+)", "TP-Link", Some("$1")),
+        m("telnet", r"TP-LINK", "TP-Link", None),
+        m("http", r"TP-LINK.*Router", "TP-Link Router", None),
+        m("http", r"Server: TP-LINK", "TP-Link", None),
+
+        // Netgear extra
+        m("ssh", r"SSH-2.0-Netgear.*(\d+)", "Netgear", Some("$1")),
+        m("http", r"NETGEAR.*(\w+)", "Netgear", None),
+        m("http", r"Server: NETGEAR", "Netgear", None),
+
+        // Linksys extra
+        m("ssh", r"SSH-2.0-Linksys.*(\d+)", "Linksys", Some("$1")),
+        m("http", r"Linksys.*Smart Wi-Fi", "Linksys Smart Wi-Fi", None),
+        m("http", r"Server: Linksys", "Linksys", None),
+    ]
+}
+
+/// Get additional IoT device signatures
+pub fn iot_devices_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Hikvision extra
+        m("http", r"Hikvision.*DS-\w+", "Hikvision Camera", None),
+        m("http", r"Server: App-webs/", "Hikvision", None),
+        m("rtsp", r"Hikvision.*(\d+\.\d+)", "Hikvision", Some("$1")),
+        m("http", r"Hikvision.*NVR", "Hikvision NVR", None),
+        m("http", r"Hikvision.*DVR", "Hikvision DVR", None),
+
+        // Dahua extra
+        m("http", r"Dahua.*IPC", "Dahua IPC Camera", None),
+        m("http", r"Dahua.*NVR", "Dahua NVR", None),
+        m("http", r"Dahua.*DVR", "Dahua DVR", None),
+        m("rtsp", r"Dahua.*(\d+\.\d+)", "Dahua", Some("$1")),
+        m("http", r"Server: DNVRS-Webs/(\d+)", "Dahua", Some("$1")),
+
+        // Axis extra
+        m("http", r"AXIS.*P\d+", "Axis Camera", None),
+        m("http", r"AXIS.*M\d+", "Axis Camera", None),
+        m("http", r"AXIS.*Q\d+", "Axis Camera", None),
+        m("http", r"Server: AXIS/(\d+\.\d+)", "Axis Camera", Some("$1")),
+        m("rtsp", r"AXIS.*(\d+\.\d+)", "Axis Camera", Some("$1")),
+
+        // Bosch extra
+        m("http", r"Bosch.*DINION", "Bosch Dinion Camera", None),
+        m("http", r"Bosch.*FLEXIDOME", "Bosch Flexidome Camera", None),
+        m("http", r"Bosch.*MIC", "Bosch MIC Camera", None),
+        m("rtsp", r"Bosch.*(\d+\.\d+)", "Bosch Camera", Some("$1")),
+
+        // Hanwha/Samsung extra
+        m("http", r"Hanwha.*WiseNet", "Hanwha WiseNet Camera", None),
+        m("http", r"Samsung.*WiseNet", "Hanwha WiseNet Camera", None),
+        m("http", r"Server: Hanwha/(\d+)", "Hanwha Camera", Some("$1")),
+
+        // FLIR extra
+        m("http", r"FLIR.*FC-\w+", "FLIR Camera", None),
+        m("http", r"FLIR.*PTZ", "FLIR PTZ Camera", None),
+
+        // Pelco extra
+        m("http", r"Pelco.*Sarix", "Pelco Sarix Camera", None),
+        m("http", r"Pelco.*Spectra", "Pelco Spectra Camera", None),
+
+        // Panasonic extra
+        m("http", r"Panasonic.*WV-\w+", "Panasonic Camera", None),
+        m("rtsp", r"Panasonic", "Panasonic Camera", None),
+
+        // Geovision extra
+        m("http", r"GeoVision.*GV-\w+", "GeoVision Camera", None),
+        m("http", r"Server: GeoHttpServer/(\d+)", "GeoVision", Some("$1")),
+
+        // Sony extra
+        m("http", r"Sony.*SNC-\w+", "Sony SNC Camera", None),
+        m("http", r"Server: Sony Network Camera", "Sony Camera", None),
+
+        // Mobotix extra
+        m("http", r"MOBOTIX.*M\d+", "MOBOTIX Camera", None),
+        m("http", r"Server: MOBOTIX/(\d+)", "MOBOTIX Camera", Some("$1")),
+
+        // Vivotek extra
+        m("http", r"Vivotek.*FD\d+", "Vivotek Camera", None),
+        m("http", r"Vivotek.*MD\d+", "Vivotek Camera", None),
+        m("http", r"Server: Vivotek/(\d+)", "Vivotek Camera", Some("$1")),
+
+        // Uniview extra
+        m("http", r"Uniview.*IPC", "Uniview IPC Camera", None),
+        m("http", r"Uniview.*NVR", "Uniview NVR", None),
+
+        // Amcrest extra
+        m("http", r"Amcrest.*IP\d+", "Amcrest Camera", None),
+
+        // Foscam extra
+        m("http", r"FOSCAM.*FI\d+", "Foscam Camera", None),
+        m("http", r"Foscam.*FI\d+", "Foscam Camera", None),
+
+        // Reolink extra
+        m("http", r"Reolink.*RLC-\w+", "Reolink Camera", None),
+        m("http", r"Reolink.*(\d+MP)", "Reolink Camera", None),
+
+        // Siemens SIMATIC extra
+        m("http", r"SIMATIC.*S7-\d+", "Siemens SIMATIC S7", None),
+        m("http", r"SIMATIC.*WinCC", "Siemens WinCC", None),
+        m("http", r"SIMATIC HMI", "Siemens HMI", None),
+        m("http", r"Siemens.*LOGO!", "Siemens LOGO!", None),
+        m("http", r"Siemens.*Scalance", "Siemens Scalance", None),
+        m("siemens", r"SIMATIC S7", "Siemens SIMATIC S7", None),
+        m("siemens", r"SIMATIC WinCC", "Siemens WinCC", None),
+        m("http", r"Server: Siemens", "Siemens Device", None),
+
+        // Allen-Bradley / Rockwell extra
+        m("http", r"Allen-Bradley.*MicroLogix", "Allen-Bradley MicroLogix", None),
+        m("http", r"Allen-Bradley.*CompactLogix", "Allen-Bradley CompactLogix", None),
+        m("http", r"Allen-Bradley.*ControlLogix", "Allen-Bradley ControlLogix", None),
+        m("http", r"Rockwell.*CompactLogix", "Rockwell CompactLogix", None),
+        m("http", r"Rockwell.*ControlLogix", "Rockwell ControlLogix", None),
+        m("ethernetip", r"Rockwell Automation", "Rockwell Automation", None),
+
+        // Schneider Electric extra
+        m("http", r"Schneider.*Modicon M\d+", "Schneider Modicon M", None),
+        m("http", r"Schneider.*Modicon TM\d+", "Schneider Modicon TM", None),
+        m("http", r"Schneider.*PowerLogic", "Schneider PowerLogic", None),
+        m("http", r"Schneider.*EcoStruxure", "Schneider EcoStruxure", None),
+        m("modbus", r"Schneider Electric", "Schneider Electric", None),
+
+        // ABB extra
+        m("http", r"ABB.*AC500", "ABB AC500 PLC", None),
+        m("http", r"ABB.*Drive", "ABB Drive", None),
+
+        // Honeywell extra
+        m("http", r"Honeywell.*HC\d+", "Honeywell Controller", None),
+        m("http", r"Honeywell.*WEBs", "Honeywell WEBs", None),
+
+        // Phoenix Contact
+        m("http", r"Phoenix Contact", "Phoenix Contact Device", None),
+        m("http", r"PCWORX", "Phoenix Contact PCWORX", None),
+        m("http", r"Server: ILC", "Phoenix Contact ILC", None),
+
+        // Beckhoff
+        m("http", r"Beckhoff.*TwinCAT", "Beckhoff TwinCAT", None),
+        m("http", r"Server: Beckhoff", "Beckhoff Device", None),
+
+        // WAGO
+        m("http", r"WAGO.*PFC\d+", "WAGO PFC Controller", None),
+        m("http", r"Server: WAGO", "WAGO Device", None),
+
+        // Omron
+        m("http", r"Omron.*NJ\d+", "Omron NJ Controller", None),
+        m("http", r"Omron.*NX\d+", "Omron NX Controller", None),
+        m("http", r"Server: Omron", "Omron Device", None),
+
+        // Emerson/GE
+        m("http", r"Emerson.*PACSystems", "Emerson PACSystems", None),
+        m("http", r"GE.*PACSystems", "GE PACSystems", None),
+
+        // Yokogawa
+        m("http", r"Yokogawa.*STARDOM", "Yokogawa STARDOM", None),
+        m("http", r"Server: Yokogawa", "Yokogawa Device", None),
+
+        // Mitsubishi
+        m("http", r"Mitsubishi.*MELSEC", "Mitsubishi MELSEC", None),
+        m("http", r"Server: Mitsubishi", "Mitsubishi Device", None),
+
+        // Smart home extra
+        m("http", r"Server: HomeAssistant", "Home Assistant", None),
+        m("http", r"X-Home-Assistant", "Home Assistant", None),
+        m("http", r"Home Assistant/(\d+\.\d+)", "Home Assistant", Some("$1")),
+        m("http", r"OpenHAB/(\d+\.\d+)", "OpenHAB", Some("$1")),
+        m("http", r"Server: openHAB", "OpenHAB", None),
+        m("http", r"Domoticz", "Domoticz", None),
+        m("http", r"Server: Domoticz", "Domoticz", None),
+
+        // Router firmware extra
+        m("http", r"Server: httpd/.*ASUS.*(\d+\.\d+)", "ASUS Router", Some("$1")),
+        m("http", r"RT-\w+", "ASUS Router", None),
+        m("http", r"ASUS.*RT-\w+", "ASUS Router", None),
+
+        // DD-WRT extra
+        m("http", r"DD-WRT v\d+", "DD-WRT", None),
+        m("http", r"Server: httpd.*DD-WRT.*(\d+)", "DD-WRT", Some("$1")),
+
+        // OpenWrt extra
+        m("http", r"Server: uhttpd.*OpenWrt", "OpenWrt", None),
+        m("http", r"OpenWrt.*(\d+\.\d+)", "OpenWrt", Some("$1")),
+
+        // Tomato extra
+        m("http", r"Tomato.*(\d+\.\d+)", "Tomato firmware", Some("$1")),
+        m("http", r"Server: httpd.*Tomato.*(\d+)", "Tomato firmware", Some("$1")),
+
+        // Ubiquiti UniFi extra
+        m("http", r"UniFi.*AP", "Ubiquiti UniFi AP", None),
+        m("http", r"UniFi.*Switch", "Ubiquiti UniFi Switch", None),
+        m("http", r"UniFi.*Gateway", "Ubiquiti UniFi Gateway", None),
+        m("unifi", r"UniFi Network", "Ubiquiti UniFi Network", None),
+
+        // NVR/DVR extra
+        m("http", r"Server: XMGOO", "XMGOO DVR", None),
+        m("http", r"Server: JAWS", "JAWS Camera", None),
+        m("http", r"Server: NetSurveillance", "NetSurveillance DVR", None),
+        m("http", r"Server: Cross Web Server", "Cross Web DVR", None),
+
+        // VoIP phones
+        m("http", r"Polycom.*VVX", "Polycom VVX Phone", None),
+        m("http", r"Polycom.*SoundStation", "Polycom Conference Phone", None),
+        m("http", r"Yealink.*T\d+", "Yealink Phone", None),
+        m("http", r"Yealink.*W\d+", "Yealink Phone", None),
+        m("http", r"Cisco.*SPA\d+", "Cisco SPA Phone", None),
+        m("http", r"Cisco.*IP Phone", "Cisco IP Phone", None),
+        m("http", r"Grandstream.*GXP", "Grandstream Phone", None),
+        m("http", r"Grandstream.*GXV", "Grandstream Video Phone", None),
+        m("http", r"Snom.*\d+", "Snom Phone", None),
+        m("http", r"Fanvil.*\d+", "Fanvil Phone", None),
+
+        // NAS devices
+        m("http", r"Synology.*DiskStation", "Synology DiskStation", None),
+        m("http", r"Server: Synology", "Synology NAS", None),
+        m("http", r"QNAP.*Turbo NAS", "QNAP Turbo NAS", None),
+        m("http", r"Server: QNAP", "QNAP NAS", None),
+        m("http", r"WD.*My Cloud", "WD My Cloud", None),
+        m("http", r"ReadyNAS", "Netgear ReadyNAS", None),
+        m("http", r"TerraMaster.*F\d+", "TerraMaster NAS", None),
+        m("http", r"Asustor.*ADM", "Asustor NAS", None),
+
+        // UPS devices
+        m("http", r"APC.*UPS", "APC UPS", None),
+        m("http", r"Server: APC", "APC Device", None),
+        m("http", r"Eaton.*UPS", "Eaton UPS", None),
+        m("http", r"CyberPower.*UPS", "CyberPower UPS", None),
+        m("http", r"Server: CyberPower", "CyberPower Device", None),
+    ]
+}
+
 /// Get all signatures combined
 pub fn all_signatures() -> Vec<MatchPattern> {
     let mut sigs = Vec::new();
@@ -2206,6 +3078,10 @@ pub fn all_signatures() -> Vec<MatchPattern> {
     sigs.extend(mail_more_signatures());
     sigs.extend(network_more_signatures());
     sigs.extend(iot_more_signatures());
+    sigs.extend(web_frameworks_extra_signatures());
+    sigs.extend(database_variants_signatures());
+    sigs.extend(network_equip_signatures());
+    sigs.extend(iot_devices_signatures());
     sigs
 }
 
@@ -2240,7 +3116,7 @@ mod tests {
     #[test]
     fn test_all_signatures_count() {
         let sigs = all_signatures();
-        assert!(sigs.len() >= 750, "Expected at least 750 total signatures, got {}", sigs.len());
+        assert!(sigs.len() >= 1500, "Expected at least 1500 total signatures, got {}", sigs.len());
     }
 
     #[test]
