@@ -4105,6 +4105,362 @@ pub fn version_specific_framework_signatures() -> Vec<MatchPattern> {
     ]
 }
 
+/// Get version-specific database signatures
+pub fn version_specific_database_signatures() -> Vec<MatchPattern> {
+    vec![
+        // MySQL 5.0 specific
+        m("mysql", r"5\.0\.(\d+)-", "MySQL 5.0", Some("5.0.$1")),
+        m("mysql", r"5\.0\.(\d+)$", "MySQL 5.0", Some("5.0.$1")),
+        // MySQL 5.1 specific
+        m("mysql", r"5\.1\.(\d+)-", "MySQL 5.1", Some("5.1.$1")),
+        m("mysql", r"5\.1\.(\d+)$", "MySQL 5.1", Some("5.1.$1")),
+        // MySQL 5.5 specific
+        m("mysql", r"5\.5\.(\d+)-", "MySQL 5.5", Some("5.5.$1")),
+        m("mysql", r"5\.5\.(\d+)$", "MySQL 5.5", Some("5.5.$1")),
+        // MySQL 5.6 specific
+        m("mysql", r"5\.6\.(\d+)-", "MySQL 5.6", Some("5.6.$1")),
+        m("mysql", r"5\.6\.(\d+)$", "MySQL 5.6", Some("5.6.$1")),
+        // MySQL 5.7 specific
+        m("mysql", r"5\.7\.(\d+)-", "MySQL 5.7", Some("5.7.$1")),
+        m("mysql", r"5\.7\.(\d+)$", "MySQL 5.7", Some("5.7.$1")),
+        // MySQL 8.0 specific
+        m("mysql", r"8\.0\.(\d+)-", "MySQL 8.0", Some("8.0.$1")),
+        m("mysql", r"8\.0\.(\d+)$", "MySQL 8.0", Some("8.0.$1")),
+        // MySQL 8.4 specific
+        m("mysql", r"8\.4\.(\d+)-", "MySQL 8.4", Some("8.4.$1")),
+        m("mysql", r"9\.0\.(\d+)-", "MySQL 9.0", Some("9.0.$1")),
+        // MySQL Community
+        m("mysql", r"(\d+\.\d+\.\d+)-MySQL Community Server", "MySQL Community", Some("$1")),
+        m("mysql", r"(\d+\.\d+\.\d+)-commercial", "MySQL Commercial", Some("$1")),
+        // MariaDB 5.5
+        m("mysql", r"5\.5\.(\d+)-MariaDB", "MariaDB 5.5", Some("5.5.$1")),
+        // MariaDB 10.x
+        m("mysql", r"10\.0\.(\d+)-MariaDB", "MariaDB 10.0", Some("10.0.$1")),
+        m("mysql", r"10\.1\.(\d+)-MariaDB", "MariaDB 10.1", Some("10.1.$1")),
+        m("mysql", r"10\.2\.(\d+)-MariaDB", "MariaDB 10.2", Some("10.2.$1")),
+        m("mysql", r"10\.3\.(\d+)-MariaDB", "MariaDB 10.3", Some("10.3.$1")),
+        m("mysql", r"10\.4\.(\d+)-MariaDB", "MariaDB 10.4", Some("10.4.$1")),
+        m("mysql", r"10\.5\.(\d+)-MariaDB", "MariaDB 10.5", Some("10.5.$1")),
+        m("mysql", r"10\.6\.(\d+)-MariaDB", "MariaDB 10.6", Some("10.6.$1")),
+        m("mysql", r"10\.11\.(\d+)-MariaDB", "MariaDB 10.11", Some("10.11.$1")),
+        m("mysql", r"11\.0\.(\d+)-MariaDB", "MariaDB 11.0", Some("11.0.$1")),
+        m("mysql", r"11\.4\.(\d+)-MariaDB", "MariaDB 11.4", Some("11.4.$1")),
+
+        // PostgreSQL 9.x specific
+        m("postgres", r"PostgreSQL 9\.0\.(\d+)", "PostgreSQL 9.0", Some("9.0.$1")),
+        m("postgres", r"PostgreSQL 9\.1\.(\d+)", "PostgreSQL 9.1", Some("9.1.$1")),
+        m("postgres", r"PostgreSQL 9\.2\.(\d+)", "PostgreSQL 9.2", Some("9.2.$1")),
+        m("postgres", r"PostgreSQL 9\.3\.(\d+)", "PostgreSQL 9.3", Some("9.3.$1")),
+        m("postgres", r"PostgreSQL 9\.4\.(\d+)", "PostgreSQL 9.4", Some("9.4.$1")),
+        m("postgres", r"PostgreSQL 9\.5\.(\d+)", "PostgreSQL 9.5", Some("9.5.$1")),
+        m("postgres", r"PostgreSQL 9\.6\.(\d+)", "PostgreSQL 9.6", Some("9.6.$1")),
+        // PostgreSQL 10.x specific
+        m("postgres", r"PostgreSQL 10\.(\d+)", "PostgreSQL 10", Some("10.$1")),
+        // PostgreSQL 11.x specific
+        m("postgres", r"PostgreSQL 11\.(\d+)", "PostgreSQL 11", Some("11.$1")),
+        // PostgreSQL 12.x specific
+        m("postgres", r"PostgreSQL 12\.(\d+)", "PostgreSQL 12", Some("12.$1")),
+        // PostgreSQL 13.x specific
+        m("postgres", r"PostgreSQL 13\.(\d+)", "PostgreSQL 13", Some("13.$1")),
+        // PostgreSQL 14.x specific
+        m("postgres", r"PostgreSQL 14\.(\d+)", "PostgreSQL 14", Some("14.$1")),
+        // PostgreSQL 15.x specific
+        m("postgres", r"PostgreSQL 15\.(\d+)", "PostgreSQL 15", Some("15.$1")),
+        // PostgreSQL 16.x specific
+        m("postgres", r"PostgreSQL 16\.(\d+)", "PostgreSQL 16", Some("16.$1")),
+        // PostgreSQL 17.x specific
+        m("postgres", r"PostgreSQL 17\.(\d+)", "PostgreSQL 17", Some("17.$1")),
+
+        // Redis 2.x specific
+        m("redis", r"redis_version:2\.(\d+\.\d+)", "Redis 2", Some("2.$1")),
+        // Redis 3.x specific
+        m("redis", r"redis_version:3\.(\d+\.\d+)", "Redis 3", Some("3.$1")),
+        // Redis 4.x specific
+        m("redis", r"redis_version:4\.(\d+\.\d+)", "Redis 4", Some("4.$1")),
+        // Redis 5.x specific
+        m("redis", r"redis_version:5\.(\d+\.\d+)", "Redis 5", Some("5.$1")),
+        // Redis 6.x specific
+        m("redis", r"redis_version:6\.(\d+\.\d+)", "Redis 6", Some("6.$1")),
+        // Redis 7.x specific
+        m("redis", r"redis_version:7\.(\d+\.\d+)", "Redis 7", Some("7.$1")),
+        // Redis 8.x specific
+        m("redis", r"redis_version:8\.(\d+\.\d+)", "Redis 8", Some("8.$1")),
+        // Redis with OS info
+        m("redis", r"redis_version:(\d+\.\d+\.\d+).*os:", "Redis", Some("$1")),
+        // Redis Cluster versions
+        m("redis", r"redis_version:(\d+\.\d+\.\d+).*cluster_enabled:1", "Redis Cluster", Some("$1")),
+
+        // MongoDB 2.x specific
+        m("mongodb", r"MongoDB 2\.(\d+\.\d+)", "MongoDB 2", Some("2.$1")),
+        // MongoDB 3.x specific
+        m("mongodb", r"MongoDB 3\.(\d+\.\d+)", "MongoDB 3", Some("3.$1")),
+        // MongoDB 4.x specific
+        m("mongodb", r"MongoDB 4\.(\d+\.\d+)", "MongoDB 4", Some("4.$1")),
+        // MongoDB 5.x specific
+        m("mongodb", r"MongoDB 5\.(\d+\.\d+)", "MongoDB 5", Some("5.$1")),
+        // MongoDB 6.x specific
+        m("mongodb", r"MongoDB 6\.(\d+\.\d+)", "MongoDB 6", Some("6.$1")),
+        // MongoDB 7.x specific
+        m("mongodb", r"MongoDB 7\.(\d+\.\d+)", "MongoDB 7", Some("7.$1")),
+        // MongoDB 8.x specific
+        m("mongodb", r"MongoDB 8\.(\d+\.\d+)", "MongoDB 8", Some("8.$1")),
+
+        // Elasticsearch 1.x
+        m("elasticsearch", r"elasticsearch/1\.(\d+\.\d+)", "Elasticsearch 1", Some("1.$1")),
+        // Elasticsearch 2.x
+        m("elasticsearch", r"elasticsearch/2\.(\d+\.\d+)", "Elasticsearch 2", Some("2.$1")),
+        // Elasticsearch 5.x
+        m("elasticsearch", r"elasticsearch/5\.(\d+\.\d+)", "Elasticsearch 5", Some("5.$1")),
+        // Elasticsearch 6.x
+        m("elasticsearch", r"elasticsearch/6\.(\d+\.\d+)", "Elasticsearch 6", Some("6.$1")),
+        // Elasticsearch 7.x
+        m("elasticsearch", r"elasticsearch/7\.(\d+\.\d+)", "Elasticsearch 7", Some("7.$1")),
+        // Elasticsearch 8.x
+        m("elasticsearch", r"elasticsearch/8\.(\d+\.\d+)", "Elasticsearch 8", Some("8.$1")),
+
+        // OpenSearch 1.x
+        m("elasticsearch", r"opensearch/1\.(\d+\.\d+)", "OpenSearch 1", Some("1.$1")),
+        // OpenSearch 2.x
+        m("elasticsearch", r"opensearch/2\.(\d+\.\d+)", "OpenSearch 2", Some("2.$1")),
+
+        // Cassandra 2.x
+        m("cassandra", r"Cassandra 2\.(\d+\.\d+)", "Cassandra 2", Some("2.$1")),
+        // Cassandra 3.x
+        m("cassandra", r"Cassandra 3\.(\d+\.\d+)", "Cassandra 3", Some("3.$1")),
+        // Cassandra 4.x
+        m("cassandra", r"Cassandra 4\.(\d+\.\d+)", "Cassandra 4", Some("4.$1")),
+        // Cassandra 5.x
+        m("cassandra", r"Cassandra 5\.(\d+\.\d+)", "Cassandra 5", Some("5.$1")),
+
+        // CouchDB 1.x
+        m("couchdb", r"CouchDB/1\.(\d+\.\d+)", "CouchDB 1", Some("1.$1")),
+        // CouchDB 2.x
+        m("couchdb", r"CouchDB/2\.(\d+\.\d+)", "CouchDB 2", Some("2.$1")),
+        // CouchDB 3.x
+        m("couchdb", r"CouchDB/3\.(\d+\.\d+)", "CouchDB 3", Some("3.$1")),
+
+        // Memcached versions
+        m("memcached", r"memcached (\d+)\.(\d+)\.(\d+)", "Memcached", Some("$1.$2.$3")),
+        m("memcached", r"memcached (\d+)\.(\d+)", "Memcached", Some("$1.$2")),
+
+        // ClickHouse versions
+        m("clickhouse", r"ClickHouse server version (\d+)\.(\d+)\.(\d+)", "ClickHouse", Some("$1.$2.$3")),
+        m("clickhouse", r"ClickHouse (\d+)\.(\d+)", "ClickHouse", Some("$1.$2")),
+
+        // InfluxDB versions
+        m("influxdb", r"InfluxDB (\d+)\.(\d+)\.(\d+)", "InfluxDB", Some("$1.$2.$3")),
+        m("influxdb", r"InfluxDB (\d+)\.(\d+)", "InfluxDB", Some("$1.$2")),
+
+        // DynamoDB HTTP
+        m("http", r"X-Amz-Target:.*DynamoDB_20120810", "Amazon DynamoDB", None),
+        m("http", r"x-amz-request-id:", "Amazon DynamoDB", None),
+    ]
+}
+
+/// Get cloud service signatures
+pub fn cloud_service_signatures() -> Vec<MatchPattern> {
+    vec![
+        // AWS S3
+        m("http", r"Server: AmazonS3", "AWS S3", None),
+        m("http", r"X-Amz-Request-Id:", "AWS S3", None),
+        m("http", r"X-Amz-Bucket-Region:", "AWS S3", None),
+        m("http", r"<Code>NoSuchBucket</Code>", "AWS S3", None),
+        m("http", r"s3\.amazonaws\.com", "AWS S3", None),
+
+        // AWS EC2
+        m("http", r"X-Amz-Meta-", "AWS EC2/S3", None),
+        m("http", r"ec2\.amazonaws\.com", "AWS EC2", None),
+        m("http", r"X-Amzn-RequestId:", "AWS API", None),
+
+        // AWS Lambda
+        m("http", r"X-Amzn-Trace-Id:", "AWS Lambda", None),
+        m("http", r"lambda\..*\.amazonaws\.com", "AWS Lambda", None),
+
+        // AWS RDS
+        m("mysql", r"rdsadmin", "AWS RDS MySQL", None),
+        m("postgres", r"rdsadmin", "AWS RDS PostgreSQL", None),
+        m("http", r"rds\.amazonaws\.com", "AWS RDS", None),
+
+        // AWS API Gateway
+        m("http", r"X-Amzn-Remapped-", "AWS API Gateway", None),
+        m("http", r"\.execute-api\..*\.amazonaws\.com", "AWS API Gateway", None),
+
+        // AWS ELB/ALB
+        m("http", r"X-Amzn-Trace-Id:.*Root=", "AWS ALB/ELB", None),
+        m("http", r"awselb", "AWS ELB", None),
+
+        // AWS CloudFront
+        m("http", r"Server: CloudFront", "AWS CloudFront", None),
+        m("http", r"X-Cache:.*cloudfront", "AWS CloudFront", None),
+        m("http", r"X-Amz-Cf-Pop:", "AWS CloudFront", None),
+        m("http", r"X-Amz-Cf-Id:", "AWS CloudFront", None),
+        m("http", r"\.cloudfront\.net", "AWS CloudFront", None),
+
+        // AWS ECS/EKS
+        m("http", r"ECS/(\d+\.\d+)", "AWS ECS", Some("$1")),
+        m("http", r"X-Amzn-Remapped-Host:", "AWS ECS", None),
+
+        // AWS SQS
+        m("http", r"sqs\..*\.amazonaws\.com", "AWS SQS", None),
+        m("http", r"X-Amzn-RequestId:.*sqs", "AWS SQS", None),
+
+        // AWS SNS
+        m("http", r"sns\..*\.amazonaws\.com", "AWS SNS", None),
+
+        // AWS ElastiCache
+        m("redis", r"elasticache", "AWS ElastiCache", None),
+
+        // AWS Route53
+        m("dns", r"route53", "AWS Route53", None),
+
+        // AWS WAF
+        m("http", r"X-Amzn-WAF-", "AWS WAF", None),
+        m("http", r"aws-waf", "AWS WAF", None),
+
+        // Azure Blob Storage
+        m("http", r"Server: Windows-Azure-Blob", "Azure Blob Storage", None),
+        m("http", r"X-Ms-Request-Id:", "Azure Storage", None),
+        m("http", r"X-Ms-Version:", "Azure Storage", None),
+        m("http", r"\.blob\.core\.windows\.net", "Azure Blob Storage", None),
+
+        // Azure VM
+        m("http", r"X-Ms-Routing-Name:", "Azure", None),
+        m("http", r"\.cloudapp\.azure\.com", "Azure VM", None),
+        m("http", r"\.azurewebsites\.net", "Azure App Service", None),
+
+        // Azure Functions
+        m("http", r"X-Azure-Ref:", "Azure", None),
+        m("http", r"X-Ms-Client-Request-Id:", "Azure Functions", None),
+        m("http", r"\.azurewebsites\.net/api/", "Azure Functions", None),
+
+        // Azure SQL
+        m("mssql", r"\.database\.windows\.net", "Azure SQL", None),
+        m("mssql", r"X-Ms-ActivityId:", "Azure SQL", None),
+
+        // Azure CDN
+        m("http", r"X-Azure-CDN", "Azure CDN", None),
+        m("http", r"X-EC2-Instance-Id:", "Azure CDN", None),
+
+        // Azure Front Door
+        m("http", r"X-Azure-FDID:", "Azure Front Door", None),
+        m("http", r"X-Azure-Ref:.*frontdoor", "Azure Front Door", None),
+
+        // GCP Cloud Storage
+        m("http", r"Server: UploadServer", "GCP Cloud Storage", None),
+        m("http", r"X-GUploader-UploadID:", "GCP Cloud Storage", None),
+        m("http", r"\.storage\.googleapis\.com", "GCP Cloud Storage", None),
+
+        // GCP Compute
+        m("http", r"X-Cloud-Trace-Context:", "GCP", None),
+        m("http", r"\.compute\.googleapis\.com", "GCP Compute", None),
+        m("http", r"Metadata-Flavor: Google", "GCP Metadata", None),
+
+        // GCP Cloud Functions
+        m("http", r"\.cloudfunctions\.net", "GCP Cloud Functions", None),
+        m("http", r"X-Cloud-Function-Name:", "GCP Cloud Functions", None),
+
+        // GCP Cloud SQL
+        m("mysql", r"cloudsql", "GCP Cloud SQL MySQL", None),
+        m("postgres", r"cloudsql", "GCP Cloud SQL PostgreSQL", None),
+
+        // GCP Cloud Run
+        m("http", r"\.run\.app", "GCP Cloud Run", None),
+        m("http", r"X-Cloud-Run-", "GCP Cloud Run", None),
+
+        // GCP BigQuery
+        m("http", r"bigquery\.googleapis\.com", "GCP BigQuery", None),
+
+        // GCP Pub/Sub
+        m("http", r"pubsub\.googleapis\.com", "GCP Pub/Sub", None),
+
+        // GCP Load Balancer
+        m("http", r"Via:.*google", "GCP Load Balancer", None),
+        m("http", r"Server: Google Frontend", "GCP Frontend", None),
+    ]
+}
+
+/// Get extended CDN signatures
+pub fn cdn_extended_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Cloudflare variants
+        m("http", r"Server: cloudflare", "Cloudflare CDN", None),
+        m("http", r"cf-ray:", "Cloudflare CDN", None),
+        m("http", r"CF-Cache-Status:", "Cloudflare CDN", None),
+        m("http", r"cf-request-id:", "Cloudflare CDN", None),
+        m("http", r"Server: Cloudflare", "Cloudflare CDN", None),
+        m("http", r"X-CF-Powered-By:", "Cloudflare CDN", None),
+        m("http", r"Set-Cookie:.*__cflb=", "Cloudflare CDN", None),
+        m("http", r"Set-Cookie:.*__cfuid=", "Cloudflare CDN", None),
+        m("http", r"Set-Cookie:.*cf_clearance=", "Cloudflare CDN", None),
+        m("http", r"Expect-CT:.*cloudflare", "Cloudflare CDN", None),
+        m("http", r"Report-To:.*cloudflare", "Cloudflare CDN", None),
+        m("http", r"Nel:.*cloudflare", "Cloudflare CDN", None),
+        m("http", r"cf-cache-status: HIT", "Cloudflare CDN (HIT)", None),
+        m("http", r"cf-cache-status: MISS", "Cloudflare CDN (MISS)", None),
+        m("http", r"cf-cache-status: DYNAMIC", "Cloudflare CDN (DYNAMIC)", None),
+        m("http", r"cf-cache-status: BYPASS", "Cloudflare CDN (BYPASS)", None),
+        m("http", r"cf-cache-status: EXPIRED", "Cloudflare CDN (EXPIRED)", None),
+
+        // Akamai variants
+        m("http", r"Server: AkamaiGHost", "Akamai CDN", None),
+        m("http", r"X-Akamai-Transformed:", "Akamai CDN", None),
+        m("http", r"X-Cache:.*akamai", "Akamai CDN", None),
+        m("http", r"X-Cache-Key:", "Akamai CDN", None),
+        m("http", r"X-Akamai-Session-Info:", "Akamai CDN", None),
+        m("http", r"X-Akamai-Request-ID:", "Akamai CDN", None),
+        m("http", r"Set-Cookie:.*akamai", "Akamai CDN", None),
+        m("http", r"X-True-Cache-Key:", "Akamai CDN", None),
+        m("http", r"Server: Akamai NetStorage", "Akamai NetStorage", None),
+        m("http", r"X-Akamai-Staging:", "Akamai CDN (Staging)", None),
+
+        // Fastly variants
+        m("http", r"Server: Fastly", "Fastly CDN", None),
+        m("http", r"X-Served-By:.*cache-", "Fastly CDN", None),
+        m("http", r"X-Cache:.*HIT.*fastly", "Fastly CDN (HIT)", None),
+        m("http", r"X-Cache:.*MISS.*fastly", "Fastly CDN (MISS)", None),
+        m("http", r"X-Timer:", "Fastly CDN", None),
+        m("http", r"Fastly-Debug-Digest:", "Fastly CDN", None),
+        m("http", r"X-Fastly-Request-ID:", "Fastly CDN", None),
+        m("http", r"Via:.*varnish", "Fastly/Varnish", None),
+        m("http", r"X-Varnish:", "Fastly/Varnish", None),
+        m("http", r"Age:.*\d+.*Via:.*varnish", "Fastly/Varnish", None),
+
+        // CloudFront variants
+        m("http", r"Server: CloudFront", "AWS CloudFront", None),
+        m("http", r"X-Cache:.*cloudfront", "AWS CloudFront", None),
+        m("http", r"X-Amz-Cf-Pop:", "AWS CloudFront", None),
+        m("http", r"X-Amz-Cf-Id:", "AWS CloudFront", None),
+        m("http", r"Via:.*cloudfront", "AWS CloudFront", None),
+        m("http", r"X-Amz-Server-Side-Encryption:", "AWS CloudFront/S3", None),
+
+        // KeyCDN variants
+        m("http", r"Server: keycdn-engine", "KeyCDN", None),
+        m("http", r"X-Edge-Location:", "KeyCDN", None),
+        m("http", r"X-Cache:.*keycdn", "KeyCDN", None),
+        m("http", r"X-Shield:.*keycdn", "KeyCDN (Shield)", None),
+
+        // StackPath variants
+        m("http", r"Server: StackPath", "StackPath CDN", None),
+        m("http", r"X-CDN: StackPath", "StackPath CDN", None),
+        m("http", r"X-HW:", "StackPath CDN", None),
+        m("http", r"X-Cache:.*stackpath", "StackPath CDN", None),
+
+        // Sucuri variants
+        m("http", r"Server: Sucuri/Cloudproxy", "Sucuri WAF", None),
+        m("http", r"X-Sucuri-ID:", "Sucuri WAF", None),
+        m("http", r"X-Sucuri-Cache:", "Sucuri CDN", None),
+        m("http", r"X-Sucuri-Block:", "Sucuri WAF", None),
+
+        // Imperva/Incapsula variants
+        m("http", r"Server: Incapsula", "Imperva Incapsula", None),
+        m("http", r"X-CDN: Incapsula", "Imperva Incapsula", None),
+        m("http", r"Set-Cookie:.*incap_ses", "Imperva Incapsula", None),
+        m("http", r"Set-Cookie:.*visid_incap", "Imperva Incapsula", None),
+        m("http", r"X-Iinfo:", "Imperva Incapsula", None),
+        m("http", r"Set-Cookie:.*___utmvc", "Imperva Incapsula", None),
+    ]
+}
+
 /// Get all signatures combined
 pub fn all_signatures() -> Vec<MatchPattern> {
     let mut sigs = Vec::new();
@@ -4152,6 +4508,9 @@ pub fn all_signatures() -> Vec<MatchPattern> {
     sigs.extend(version_specific_app_server_signatures());
     sigs.extend(version_specific_language_signatures());
     sigs.extend(version_specific_framework_signatures());
+    sigs.extend(version_specific_database_signatures());
+    sigs.extend(cloud_service_signatures());
+    sigs.extend(cdn_extended_signatures());
     sigs
 }
 
