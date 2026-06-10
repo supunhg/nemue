@@ -3,7 +3,7 @@
 **Last Updated**: June 2026
 **Current Version**: 0.2.0-dev
 **Branch**: dev
-**Tests**: 1945 passing, 0 failing
+**Tests**: 2033 passing, 0 failing
 
 ---
 
@@ -12,13 +12,13 @@
 If you're picking up this project, here's what you need to know:
 
 1. **Build**: `cargo build` - clean, zero warnings
-2. **Test**: `cargo test --lib` - 1945 tests pass
+2. **Test**: `cargo test --lib` - 2033 tests pass
 3. **Run**: `cargo run -- scan -p 80,443 scanme.nmap.org`
 4. **MCP**: `cargo run -- mcp` - starts MCP server for AI assistants
 
 ---
 
-## What's Been Done (28 sessions of work)
+## What's Been Done (30+ sessions of work)
 
 ### Core Features (Complete)
 - [x] TCP/UDP/SCTP/IP protocol scanning
@@ -32,7 +32,7 @@ If you're picking up this project, here's what you need to know:
 - [x] Scan history and trend analysis
 
 ### Service Detection (Complete)
-- [x] 500+ service signatures with regex matching
+- [x] 1575 service signatures with regex matching
 - [x] Real probe sending in enhanced detector
 - [x] Service family detection
 - [x] OS hint detection from banners
@@ -40,13 +40,13 @@ If you're picking up this project, here's what you need to know:
 - [x] nmap-service-probes parser (can import Nmap's signatures)
 
 ### OS Fingerprinting (Complete)
-- [x] 20+ OS signatures (Linux, Windows, macOS, FreeBSD, Cisco, etc.)
+- [x] 43 OS signatures (Linux, Windows, macOS, FreeBSD, Cisco, etc.)
 - [x] TCP/IP stack analysis
 - [x] Passive OS detection from banners
 - [x] IP ID sequence detection
 
 ### Lua Scripts (Complete)
-- [x] 142 scripts total
+- [x] 202 scripts total
 - [x] HTTP security (XSS, SQLi, CORS, HSTS, CSP, SSRF, XXE, etc.)
 - [x] SSH/SSL/FTP/SMTP/DNS/Database/Container/Cloud scripts
 - [x] NSE-compatible structure
