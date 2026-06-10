@@ -3039,6 +3039,1072 @@ pub fn iot_devices_signatures() -> Vec<MatchPattern> {
     ]
 }
 
+/// Get version-specific web server signatures
+pub fn version_specific_web_server_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Apache versions
+        m("http", r"Server: Apache/2\.4\.(\d+)", "Apache httpd", Some("2.4.$1")),
+        m("http", r"Server: Apache/2\.2\.(\d+)", "Apache httpd", Some("2.2.$1")),
+        m("http", r"Server: Apache/2\.0\.(\d+)", "Apache httpd", Some("2.0.$1")),
+        m("http", r"Server: Apache/1\.3\.(\d+)", "Apache httpd", Some("1.3.$1")),
+        m("http", r"Server: Apache/1\.2\.(\d+)", "Apache httpd", Some("1.2.$1")),
+        m("http", r"Server: Apache/1\.1\.(\d+)", "Apache httpd", Some("1.1.$1")),
+        m("http", r"Server: Apache/(\d+\.\d+\.\d+) \(", "Apache httpd", Some("$1")),
+        m("http", r"Server: Apache/(\d+\.\d+\.\d+)-Win", "Apache httpd (Windows)", Some("$1")),
+        m("http", r"Server: Apache/(\d+\.\d+\.\d+) \(Unix\)", "Apache httpd (Unix)", Some("$1")),
+        m("http", r"Server: Apache/(\d+\.\d+\.\d+) \(Debian\)", "Apache httpd (Debian)", Some("$1")),
+        m("http", r"Server: Apache/(\d+\.\d+\.\d+) \(Ubuntu\)", "Apache httpd (Ubuntu)", Some("$1")),
+        m("http", r"Server: Apache/(\d+\.\d+\.\d+) \(CentOS\)", "Apache httpd (CentOS)", Some("$1")),
+        m("http", r"Server: Apache/(\d+\.\d+\.\d+) \(Red Hat\)", "Apache httpd (RHEL)", Some("$1")),
+        m("http", r"Server: Apache/(\d+\.\d+\.\d+) \(FreeBSD\)", "Apache httpd (FreeBSD)", Some("$1")),
+        m("http", r"Server: Apache/(\d+\.\d+\.\d+) \(Debian\).*mod_ssl", "Apache httpd (Debian/mod_ssl)", Some("$1")),
+        m("http", r"Server: Apache/(\d+\.\d+\.\d+).*OpenSSL", "Apache httpd (OpenSSL)", Some("$1")),
+        m("http", r"Server: Apache/(\d+\.\d+\.\d+).*PHP", "Apache httpd (PHP)", Some("$1")),
+        m("http", r"Server: Apache/(\d+\.\d+\.\d+).*Perl", "Apache httpd (Perl)", Some("$1")),
+
+        // Nginx versions
+        m("http", r"Server: nginx/1\.25\.(\d+)", "nginx", Some("1.25.$1")),
+        m("http", r"Server: nginx/1\.24\.(\d+)", "nginx", Some("1.24.$1")),
+        m("http", r"Server: nginx/1\.23\.(\d+)", "nginx", Some("1.23.$1")),
+        m("http", r"Server: nginx/1\.22\.(\d+)", "nginx", Some("1.22.$1")),
+        m("http", r"Server: nginx/1\.21\.(\d+)", "nginx", Some("1.21.$1")),
+        m("http", r"Server: nginx/1\.20\.(\d+)", "nginx", Some("1.20.$1")),
+        m("http", r"Server: nginx/1\.19\.(\d+)", "nginx", Some("1.19.$1")),
+        m("http", r"Server: nginx/1\.18\.(\d+)", "nginx", Some("1.18.$1")),
+        m("http", r"Server: nginx/1\.17\.(\d+)", "nginx", Some("1.17.$1")),
+        m("http", r"Server: nginx/1\.16\.(\d+)", "nginx", Some("1.16.$1")),
+        m("http", r"Server: nginx/1\.15\.(\d+)", "nginx", Some("1.15.$1")),
+        m("http", r"Server: nginx/1\.14\.(\d+)", "nginx", Some("1.14.$1")),
+        m("http", r"Server: nginx/1\.13\.(\d+)", "nginx", Some("1.13.$1")),
+        m("http", r"Server: nginx/1\.12\.(\d+)", "nginx", Some("1.12.$1")),
+        m("http", r"Server: nginx/1\.10\.(\d+)", "nginx", Some("1.10.$1")),
+        m("http", r"Server: nginx/1\.8\.(\d+)", "nginx", Some("1.8.$1")),
+        m("http", r"Server: nginx/1\.6\.(\d+)", "nginx", Some("1.6.$1")),
+        m("http", r"Server: nginx/1\.4\.(\d+)", "nginx", Some("1.4.$1")),
+        m("http", r"Server: nginx/(\d+\.\d+\.\d+).*Ubuntu", "nginx (Ubuntu)", Some("$1")),
+        m("http", r"Server: nginx/(\d+\.\d+\.\d+).*Debian", "nginx (Debian)", Some("$1")),
+        m("http", r"Server: nginx/(\d+\.\d+\.\d+).*CentOS", "nginx (CentOS)", Some("$1")),
+        m("http", r"Server: nginx/(\d+\.\d+\.\d+).*Win", "nginx (Windows)", Some("$1")),
+        m("http", r"Server: nginx/(\d+\.\d+\.\d+).*brotli", "nginx (brotli)", Some("$1")),
+        m("http", r"Server: nginx/(\d+\.\d+\.\d+).*http2", "nginx (HTTP/2)", Some("$1")),
+
+        // IIS versions
+        m("http", r"Server: Microsoft-IIS/10\.0", "Microsoft IIS 10.0", None),
+        m("http", r"Server: Microsoft-IIS/8\.5", "Microsoft IIS 8.5", None),
+        m("http", r"Server: Microsoft-IIS/8\.0", "Microsoft IIS 8.0", None),
+        m("http", r"Server: Microsoft-IIS/7\.5", "Microsoft IIS 7.5", None),
+        m("http", r"Server: Microsoft-IIS/7\.0", "Microsoft IIS 7.0", None),
+        m("http", r"Server: Microsoft-IIS/6\.0", "Microsoft IIS 6.0", None),
+        m("http", r"Server: Microsoft-IIS/5\.1", "Microsoft IIS 5.1", None),
+        m("http", r"Server: Microsoft-IIS/5\.0", "Microsoft IIS 5.0", None),
+        m("http", r"Server: Microsoft-IIS/4\.0", "Microsoft IIS 4.0", None),
+        m("http", r"Server: Microsoft-IIS/3\.0", "Microsoft IIS 3.0", None),
+        m("http", r"Server: Microsoft-IIS/2\.0", "Microsoft IIS 2.0", None),
+        m("http", r"Server: Microsoft-IIS/1\.0", "Microsoft IIS 1.0", None),
+        m("http", r"Server: Microsoft-IIS/10\.0.*ASP\.NET", "Microsoft IIS 10.0 (ASP.NET)", None),
+        m("http", r"Server: Microsoft-IIS/8\.5.*ASP\.NET", "Microsoft IIS 8.5 (ASP.NET)", None),
+
+        // Tomcat versions
+        m("http", r"Server: Apache Tomcat/10\.(\d+)", "Apache Tomcat", Some("10.$1")),
+        m("http", r"Server: Apache Tomcat/9\.(\d+)", "Apache Tomcat", Some("9.$1")),
+        m("http", r"Server: Apache Tomcat/8\.5\.(\d+)", "Apache Tomcat", Some("8.5.$1")),
+        m("http", r"Server: Apache Tomcat/8\.0\.(\d+)", "Apache Tomcat", Some("8.0.$1")),
+        m("http", r"Server: Apache Tomcat/7\.0\.(\d+)", "Apache Tomcat", Some("7.0.$1")),
+        m("http", r"Server: Apache Tomcat/6\.0\.(\d+)", "Apache Tomcat", Some("6.0.$1")),
+        m("http", r"Server: Apache Tomcat/5\.5\.(\d+)", "Apache Tomcat", Some("5.5.$1")),
+        m("http", r"Server: Apache Tomcat/5\.0\.(\d+)", "Apache Tomcat", Some("5.0.$1")),
+        m("http", r"Server: Apache Tomcat/4\.1\.(\d+)", "Apache Tomcat", Some("4.1.$1")),
+        m("http", r"Server: Apache Tomcat/3\.(\d+)", "Apache Tomcat", Some("3.$1")),
+        m("http", r"Server: Apache-Coyote/1\.1", "Apache Tomcat Coyote 1.1", None),
+        m("http", r"Server: Apache-Coyote/1\.0", "Apache Tomcat Coyote 1.0", None),
+
+        // Jetty versions
+        m("http", r"Server: Jetty\((\d+\.\d+\.\d+)", "Jetty", Some("$1")),
+        m("http", r"Server: Jetty\((\d+\.\d+)", "Jetty", Some("$1")),
+        m("http", r"Server: Jetty\((\d+)", "Jetty", Some("$1")),
+        m("http", r"Server: Jetty/(\d+\.\d+\.\d+)", "Jetty", Some("$1")),
+        m("http", r"Server: Jetty/(\d+\.\d+)", "Jetty", Some("$1")),
+        m("http", r"Server: Jetty \(9\.4\.(\d+)\)", "Jetty", Some("9.4.$1")),
+        m("http", r"Server: Jetty \(9\.3\.(\d+)\)", "Jetty", Some("9.3.$1")),
+        m("http", r"Server: Jetty \(9\.2\.(\d+)\)", "Jetty", Some("9.2.$1")),
+        m("http", r"Server: Jetty \(8\.(\d+)\)", "Jetty", Some("8.$1")),
+        m("http", r"Server: Jetty \(7\.(\d+)\)", "Jetty", Some("7.$1")),
+        m("http", r"Server: Jetty \(11\.0\.(\d+)\)", "Jetty", Some("11.0.$1")),
+        m("http", r"Server: Jetty \(12\.0\.(\d+)\)", "Jetty", Some("12.0.$1")),
+
+        // Caddy versions
+        m("http", r"Server: Caddy/(\d+\.\d+\.\d+)", "Caddy httpd", Some("$1")),
+        m("http", r"Server: Caddy/(\d+\.\d+)", "Caddy httpd", Some("$1")),
+        m("http", r"Server: Caddy/(\d+)", "Caddy httpd", Some("$1")),
+        m("http", r"Server: Caddy", "Caddy httpd", None),
+        m("http", r"Server: Caddy v(\d+\.\d+\.\d+)", "Caddy httpd", Some("$1")),
+
+        // LiteSpeed versions
+        m("http", r"Server: LiteSpeed/(\d+\.\d+\.\d+)", "LiteSpeed httpd", Some("$1")),
+        m("http", r"Server: LiteSpeed/(\d+\.\d+)", "LiteSpeed httpd", Some("$1")),
+        m("http", r"Server: LiteSpeed/(\d+)", "LiteSpeed httpd", Some("$1")),
+        m("http", r"Server: OpenLiteSpeed/(\d+\.\d+\.\d+)", "OpenLiteSpeed", Some("$1")),
+        m("http", r"Server: OpenLiteSpeed/(\d+\.\d+)", "OpenLiteSpeed", Some("$1")),
+        m("http", r"Server: LiteSpeed Web Server", "LiteSpeed httpd", None),
+        m("http", r"Server: LiteSpeed/(\d+\.\d+\.\d+) Enterprise", "LiteSpeed Enterprise", Some("$1")),
+
+        // OpenResty versions
+        m("http", r"Server: openresty/(\d+\.\d+\.\d+)", "OpenResty", Some("$1")),
+        m("http", r"Server: openresty/(\d+\.\d+)", "OpenResty", Some("$1")),
+        m("http", r"Server: openresty/(\d+)", "OpenResty", Some("$1")),
+        m("http", r"Server: openresty", "OpenResty", None),
+        m("http", r"Server: Tengine/(\d+\.\d+\.\d+)", "Tengine", Some("$1")),
+        m("http", r"Server: Tengine/(\d+\.\d+)", "Tengine", Some("$1")),
+        m("http", r"Server: Tengine", "Tengine", None),
+
+        // Lighttpd versions
+        m("http", r"Server: lighttpd/(\d+\.\d+\.\d+)", "lighttpd", Some("$1")),
+        m("http", r"Server: lighttpd/(\d+\.\d+)", "lighttpd", Some("$1")),
+        m("http", r"Server: lighttpd/(\d+)", "lighttpd", Some("$1")),
+        m("http", r"Server: lighttpd", "lighttpd", None),
+
+        // Cherokee
+        m("http", r"Server: Cherokee/(\d+\.\d+\.\d+)", "Cherokee httpd", Some("$1")),
+        m("http", r"Server: Cherokee/(\d+\.\d+)", "Cherokee httpd", Some("$1")),
+        m("http", r"Server: Cherokee", "Cherokee httpd", None),
+
+        // Abyss
+        m("http", r"Server: Abyss/(\d+\.\d+\.\d+)", "Abyss httpd", Some("$1")),
+        m("http", r"Server: Abyss/(\d+\.\d+)", "Abyss httpd", Some("$1")),
+        m("http", r"Server: Abyss", "Abyss httpd", None),
+
+        // Yaws
+        m("http", r"Server: Yaws/(\d+\.\d+\.\d+)", "Yaws", Some("$1")),
+        m("http", r"Server: Yaws/(\d+\.\d+)", "Yaws", Some("$1")),
+        m("http", r"Server: Yaws", "Yaws", None),
+
+        // Monkey HTTP
+        m("http", r"Server: Monkey/(\d+\.\d+\.\d+)", "Monkey httpd", Some("$1")),
+        m("http", r"Server: Monkey", "Monkey httpd", None),
+
+        // Hiawatha
+        m("http", r"Server: Hiawatha v(\d+\.\d+)", "Hiawatha httpd", Some("$1")),
+        m("http", r"Server: Hiawatha", "Hiawatha httpd", None),
+
+        // H2O
+        m("http", r"Server: h2o/(\d+\.\d+\.\d+)", "H2O httpd", Some("$1")),
+        m("http", r"Server: h2o", "H2O httpd", None),
+
+        // OpenBSD httpd
+        m("http", r"Server: OpenBSD httpd", "OpenBSD httpd", None),
+
+        // Boa
+        m("http", r"Server: Boa/(\d+\.\d+\.\d+)", "Boa httpd", Some("$1")),
+        m("http", r"Server: Boa/(\d+\.\d+)", "Boa httpd", Some("$1")),
+
+        // Kestrel
+        m("http", r"Server: Kestrel", "ASP.NET Kestrel", None),
+        m("http", r"Server: Kestrel/(\d+\.\d+\.\d+)", "ASP.NET Kestrel", Some("$1")),
+    ]
+}
+
+/// Get version-specific application server signatures
+pub fn version_specific_app_server_signatures() -> Vec<MatchPattern> {
+    vec![
+        // WebLogic versions
+        m("http", r"Server: WebLogic Server (\d+\.\d+\.\d+)", "Oracle WebLogic", Some("$1")),
+        m("http", r"Server: WebLogic Server (\d+\.\d+)", "Oracle WebLogic", Some("$1")),
+        m("http", r"Server: WebLogic", "Oracle WebLogic", None),
+        m("http", r"X-Powered-By: WebLogic", "Oracle WebLogic", None),
+        m("http", r"Server: WebLogic Server (\d+) ", "Oracle WebLogic", Some("$1")),
+        m("http", r"Server: WebLogic/(\d+\.\d+)", "Oracle WebLogic", Some("$1")),
+        m("t3", r"WebLogic", "Oracle WebLogic", None),
+        m("http", r"WebLogic.*(\d+\.\d+\.\d+\.\d+)", "Oracle WebLogic", Some("$1")),
+
+        // WebSphere versions
+        m("http", r"Server: WebSphere Application Server/(\d+\.\d+)", "IBM WebSphere", Some("$1")),
+        m("http", r"Server: WebSphere Application Server (\d+\.\d+)", "IBM WebSphere", Some("$1")),
+        m("http", r"Server: IBM WebSphere Application Server", "IBM WebSphere", None),
+        m("http", r"Server: WebSphere", "IBM WebSphere", None),
+        m("http", r"Server: IBM_HTTP_Server/(\d+\.\d+\.\d+)", "IBM HTTP Server", Some("$1")),
+        m("http", r"Server: IBM_HTTP_Server/(\d+\.\d+)", "IBM HTTP Server", Some("$1")),
+        m("http", r"Server: IBM_HTTP_Server", "IBM HTTP Server", None),
+        m("http", r"X-Powered-By: Servlet.*WebSphere", "IBM WebSphere", None),
+        m("http", r"Server: WebSphere Liberty", "IBM WebSphere Liberty", None),
+        m("http", r"Server: WebSphere Application Server Liberty", "IBM WebSphere Liberty", None),
+        m("http", r"Server: Open Liberty", "IBM Open Liberty", None),
+
+        // JBoss/WildFly versions
+        m("http", r"Server: JBoss-EAP/(\d+\.\d+)", "JBoss EAP", Some("$1")),
+        m("http", r"Server: JBoss-EAP", "JBoss EAP", None),
+        m("http", r"Server: JBoss-Web/(\d+\.\d+\.\d+)", "JBoss Web", Some("$1")),
+        m("http", r"Server: JBoss-Web", "JBoss Web", None),
+        m("http", r"Server: JBoss", "JBoss", None),
+        m("http", r"X-Powered-By: JBoss", "JBoss", None),
+        m("http", r"Server: WildFly/(\d+)", "WildFly", Some("$1")),
+        m("http", r"Server: WildFly/(\d+\.\d+)", "WildFly", Some("$1")),
+        m("http", r"Server: WildFly", "WildFly", None),
+        m("http", r"X-Powered-By: WildFly", "WildFly", None),
+        m("http", r"Server: JBoss AS (\d+\.\d+)", "JBoss AS", Some("$1")),
+        m("http", r"Server: JBoss AS", "JBoss AS", None),
+        m("http", r"Server: JBossWeb", "JBoss Web", None),
+        m("http", r"Server: JBoss-EAP/7", "JBoss EAP 7", None),
+        m("http", r"Server: JBoss-EAP/6", "JBoss EAP 6", None),
+        m("http", r"Server: JBoss-EAP/5", "JBoss EAP 5", None),
+        m("http", r"Server: JBoss-EAP/4", "JBoss EAP 4", None),
+
+        // GlassFish versions
+        m("http", r"Server: GlassFish Server (\d+\.\d+)", "GlassFish", Some("$1")),
+        m("http", r"Server: GlassFish Server Open Source Edition (\d+)", "GlassFish", Some("$1")),
+        m("http", r"Server: GlassFish Server", "GlassFish", None),
+        m("http", r"Server: GlassFish", "GlassFish", None),
+        m("http", r"X-Powered-By: GlassFish", "GlassFish", None),
+        m("http", r"Server: Payara Server (\d+\.\d+)", "Payara Server", Some("$1")),
+        m("http", r"Server: Payara Server", "Payara Server", None),
+        m("http", r"Server: Payara Micro (\d+\.\d+)", "Payara Micro", Some("$1")),
+
+        // Geronimo
+        m("http", r"Server: Geronimo", "Apache Geronimo", None),
+        m("http", r"Server: Geronimo/(\d+\.\d+)", "Apache Geronimo", Some("$1")),
+        m("http", r"X-Powered-By: Geronimo", "Apache Geronimo", None),
+
+        // Resin versions
+        m("http", r"Server: Resin/(\d+\.\d+\.\d+)", "Caucho Resin", Some("$1")),
+        m("http", r"Server: Resin/(\d+\.\d+)", "Caucho Resin", Some("$1")),
+        m("http", r"Server: Resin/(\d+)", "Caucho Resin", Some("$1")),
+        m("http", r"Server: Resin", "Caucho Resin", None),
+        m("http", r"X-Powered-By: Resin", "Caucho Resin", None),
+        m("http", r"Server: Resin OS", "Caucho Resin", None),
+
+        // TomEE
+        m("http", r"Server: Apache TomEE", "Apache TomEE", None),
+        m("http", r"Server: Apache TomEE/(\d+\.\d+)", "Apache TomEE", Some("$1")),
+        m("http", r"X-Powered-By: Apache TomEE", "Apache TomEE", None),
+
+        // JOnAS
+        m("http", r"Server: JOnAS", "JOnAS", None),
+        m("http", r"X-Powered-By: JOnAS", "JOnAS", None),
+
+        // Jo!
+        m("http", r"Server: Jo!", "Jo! httpd", None),
+
+        // Oracle HTTP Server
+        m("http", r"Server: Oracle-HTTP-Server/(\d+\.\d+)", "Oracle HTTP Server", Some("$1")),
+        m("http", r"Server: Oracle-HTTP-Server", "Oracle HTTP Server", None),
+        m("http", r"Server: Oracle-Application-Server", "Oracle App Server", None),
+
+        // Tcat
+        m("http", r"Server: Tcat", "Tcat Server", None),
+
+        // Undertow versions
+        m("http", r"Server: Undertow/(\d+\.\d+\.\d+)", "Undertow", Some("$1")),
+        m("http", r"Server: Undertow/(\d+\.\d+)", "Undertow", Some("$1")),
+        m("http", r"Server: Undertow", "Undertow", None),
+
+        // Netty versions
+        m("http", r"Server: Netty/(\d+\.\d+\.\d+)", "Netty HTTP", Some("$1")),
+        m("http", r"Server: Netty/(\d+\.\d+)", "Netty HTTP", Some("$1")),
+        m("http", r"Server: Netty", "Netty HTTP", None),
+        m("http", r"X-Powered-By: Netty", "Netty HTTP", None),
+
+        // Vert.x versions
+        m("http", r"Server: Vert\.x-Web/(\d+\.\d+\.\d+)", "Vert.x-Web", Some("$1")),
+        m("http", r"Server: Vert\.x-Web/(\d+\.\d+)", "Vert.x-Web", Some("$1")),
+        m("http", r"Server: Vert\.x HTTP Server", "Vert.x HTTP Server", None),
+        m("http", r"X-Powered-By: Vert\.x", "Vert.x", None),
+
+        // PumaGo
+        m("http", r"Server: PumaGo/(\d+\.\d+)", "PumaGo", Some("$1")),
+
+        // Thin
+        m("http", r"Server: thin (\d+\.\d+\.\d+)", "Thin", Some("$1")),
+        m("http", r"Server: thin (\d+\.\d+)", "Thin", Some("$1")),
+
+        // WEBrick versions
+        m("http", r"Server: WEBrick/(\d+\.\d+\.\d+)", "WEBrick", Some("$1")),
+        m("http", r"Server: WEBrick/(\d+\.\d+)", "WEBrick", Some("$1")),
+        m("http", r"Server: WEBrick", "WEBrick", None),
+
+        // Gunicorn versions
+        m("http", r"Server: gunicorn/(\d+\.\d+\.\d+)", "Gunicorn", Some("$1")),
+        m("http", r"Server: gunicorn/(\d+\.\d+)", "Gunicorn", Some("$1")),
+        m("http", r"Server: gunicorn", "Gunicorn", None),
+
+        // Waitress
+        m("http", r"Server: Waitress/(\d+\.\d+\.\d+)", "Waitress", Some("$1")),
+        m("http", r"Server: Waitress", "Waitress", None),
+
+        // Daphne
+        m("http", r"Server: Daphne/(\d+\.\d+\.\d+)", "Daphne", Some("$1")),
+        m("http", r"Server: Daphne", "Daphne", None),
+
+        // Hypercorn
+        m("http", r"Server: Hypercorn/(\d+\.\d+\.\d+)", "Hypercorn", Some("$1")),
+        m("http", r"Server: Hypercorn", "Hypercorn", None),
+
+        // Grin
+        m("http", r"Server: Grin/(\d+\.\d+)", "Grin", Some("$1")),
+
+        // Mongrel2
+        m("http", r"Server: Mongrel2", "Mongrel2", None),
+
+        // Puma versions
+        m("http", r"Server: Puma (\d+\.\d+\.\d+)", "Puma", Some("$1")),
+        m("http", r"Server: Puma (\d+\.\d+)", "Puma", Some("$1")),
+        m("http", r"Server: Puma", "Puma", None),
+    ]
+}
+
+/// Get version-specific programming language signatures
+pub fn version_specific_language_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Python versions
+        m("http", r"Server: Python/(\d+\.\d+\.\d+)", "Python", Some("$1")),
+        m("http", r"Server: Python/(\d+\.\d+)", "Python", Some("$1")),
+        m("http", r"X-Powered-By: Python/(\d+\.\d+\.\d+)", "Python", Some("$1")),
+        m("http", r"X-Powered-By: Python/(\d+\.\d+)", "Python", Some("$1")),
+        m("http", r"Server: Python", "Python", None),
+        m("http", r"X-Python-Version: (\d+\.\d+\.\d+)", "Python", Some("$1")),
+        m("http", r"X-Python-Version: (\d+\.\d+)", "Python", Some("$1")),
+        m("http", r"Server: BaseHTTP/(\d+\.\d+) Python/(\d+\.\d+\.\d+)", "Python BaseHTTP", Some("$2")),
+        m("http", r"Server: BaseHTTP/(\d+\.\d+) Python/(\d+\.\d+)", "Python BaseHTTP", Some("$2")),
+        m("http", r"Server: SimpleHTTP/(\d+\.\d+) Python/(\d+\.\d+\.\d+)", "Python SimpleHTTP", Some("$2")),
+        m("http", r"Server: WSGIServer/(\d+\.\d+) Python/(\d+\.\d+\.\d+)", "Python WSGI", Some("$2")),
+        m("http", r"Server: WSGIServer/(\d+\.\d+) Python/(\d+\.\d+)", "Python WSGI", Some("$2")),
+        m("http", r"Server: Python/3\.12\.(\d+)", "Python 3.12", Some("3.12.$1")),
+        m("http", r"Server: Python/3\.11\.(\d+)", "Python 3.11", Some("3.11.$1")),
+        m("http", r"Server: Python/3\.10\.(\d+)", "Python 3.10", Some("3.10.$1")),
+        m("http", r"Server: Python/3\.9\.(\d+)", "Python 3.9", Some("3.9.$1")),
+        m("http", r"Server: Python/3\.8\.(\d+)", "Python 3.8", Some("3.8.$1")),
+        m("http", r"Server: Python/3\.7\.(\d+)", "Python 3.7", Some("3.7.$1")),
+        m("http", r"Server: Python/2\.7\.(\d+)", "Python 2.7", Some("2.7.$1")),
+        m("http", r"Server: Python/2\.6\.(\d+)", "Python 2.6", Some("2.6.$1")),
+
+        // Node.js versions
+        m("http", r"Server: Node\.js/(\d+\.\d+\.\d+)", "Node.js", Some("$1")),
+        m("http", r"Server: Node\.js/(\d+\.\d+)", "Node.js", Some("$1")),
+        m("http", r"X-Powered-By: Node\.js/(\d+\.\d+\.\d+)", "Node.js", Some("$1")),
+        m("http", r"X-Powered-By: Node\.js/(\d+\.\d+)", "Node.js", Some("$1")),
+        m("http", r"Server: Node\.js", "Node.js", None),
+        m("http", r"X-Powered-By: Node\.js", "Node.js", None),
+        m("http", r"Server: Node\.js/v(\d+\.\d+\.\d+)", "Node.js", Some("$1")),
+        m("http", r"Server: Node\.js/v(\d+)", "Node.js", Some("$1")),
+        m("http", r"Server: node/v(\d+\.\d+\.\d+)", "Node.js", Some("$1")),
+        m("http", r"Server: Node/v(\d+\.\d+\.\d+)", "Node.js", Some("$1")),
+        m("http", r"X-Powered-By: Express", "Node.js Express", None),
+        m("http", r"Server: Express", "Node.js Express", None),
+
+        // Ruby versions
+        m("http", r"Server: Ruby/(\d+\.\d+\.\d+)", "Ruby", Some("$1")),
+        m("http", r"Server: Ruby/(\d+\.\d+)", "Ruby", Some("$1")),
+        m("http", r"X-Powered-By: Ruby/(\d+\.\d+\.\d+)", "Ruby", Some("$1")),
+        m("http", r"X-Powered-By: Ruby/(\d+\.\d+)", "Ruby", Some("$1")),
+        m("http", r"Server: Ruby", "Ruby", None),
+        m("http", r"X-Powered-By: Ruby", "Ruby", None),
+        m("http", r"Server: WEBrick/(\d+\.\d+\.\d+) Ruby/(\d+\.\d+\.\d+)", "Ruby WEBrick", Some("$2")),
+        m("http", r"Server: Puma (\d+\.\d+\.\d+) Ruby/(\d+\.\d+)", "Ruby Puma", Some("$2")),
+        m("http", r"Server: thin (\d+\.\d+\.\d+) Ruby/(\d+\.\d+)", "Ruby Thin", Some("$2")),
+        m("http", r"Server: unicorn (\d+\.\d+\.\d+) Ruby/(\d+\.\d+)", "Ruby Unicorn", Some("$2")),
+        m("http", r"Server: Mongrel (\d+\.\d+\.\d+) Ruby/(\d+\.\d+)", "Ruby Mongrel", Some("$2")),
+
+        // PHP versions
+        m("http", r"X-Powered-By: PHP/(\d+\.\d+\.\d+)", "PHP", Some("$1")),
+        m("http", r"X-Powered-By: PHP/(\d+\.\d+)", "PHP", Some("$1")),
+        m("http", r"X-Powered-By: PHP/(\d+)", "PHP", Some("$1")),
+        m("http", r"X-Powered-By: PHP", "PHP", None),
+        m("http", r"Server: PHP/(\d+\.\d+\.\d+)", "PHP", Some("$1")),
+        m("http", r"Server: PHP/(\d+\.\d+)", "PHP", Some("$1")),
+        m("http", r"Server: PHP", "PHP", None),
+        m("http", r"X-Powered-By: PHP/8\.3\.(\d+)", "PHP 8.3", Some("8.3.$1")),
+        m("http", r"X-Powered-By: PHP/8\.2\.(\d+)", "PHP 8.2", Some("8.2.$1")),
+        m("http", r"X-Powered-By: PHP/8\.1\.(\d+)", "PHP 8.1", Some("8.1.$1")),
+        m("http", r"X-Powered-By: PHP/8\.0\.(\d+)", "PHP 8.0", Some("8.0.$1")),
+        m("http", r"X-Powered-By: PHP/7\.4\.(\d+)", "PHP 7.4", Some("7.4.$1")),
+        m("http", r"X-Powered-By: PHP/7\.3\.(\d+)", "PHP 7.3", Some("7.3.$1")),
+        m("http", r"X-Powered-By: PHP/7\.2\.(\d+)", "PHP 7.2", Some("7.2.$1")),
+        m("http", r"X-Powered-By: PHP/7\.1\.(\d+)", "PHP 7.1", Some("7.1.$1")),
+        m("http", r"X-Powered-By: PHP/7\.0\.(\d+)", "PHP 7.0", Some("7.0.$1")),
+        m("http", r"X-Powered-By: PHP/5\.6\.(\d+)", "PHP 5.6", Some("5.6.$1")),
+        m("http", r"X-Powered-By: PHP/5\.5\.(\d+)", "PHP 5.5", Some("5.5.$1")),
+        m("http", r"X-Powered-By: PHP/5\.4\.(\d+)", "PHP 5.4", Some("5.4.$1")),
+        m("http", r"X-Powered-By: PHP/5\.3\.(\d+)", "PHP 5.3", Some("5.3.$1")),
+        m("http", r"X-Powered-By: PHP/5\.2\.(\d+)", "PHP 5.2", Some("5.2.$1")),
+
+        // Java versions
+        m("http", r"Server: Java/(\d+\.\d+\.\d+)", "Java", Some("$1")),
+        m("http", r"Server: Java/(\d+\.\d+)", "Java", Some("$1")),
+        m("http", r"X-Powered-By: Java/(\d+\.\d+\.\d+)", "Java", Some("$1")),
+        m("http", r"X-Powered-By: Java/(\d+\.\d+)", "Java", Some("$1")),
+        m("http", r"Server: Java", "Java", None),
+        m("http", r"X-Powered-By: Servlet", "Java Servlet", None),
+        m("http", r"Server: Jetty.*Java/(\d+\.\d+)", "Java (Jetty)", Some("$1")),
+        m("http", r"Server: Apache-Coyote.*Java/(\d+\.\d+)", "Java (Tomcat)", Some("$1")),
+        m("http", r"X-Powered-By: JSP", "Java JSP", None),
+        m("http", r"X-Powered-By: JSF", "Java JSF", None),
+
+        // Go versions
+        m("http", r"Server: Go-httpd/(\d+\.\d+\.\d+)", "Go httpd", Some("$1")),
+        m("http", r"Server: Go-httpd/(\d+\.\d+)", "Go httpd", Some("$1")),
+        m("http", r"Server: Go-httpd", "Go httpd", None),
+        m("http", r"Server: Go-http-server/(\d+\.\d+)", "Go HTTP", Some("$1")),
+        m("http", r"Server: Go.*http", "Go httpd", None),
+        m("http", r"X-Powered-By: Go", "Go", None),
+        m("http", r"Server: Go-httpd/(\d+) Go/(\d+\.\d+)", "Go", Some("$2")),
+
+        // Rust versions
+        m("http", r"Server: actix-web/(\d+\.\d+\.\d+)", "Rust (actix-web)", Some("$1")),
+        m("http", r"Server: actix-web/(\d+\.\d+)", "Rust (actix-web)", Some("$1")),
+        m("http", r"Server: actix-web", "Rust (actix-web)", None),
+        m("http", r"Server: Rocket/(\d+\.\d+\.\d+)", "Rust (Rocket)", Some("$1")),
+        m("http", r"Server: Rocket/(\d+\.\d+)", "Rust (Rocket)", Some("$1")),
+        m("http", r"Server: Rocket", "Rust (Rocket)", None),
+        m("http", r"Server: Axum", "Rust (Axum)", None),
+        m("http", r"Server: axum/(\d+\.\d+)", "Rust (Axum)", Some("$1")),
+        m("http", r"Server: warp/(\d+\.\d+\.\d+)", "Rust (Warp)", Some("$1")),
+        m("http", r"Server: warp/(\d+\.\d+)", "Rust (Warp)", Some("$1")),
+        m("http", r"Server: warp", "Rust (Warp)", None),
+        m("http", r"Server: hyper/(\d+\.\d+\.\d+)", "Rust (hyper)", Some("$1")),
+        m("http", r"Server: hyper/(\d+\.\d+)", "Rust (hyper)", Some("$1")),
+        m("http", r"Server: hyper", "Rust (hyper)", None),
+        m("http", r"Server: Tide", "Rust (Tide)", None),
+
+        // .NET versions
+        m("http", r"X-Powered-By: ASP\.NET", "ASP.NET", None),
+        m("http", r"X-AspNet-Version: (\d+\.\d+\.\d+)", "ASP.NET", Some("$1")),
+        m("http", r"X-AspNet-Version: (\d+\.\d+)", "ASP.NET", Some("$1")),
+        m("http", r"X-AspNet-Version: (\d+)", "ASP.NET", Some("$1")),
+        m("http", r"X-AspNetMvc-Version: (\d+\.\d+)", "ASP.NET MVC", Some("$1")),
+        m("http", r"X-AspNetMvc-Version: (\d+)", "ASP.NET MVC", Some("$1")),
+        m("http", r"X-Powered-By: ASP\.NET Core", "ASP.NET Core", None),
+        m("http", r"X-Powered-By: ASP\.NET Core/(\d+\.\d+)", "ASP.NET Core", Some("$1")),
+        m("http", r"Server: Kestrel", "ASP.NET Kestrel", None),
+        m("http", r"Server: Kestrel/(\d+\.\d+\.\d+)", "ASP.NET Kestrel", Some("$1")),
+        m("http", r"Server: Kestrel/(\d+\.\d+)", "ASP.NET Kestrel", Some("$1")),
+        m("http", r"X-Powered-By: ASP\.NET/(\d+\.\d+)", "ASP.NET", Some("$1")),
+
+        // Perl
+        m("http", r"Server: Perl/(\d+\.\d+\.\d+)", "Perl", Some("$1")),
+        m("http", r"X-Powered-By: Perl/(\d+\.\d+\.\d+)", "Perl", Some("$1")),
+        m("http", r"X-Powered-By: Perl", "Perl", None),
+        m("http", r"Server: Perl", "Perl", None),
+
+        // Lua
+        m("http", r"Server: Lua/(\d+\.\d+\.\d+)", "Lua", Some("$1")),
+        m("http", r"X-Powered-By: Lua", "Lua", None),
+        m("http", r"Server: OpenResty.*Lua", "Lua (OpenResty)", None),
+
+        // Erlang
+        m("http", r"Server: Cowboy/(\d+\.\d+\.\d+)", "Erlang Cowboy", Some("$1")),
+        m("http", r"Server: Cowboy/(\d+\.\d+)", "Erlang Cowboy", Some("$1")),
+        m("http", r"Server: Cowboy", "Erlang Cowboy", None),
+        m("http", r"Server: MochiWeb/(\d+\.\d+)", "Erlang MochiWeb", Some("$1")),
+        m("http", r"Server: MochiWeb", "Erlang MochiWeb", None),
+        m("http", r"Server: Yaws/(\d+\.\d+\.\d+)", "Erlang Yaws", Some("$1")),
+        m("http", r"Server: Yaws/(\d+\.\d+)", "Erlang Yaws", Some("$1")),
+        m("http", r"Server: Yaws", "Erlang Yaws", None),
+
+        // Elixir
+        m("http", r"X-Powered-By: Phoenix", "Elixir Phoenix", None),
+        m("http", r"Server: Phoenix", "Elixir Phoenix", None),
+        m("http", r"X-Powered-By: Plug", "Elixir Plug", None),
+
+        // Scala
+        m("http", r"X-Powered-By: Scala", "Scala", None),
+        m("http", r"Server: Akka HTTP/(\d+\.\d+\.\d+)", "Scala Akka HTTP", Some("$1")),
+        m("http", r"Server: Akka HTTP/(\d+\.\d+)", "Scala Akka HTTP", Some("$1")),
+        m("http", r"Server: Akka HTTP", "Scala Akka HTTP", None),
+
+        // Kotlin
+        m("http", r"X-Powered-By: Ktor", "Kotlin Ktor", None),
+        m("http", r"Server: Ktor/(\d+\.\d+\.\d+)", "Kotlin Ktor", Some("$1")),
+        m("http", r"Server: Ktor", "Kotlin Ktor", None),
+
+        // R
+        m("http", r"X-Powered-By: R/(\d+\.\d+\.\d+)", "R", Some("$1")),
+        m("http", r"X-Powered-By: Shiny", "R Shiny", None),
+        m("http", r"Server: Shiny", "R Shiny", None),
+
+        // Julia
+        m("http", r"X-Powered-By: Julia", "Julia", None),
+        m("http", r"Server: Julia/(\d+\.\d+)", "Julia", Some("$1")),
+    ]
+}
+
+/// Get version-specific framework signatures
+pub fn version_specific_framework_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Django versions
+        m("http", r"Server: Django/(\d+\.\d+\.\d+)", "Django", Some("$1")),
+        m("http", r"Server: Django/(\d+\.\d+)", "Django", Some("$1")),
+        m("http", r"Server: Django", "Django", None),
+        m("http", r"X-Powered-By: Django", "Django", None),
+        m("http", r"X-Frame-Options: DENY.*WSGIServer", "Django", None),
+        m("http", r"csrfmiddlewaretoken", "Django", None),
+        m("http", r"Set-Cookie:.*csrftoken", "Django", None),
+        m("http", r"Set-Cookie:.*sessionid", "Django", None),
+        m("http", r"Server: Django/4\.2\.(\d+)", "Django 4.2", Some("4.2.$1")),
+        m("http", r"Server: Django/4\.1\.(\d+)", "Django 4.1", Some("4.1.$1")),
+        m("http", r"Server: Django/4\.0\.(\d+)", "Django 4.0", Some("4.0.$1")),
+        m("http", r"Server: Django/3\.2\.(\d+)", "Django 3.2", Some("3.2.$1")),
+        m("http", r"Server: Django/3\.1\.(\d+)", "Django 3.1", Some("3.1.$1")),
+        m("http", r"Server: Django/2\.2\.(\d+)", "Django 2.2", Some("2.2.$1")),
+        m("http", r"Server: Django/2\.1\.(\d+)", "Django 2.1", Some("2.1.$1")),
+        m("http", r"Server: Django/1\.11\.(\d+)", "Django 1.11", Some("1.11.$1")),
+
+        // Flask versions
+        m("http", r"Server: Werkzeug/(\d+\.\d+\.\d+) Python/(\d+\.\d+\.\d+)", "Flask", Some("$1")),
+        m("http", r"Server: Werkzeug/(\d+\.\d+\.\d+) Python/(\d+\.\d+)", "Flask", Some("$1")),
+        m("http", r"Server: Werkzeug/(\d+\.\d+\.\d+)", "Werkzeug", Some("$1")),
+        m("http", r"Server: Werkzeug/(\d+\.\d+)", "Werkzeug", Some("$1")),
+        m("http", r"Server: Werkzeug", "Werkzeug", None),
+        m("http", r"X-Powered-By: Flask/(\d+\.\d+\.\d+)", "Flask", Some("$1")),
+        m("http", r"X-Powered-By: Flask/(\d+\.\d+)", "Flask", Some("$1")),
+        m("http", r"X-Powered-By: Flask", "Flask", None),
+        m("http", r"Server: Flask/(\d+\.\d+\.\d+)", "Flask", Some("$1")),
+        m("http", r"Server: Flask/(\d+\.\d+)", "Flask", Some("$1")),
+        m("http", r"Server: Flask", "Flask", None),
+
+        // FastAPI versions
+        m("http", r"Server: uvicorn/(\d+\.\d+\.\d+)", "FastAPI/uvicorn", Some("$1")),
+        m("http", r"Server: uvicorn/(\d+\.\d+)", "FastAPI/uvicorn", Some("$1")),
+        m("http", r"Server: uvicorn", "FastAPI/uvicorn", None),
+        m("http", r"X-Powered-By: FastAPI", "FastAPI", None),
+        m("http", r"X-Process-Time:", "FastAPI", None),
+        m("http", r"Server: FastAPI", "FastAPI", None),
+        m("http", r"Server: FastAPI/(\d+\.\d+\.\d+)", "FastAPI", Some("$1")),
+        m("http", r"Server: FastAPI/(\d+\.\d+)", "FastAPI", Some("$1")),
+        m("http", r"openapi.json", "FastAPI/OpenAPI", None),
+
+        // Express versions
+        m("http", r"X-Powered-By: Express", "Express.js", None),
+        m("http", r"X-Powered-By: Express/(\d+\.\d+\.\d+)", "Express.js", Some("$1")),
+        m("http", r"X-Powered-By: Express/(\d+\.\d+)", "Express.js", Some("$1")),
+        m("http", r"Server: Express", "Express.js", None),
+        m("http", r"Server: Express/(\d+\.\d+\.\d+)", "Express.js", Some("$1")),
+        m("http", r"Server: Express/(\d+\.\d+)", "Express.js", Some("$1")),
+        m("http", r"Set-Cookie:.*connect\.sid", "Express.js", None),
+        m("http", r"X-Powered-By: Express/4\.(\d+)", "Express.js 4", Some("4.$1")),
+        m("http", r"X-Powered-By: Express/3\.(\d+)", "Express.js 3", Some("3.$1")),
+
+        // Rails versions
+        m("http", r"X-Powered-By: Ruby on Rails", "Ruby on Rails", None),
+        m("http", r"X-Powered-By: Rails", "Ruby on Rails", None),
+        m("http", r"X-Powered-By: Rails/(\d+\.\d+\.\d+)", "Ruby on Rails", Some("$1")),
+        m("http", r"X-Powered-By: Rails/(\d+\.\d+)", "Ruby on Rails", Some("$1")),
+        m("http", r"Set-Cookie:.*_session_id", "Ruby on Rails", None),
+        m("http", r"Set-Cookie:.*_rails_session", "Ruby on Rails", None),
+        m("http", r"X-Runtime:", "Ruby on Rails", None),
+        m("http", r"X-Request-Id:", "Ruby on Rails", None),
+        m("http", r"Server: Puma.*Rails", "Ruby on Rails (Puma)", None),
+        m("http", r"Server: Passenger.*Rails", "Ruby on Rails (Passenger)", None),
+        m("http", r"Server: Unicorn.*Rails", "Ruby on Rails (Unicorn)", None),
+
+        // Laravel versions
+        m("http", r"X-Powered-By: Laravel", "Laravel", None),
+        m("http", r"X-Powered-By: Laravel/(\d+\.\d+)", "Laravel", Some("$1")),
+        m("http", r"Set-Cookie:.*laravel_session", "Laravel", None),
+        m("http", r"Set-Cookie:.*XSRF-TOKEN", "Laravel", None),
+        m("http", r"X-RateLimit-Limit:", "Laravel", None),
+        m("http", r"X-RateLimit-Remaining:", "Laravel", None),
+        m("http", r"Set-Cookie:.*laravel_token", "Laravel", None),
+        m("http", r"Server: Laravel", "Laravel", None),
+        m("http", r"X-Powered-By: Laravel/10\.", "Laravel 10", None),
+        m("http", r"X-Powered-By: Laravel/11\.", "Laravel 11", None),
+        m("http", r"X-Powered-By: Laravel/9\.", "Laravel 9", None),
+        m("http", r"X-Powered-By: Laravel/8\.", "Laravel 8", None),
+
+        // Spring versions
+        m("http", r"X-Powered-By: Spring", "Spring Framework", None),
+        m("http", r"X-Powered-By: Spring/(\d+\.\d+\.\d+)", "Spring Framework", Some("$1")),
+        m("http", r"X-Powered-By: Spring/(\d+\.\d+)", "Spring Framework", Some("$1")),
+        m("http", r"X-Powered-By: Spring Boot", "Spring Boot", None),
+        m("http", r"X-Powered-By: Spring Boot/(\d+\.\d+\.\d+)", "Spring Boot", Some("$1")),
+        m("http", r"X-Powered-By: Spring Boot/(\d+\.\d+)", "Spring Boot", Some("$1")),
+        m("http", r"X-Application-Context:", "Spring Boot", None),
+        m("http", r"X-Application-Context:.*Spring", "Spring Boot", None),
+        m("http", r"/actuator/health", "Spring Boot Actuator", None),
+        m("http", r"/actuator/info", "Spring Boot Actuator", None),
+        m("http", r"Whitelabel Error Page", "Spring Boot", None),
+        m("http", r"Set-Cookie:.*JSESSIONID", "Java (Spring)", None),
+        m("http", r"Server: Spring Boot", "Spring Boot", None),
+        m("http", r"X-Powered-By: Spring Boot/3\.(\d+)", "Spring Boot 3", Some("3.$1")),
+        m("http", r"X-Powered-By: Spring Boot/2\.(\d+)", "Spring Boot 2", Some("2.$1")),
+        m("http", r"X-Powered-By: Spring Boot/1\.(\d+)", "Spring Boot 1", Some("1.$1")),
+
+        // ASP.NET versions
+        m("http", r"X-Powered-By: ASP\.NET", "ASP.NET", None),
+        m("http", r"X-AspNet-Version: (\d+\.\d+\.\d+)", "ASP.NET", Some("$1")),
+        m("http", r"X-AspNet-Version: (\d+\.\d+)", "ASP.NET", Some("$1")),
+        m("http", r"X-AspNet-Version: (\d+)", "ASP.NET", Some("$1")),
+        m("http", r"X-AspNetMvc-Version: (\d+\.\d+)", "ASP.NET MVC", Some("$1")),
+        m("http", r"X-AspNetMvc-Version: (\d+)", "ASP.NET MVC", Some("$1")),
+        m("http", r"X-Powered-By: ASP\.NET Core", "ASP.NET Core", None),
+        m("http", r"X-Powered-By: ASP\.NET Core/(\d+\.\d+)", "ASP.NET Core", Some("$1")),
+        m("http", r"Server: Microsoft-IIS.*ASP\.NET", "ASP.NET (IIS)", None),
+        m("http", r"X-Powered-By: ASP\.NET/4\.0", "ASP.NET 4.0", None),
+        m("http", r"X-Powered-By: ASP\.NET/2\.0", "ASP.NET 2.0", None),
+        m("http", r"X-Powered-By: ASP\.NET/1\.1", "ASP.NET 1.1", None),
+        m("http", r"X-AspNet-Version:4\.0", "ASP.NET 4.0", None),
+        m("http", r"X-AspNet-Version:2\.0", "ASP.NET 2.0", None),
+
+        // Symfony versions
+        m("http", r"X-Powered-By: Symfony/(\d+\.\d+\.\d+)", "Symfony", Some("$1")),
+        m("http", r"X-Powered-By: Symfony/(\d+\.\d+)", "Symfony", Some("$1")),
+        m("http", r"X-Powered-By: Symfony", "Symfony", None),
+        m("http", r"X-Debug-Token:", "Symfony", None),
+        m("http", r"X-Symfony-Cache:", "Symfony", None),
+        m("http", r"Set-Cookie:.*SYMFONY", "Symfony", None),
+
+        // CodeIgniter versions
+        m("http", r"X-Powered-By: CodeIgniter/(\d+\.\d+\.\d+)", "CodeIgniter", Some("$1")),
+        m("http", r"X-Powered-By: CodeIgniter/(\d+\.\d+)", "CodeIgniter", Some("$1")),
+        m("http", r"X-Powered-By: CodeIgniter", "CodeIgniter", None),
+        m("http", r"Set-Cookie:.*ci_session", "CodeIgniter", None),
+
+        // CakePHP versions
+        m("http", r"X-Powered-By: CakePHP/(\d+\.\d+\.\d+)", "CakePHP", Some("$1")),
+        m("http", r"X-Powered-By: CakePHP/(\d+\.\d+)", "CakePHP", Some("$1")),
+        m("http", r"X-Powered-By: CakePHP", "CakePHP", None),
+        m("http", r"Set-Cookie:.*CAKEPHP", "CakePHP", None),
+
+        // Zend/Laminas versions
+        m("http", r"X-Powered-By: Zend Framework/(\d+\.\d+\.\d+)", "Zend Framework", Some("$1")),
+        m("http", r"X-Powered-By: Zend Framework/(\d+\.\d+)", "Zend Framework", Some("$1")),
+        m("http", r"X-Powered-By: Zend Framework", "Zend Framework", None),
+        m("http", r"X-Powered-By: Laminas/(\d+\.\d+\.\d+)", "Laminas", Some("$1")),
+        m("http", r"X-Powered-By: Laminas/(\d+\.\d+)", "Laminas", Some("$1")),
+        m("http", r"X-Powered-By: Laminas", "Laminas", None),
+
+        // Yii versions
+        m("http", r"X-Powered-By: Yii/(\d+\.\d+\.\d+)", "Yii", Some("$1")),
+        m("http", r"X-Powered-By: Yii/(\d+\.\d+)", "Yii", Some("$1")),
+        m("http", r"X-Powered-By: Yii", "Yii", None),
+        m("http", r"Set-Cookie:.*YII_CSRF_TOKEN", "Yii", None),
+
+        // Slim versions
+        m("http", r"X-Powered-By: Slim/(\d+\.\d+\.\d+)", "Slim Framework", Some("$1")),
+        m("http", r"X-Powered-By: Slim/(\d+\.\d+)", "Slim Framework", Some("$1")),
+        m("http", r"X-Powered-By: Slim", "Slim Framework", None),
+        m("http", r"Server: Slim", "Slim Framework", None),
+
+        // Lumen versions
+        m("http", r"X-Powered-By: Lumen/(\d+\.\d+\.\d+)", "Lumen", Some("$1")),
+        m("http", r"X-Powered-By: Lumen/(\d+\.\d+)", "Lumen", Some("$1")),
+        m("http", r"X-Powered-By: Lumen", "Lumen", None),
+
+        // Phalcon
+        m("http", r"X-Powered-By: Phalcon", "Phalcon", None),
+        m("http", r"X-Powered-By: Phalcon/(\d+\.\d+)", "Phalcon", Some("$1")),
+
+        // FuelPHP
+        m("http", r"X-Powered-By: FuelPHP/(\d+\.\d+)", "FuelPHP", Some("$1")),
+        m("http", r"X-Powered-By: FuelPHP", "FuelPHP", None),
+
+        // Nette
+        m("http", r"X-Powered-By: Nette Framework", "Nette Framework", None),
+        m("http", r"Set-Cookie:.*nette-browser", "Nette Framework", None),
+
+        // Next.js versions
+        m("http", r"x-nextjs-page:", "Next.js", None),
+        m("http", r"x-nextjs-cache:", "Next.js", None),
+        m("http", r"X-Powered-By: Next\.js", "Next.js", None),
+        m("http", r"_next/static", "Next.js", None),
+        m("http", r"X-Powered-By: Next\.js/(\d+\.\d+\.\d+)", "Next.js", Some("$1")),
+        m("http", r"X-Powered-By: Next\.js/(\d+\.\d+)", "Next.js", Some("$1")),
+
+        // Nuxt.js versions
+        m("http", r"X-Powered-By: Nuxt", "Nuxt.js", None),
+        m("http", r"X-Powered-By: Nuxt/(\d+\.\d+\.\d+)", "Nuxt.js", Some("$1")),
+        m("http", r"X-Powered-By: Nuxt/(\d+\.\d+)", "Nuxt.js", Some("$1")),
+        m("http", r"nuxt/", "Nuxt.js", None),
+        m("http", r"_nuxt/", "Nuxt.js", None),
+
+        // Gatsby versions
+        m("http", r"X-Gatsby-.*:", "Gatsby", None),
+        m("http", r"Server: Gatsby", "Gatsby", None),
+        m("http", r"X-Powered-By: Gatsby", "Gatsby", None),
+
+        // SvelteKit versions
+        m("http", r"X-Powered-By: SvelteKit", "SvelteKit", None),
+        m("http", r"Server: SvelteKit", "SvelteKit", None),
+        m("http", r"_app/immutable", "SvelteKit", None),
+
+        // Remix versions
+        m("http", r"X-Remix-.*:", "Remix", None),
+        m("http", r"Server: Remix", "Remix", None),
+        m("http", r"X-Powered-By: Remix", "Remix", None),
+
+        // Astro versions
+        m("http", r"X-Powered-By: Astro", "Astro", None),
+        m("http", r"Server: Astro", "Astro", None),
+
+        // Angular versions
+        m("http", r"X-Powered-By: Angular", "Angular", None),
+        m("http", r"ng-version", "Angular", None),
+        m("http", r"X-Angular-.*:", "Angular", None),
+
+        // React versions
+        m("http", r"X-Powered-By: React", "React", None),
+        m("http", r"Server: React", "React", None),
+
+        // Vue.js versions
+        m("http", r"X-Powered-By: Vue\.js", "Vue.js", None),
+        m("http", r"Server: Vue\.js", "Vue.js", None),
+
+        // Fastify versions
+        m("http", r"Server: Fastify/(\d+\.\d+\.\d+)", "Fastify", Some("$1")),
+        m("http", r"Server: Fastify/(\d+\.\d+)", "Fastify", Some("$1")),
+        m("http", r"Server: Fastify", "Fastify", None),
+        m("http", r"X-Powered-By: Fastify", "Fastify", None),
+        m("http", r"Server: fastify/(\d+\.\d+\.\d+)", "Fastify", Some("$1")),
+        m("http", r"Server: fastify/(\d+\.\d+)", "Fastify", Some("$1")),
+        m("http", r"Server: fastify", "Fastify", None),
+        m("http", r"X-Powered-By: fastify", "Fastify", None),
+
+        // Koa versions
+        m("http", r"X-Powered-By: Koa", "Koa", None),
+        m("http", r"X-Powered-By: Koa/(\d+\.\d+\.\d+)", "Koa", Some("$1")),
+        m("http", r"X-Powered-By: Koa/(\d+\.\d+)", "Koa", Some("$1")),
+        m("http", r"Server: Koa", "Koa", None),
+        m("http", r"Set-Cookie:.*koa:sess", "Koa", None),
+
+        // Hapi versions
+        m("http", r"X-Powered-By: hapi", "hapi", None),
+        m("http", r"Server: hapi/(\d+\.\d+\.\d+)", "hapi", Some("$1")),
+        m("http", r"Server: hapi/(\d+\.\d+)", "hapi", Some("$1")),
+        m("http", r"Server: hapi", "hapi", None),
+        m("http", r"Server: Hapi", "hapi", None),
+
+        // NestJS versions
+        m("http", r"X-Powered-By: NestJS", "NestJS", None),
+        m("http", r"X-Powered-By: NestJS/(\d+\.\d+\.\d+)", "NestJS", Some("$1")),
+        m("http", r"X-Powered-By: NestJS/(\d+\.\d+)", "NestJS", Some("$1")),
+        m("http", r"Server: NestJS", "NestJS", None),
+
+        // Gin versions
+        m("http", r"Server: Gin/(\d+\.\d+\.\d+)", "Gin", Some("$1")),
+        m("http", r"Server: Gin/(\d+\.\d+)", "Gin", Some("$1")),
+        m("http", r"Server: Gin", "Gin", None),
+        m("http", r"X-Powered-By: Gin", "Gin", None),
+
+        // Echo versions
+        m("http", r"Server: Echo/(\d+\.\d+\.\d+)", "Echo", Some("$1")),
+        m("http", r"Server: Echo/(\d+\.\d+)", "Echo", Some("$1")),
+        m("http", r"Server: Echo", "Echo", None),
+        m("http", r"X-Powered-By: Echo", "Echo", None),
+
+        // Fiber versions
+        m("http", r"Server: Fiber/(\d+\.\d+\.\d+)", "Fiber", Some("$1")),
+        m("http", r"Server: Fiber/(\d+\.\d+)", "Fiber", Some("$1")),
+        m("http", r"Server: Fiber", "Fiber", None),
+        m("http", r"X-Powered-By: Fiber", "Fiber", None),
+
+        // Chi versions
+        m("http", r"Server: Chi", "Chi", None),
+        m("http", r"X-Powered-By: Chi", "Chi", None),
+
+        // Buffalo versions
+        m("http", r"Server: Buffalo", "Buffalo", None),
+        m("http", r"X-Powered-By: Buffalo", "Buffalo", None),
+
+        // Beego versions
+        m("http", r"Server: BeegoServer/(\d+\.\d+\.\d+)", "Beego", Some("$1")),
+        m("http", r"Server: BeegoServer/(\d+\.\d+)", "Beego", Some("$1")),
+        m("http", r"Server: BeegoServer", "Beego", None),
+        m("http", r"X-Powered-By: Beego", "Beego", None),
+
+        // Iris versions
+        m("http", r"Server: Iris/(\d+\.\d+\.\d+)", "Iris", Some("$1")),
+        m("http", r"Server: Iris/(\d+\.\d+)", "Iris", Some("$1")),
+        m("http", r"Server: Iris", "Iris", None),
+        m("http", r"X-Powered-By: Iris", "Iris", None),
+
+        // Revel versions
+        m("http", r"Server: Revel/(\d+\.\d+)", "Revel", Some("$1")),
+        m("http", r"Server: Revel", "Revel", None),
+        m("http", r"X-Powered-By: Revel", "Revel", None),
+
+        // Actix Web versions
+        m("http", r"Server: actix-web/(\d+\.\d+\.\d+)", "Actix Web", Some("$1")),
+        m("http", r"Server: actix-web/(\d+\.\d+)", "Actix Web", Some("$1")),
+        m("http", r"Server: actix-web", "Actix Web", None),
+        m("http", r"Server: Actix", "Actix Web", None),
+        m("http", r"Server: Actix-Web", "Actix Web", None),
+        m("http", r"X-Powered-By: Actix", "Actix Web", None),
+
+        // Rocket versions
+        m("http", r"Server: Rocket/(\d+\.\d+\.\d+)", "Rocket", Some("$1")),
+        m("http", r"Server: Rocket/(\d+\.\d+)", "Rocket", Some("$1")),
+        m("http", r"Server: Rocket", "Rocket", None),
+        m("http", r"X-Powered-By: Rocket", "Rocket", None),
+
+        // Axum versions
+        m("http", r"Server: axum/(\d+\.\d+\.\d+)", "Axum", Some("$1")),
+        m("http", r"Server: axum/(\d+\.\d+)", "Axum", Some("$1")),
+        m("http", r"Server: axum", "Axum", None),
+        m("http", r"Server: Axum", "Axum", None),
+        m("http", r"X-Powered-By: Axum", "Axum", None),
+
+        // Warp versions
+        m("http", r"Server: warp/(\d+\.\d+\.\d+)", "Warp", Some("$1")),
+        m("http", r"Server: warp/(\d+\.\d+)", "Warp", Some("$1")),
+        m("http", r"Server: warp", "Warp", None),
+        m("http", r"X-Powered-By: Warp", "Warp", None),
+
+        // Tide versions
+        m("http", r"Server: Tide/(\d+\.\d+\.\d+)", "Tide", Some("$1")),
+        m("http", r"Server: Tide/(\d+\.\d+)", "Tide", Some("$1")),
+        m("http", r"Server: Tide", "Tide", None),
+        m("http", r"X-Powered-By: Tide", "Tide", None),
+
+        // Micronaut versions
+        m("http", r"X-Micronaut-.*:", "Micronaut", None),
+        m("http", r"Server: Micronaut/(\d+\.\d+\.\d+)", "Micronaut", Some("$1")),
+        m("http", r"Server: Micronaut/(\d+\.\d+)", "Micronaut", Some("$1")),
+        m("http", r"Server: Micronaut", "Micronaut", None),
+
+        // Quarkus versions
+        m("http", r"X-Powered-By: Quarkus/(\d+\.\d+\.\d+)", "Quarkus", Some("$1")),
+        m("http", r"X-Powered-By: Quarkus/(\d+\.\d+)", "Quarkus", Some("$1")),
+        m("http", r"X-Powered-By: Quarkus", "Quarkus", None),
+        m("http", r"Server: Quarkus/(\d+\.\d+\.\d+)", "Quarkus", Some("$1")),
+        m("http", r"Server: Quarkus/(\d+\.\d+)", "Quarkus", Some("$1")),
+        m("http", r"Server: Quarkus", "Quarkus", None),
+
+        // Dropwizard versions
+        m("http", r"Server: Dropwizard/(\d+\.\d+\.\d+)", "Dropwizard", Some("$1")),
+        m("http", r"Server: Dropwizard/(\d+\.\d+)", "Dropwizard", Some("$1")),
+        m("http", r"Server: Dropwizard", "Dropwizard", None),
+        m("http", r"X-Powered-By: Dropwizard/(\d+\.\d+\.\d+)", "Dropwizard", Some("$1")),
+        m("http", r"X-Powered-By: Dropwizard/(\d+\.\d+)", "Dropwizard", Some("$1")),
+        m("http", r"X-Powered-By: Dropwizard", "Dropwizard", None),
+
+        // Play Framework versions
+        m("http", r"X-Powered-By: Play Framework", "Play Framework", None),
+        m("http", r"X-Powered-By: Play/(\d+\.\d+\.\d+)", "Play Framework", Some("$1")),
+        m("http", r"X-Powered-By: Play/(\d+\.\d+)", "Play Framework", Some("$1")),
+        m("http", r"Server: Play", "Play Framework", None),
+        m("http", r"Server: Play Framework/(\d+\.\d+\.\d+)", "Play Framework", Some("$1")),
+        m("http", r"Set-Cookie:.*PLAY_SESSION", "Play Framework", None),
+
+        // Akka HTTP versions
+        m("http", r"Server: akka-http/(\d+\.\d+\.\d+)", "Akka HTTP", Some("$1")),
+        m("http", r"Server: akka-http/(\d+\.\d+)", "Akka HTTP", Some("$1")),
+        m("http", r"Server: akka-http", "Akka HTTP", None),
+
+        // Grails versions
+        m("http", r"X-Powered-By: Grails/(\d+\.\d+\.\d+)", "Grails", Some("$1")),
+        m("http", r"X-Powered-By: Grails/(\d+\.\d+)", "Grails", Some("$1")),
+        m("http", r"X-Powered-By: Grails", "Grails", None),
+
+        // Struts versions
+        m("http", r"X-Powered-By: Struts/(\d+\.\d+\.\d+)", "Apache Struts", Some("$1")),
+        m("http", r"X-Powered-By: Struts/(\d+\.\d+)", "Apache Struts", Some("$1")),
+        m("http", r"X-Powered-By: Struts", "Apache Struts", None),
+
+        // Mojolicious versions
+        m("http", r"X-Powered-By: Mojolicious/(\d+\.\d+)", "Mojolicious", Some("$1")),
+        m("http", r"X-Powered-By: Mojolicious", "Mojolicious", None),
+        m("http", r"Server: Mojolicious", "Mojolicious", None),
+
+        // Dancer versions
+        m("http", r"X-Powered-By: Perl Dancer/(\d+\.\d+\.\d+)", "Perl Dancer", Some("$1")),
+        m("http", r"X-Powered-By: Perl Dancer", "Perl Dancer", None),
+        m("http", r"X-Powered-By: Dancer2/(\d+\.\d+\.\d+)", "Dancer2", Some("$1")),
+        m("http", r"X-Powered-By: Dancer2", "Dancer2", None),
+
+        // Sinatra versions
+        m("http", r"X-Powered-By: Sinatra/(\d+\.\d+\.\d+)", "Sinatra", Some("$1")),
+        m("http", r"X-Powered-By: Sinatra/(\d+\.\d+)", "Sinatra", Some("$1")),
+        m("http", r"X-Powered-By: Sinatra", "Sinatra", None),
+        m("http", r"Server: Sinatra/(\d+\.\d+\.\d+)", "Sinatra", Some("$1")),
+        m("http", r"Server: Sinatra/(\d+\.\d+)", "Sinatra", Some("$1")),
+        m("http", r"Server: Sinatra", "Sinatra", None),
+
+        // Hanami versions
+        m("http", r"X-Powered-By: Hanami/(\d+\.\d+)", "Hanami", Some("$1")),
+        m("http", r"X-Powered-By: Hanami", "Hanami", None),
+        m("http", r"Set-Cookie:.*hanami_session", "Hanami", None),
+
+        // Grape versions
+        m("http", r"X-Powered-By: Grape/(\d+\.\d+\.\d+)", "Grape", Some("$1")),
+        m("http", r"X-Powered-By: Grape/(\d+\.\d+)", "Grape", Some("$1")),
+        m("http", r"X-Powered-By: Grape", "Grape", None),
+
+        // Nancy versions
+        m("http", r"X-Powered-By: Nancy/(\d+\.\d+\.\d+)", "Nancy", Some("$1")),
+        m("http", r"X-Powered-By: Nancy/(\d+\.\d+)", "Nancy", Some("$1")),
+        m("http", r"X-Powered-By: Nancy", "Nancy", None),
+
+        // Sails.js versions
+        m("http", r"X-Powered-By: Sails.js/(\d+\.\d+\.\d+)", "Sails.js", Some("$1")),
+        m("http", r"X-Powered-By: Sails.js/(\d+\.\d+)", "Sails.js", Some("$1")),
+        m("http", r"X-Powered-By: Sails.js", "Sails.js", None),
+        m("http", r"Set-Cookie:.*sails\.sid", "Sails.js", None),
+
+        // AdonisJS versions
+        m("http", r"X-Powered-By: AdonisJs/(\d+\.\d+\.\d+)", "AdonisJS", Some("$1")),
+        m("http", r"X-Powered-By: AdonisJs/(\d+\.\d+)", "AdonisJS", Some("$1")),
+        m("http", r"X-Powered-By: AdonisJs", "AdonisJS", None),
+        m("http", r"Set-Cookie:.*adonis-session", "AdonisJS", None),
+
+        // LoopBack versions
+        m("http", r"X-Powered-By: LoopBack/(\d+\.\d+\.\d+)", "LoopBack", Some("$1")),
+        m("http", r"X-Powered-By: LoopBack/(\d+\.\d+)", "LoopBack", Some("$1")),
+        m("http", r"X-Powered-By: LoopBack", "LoopBack", None),
+
+        // Restify versions
+        m("http", r"Server: restify/(\d+\.\d+\.\d+)", "Restify", Some("$1")),
+        m("http", r"Server: restify/(\d+\.\d+)", "Restify", Some("$1")),
+        m("http", r"Server: restify", "Restify", None),
+        m("http", r"X-Powered-By: Restify", "Restify", None),
+
+        // Meteor versions
+        m("http", r"X-Powered-By: Meteor", "Meteor", None),
+        m("http", r"Set-Cookie:.*meteor_login_token", "Meteor", None),
+
+        // Strapi versions
+        m("http", r"X-Powered-By: Strapi/(\d+\.\d+\.\d+)", "Strapi", Some("$1")),
+        m("http", r"X-Powered-By: Strapi/(\d+\.\d+)", "Strapi", Some("$1")),
+        m("http", r"X-Powered-By: Strapi", "Strapi", None),
+        m("http", r"Server: Strapi", "Strapi", None),
+
+        // KeystoneJS versions
+        m("http", r"X-Powered-By: KeystoneJS/(\d+\.\d+)", "KeystoneJS", Some("$1")),
+        m("http", r"X-Powered-By: KeystoneJS", "KeystoneJS", None),
+
+        // FeathersJS versions
+        m("http", r"X-Powered-By: FeathersJS/(\d+\.\d+)", "FeathersJS", Some("$1")),
+        m("http", r"X-Powered-By: FeathersJS", "FeathersJS", None),
+
+        // October CMS
+        m("http", r"X-Powered-By: October CMS", "October CMS", None),
+
+        // Craft CMS
+        m("http", r"Set-Cookie:.*CraftSessionId", "Craft CMS", None),
+        m("http", r"X-Powered-By: Craft CMS", "Craft CMS", None),
+
+        // Plotly Dash
+        m("http", r"X-Powered-By: Dash", "Plotly Dash", None),
+        m("http", r"Server: Dash", "Plotly Dash", None),
+
+        // Streamlit
+        m("http", r"Server: Streamlit", "Streamlit", None),
+        m("http", r"X-Powered-By: Streamlit", "Streamlit", None),
+
+        // Gradio
+        m("http", r"Server: Gradio", "Gradio", None),
+        m("http", r"X-Powered-By: Gradio", "Gradio", None),
+
+        // Pyramid versions
+        m("http", r"Server: Pyramid/(\d+\.\d+\.\d+)", "Pyramid", Some("$1")),
+        m("http", r"Server: Pyramid/(\d+\.\d+)", "Pyramid", Some("$1")),
+        m("http", r"X-Powered-By: Pyramid", "Pyramid", None),
+
+        // Bottle versions
+        m("http", r"Server: Bottle/(\d+\.\d+\.\d+)", "Bottle", Some("$1")),
+        m("http", r"Server: Bottle/(\d+\.\d+)", "Bottle", Some("$1")),
+        m("http", r"Server: Bottle", "Bottle", None),
+        m("http", r"X-Powered-By: Bottle", "Bottle", None),
+
+        // Sanic versions
+        m("http", r"Server: Sanic/(\d+\.\d+\.\d+)", "Sanic", Some("$1")),
+        m("http", r"Server: Sanic/(\d+\.\d+)", "Sanic", Some("$1")),
+        m("http", r"Server: Sanic", "Sanic", None),
+        m("http", r"X-Powered-By: Sanic", "Sanic", None),
+
+        // Starlette versions
+        m("http", r"Server: Starlette/(\d+\.\d+\.\d+)", "Starlette", Some("$1")),
+        m("http", r"Server: Starlette/(\d+\.\d+)", "Starlette", Some("$1")),
+        m("http", r"Server: Starlette", "Starlette", None),
+
+        // Falcon versions
+        m("http", r"X-Powered-By: Falcon/(\d+\.\d+\.\d+)", "Falcon", Some("$1")),
+        m("http", r"X-Powered-By: Falcon/(\d+\.\d+)", "Falcon", Some("$1")),
+        m("http", r"X-Powered-By: Falcon", "Falcon", None),
+
+        // Tornado versions
+        m("http", r"Server: TornadoServer/(\d+\.\d+\.\d+)", "Tornado", Some("$1")),
+        m("http", r"Server: TornadoServer/(\d+\.\d+)", "Tornado", Some("$1")),
+        m("http", r"Server: TornadoServer", "Tornado", None),
+        m("http", r"X-Powered-By: Tornado", "Tornado", None),
+
+        // Twisted versions
+        m("http", r"Server: TwistedWeb/(\d+\.\d+\.\d+)", "Twisted Web", Some("$1")),
+        m("http", r"Server: TwistedWeb/(\d+\.\d+)", "Twisted Web", Some("$1")),
+        m("http", r"Server: TwistedWeb", "Twisted Web", None),
+
+        // CherryPy versions
+        m("http", r"Server: CherryPy/(\d+\.\d+\.\d+)", "CherryPy", Some("$1")),
+        m("http", r"Server: CherryPy/(\d+\.\d+)", "CherryPy", Some("$1")),
+        m("http", r"Server: CherryPy", "CherryPy", None),
+        m("http", r"X-Powered-By: CherryPy", "CherryPy", None),
+
+        // AIOHTTP versions
+        m("http", r"Server: Python/(\d+\.\d+) aiohttp/(\d+\.\d+\.\d+)", "aiohttp", Some("$2")),
+        m("http", r"Server: aiohttp/(\d+\.\d+\.\d+)", "aiohttp", Some("$1")),
+        m("http", r"Server: aiohttp/(\d+\.\d+)", "aiohttp", Some("$1")),
+        m("http", r"Server: aiohttp", "aiohttp", None),
+
+        // Mongoose versions
+        m("http", r"Server: Mongoose/(\d+\.\d+\.\d+)", "Mongoose HTTP", Some("$1")),
+        m("http", r"Server: Mongoose/(\d+\.\d+)", "Mongoose HTTP", Some("$1")),
+        m("http", r"Server: Mongoose", "Mongoose HTTP", None),
+
+        // RomPager
+        m("http", r"Server: Allegro.*RomPager/(\d+\.\d+)", "Allegro RomPager", Some("$1")),
+        m("http", r"Server: Allegro", "Allegro RomPager", None),
+        m("http", r"Server: RomPager/(\d+\.\d+)", "Allegro RomPager", Some("$1")),
+        m("http", r"Server: RomPager", "Allegro RomPager", None),
+
+        // mini_httpd
+        m("http", r"Server: mini_httpd/(\d+\.\d+\d+)", "mini_httpd", Some("$1")),
+        m("http", r"Server: mini_httpd/(\d+\.\d+)", "mini_httpd", Some("$1")),
+        m("http", r"Server: mini_httpd", "mini_httpd", None),
+
+        // thttpd
+        m("http", r"Server: thttpd/(\d+\.\d+\d+)", "thttpd", Some("$1")),
+        m("http", r"Server: thttpd/(\d+\.\d+)", "thttpd", Some("$1")),
+        m("http", r"Server: thttpd", "thttpd", None),
+
+        // GoAhead
+        m("http", r"Server: GoAhead-Webs/(\d+\.\d+\.\d+)", "GoAhead Web Server", Some("$1")),
+        m("http", r"Server: GoAhead-Webs/(\d+\.\d+)", "GoAhead Web Server", Some("$1")),
+        m("http", r"Server: GoAhead-Webs", "GoAhead Web Server", None),
+        m("http", r"Server: GoAhead", "GoAhead Web Server", None),
+
+        // BusyBox httpd
+        m("http", r"Server: BusyBox httpd/(\d+\.\d+)", "BusyBox httpd", Some("$1")),
+        m("http", r"Server: BusyBox httpd", "BusyBox httpd", None),
+        m("http", r"Server: BusyBox", "BusyBox httpd", None),
+
+        // Embedthis
+        m("http", r"Server: Embedthis HTTP/(\d+\.\d+)", "Embedthis HTTP", Some("$1")),
+        m("http", r"Server: Embedthis", "Embedthis HTTP", None),
+        m("http", r"Server: Appweb/(\d+\.\d+)", "Embedthis Appweb", Some("$1")),
+
+        // Virata-EmWeb
+        m("http", r"Server: Virata-EmWeb/(\d+\.\d+)", "Virata-EmWeb", Some("$1")),
+        m("http", r"Server: Virata-EmWeb", "Virata-EmWeb", None),
+
+        // lwIP
+        m("http", r"Server: lwIP/(\d+\.\d+)", "lwIP HTTP", Some("$1")),
+        m("http", r"Server: lwIP", "lwIP HTTP", None),
+
+        // uhttpd
+        m("http", r"Server: uhttpd/(\d+\.\d+\.\d+)", "OpenWrt uhttpd", Some("$1")),
+        m("http", r"Server: uhttpd/(\d+\.\d+)", "OpenWrt uhttpd", Some("$1")),
+        m("http", r"Server: uhttpd", "OpenWrt uhttpd", None),
+
+        // Zope versions
+        m("http", r"Server: Zope/(\d+\.\d+\.\d+)", "Zope", Some("$1")),
+        m("http", r"Server: Zope/(\d+\.\d+)", "Zope", Some("$1")),
+        m("http", r"Server: Zope/(\d+)", "Zope", Some("$1")),
+        m("http", r"Server: Zope", "Zope", None),
+        m("http", r"X-Powered-By: Zope", "Zope", None),
+
+        // web2py
+        m("http", r"X-Powered-By: web2py", "web2py", None),
+        m("http", r"web2py\.js", "web2py", None),
+        m("http", r"Set-Cookie:.*w2p_session", "web2py", None),
+    ]
+}
+
 /// Get all signatures combined
 pub fn all_signatures() -> Vec<MatchPattern> {
     let mut sigs = Vec::new();
@@ -3082,6 +4148,10 @@ pub fn all_signatures() -> Vec<MatchPattern> {
     sigs.extend(database_variants_signatures());
     sigs.extend(network_equip_signatures());
     sigs.extend(iot_devices_signatures());
+    sigs.extend(version_specific_web_server_signatures());
+    sigs.extend(version_specific_app_server_signatures());
+    sigs.extend(version_specific_language_signatures());
+    sigs.extend(version_specific_framework_signatures());
     sigs
 }
 
@@ -3116,7 +4186,7 @@ mod tests {
     #[test]
     fn test_all_signatures_count() {
         let sigs = all_signatures();
-        assert!(sigs.len() >= 1500, "Expected at least 1500 total signatures, got {}", sigs.len());
+        assert!(sigs.len() >= 2000, "Expected at least 2000 total signatures, got {}", sigs.len());
     }
 
     #[test]
