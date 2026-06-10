@@ -1,55 +1,30 @@
--- DNS Recursion Test
--- Tests if DNS server allows recursive queries
-
-local nmap = require("nmap")
-local stdnse = require("stdnse")
-local dns = require("dns")
-local string = require("string")
-local table = require("table")
+local nmap = require "nmap"
+local shortport = require "shortport"
+local stdnse = require "stdnse"
+local dns = require "dns"
 
 description = [[
-Tests if a DNS server allows recursive queries from external
-sources, which could be used for DNS amplification attacks.
+Tests if the DNS server allows recursive queries from external sources.
 ]]
 
-author = "Nemue Security Team"
-license = "MIT"
-categories = {"safe", "vuln"}
+author = "Nemue"
+license = "Same as Nmap--See https://nmap.org/book/man-legal.html"
+categories = {"safe", "discovery"}
 
-portrule = function(host, port)
-    return port.protocol == "udp" and
-           (port.number == 53 or port.service == "dns")
-end
+portrule = shortport.port_or_service(53, "dns", "tcp")
 
 action = function(host, port)
-    local output = {}
+  local status, response = dns.query("www.google.com", {host = host.ip, port = port.number, dtype = "A", recurse = true})
 
-    local status, response = dns.query("www.example.com", {
-        type = "A",
-        host = host.ip,
-        port = port.number,
-        dtype = "recursive"
-    })
-
-    if status and response then
-        table.insert(output, "[!] RECURSION IS ENABLED")
-        table.insert(output, "Query: www.example.com (A)")
-        table.insert(output, "Response: " .. tostring(response))
-        table.insert(output, "\nRisk: Server may be used for DNS amplification attacks")
-        table.insert(output, "Recommendation: Disable recursion for external clients")
-    else
-        table.insert(output, "Recursion appears to be disabled or query failed")
-
-        local status2, response2 = dns.query("example.com", {
-            type = "NS",
-            host = host.ip,
-            port = port.number
-        })
-
-        if status2 then
-            table.insert(output, "Server responds to non-recursive queries")
-        end
-    end
-
-    return stdnse.format_output(true, output)
+  local output = stdnse.output_table()
+  if status and response then
+    output["Recursion"] = "Allowed"
+    output["Status"] = "VULNERABLE (open resolver)"
+    output["Severity"] = "Medium"
+    output["Recommendation"] = "Restrict recursion to trusted clients only"
+  else
+    output["Recursion"] = "Denied"
+    output["Status"] = "Secure"
+  end
+  return output
 end

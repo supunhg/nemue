@@ -1,71 +1,53 @@
--- SMTP VRFY User Enumeration
--- Tests SMTP VRFY command for user enumeration
-
-local nmap = require("nmap")
-local stdnse = require("stdnse")
-local string = require("string")
-local table = require("table")
+local nmap = require "nmap"
+local shortport = require "shortport"
+local stdnse = require "stdnse"
 
 description = [[
-Tests if an SMTP server supports the VRFY command which can
-be used to enumerate valid usernames.
+Tests if the SMTP server allows VRFY user enumeration.
 ]]
 
-author = "Nemue Security Team"
-license = "MIT"
+author = "Nemue"
+license = "Same as Nmap--See https://nmap.org/book/man-legal.html"
 categories = {"safe", "auth"}
 
-portrule = function(host, port)
-    return port.protocol == "tcp" and
-           (port.service == "smtp" or port.number == 25 or
-            port.number == 587)
-end
+portrule = shortport.port_or_service(25, "smtp", "tcp")
 
 action = function(host, port)
-    local output = {}
-    local socket = nmap.new_socket()
-    socket:set_timeout(10000)
+  local test_users = {"root", "admin", "postmaster", "webmaster", "info", "test", "user"}
 
-    local status, err = socket:connect(host.ip, port.number)
-    if not status then
-        return stdnse.format_output(true, "Connection failed: " .. (err or "unknown"))
-    end
+  local socket = nmap.new_socket()
+  local status, err = socket:connect(host, port)
+  if not status then
+    return nil
+  end
 
-    local status, banner = socket:receive_lines(1)
+  socket:receive_lines(1)
+  socket:send("EHLO nmap.test\r\n")
+  local line
+  repeat
+    status, line = socket:receive_lines(1)
+  until not status or (line and line:match("^250 "))
+
+  local results = {}
+  for _, user in ipairs(test_users) do
+    socket:send("VRFY " .. user .. "\r\n")
+    status, line = socket:receive_lines(1)
     if status then
-        table.insert(output, "SMTP Banner: " .. banner)
+      local resp = line:gsub("\r?\n$", "")
+      if resp:match("^250") or resp:match("^252") then
+        table.insert(results, user .. " - EXISTS")
+      elseif resp:match("^550") then
+        table.insert(results, user .. " - Not found")
+      else
+        table.insert(results, user .. " - " .. resp)
+      end
     end
+  end
 
-    socket:send("EHLO nemue-test\r\n")
-    local status, ehlo = socket:receive_lines(1)
-    if status then
-        table.insert(output, "EHLO Response: " .. ehlo)
-    end
+  socket:close()
 
-    local test_users = {"root", "admin", "postmaster", "webmaster", "test", "user"}
-    local vrfy_supported = false
-
-    for _, user in ipairs(test_users) do
-        socket:send("VRFY " .. user .. "\r\n")
-        local status, response = socket:receive_lines(1)
-        if not status then break end
-
-        table.insert(output, "VRFY " .. user .. ": " .. response)
-
-        if response:match("^250") or response:match("^252") then
-            vrfy_supported = true
-        end
-    end
-
-    if vrfy_supported then
-        table.insert(output, "\n[!] VRFY command is ENABLED")
-        table.insert(output, "[!] User enumeration is possible")
-    else
-        table.insert(output, "\nVRFY command appears disabled or restricted")
-    end
-
-    socket:send("QUIT\r\n")
-    socket:close()
-
-    return stdnse.format_output(true, output)
+  local output = stdnse.output_table()
+  output["VRFY Results"] = results
+  output["Note"] = "VRFY can be used to enumerate valid usernames"
+  return output
 end

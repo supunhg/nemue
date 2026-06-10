@@ -1,69 +1,57 @@
--- SMTP Open Relay Test
--- Tests if SMTP server is an open relay
-
-local nmap = require("nmap")
-local stdnse = require("stdnse")
-local smtp = require("smtp")
+local nmap = require "nmap"
+local shortport = require "shortport"
+local stdnse = require "stdnse"
 
 description = [[
-Tests if an SMTP server is configured as an open relay by
-attempting to send email to an external domain.
+Tests if the SMTP server is an open relay.
 ]]
 
-author = "Nemue Security Team"
-license = "MIT"
-categories = {"safe", "default"}
+author = "Nemue"
+license = "Same as Nmap--See https://nmap.org/book/man-legal.html"
+categories = {"intrusive", "vuln"}
 
-portrule = function(host, port)
-    return port.protocol == "tcp" and
-           (port.number == 25 or port.number == 587 or port.service == "smtp")
-end
+portrule = shortport.port_or_service(25, "smtp", "tcp")
 
 action = function(host, port)
-    local output = {}
-    local is_relay = false
+  local socket = nmap.new_socket()
+  local status, err = socket:connect(host, port)
+  if not status then
+    return nil
+  end
 
-    local socket = nmap.new_socket()
-    local status, err = socket:connect(host, port)
+  socket:receive_lines(1)
+  socket:send("EHLO nmap.test\r\n")
+  local line
+  repeat
+    status, line = socket:receive_lines(1)
+  until not status or (line and line:match("^250 "))
 
-    if not status then
-        return stdnse.format_output(false, "Could not connect: " .. err)
-    end
+  socket:send("MAIL FROM:<test@external.com>\r\n")
+  status, line = socket:receive_lines(1)
+  local mail_from_ok = status and line:match("^250")
 
-    local banner
-    status, banner = socket:receive_lines(1)
-    if status and banner then
-        table.insert(output, "SMTP Banner: " .. banner)
-    end
-
-    socket:send("EHLO test.local\r\n")
-    local ehlo_resp
-    status, ehlo_resp = socket:receive_lines(1)
-
-    socket:send("MAIL FROM:<test@test.com>\r\n")
-    local mail_resp
-    status, mail_resp = socket:receive_lines(1)
-
-    if status and mail_resp and mail_resp:sub(1, 3) == "250" then
-        socket:send("RCPT TO:<test@external-domain.com>\r\n")
-        local rcpt_resp
-        status, rcpt_resp = socket:receive_lines(1)
-
-        if status and rcpt_resp and rcpt_resp:sub(1, 3) == "250" then
-            is_relay = true
-            table.insert(output, "CRITICAL: Server accepts external relay")
-            table.insert(output, "  Response: " .. rcpt_resp)
-        else
-            table.insert(output, "Server rejects external relay (secure)")
-        end
-    end
-
-    socket:send("QUIT\r\n")
+  if not mail_from_ok then
     socket:close()
+    local output = stdnse.output_table()
+    output["Open Relay"] = "No (MAIL FROM rejected)"
+    return output
+  end
 
-    if is_relay then
-        table.insert(output, "\n[!] Open relay detected - server can be abused for spam")
-    end
+  socket:send("RCPT TO:<test@external.com>\r\n")
+  status, line = socket:receive_lines(1)
+  local rcpt_ok = status and (line:match("^250") or line:match("^251"))
 
-    return stdnse.format_output(true, output)
+  socket:send("RSET\r\n")
+  socket:receive_lines(1)
+  socket:close()
+
+  local output = stdnse.output_table()
+  if rcpt_ok then
+    output["Open Relay"] = "VULNERABLE"
+    output["Severity"] = "Critical"
+    output["Recommendation"] = "Configure relay restrictions"
+  else
+    output["Open Relay"] = "Not vulnerable"
+  end
+  return output
 end

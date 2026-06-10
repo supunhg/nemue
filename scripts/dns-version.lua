@@ -1,50 +1,36 @@
--- DNS Version Detection
--- Queries DNS server for version information
-
-local nmap = require("nmap")
-local stdnse = require("stdnse")
-local dns = require("dns")
+local nmap = require "nmap"
+local shortport = require "shortport"
+local stdnse = require "stdnse"
+local dns = require "dns"
 
 description = [[
-Queries the DNS server for its version using the VERSION.BIND
-CHAOS TXT record technique.
+Attempts to determine the version of the DNS server using CHAOS class TXT queries.
 ]]
 
-author = "Nemue Security Team"
-license = "MIT"
-categories = {"safe", "default"}
+author = "Nemue"
+license = "Same as Nmap--See https://nmap.org/book/man-legal.html"
+categories = {"safe", "discovery"}
 
-portrule = function(host, port)
-    return port.protocol == "udp" and
-           (port.number == 53 or port.service == "dns")
-end
+portrule = shortport.port_or_service(53, "dns", "tcp")
 
 action = function(host, port)
-    local output = {}
+  local versions = {
+    "version.bind", "version.server"
+  }
 
-    local status, response = dns.query("version.bind", {
-        type = "TXT",
-        class = "CHAOS",
-        host = host.ip,
-        port = port.number
-    })
-
-    if status and response then
-        table.insert(output, "DNS Version: " .. tostring(response))
-
-        local version = tostring(response):lower()
-        if version:find("bind") then
-            table.insert(output, "Server Software: ISC BIND")
-        elseif version:find("microsoft") then
-            table.insert(output, "Server Software: Microsoft DNS")
-        elseif version:find("dnsmasq") then
-            table.insert(output, "Server Software: Dnsmasq")
-        end
-
-        table.insert(output, "\n[!] Version disclosure may aid attackers")
-    else
-        table.insert(output, "Version query not supported or blocked")
+  local results = {}
+  for _, name in ipairs(versions) do
+    local status, response = dns.query(name, {host = host.ip, port = port.number, dtype = "TXT", class = "CHAOS"})
+    if status then
+      table.insert(results, name .. ": " .. (response or "Unknown"))
     end
+  end
 
-    return stdnse.format_output(true, output)
+  local output = stdnse.output_table()
+  if #results > 0 then
+    output["Version Info"] = results
+  else
+    output["Version Info"] = "Not disclosed"
+  end
+  return output
 end

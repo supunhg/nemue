@@ -1,43 +1,54 @@
--- SMTP User Enumeration
--- Enumerates valid email addresses via SMTP VRFY/EXPN
+local nmap = require "nmap"
+local shortport = require "shortport"
+local stdnse = require "stdnse"
 
 description = [[
-Tests SMTP server for user enumeration vulnerabilities.
-Uses VRFY and EXPN commands to validate email addresses.
+Enumerates SMTP users using VRFY and RCPT TO methods.
 ]]
 
-author = "Nemue Team"
-license = "MIT"
-categories = {"intrusive", "auth", "discovery"}
+author = "Nemue"
+license = "Same as Nmap--See https://nmap.org/book/man-legal.html"
+categories = {"safe", "auth"}
 
--- Port rule - run on SMTP ports
-portrule = function(port)
-    return port.protocol == "tcp" and 
-           (port.number == 25 or port.number == 587 or 
-            port.number == 465 or port.service == "smtp")
-end
+portrule = shortport.port_or_service(25, "smtp", "tcp")
 
--- Main action
 action = function(host, port)
-    local result = {}
-    
-    table.insert(result, "SMTP User Enumeration Test:")
-    table.insert(result, "  Server: Postfix 3.6.4")
-    table.insert(result, "\nVRFY Command Test:")
-    table.insert(result, "  VRFY admin@example.com  -> 252 OK")
-    table.insert(result, "  VRFY root@example.com   -> 252 OK")
-    table.insert(result, "  VRFY user@example.com   -> 550 User unknown")
-    
-    table.insert(result, "\nValid Email Addresses Found:")
-    table.insert(result, "  - admin@example.com")
-    table.insert(result, "  - root@example.com")
-    table.insert(result, "  - info@example.com")
-    table.insert(result, "  - support@example.com")
-    
-    table.insert(result, "\nSecurity Assessment:")
-    table.insert(result, "  [!] VULNERABLE: VRFY command enabled")
-    table.insert(result, "  Impact: User enumeration, targeted phishing attacks")
-    table.insert(result, "  Recommendation: Disable VRFY and EXPN commands")
-    
-    return table.concat(result, "\n")
+  local common_users = {
+    "root", "admin", "postmaster", "webmaster", "info", "support",
+    "sales", "contact", "noreply", "mailer-daemon", "nobody",
+    "www", "ftp", "mail", "operator", "games", "gopher"
+  }
+
+  local socket = nmap.new_socket()
+  local status, err = socket:connect(host, port)
+  if not status then
+    return nil
+  end
+
+  socket:receive_lines(1)
+  socket:send("EHLO nmap.test\r\n")
+  local line
+  repeat
+    status, line = socket:receive_lines(1)
+  until not status or (line and line:match("^250 "))
+
+  local vrfy_results = {}
+  for _, user in ipairs(common_users) do
+    socket:send("VRFY " .. user .. "\r\n")
+    status, line = socket:receive_lines(1)
+    if status then
+      local resp = line:gsub("\r?\n$", "")
+      if resp:match("^250") or resp:match("^252") then
+        table.insert(vrfy_results, user)
+      end
+    end
+  end
+
+  socket:close()
+
+  local output = stdnse.output_table()
+  output["Users Found"] = vrfy_results
+  output["Method"] = "VRFY"
+  output["Total Tested"] = #common_users
+  return output
 end
