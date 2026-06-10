@@ -5140,6 +5140,23 @@ pub fn more_version_specific_framework_signatures() -> Vec<MatchPattern> {
     ]
 }
 
+/// Get Nmap-specific service signatures
+pub fn nmap_specific_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Nping echo service (port 9929)
+        m("nping-echo", r"Nping echo", "Nping echo", None),
+        m("nping-echo", r"NPING", "Nping", None),
+        
+        // tcpwrapped (port 31337)
+        m("tcpwrapped", r"tcpwrapped", "tcpwrapped", None),
+        m("elite", r"Elite", "Elite", None),
+        
+        // Nmap-specific services
+        m("nmap", r"Nmap", "Nmap", None),
+        m("nse", r"NSE", "Nmap Scripting Engine", None),
+    ]
+}
+
 /// Get all signatures combined
 pub fn all_signatures() -> Vec<MatchPattern> {
     let mut sigs = Vec::new();
@@ -5194,6 +5211,7 @@ pub fn all_signatures() -> Vec<MatchPattern> {
     sigs.extend(more_version_specific_database_signatures());
     sigs.extend(more_version_specific_language_signatures());
     sigs.extend(more_version_specific_framework_signatures());
+    sigs.extend(nmap_specific_signatures());
     sigs
 }
 

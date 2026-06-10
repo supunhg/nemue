@@ -34,7 +34,7 @@ enum Commands {
         rate: u32,
 
         /// Timeout for each port in milliseconds
-        #[arg(long, default_value = "1000")]
+        #[arg(long, default_value = "3000")]
         timeout: u64,
 
         /// Scan type: syn (default), connect, udp

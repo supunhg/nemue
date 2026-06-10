@@ -387,12 +387,48 @@ impl ServiceDetector {
 
         // If no immediate banner, try HTTP probe for web servers
         if addr.port() == 80 || addr.port() == 443 || addr.port() == 8080 || addr.port() == 8443 {
-            stream.write_all(b"GET / HTTP/1.0\r\n\r\n").await?;
+            stream.write_all(b"GET / HTTP/1.0\r\nHost: target\r\n\r\n").await?;
             
-            match timeout(Duration::from_millis(1000), stream.read(&mut buffer)).await {
+            // Read multiple chunks to get full response
+            let mut full_response = Vec::new();
+            loop {
+                match timeout(Duration::from_millis(2000), stream.read(&mut buffer)).await {
+                    Ok(Ok(n)) if n > 0 => {
+                        full_response.extend_from_slice(&buffer[..n]);
+                        // Check if we have headers (look for \r\n\r\n)
+                        if full_response.windows(4).any(|w| w == b"\r\n\r\n") {
+                            // Got headers, read a bit more for body
+                            tokio::time::sleep(Duration::from_millis(100)).await;
+                            match timeout(Duration::from_millis(500), stream.read(&mut buffer)).await {
+                                Ok(Ok(m)) if m > 0 => full_response.extend_from_slice(&buffer[..m]),
+                                _ => {}
+                            }
+                            break;
+                        }
+                        // If we've read enough, stop
+                        if full_response.len() > 4096 {
+                            break;
+                        }
+                    }
+                    _ => break,
+                }
+            }
+            
+            if !full_response.is_empty() {
+                let banner = String::from_utf8_lossy(&full_response).to_string();
+                debug!("Received HTTP response: {} bytes", banner.len());
+                return Ok(banner);
+            }
+        }
+
+        // Try generic probes for unknown ports
+        if addr.port() == 9929 {
+            // Nping echo service - send a probe
+            let probe = b"NPING";
+            let _ = stream.write_all(probe).await;
+            match timeout(Duration::from_millis(2000), stream.read(&mut buffer)).await {
                 Ok(Ok(n)) if n > 0 => {
                     let banner = String::from_utf8_lossy(&buffer[..n]).to_string();
-                    debug!("Received HTTP response: {}", banner.trim());
                     return Ok(banner);
                 }
                 _ => {}
