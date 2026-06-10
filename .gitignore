@@ -34,3 +34,9 @@ Thumbs.db
 # Temporary docs (auto-generated)
 PROJECT_STATUS.md
 RELEASE_CHECKLIST.md
+
+# Graphify outputs (large files, regenerate with /graphify)
+graphify-out/
+
+# Session files
+session-*.md

@@ -124,7 +124,7 @@ pub enum PortState {
     Unknown,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Protocol {
     TCP,
     UDP,
