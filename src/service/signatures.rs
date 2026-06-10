@@ -4461,6 +4461,685 @@ pub fn cdn_extended_signatures() -> Vec<MatchPattern> {
     ]
 }
 
+/// Get more version-specific web server signatures
+pub fn more_version_specific_web_server_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Apache 2.4.x specific minor versions
+        m("http", r"Server: Apache/2\.4\.(\d+) \(Ubuntu\)", "Apache httpd 2.4 (Ubuntu)", Some("2.4.$1")),
+        m("http", r"Server: Apache/2\.4\.(\d+) \(Debian\)", "Apache httpd 2.4 (Debian)", Some("2.4.$1")),
+        m("http", r"Server: Apache/2\.4\.(\d+) \(CentOS\)", "Apache httpd 2.4 (CentOS)", Some("2.4.$1")),
+        m("http", r"Server: Apache/2\.4\.(\d+) \(Red Hat\)", "Apache httpd 2.4 (RHEL)", Some("2.4.$1")),
+        m("http", r"Server: Apache/2\.4\.(\d+) \(Unix\)", "Apache httpd 2.4 (Unix)", Some("2.4.$1")),
+        m("http", r"Server: Apache/2\.4\.(\d+) \(Win32\)", "Apache httpd 2.4 (Windows)", Some("2.4.$1")),
+        m("http", r"Server: Apache/2\.4\.(\d+) \(FreeBSD\)", "Apache httpd 2.4 (FreeBSD)", Some("2.4.$1")),
+        m("http", r"Server: Apache/2\.4\.(\d+).*OpenSSL/(\d+\.\d+)", "Apache httpd 2.4 (OpenSSL)", Some("2.4.$1")),
+        m("http", r"Server: Apache/2\.4\.(\d+).*PHP/(\d+\.\d+)", "Apache httpd 2.4 (PHP)", Some("2.4.$1")),
+        m("http", r"Server: Apache/2\.4\.(\d+).*mod_ssl", "Apache httpd 2.4 (mod_ssl)", Some("2.4.$1")),
+        m("http", r"Server: Apache/2\.4\.(\d+).*mod_perl", "Apache httpd 2.4 (mod_perl)", Some("2.4.$1")),
+        m("http", r"Server: Apache/2\.4\.(\d+).*mod_wsgi", "Apache httpd 2.4 (mod_wsgi)", Some("2.4.$1")),
+        m("http", r"Server: Apache/2\.4\.(\d+).*mod_fcgid", "Apache httpd 2.4 (mod_fcgid)", Some("2.4.$1")),
+        m("http", r"Server: Apache/2\.4\.(\d+).*mod_security", "Apache httpd 2.4 (mod_security)", Some("2.4.$1")),
+        m("http", r"Server: Apache/2\.4\.(\d+).*mod_evasive", "Apache httpd 2.4 (mod_evasive)", Some("2.4.$1")),
+        m("http", r"Server: Apache/2\.4\.(\d+).*Phusion_Passenger", "Apache httpd 2.4 (Passenger)", Some("2.4.$1")),
+        m("http", r"Server: Apache/2\.4\.(\d+).*Python", "Apache httpd 2.4 (Python)", Some("2.4.$1")),
+        m("http", r"Server: Apache/2\.4\.(\d+).*Ruby", "Apache httpd 2.4 (Ruby)", Some("2.4.$1")),
+        m("http", r"Server: Apache/2\.4\.(\d+).*Tomcat", "Apache httpd 2.4 (Tomcat)", Some("2.4.$1")),
+        m("http", r"Server: Apache/2\.4\.(\d+).*proxy", "Apache httpd 2.4 (proxy)", Some("2.4.$1")),
+
+        // Apache 2.2.x specific minor versions
+        m("http", r"Server: Apache/2\.2\.(\d+) \(Ubuntu\)", "Apache httpd 2.2 (Ubuntu)", Some("2.2.$1")),
+        m("http", r"Server: Apache/2\.2\.(\d+) \(Debian\)", "Apache httpd 2.2 (Debian)", Some("2.2.$1")),
+        m("http", r"Server: Apache/2\.2\.(\d+) \(CentOS\)", "Apache httpd 2.2 (CentOS)", Some("2.2.$1")),
+        m("http", r"Server: Apache/2\.2\.(\d+) \(Red Hat\)", "Apache httpd 2.2 (RHEL)", Some("2.2.$1")),
+        m("http", r"Server: Apache/2\.2\.(\d+) \(Unix\)", "Apache httpd 2.2 (Unix)", Some("2.2.$1")),
+        m("http", r"Server: Apache/2\.2\.(\d+) \(Win32\)", "Apache httpd 2.2 (Windows)", Some("2.2.$1")),
+        m("http", r"Server: Apache/2\.2\.(\d+).*OpenSSL", "Apache httpd 2.2 (OpenSSL)", Some("2.2.$1")),
+        m("http", r"Server: Apache/2\.2\.(\d+).*PHP", "Apache httpd 2.2 (PHP)", Some("2.2.$1")),
+        m("http", r"Server: Apache/2\.2\.(\d+).*mod_ssl", "Apache httpd 2.2 (mod_ssl)", Some("2.2.$1")),
+        m("http", r"Server: Apache/2\.2\.(\d+).*mod_perl", "Apache httpd 2.2 (mod_perl)", Some("2.2.$1")),
+
+        // Apache 2.0.x specific minor versions
+        m("http", r"Server: Apache/2\.0\.(\d+) \(Win32\)", "Apache httpd 2.0 (Windows)", Some("2.0.$1")),
+        m("http", r"Server: Apache/2\.0\.(\d+) \(Unix\)", "Apache httpd 2.0 (Unix)", Some("2.0.$1")),
+        m("http", r"Server: Apache/2\.0\.(\d+) \(Debian\)", "Apache httpd 2.0 (Debian)", Some("2.0.$1")),
+        m("http", r"Server: Apache/2\.0\.(\d+) \(Red Hat\)", "Apache httpd 2.0 (RHEL)", Some("2.0.$1")),
+        m("http", r"Server: Apache/2\.0\.(\d+).*OpenSSL", "Apache httpd 2.0 (OpenSSL)", Some("2.0.$1")),
+        m("http", r"Server: Apache/2\.0\.(\d+).*mod_ssl", "Apache httpd 2.0 (mod_ssl)", Some("2.0.$1")),
+        m("http", r"Server: Apache/2\.0\.(\d+).*FrontPage", "Apache httpd 2.0 (FrontPage)", Some("2.0.$1")),
+
+        // Nginx specific minor versions with build info
+        m("http", r"Server: nginx/1\.26\.(\d+)", "nginx", Some("1.26.$1")),
+        m("http", r"Server: nginx/1\.25\.(\d+).*quic", "nginx (QUIC)", Some("1.25.$1")),
+        m("http", r"Server: nginx/1\.24\.(\d+) \(Ubuntu\)", "nginx (Ubuntu)", Some("1.24.$1")),
+        m("http", r"Server: nginx/1\.24\.(\d+) \(Debian\)", "nginx (Debian)", Some("1.24.$1")),
+        m("http", r"Server: nginx/1\.22\.(\d+) \(Ubuntu\)", "nginx (Ubuntu)", Some("1.22.$1")),
+        m("http", r"Server: nginx/1\.22\.(\d+) \(Debian\)", "nginx (Debian)", Some("1.22.$1")),
+        m("http", r"Server: nginx/1\.18\.(\d+) \(Ubuntu\)", "nginx (Ubuntu)", Some("1.18.$1")),
+        m("http", r"Server: nginx/1\.18\.(\d+) \(Debian\)", "nginx (Debian)", Some("1.18.$1")),
+        m("http", r"Server: nginx/1\.14\.(\d+) \(Ubuntu\)", "nginx (Ubuntu)", Some("1.14.$1")),
+        m("http", r"Server: nginx/1\.14\.(\d+) \(Debian\)", "nginx (Debian)", Some("1.14.$1")),
+        m("http", r"Server: nginx/1\.14\.(\d+) \(CentOS\)", "nginx (CentOS)", Some("1.14.$1")),
+        m("http", r"Server: nginx/1\.16\.(\d+).*quic", "nginx (QUIC)", Some("1.16.$1")),
+        m("http", r"Server: nginx/1\.20\.(\d+) \(Ubuntu\)", "nginx (Ubuntu)", Some("1.20.$1")),
+        m("http", r"Server: nginx/1\.20\.(\d+) \(Debian\)", "nginx (Debian)", Some("1.20.$1")),
+        m("http", r"Server: nginx/1\.21\.(\d+).*http2", "nginx (HTTP/2)", Some("1.21.$1")),
+        m("http", r"Server: nginx/1\.23\.(\d+).*http2", "nginx (HTTP/2)", Some("1.23.$1")),
+        m("http", r"Server: nginx/1\.25\.(\d+).*http2", "nginx (HTTP/2)", Some("1.25.$1")),
+        m("http", r"Server: nginx/1\.26\.(\d+).*http2", "nginx (HTTP/2)", Some("1.26.$1")),
+        m("http", r"Server: nginx/1\.24\.(\d+).*brotli", "nginx (brotli)", Some("1.24.$1")),
+        m("http", r"Server: nginx/1\.22\.(\d+).*brotli", "nginx (brotli)", Some("1.22.$1")),
+        m("http", r"Server: nginx/1\.20\.(\d+).*brotli", "nginx (brotli)", Some("1.20.$1")),
+
+        // IIS specific versions with details
+        m("http", r"Server: Microsoft-IIS/10\.0.*X-Powered-By: ASP\.NET", "Microsoft IIS 10.0 (ASP.NET)", None),
+        m("http", r"Server: Microsoft-IIS/8\.5.*X-Powered-By: ASP\.NET", "Microsoft IIS 8.5 (ASP.NET)", None),
+        m("http", r"Server: Microsoft-IIS/8\.0.*X-Powered-By: ASP\.NET", "Microsoft IIS 8.0 (ASP.NET)", None),
+        m("http", r"Server: Microsoft-IIS/7\.5.*X-Powered-By: ASP\.NET", "Microsoft IIS 7.5 (ASP.NET)", None),
+        m("http", r"Server: Microsoft-IIS/7\.0.*X-Powered-By: ASP\.NET", "Microsoft IIS 7.0 (ASP.NET)", None),
+        m("http", r"Server: Microsoft-IIS/6\.0.*X-Powered-By: ASP\.NET", "Microsoft IIS 6.0 (ASP.NET)", None),
+        m("http", r"Server: Microsoft-IIS/10\.0.*X-Powered-By: PHP", "Microsoft IIS 10.0 (PHP)", None),
+        m("http", r"Server: Microsoft-IIS/8\.5.*X-Powered-By: PHP", "Microsoft IIS 8.5 (PHP)", None),
+        m("http", r"Server: Microsoft-IIS/7\.5.*X-Powered-By: PHP", "Microsoft IIS 7.5 (PHP)", None),
+        m("http", r"Server: Microsoft-IIS/10\.0.*ARR", "Microsoft IIS 10.0 (ARR)", None),
+        m("http", r"Server: Microsoft-IIS/8\.5.*ARR", "Microsoft IIS 8.5 (ARR)", None),
+        m("http", r"Server: Microsoft-IIS/10\.0.*UrlRewriter", "Microsoft IIS 10.0 (URL Rewrite)", None),
+
+        // Tomcat specific minor versions
+        m("http", r"Server: Apache Tomcat/10\.1\.(\d+)", "Apache Tomcat", Some("10.1.$1")),
+        m("http", r"Server: Apache Tomcat/10\.0\.(\d+)", "Apache Tomcat", Some("10.0.$1")),
+        m("http", r"Server: Apache Tomcat/9\.0\.(\d+)", "Apache Tomcat", Some("9.0.$1")),
+        m("http", r"Server: Apache Tomcat/8\.5\.(\d+)", "Apache Tomcat", Some("8.5.$1")),
+        m("http", r"Server: Apache Tomcat/8\.0\.(\d+)", "Apache Tomcat", Some("8.0.$1")),
+        m("http", r"Server: Apache Tomcat/7\.0\.(\d+)", "Apache Tomcat", Some("7.0.$1")),
+        m("http", r"Server: Apache Tomcat/6\.0\.(\d+)", "Apache Tomcat", Some("6.0.$1")),
+        m("http", r"Server: Apache Tomcat/5\.5\.(\d+)", "Apache Tomcat", Some("5.5.$1")),
+        m("http", r"Server: Apache Tomcat/5\.0\.(\d+)", "Apache Tomcat", Some("5.0.$1")),
+        m("http", r"Server: Apache-Coyote/1\.1.*Tomcat", "Apache Tomcat Coyote 1.1", None),
+
+        // Lighttpd specific versions
+        m("http", r"Server: lighttpd/1\.4\.(\d+)", "lighttpd 1.4", Some("1.4.$1")),
+        m("http", r"Server: lighttpd/1\.5\.(\d+)", "lighttpd 1.5", Some("1.5.$1")),
+        m("http", r"Server: lighttpd/2\.0\.(\d+)", "lighttpd 2.0", Some("2.0.$1")),
+        m("http", r"Server: lighttpd/1\.4\.(\d+) \(Debian\)", "lighttpd 1.4 (Debian)", Some("1.4.$1")),
+        m("http", r"Server: lighttpd/1\.4\.(\d+) \(Ubuntu\)", "lighttpd 1.4 (Ubuntu)", Some("1.4.$1")),
+
+        // Caddy specific versions
+        m("http", r"Server: Caddy/2\.(\d+\.\d+)", "Caddy 2", Some("2.$1")),
+        m("http", r"Server: Caddy/2\.(\d+)", "Caddy 2", Some("2.$1")),
+        m("http", r"Server: Caddy v2\.(\d+\.\d+)", "Caddy 2", Some("2.$1")),
+        m("http", r"Server: Caddy v2\.(\d+)", "Caddy 2", Some("2.$1")),
+        m("http", r"Server: Caddy/1\.(\d+\.\d+)", "Caddy 1", Some("1.$1")),
+
+        // LiteSpeed specific versions
+        m("http", r"Server: LiteSpeed/6\.(\d+\.\d+)", "LiteSpeed 6", Some("6.$1")),
+        m("http", r"Server: LiteSpeed/5\.(\d+\.\d+)", "LiteSpeed 5", Some("5.$1")),
+        m("http", r"Server: LiteSpeed/4\.(\d+\.\d+)", "LiteSpeed 4", Some("4.$1")),
+        m("http", r"Server: LiteSpeed/6\.(\d+)", "LiteSpeed 6", Some("6.$1")),
+        m("http", r"Server: LiteSpeed/5\.(\d+)", "LiteSpeed 5", Some("5.$1")),
+        m("http", r"Server: OpenLiteSpeed/1\.8\.(\d+)", "OpenLiteSpeed 1.8", Some("1.8.$1")),
+        m("http", r"Server: OpenLiteSpeed/1\.7\.(\d+)", "OpenLiteSpeed 1.7", Some("1.7.$1")),
+        m("http", r"Server: OpenLiteSpeed/1\.6\.(\d+)", "OpenLiteSpeed 1.6", Some("1.6.$1")),
+        m("http", r"Server: OpenLiteSpeed/1\.4\.(\d+)", "OpenLiteSpeed 1.4", Some("1.4.$1")),
+
+        // OpenResty/Tengine specific versions
+        m("http", r"Server: openresty/1\.25\.(\d+)", "OpenResty 1.25", Some("1.25.$1")),
+        m("http", r"Server: openresty/1\.21\.(\d+)", "OpenResty 1.21", Some("1.21.$1")),
+        m("http", r"Server: openresty/1\.19\.(\d+)", "OpenResty 1.19", Some("1.19.$1")),
+        m("http", r"Server: openresty/1\.17\.(\d+)", "OpenResty 1.17", Some("1.17.$1")),
+        m("http", r"Server: openresty/1\.15\.(\d+)", "OpenResty 1.15", Some("1.15.$1")),
+        m("http", r"Server: Tengine/3\.(\d+\.\d+)", "Tengine 3", Some("3.$1")),
+        m("http", r"Server: Tengine/2\.(\d+\.\d+)", "Tengine 2", Some("2.$1")),
+
+        // Envoy/HAProxy/Traefik versions
+        m("http", r"Server: envoy/1\.(\d+\.\d+)", "Envoy proxy 1", Some("1.$1")),
+        m("http", r"Server: envoy/1\.28\.(\d+)", "Envoy proxy 1.28", Some("1.28.$1")),
+        m("http", r"Server: envoy/1\.27\.(\d+)", "Envoy proxy 1.27", Some("1.27.$1")),
+        m("http", r"Server: envoy/1\.26\.(\d+)", "Envoy proxy 1.26", Some("1.26.$1")),
+        m("http", r"Server: envoy/1\.25\.(\d+)", "Envoy proxy 1.25", Some("1.25.$1")),
+        m("http", r"Server: HAProxy (\d+\.\d+)", "HAProxy", Some("$1")),
+        m("http", r"Server: Traefik/(\d+\.\d+\.\d+)", "Traefik", Some("$1")),
+        m("http", r"Server: Traefik/(\d+\.\d+)", "Traefik", Some("$1")),
+
+        // Jetty specific versions
+        m("http", r"Server: Jetty \(12\.0\.(\d+)\)", "Jetty 12.0", Some("12.0.$1")),
+        m("http", r"Server: Jetty \(11\.0\.(\d+)\)", "Jetty 11.0", Some("11.0.$1")),
+        m("http", r"Server: Jetty \(10\.0\.(\d+)\)", "Jetty 10.0", Some("10.0.$1")),
+        m("http", r"Server: Jetty \(9\.4\.(\d+)\)", "Jetty 9.4", Some("9.4.$1")),
+        m("http", r"Server: Jetty \(9\.3\.(\d+)\)", "Jetty 9.3", Some("9.3.$1")),
+        m("http", r"Server: Jetty \(9\.2\.(\d+)\)", "Jetty 9.2", Some("9.2.$1")),
+        m("http", r"Server: Jetty \(8\.(\d+)\)", "Jetty 8", Some("8.$1")),
+
+        // Gunicorn versions
+        m("http", r"Server: gunicorn/22\.(\d+\.\d+)", "Gunicorn 22", Some("22.$1")),
+        m("http", r"Server: gunicorn/21\.(\d+\.\d+)", "Gunicorn 21", Some("21.$1")),
+        m("http", r"Server: gunicorn/20\.(\d+\.\d+)", "Gunicorn 20", Some("20.$1")),
+        m("http", r"Server: gunicorn/19\.(\d+\.\d+)", "Gunicorn 19", Some("19.$1")),
+        m("http", r"Server: gunicorn/20\.1\.(\d+)", "Gunicorn 20.1", Some("20.1.$1")),
+        m("http", r"Server: gunicorn/19\.9\.(\d+)", "Gunicorn 19.9", Some("19.9.$1")),
+
+        // uvicorn versions
+        m("http", r"Server: uvicorn/(\d+\.\d+\.\d+)", "uvicorn", Some("$1")),
+        m("http", r"Server: uvicorn/(\d+\.\d+)", "uvicorn", Some("$1")),
+
+        // Werkzeug versions
+        m("http", r"Server: Werkzeug/3\.(\d+\.\d+)", "Werkzeug 3", Some("3.$1")),
+        m("http", r"Server: Werkzeug/2\.(\d+\.\d+)", "Werkzeug 2", Some("2.$1")),
+        m("http", r"Server: Werkzeug/1\.(\d+\.\d+)", "Werkzeug 1", Some("1.$1")),
+        m("http", r"Server: Werkzeug/3\.0\.(\d+)", "Werkzeug 3.0", Some("3.0.$1")),
+        m("http", r"Server: Werkzeug/2\.3\.(\d+)", "Werkzeug 2.3", Some("2.3.$1")),
+        m("http", r"Server: Werkzeug/2\.2\.(\d+)", "Werkzeug 2.2", Some("2.2.$1")),
+        m("http", r"Server: Werkzeug/2\.0\.(\d+)", "Werkzeug 2.0", Some("2.0.$1")),
+
+        // Other servers with versions
+        m("http", r"Server: Cherokee/1\.2\.(\d+)", "Cherokee 1.2", Some("1.2.$1")),
+        m("http", r"Server: Cherokee/1\.0\.(\d+)", "Cherokee 1.0", Some("1.0.$1")),
+        m("http", r"Server: Yaws/2\.(\d+\.\d+)", "Yaws 2", Some("2.$1")),
+        m("http", r"Server: Yaws/1\.(\d+\.\d+)", "Yaws 1", Some("1.$1")),
+        m("http", r"Server: Abyss/2\.(\d+\.\d+)", "Abyss 2", Some("2.$1")),
+        m("http", r"Server: Abyss/1\.(\d+\.\d+)", "Abyss 1", Some("1.$1")),
+        m("http", r"Server: Boa/0\.94\.(\d+)", "Boa 0.94", Some("0.94.$1")),
+        m("http", r"Server: Hiawatha v11\.(\d+)", "Hiawatha 11", Some("11.$1")),
+        m("http", r"Server: Hiawatha v10\.(\d+)", "Hiawatha 10", Some("10.$1")),
+        m("http", r"Server: h2o/2\.(\d+\.\d+)", "H2O 2", Some("2.$1")),
+        m("http", r"Server: Monkey/1\.(\d+\.\d+)", "Monkey 1", Some("1.$1")),
+        m("http", r"Server: Kestrel/(\d+\.\d+\.\d+)", "ASP.NET Kestrel", Some("$1")),
+        m("http", r"Server: Kestrel/(\d+\.\d+)", "ASP.NET Kestrel", Some("$1")),
+        m("http", r"Server: Microsoft-HTTPAPI/(\d+\.\d+)", "Microsoft HTTPAPI", Some("$1")),
+        m("http", r"Server: Varnish/(\d+\.\d+\.\d+)", "Varnish", Some("$1")),
+        m("http", r"Server: Varnish/(\d+\.\d+)", "Varnish", Some("$1")),
+        m("http", r"Via:.*varnish", "Varnish", None),
+        m("http", r"X-Varnish:", "Varnish", None),
+        m("http", r"Server: squid/(\d+\.\d+)", "Squid", Some("$1")),
+        m("http", r"Server: squid/(\d+)", "Squid", Some("$1")),
+    ]
+}
+
+/// Get more version-specific database signatures
+pub fn more_version_specific_database_signatures() -> Vec<MatchPattern> {
+    vec![
+        // MySQL 5.0.x specific minor versions
+        m("mysql", r"5\.0\.(\d+)-Debian", "MySQL 5.0 (Debian)", Some("5.0.$1")),
+        m("mysql", r"5\.0\.(\d+)-Ubuntu", "MySQL 5.0 (Ubuntu)", Some("5.0.$1")),
+        m("mysql", r"5\.0\.(\d+)-log", "MySQL 5.0 (log)", Some("5.0.$1")),
+        m("mysql", r"5\.0\.(\d+)-MySQL Community Server", "MySQL 5.0 Community", Some("5.0.$1")),
+
+        // MySQL 5.1.x specific minor versions
+        m("mysql", r"5\.1\.(\d+)-Debian", "MySQL 5.1 (Debian)", Some("5.1.$1")),
+        m("mysql", r"5\.1\.(\d+)-Ubuntu", "MySQL 5.1 (Ubuntu)", Some("5.1.$1")),
+        m("mysql", r"5\.1\.(\d+)-log", "MySQL 5.1 (log)", Some("5.1.$1")),
+        m("mysql", r"5\.1\.(\d+)-MySQL Community Server", "MySQL 5.1 Community", Some("5.1.$1")),
+        m("mysql", r"5\.1\.(\d+)-source", "MySQL 5.1 (source)", Some("5.1.$1")),
+
+        // MySQL 5.5.x specific minor versions
+        m("mysql", r"5\.5\.(\d+)-Debian", "MySQL 5.5 (Debian)", Some("5.5.$1")),
+        m("mysql", r"5\.5\.(\d+)-Ubuntu", "MySQL 5.5 (Ubuntu)", Some("5.5.$1")),
+        m("mysql", r"5\.5\.(\d+)-log", "MySQL 5.5 (log)", Some("5.5.$1")),
+        m("mysql", r"5\.5\.(\d+)-MySQL Community Server", "MySQL 5.5 Community", Some("5.5.$1")),
+        m("mysql", r"5\.5\.(\d+)-MariaDB", "MariaDB 5.5", Some("5.5.$1")),
+
+        // MySQL 5.6.x specific minor versions
+        m("mysql", r"5\.6\.(\d+)-Debian", "MySQL 5.6 (Debian)", Some("5.6.$1")),
+        m("mysql", r"5\.6\.(\d+)-Ubuntu", "MySQL 5.6 (Ubuntu)", Some("5.6.$1")),
+        m("mysql", r"5\.6\.(\d+)-log", "MySQL 5.6 (log)", Some("5.6.$1")),
+        m("mysql", r"5\.6\.(\d+)-MySQL Community Server", "MySQL 5.6 Community", Some("5.6.$1")),
+
+        // MySQL 5.7.x specific minor versions
+        m("mysql", r"5\.7\.(\d+)-Debian", "MySQL 5.7 (Debian)", Some("5.7.$1")),
+        m("mysql", r"5\.7\.(\d+)-Ubuntu", "MySQL 5.7 (Ubuntu)", Some("5.7.$1")),
+        m("mysql", r"5\.7\.(\d+)-log", "MySQL 5.7 (log)", Some("5.7.$1")),
+        m("mysql", r"5\.7\.(\d+)-MySQL Community Server", "MySQL 5.7 Community", Some("5.7.$1")),
+        m("mysql", r"5\.7\.(\d+)-commercial", "MySQL 5.7 Commercial", Some("5.7.$1")),
+
+        // MySQL 8.0.x specific minor versions
+        m("mysql", r"8\.0\.(\d+)-Debian", "MySQL 8.0 (Debian)", Some("8.0.$1")),
+        m("mysql", r"8\.0\.(\d+)-Ubuntu", "MySQL 8.0 (Ubuntu)", Some("8.0.$1")),
+        m("mysql", r"8\.0\.(\d+)-log", "MySQL 8.0 (log)", Some("8.0.$1")),
+        m("mysql", r"8\.0\.(\d+)-MySQL Community Server", "MySQL 8.0 Community", Some("8.0.$1")),
+        m("mysql", r"8\.0\.(\d+)-commercial", "MySQL 8.0 Commercial", Some("8.0.$1")),
+        m("mysql", r"8\.0\.(\d+)-MySQL Community Server - GPL", "MySQL 8.0 Community GPL", Some("8.0.$1")),
+
+        // MySQL 8.4.x specific
+        m("mysql", r"8\.4\.(\d+)-MySQL Community Server", "MySQL 8.4 Community", Some("8.4.$1")),
+        m("mysql", r"8\.4\.(\d+)-commercial", "MySQL 8.4 Commercial", Some("8.4.$1")),
+
+        // MySQL 9.x specific
+        m("mysql", r"9\.0\.(\d+)-MySQL Community Server", "MySQL 9.0 Community", Some("9.0.$1")),
+        m("mysql", r"9\.1\.(\d+)-MySQL Community Server", "MySQL 9.1 Community", Some("9.1.$1")),
+
+        // MariaDB 10.x specific minor versions
+        m("mysql", r"10\.0\.(\d+)-MariaDB.*Ubuntu", "MariaDB 10.0 (Ubuntu)", Some("10.0.$1")),
+        m("mysql", r"10\.1\.(\d+)-MariaDB.*Ubuntu", "MariaDB 10.1 (Ubuntu)", Some("10.1.$1")),
+        m("mysql", r"10\.2\.(\d+)-MariaDB.*Ubuntu", "MariaDB 10.2 (Ubuntu)", Some("10.2.$1")),
+        m("mysql", r"10\.3\.(\d+)-MariaDB.*Ubuntu", "MariaDB 10.3 (Ubuntu)", Some("10.3.$1")),
+        m("mysql", r"10\.4\.(\d+)-MariaDB.*Ubuntu", "MariaDB 10.4 (Ubuntu)", Some("10.4.$1")),
+        m("mysql", r"10\.5\.(\d+)-MariaDB.*Ubuntu", "MariaDB 10.5 (Ubuntu)", Some("10.5.$1")),
+        m("mysql", r"10\.6\.(\d+)-MariaDB.*Ubuntu", "MariaDB 10.6 (Ubuntu)", Some("10.6.$1")),
+        m("mysql", r"10\.11\.(\d+)-MariaDB.*Ubuntu", "MariaDB 10.11 (Ubuntu)", Some("10.11.$1")),
+        m("mysql", r"10\.3\.(\d+)-MariaDB.*Debian", "MariaDB 10.3 (Debian)", Some("10.3.$1")),
+        m("mysql", r"10\.5\.(\d+)-MariaDB.*Debian", "MariaDB 10.5 (Debian)", Some("10.5.$1")),
+        m("mysql", r"10\.6\.(\d+)-MariaDB.*Debian", "MariaDB 10.6 (Debian)", Some("10.6.$1")),
+        m("mysql", r"10\.11\.(\d+)-MariaDB.*Debian", "MariaDB 10.11 (Debian)", Some("10.11.$1")),
+
+        // MariaDB 11.x specific
+        m("mysql", r"11\.0\.(\d+)-MariaDB.*Ubuntu", "MariaDB 11.0 (Ubuntu)", Some("11.0.$1")),
+        m("mysql", r"11\.2\.(\d+)-MariaDB", "MariaDB 11.2", Some("11.2.$1")),
+        m("mysql", r"11\.3\.(\d+)-MariaDB", "MariaDB 11.3", Some("11.3.$1")),
+        m("mysql", r"11\.4\.(\d+)-MariaDB.*Ubuntu", "MariaDB 11.4 (Ubuntu)", Some("11.4.$1")),
+        m("mysql", r"11\.5\.(\d+)-MariaDB", "MariaDB 11.5", Some("11.5.$1")),
+        m("mysql", r"11\.6\.(\d+)-MariaDB", "MariaDB 11.6", Some("11.6.$1")),
+
+        // PostgreSQL 9.x specific minor versions
+        m("postgres", r"PostgreSQL 9\.1\.(\d+)", "PostgreSQL 9.1", Some("9.1.$1")),
+        m("postgres", r"PostgreSQL 9\.2\.(\d+)", "PostgreSQL 9.2", Some("9.2.$1")),
+        m("postgres", r"PostgreSQL 9\.3\.(\d+)", "PostgreSQL 9.3", Some("9.3.$1")),
+        m("postgres", r"PostgreSQL 9\.4\.(\d+)", "PostgreSQL 9.4", Some("9.4.$1")),
+        m("postgres", r"PostgreSQL 9\.5\.(\d+)", "PostgreSQL 9.5", Some("9.5.$1")),
+        m("postgres", r"PostgreSQL 9\.6\.(\d+)", "PostgreSQL 9.6", Some("9.6.$1")),
+
+        // PostgreSQL 10.x specific
+        m("postgres", r"PostgreSQL 10\.(\d+) \(Ubuntu\)", "PostgreSQL 10 (Ubuntu)", Some("10.$1")),
+        m("postgres", r"PostgreSQL 10\.(\d+) \(Debian\)", "PostgreSQL 10 (Debian)", Some("10.$1")),
+
+        // PostgreSQL 11.x specific
+        m("postgres", r"PostgreSQL 11\.(\d+) \(Ubuntu\)", "PostgreSQL 11 (Ubuntu)", Some("11.$1")),
+        m("postgres", r"PostgreSQL 11\.(\d+) \(Debian\)", "PostgreSQL 11 (Debian)", Some("11.$1")),
+
+        // PostgreSQL 12.x specific
+        m("postgres", r"PostgreSQL 12\.(\d+) \(Ubuntu\)", "PostgreSQL 12 (Ubuntu)", Some("12.$1")),
+        m("postgres", r"PostgreSQL 12\.(\d+) \(Debian\)", "PostgreSQL 12 (Debian)", Some("12.$1")),
+
+        // PostgreSQL 13.x specific
+        m("postgres", r"PostgreSQL 13\.(\d+) \(Ubuntu\)", "PostgreSQL 13 (Ubuntu)", Some("13.$1")),
+        m("postgres", r"PostgreSQL 13\.(\d+) \(Debian\)", "PostgreSQL 13 (Debian)", Some("13.$1")),
+
+        // PostgreSQL 14.x specific
+        m("postgres", r"PostgreSQL 14\.(\d+) \(Ubuntu\)", "PostgreSQL 14 (Ubuntu)", Some("14.$1")),
+        m("postgres", r"PostgreSQL 14\.(\d+) \(Debian\)", "PostgreSQL 14 (Debian)", Some("14.$1")),
+
+        // PostgreSQL 15.x specific
+        m("postgres", r"PostgreSQL 15\.(\d+) \(Ubuntu\)", "PostgreSQL 15 (Ubuntu)", Some("15.$1")),
+        m("postgres", r"PostgreSQL 15\.(\d+) \(Debian\)", "PostgreSQL 15 (Debian)", Some("15.$1")),
+
+        // PostgreSQL 16.x specific
+        m("postgres", r"PostgreSQL 16\.(\d+) \(Ubuntu\)", "PostgreSQL 16 (Ubuntu)", Some("16.$1")),
+        m("postgres", r"PostgreSQL 16\.(\d+) \(Debian\)", "PostgreSQL 16 (Debian)", Some("16.$1")),
+
+        // PostgreSQL 17.x specific
+        m("postgres", r"PostgreSQL 17\.(\d+) \(Ubuntu\)", "PostgreSQL 17 (Ubuntu)", Some("17.$1")),
+        m("postgres", r"PostgreSQL 17\.(\d+) \(Debian\)", "PostgreSQL 17 (Debian)", Some("17.$1")),
+
+        // Redis specific versions
+        m("redis", r"redis_version:2\.8\.(\d+)", "Redis 2.8", Some("2.8.$1")),
+        m("redis", r"redis_version:2\.6\.(\d+)", "Redis 2.6", Some("2.6.$1")),
+        m("redis", r"redis_version:3\.0\.(\d+)", "Redis 3.0", Some("3.0.$1")),
+        m("redis", r"redis_version:3\.2\.(\d+)", "Redis 3.2", Some("3.2.$1")),
+        m("redis", r"redis_version:4\.0\.(\d+)", "Redis 4.0", Some("4.0.$1")),
+        m("redis", r"redis_version:5\.0\.(\d+)", "Redis 5.0", Some("5.0.$1")),
+        m("redis", r"redis_version:6\.0\.(\d+)", "Redis 6.0", Some("6.0.$1")),
+        m("redis", r"redis_version:6\.2\.(\d+)", "Redis 6.2", Some("6.2.$1")),
+        m("redis", r"redis_version:7\.0\.(\d+)", "Redis 7.0", Some("7.0.$1")),
+        m("redis", r"redis_version:7\.2\.(\d+)", "Redis 7.2", Some("7.2.$1")),
+        m("redis", r"redis_version:7\.4\.(\d+)", "Redis 7.4", Some("7.4.$1")),
+
+        // MongoDB specific versions
+        m("mongodb", r"MongoDB 3\.0\.(\d+)", "MongoDB 3.0", Some("3.0.$1")),
+        m("mongodb", r"MongoDB 3\.2\.(\d+)", "MongoDB 3.2", Some("3.2.$1")),
+        m("mongodb", r"MongoDB 3\.4\.(\d+)", "MongoDB 3.4", Some("3.4.$1")),
+        m("mongodb", r"MongoDB 3\.6\.(\d+)", "MongoDB 3.6", Some("3.6.$1")),
+        m("mongodb", r"MongoDB 4\.0\.(\d+)", "MongoDB 4.0", Some("4.0.$1")),
+        m("mongodb", r"MongoDB 4\.2\.(\d+)", "MongoDB 4.2", Some("4.2.$1")),
+        m("mongodb", r"MongoDB 4\.4\.(\d+)", "MongoDB 4.4", Some("4.4.$1")),
+        m("mongodb", r"MongoDB 5\.0\.(\d+)", "MongoDB 5.0", Some("5.0.$1")),
+        m("mongodb", r"MongoDB 6\.0\.(\d+)", "MongoDB 6.0", Some("6.0.$1")),
+        m("mongodb", r"MongoDB 7\.0\.(\d+)", "MongoDB 7.0", Some("7.0.$1")),
+        m("mongodb", r"MongoDB 8\.0\.(\d+)", "MongoDB 8.0", Some("8.0.$1")),
+
+        // Elasticsearch specific versions
+        m("elasticsearch", r"elasticsearch/6\.8\.(\d+)", "Elasticsearch 6.8", Some("6.8.$1")),
+        m("elasticsearch", r"elasticsearch/7\.0\.(\d+)", "Elasticsearch 7.0", Some("7.0.$1")),
+        m("elasticsearch", r"elasticsearch/7\.1\.(\d+)", "Elasticsearch 7.1", Some("7.1.$1")),
+        m("elasticsearch", r"elasticsearch/7\.2\.(\d+)", "Elasticsearch 7.2", Some("7.2.$1")),
+        m("elasticsearch", r"elasticsearch/7\.3\.(\d+)", "Elasticsearch 7.3", Some("7.3.$1")),
+        m("elasticsearch", r"elasticsearch/7\.4\.(\d+)", "Elasticsearch 7.4", Some("7.4.$1")),
+        m("elasticsearch", r"elasticsearch/7\.5\.(\d+)", "Elasticsearch 7.5", Some("7.5.$1")),
+        m("elasticsearch", r"elasticsearch/7\.6\.(\d+)", "Elasticsearch 7.6", Some("7.6.$1")),
+        m("elasticsearch", r"elasticsearch/7\.7\.(\d+)", "Elasticsearch 7.7", Some("7.7.$1")),
+        m("elasticsearch", r"elasticsearch/7\.8\.(\d+)", "Elasticsearch 7.8", Some("7.8.$1")),
+        m("elasticsearch", r"elasticsearch/7\.9\.(\d+)", "Elasticsearch 7.9", Some("7.9.$1")),
+        m("elasticsearch", r"elasticsearch/7\.10\.(\d+)", "Elasticsearch 7.10", Some("7.10.$1")),
+        m("elasticsearch", r"elasticsearch/7\.11\.(\d+)", "Elasticsearch 7.11", Some("7.11.$1")),
+        m("elasticsearch", r"elasticsearch/7\.12\.(\d+)", "Elasticsearch 7.12", Some("7.12.$1")),
+        m("elasticsearch", r"elasticsearch/7\.13\.(\d+)", "Elasticsearch 7.13", Some("7.13.$1")),
+        m("elasticsearch", r"elasticsearch/7\.14\.(\d+)", "Elasticsearch 7.14", Some("7.14.$1")),
+        m("elasticsearch", r"elasticsearch/7\.15\.(\d+)", "Elasticsearch 7.15", Some("7.15.$1")),
+        m("elasticsearch", r"elasticsearch/7\.16\.(\d+)", "Elasticsearch 7.16", Some("7.16.$1")),
+        m("elasticsearch", r"elasticsearch/7\.17\.(\d+)", "Elasticsearch 7.17", Some("7.17.$1")),
+        m("elasticsearch", r"elasticsearch/8\.0\.(\d+)", "Elasticsearch 8.0", Some("8.0.$1")),
+        m("elasticsearch", r"elasticsearch/8\.1\.(\d+)", "Elasticsearch 8.1", Some("8.1.$1")),
+        m("elasticsearch", r"elasticsearch/8\.2\.(\d+)", "Elasticsearch 8.2", Some("8.2.$1")),
+        m("elasticsearch", r"elasticsearch/8\.3\.(\d+)", "Elasticsearch 8.3", Some("8.3.$1")),
+        m("elasticsearch", r"elasticsearch/8\.4\.(\d+)", "Elasticsearch 8.4", Some("8.4.$1")),
+        m("elasticsearch", r"elasticsearch/8\.5\.(\d+)", "Elasticsearch 8.5", Some("8.5.$1")),
+        m("elasticsearch", r"elasticsearch/8\.6\.(\d+)", "Elasticsearch 8.6", Some("8.6.$1")),
+        m("elasticsearch", r"elasticsearch/8\.7\.(\d+)", "Elasticsearch 8.7", Some("8.7.$1")),
+        m("elasticsearch", r"elasticsearch/8\.8\.(\d+)", "Elasticsearch 8.8", Some("8.8.$1")),
+        m("elasticsearch", r"elasticsearch/8\.9\.(\d+)", "Elasticsearch 8.9", Some("8.9.$1")),
+        m("elasticsearch", r"elasticsearch/8\.10\.(\d+)", "Elasticsearch 8.10", Some("8.10.$1")),
+        m("elasticsearch", r"elasticsearch/8\.11\.(\d+)", "Elasticsearch 8.11", Some("8.11.$1")),
+        m("elasticsearch", r"elasticsearch/8\.12\.(\d+)", "Elasticsearch 8.12", Some("8.12.$1")),
+        m("elasticsearch", r"elasticsearch/8\.13\.(\d+)", "Elasticsearch 8.13", Some("8.13.$1")),
+        m("elasticsearch", r"elasticsearch/8\.14\.(\d+)", "Elasticsearch 8.14", Some("8.14.$1")),
+        m("elasticsearch", r"elasticsearch/8\.15\.(\d+)", "Elasticsearch 8.15", Some("8.15.$1")),
+        m("elasticsearch", r"elasticsearch/8\.16\.(\d+)", "Elasticsearch 8.16", Some("8.16.$1")),
+    ]
+}
+
+/// Get more version-specific language signatures
+pub fn more_version_specific_language_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Python specific versions
+        m("http", r"Server: Python/3\.13\.(\d+)", "Python 3.13", Some("3.13.$1")),
+        m("http", r"Server: Python/3\.12\.(\d+)", "Python 3.12", Some("3.12.$1")),
+        m("http", r"Server: Python/3\.11\.(\d+)", "Python 3.11", Some("3.11.$1")),
+        m("http", r"Server: Python/3\.10\.(\d+)", "Python 3.10", Some("3.10.$1")),
+        m("http", r"Server: Python/3\.9\.(\d+)", "Python 3.9", Some("3.9.$1")),
+        m("http", r"Server: Python/3\.8\.(\d+)", "Python 3.8", Some("3.8.$1")),
+        m("http", r"Server: Python/3\.7\.(\d+)", "Python 3.7", Some("3.7.$1")),
+        m("http", r"Server: Python/3\.6\.(\d+)", "Python 3.6", Some("3.6.$1")),
+        m("http", r"Server: Python/2\.7\.(\d+)", "Python 2.7", Some("2.7.$1")),
+        m("http", r"X-Powered-By: Python/3\.13\.(\d+)", "Python 3.13", Some("3.13.$1")),
+        m("http", r"X-Powered-By: Python/3\.12\.(\d+)", "Python 3.12", Some("3.12.$1")),
+        m("http", r"X-Powered-By: Python/3\.11\.(\d+)", "Python 3.11", Some("3.11.$1")),
+        m("http", r"X-Powered-By: Python/3\.10\.(\d+)", "Python 3.10", Some("3.10.$1")),
+        m("http", r"X-Powered-By: Python/3\.9\.(\d+)", "Python 3.9", Some("3.9.$1")),
+        m("http", r"X-Powered-By: Python/3\.8\.(\d+)", "Python 3.8", Some("3.8.$1")),
+        m("http", r"X-Python-Version: 3\.13", "Python 3.13", None),
+        m("http", r"X-Python-Version: 3\.12", "Python 3.12", None),
+        m("http", r"X-Python-Version: 3\.11", "Python 3.11", None),
+        m("http", r"X-Python-Version: 3\.10", "Python 3.10", None),
+        m("http", r"X-Python-Version: 3\.9", "Python 3.9", None),
+        m("http", r"X-Python-Version: 3\.8", "Python 3.8", None),
+        m("http", r"X-Python-Version: 2\.7", "Python 2.7", None),
+
+        // Node.js specific versions
+        m("http", r"Server: Node\.js/v22\.(\d+\.\d+)", "Node.js 22", Some("22.$1")),
+        m("http", r"Server: Node\.js/v20\.(\d+\.\d+)", "Node.js 20", Some("20.$1")),
+        m("http", r"Server: Node\.js/v18\.(\d+\.\d+)", "Node.js 18", Some("18.$1")),
+        m("http", r"Server: Node\.js/v16\.(\d+\.\d+)", "Node.js 16", Some("16.$1")),
+        m("http", r"Server: Node\.js/v14\.(\d+\.\d+)", "Node.js 14", Some("14.$1")),
+        m("http", r"Server: Node\.js/v12\.(\d+\.\d+)", "Node.js 12", Some("12.$1")),
+        m("http", r"X-Powered-By: Node\.js/v22", "Node.js 22", None),
+        m("http", r"X-Powered-By: Node\.js/v20", "Node.js 20", None),
+        m("http", r"X-Powered-By: Node\.js/v18", "Node.js 18", None),
+        m("http", r"X-Powered-By: Node\.js/v16", "Node.js 16", None),
+        m("http", r"X-Powered-By: Node\.js/v14", "Node.js 14", None),
+        m("http", r"Server: node/v22\.(\d+\.\d+)", "Node.js 22", Some("22.$1")),
+        m("http", r"Server: node/v20\.(\d+\.\d+)", "Node.js 20", Some("20.$1")),
+        m("http", r"Server: node/v18\.(\d+\.\d+)", "Node.js 18", Some("18.$1")),
+        m("http", r"Server: node/v16\.(\d+\.\d+)", "Node.js 16", Some("16.$1")),
+
+        // Ruby specific versions
+        m("http", r"Server: Ruby/3\.3\.(\d+)", "Ruby 3.3", Some("3.3.$1")),
+        m("http", r"Server: Ruby/3\.2\.(\d+)", "Ruby 3.2", Some("3.2.$1")),
+        m("http", r"Server: Ruby/3\.1\.(\d+)", "Ruby 3.1", Some("3.1.$1")),
+        m("http", r"Server: Ruby/3\.0\.(\d+)", "Ruby 3.0", Some("3.0.$1")),
+        m("http", r"Server: Ruby/2\.7\.(\d+)", "Ruby 2.7", Some("2.7.$1")),
+        m("http", r"Server: Ruby/2\.6\.(\d+)", "Ruby 2.6", Some("2.6.$1")),
+        m("http", r"Server: Ruby/2\.5\.(\d+)", "Ruby 2.5", Some("2.5.$1")),
+        m("http", r"Server: Ruby/2\.4\.(\d+)", "Ruby 2.4", Some("2.4.$1")),
+        m("http", r"X-Powered-By: Ruby/3\.3\.(\d+)", "Ruby 3.3", Some("3.3.$1")),
+        m("http", r"X-Powered-By: Ruby/3\.2\.(\d+)", "Ruby 3.2", Some("3.2.$1")),
+        m("http", r"X-Powered-By: Ruby/3\.1\.(\d+)", "Ruby 3.1", Some("3.1.$1")),
+        m("http", r"X-Powered-By: Ruby/3\.0\.(\d+)", "Ruby 3.0", Some("3.0.$1")),
+        m("http", r"X-Powered-By: Ruby/2\.7\.(\d+)", "Ruby 2.7", Some("2.7.$1")),
+
+        // PHP specific versions
+        m("http", r"X-Powered-By: PHP/8\.4\.(\d+)", "PHP 8.4", Some("8.4.$1")),
+        m("http", r"X-Powered-By: PHP/8\.3\.(\d+)", "PHP 8.3", Some("8.3.$1")),
+        m("http", r"X-Powered-By: PHP/8\.2\.(\d+)", "PHP 8.2", Some("8.2.$1")),
+        m("http", r"X-Powered-By: PHP/8\.1\.(\d+)", "PHP 8.1", Some("8.1.$1")),
+        m("http", r"X-Powered-By: PHP/8\.0\.(\d+)", "PHP 8.0", Some("8.0.$1")),
+        m("http", r"X-Powered-By: PHP/7\.4\.(\d+)", "PHP 7.4", Some("7.4.$1")),
+        m("http", r"X-Powered-By: PHP/7\.3\.(\d+)", "PHP 7.3", Some("7.3.$1")),
+        m("http", r"X-Powered-By: PHP/7\.2\.(\d+)", "PHP 7.2", Some("7.2.$1")),
+        m("http", r"X-Powered-By: PHP/7\.1\.(\d+)", "PHP 7.1", Some("7.1.$1")),
+        m("http", r"X-Powered-By: PHP/7\.0\.(\d+)", "PHP 7.0", Some("7.0.$1")),
+        m("http", r"Server: PHP/8\.4\.(\d+)", "PHP 8.4", Some("8.4.$1")),
+        m("http", r"Server: PHP/8\.3\.(\d+)", "PHP 8.3", Some("8.3.$1")),
+        m("http", r"Server: PHP/8\.2\.(\d+)", "PHP 8.2", Some("8.2.$1")),
+        m("http", r"Server: PHP/8\.1\.(\d+)", "PHP 8.1", Some("8.1.$1")),
+        m("http", r"Server: PHP/8\.0\.(\d+)", "PHP 8.0", Some("8.0.$1")),
+        m("http", r"Server: PHP/7\.4\.(\d+)", "PHP 7.4", Some("7.4.$1")),
+        m("http", r"Server: PHP/7\.3\.(\d+)", "PHP 7.3", Some("7.3.$1")),
+
+        // Java specific versions
+        m("http", r"Server: Java/21\.(\d+\.\d+)", "Java 21", Some("21.$1")),
+        m("http", r"Server: Java/17\.(\d+\.\d+)", "Java 17", Some("17.$1")),
+        m("http", r"Server: Java/11\.(\d+\.\d+)", "Java 11", Some("11.$1")),
+        m("http", r"Server: Java/8\.(\d+\.\d+)", "Java 8", Some("8.$1")),
+        m("http", r"X-Powered-By: Java/21\.(\d+\.\d+)", "Java 21", Some("21.$1")),
+        m("http", r"X-Powered-By: Java/17\.(\d+\.\d+)", "Java 17", Some("17.$1")),
+        m("http", r"X-Powered-By: Java/11\.(\d+\.\d+)", "Java 11", Some("11.$1")),
+        m("http", r"X-Powered-By: Java/8\.(\d+\.\d+)", "Java 8", Some("8.$1")),
+        m("http", r"Server: Jetty.*Java/21", "Java 21 (Jetty)", None),
+        m("http", r"Server: Jetty.*Java/17", "Java 17 (Jetty)", None),
+        m("http", r"Server: Jetty.*Java/11", "Java 11 (Jetty)", None),
+        m("http", r"Server: Jetty.*Java/8", "Java 8 (Jetty)", None),
+
+        // Go specific versions
+        m("http", r"Server: Go-httpd/1\.22\.(\d+)", "Go 1.22 httpd", Some("1.22.$1")),
+        m("http", r"Server: Go-httpd/1\.21\.(\d+)", "Go 1.21 httpd", Some("1.21.$1")),
+        m("http", r"Server: Go-httpd/1\.20\.(\d+)", "Go 1.20 httpd", Some("1.20.$1")),
+        m("http", r"Server: Go-httpd/1\.19\.(\d+)", "Go 1.19 httpd", Some("1.19.$1")),
+        m("http", r"Server: Go-httpd/1\.18\.(\d+)", "Go 1.18 httpd", Some("1.18.$1")),
+        m("http", r"Server: Go.*Go/1\.22", "Go 1.22", None),
+        m("http", r"Server: Go.*Go/1\.21", "Go 1.21", None),
+        m("http", r"Server: Go.*Go/1\.20", "Go 1.20", None),
+        m("http", r"Server: Go.*Go/1\.19", "Go 1.19", None),
+        m("http", r"Server: Go.*Go/1\.18", "Go 1.18", None),
+
+        // Rust web framework versions
+        m("http", r"Server: actix-web/4\.(\d+\.\d+)", "Rust actix-web 4", Some("4.$1")),
+        m("http", r"Server: actix-web/3\.(\d+\.\d+)", "Rust actix-web 3", Some("3.$1")),
+        m("http", r"Server: actix-web/2\.(\d+\.\d+)", "Rust actix-web 2", Some("2.$1")),
+        m("http", r"Server: actix-web/1\.(\d+\.\d+)", "Rust actix-web 1", Some("1.$1")),
+        m("http", r"Server: Rocket/0\.5\.(\d+)", "Rust Rocket 0.5", Some("0.5.$1")),
+        m("http", r"Server: Rocket/0\.4\.(\d+)", "Rust Rocket 0.4", Some("0.4.$1")),
+        m("http", r"Server: axum/(\d+\.\d+\.\d+)", "Rust Axum", Some("$1")),
+        m("http", r"Server: hyper/1\.(\d+\.\d+)", "Rust hyper 1", Some("1.$1")),
+        m("http", r"Server: hyper/0\.14\.(\d+)", "Rust hyper 0.14", Some("0.14.$1")),
+    ]
+}
+
+/// Get more version-specific framework signatures
+pub fn more_version_specific_framework_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Django specific versions
+        m("http", r"Server: Django/5\.1\.(\d+)", "Django 5.1", Some("5.1.$1")),
+        m("http", r"Server: Django/5\.0\.(\d+)", "Django 5.0", Some("5.0.$1")),
+        m("http", r"Server: Django/4\.2\.(\d+)", "Django 4.2", Some("4.2.$1")),
+        m("http", r"Server: Django/4\.1\.(\d+)", "Django 4.1", Some("4.1.$1")),
+        m("http", r"Server: Django/4\.0\.(\d+)", "Django 4.0", Some("4.0.$1")),
+        m("http", r"Server: Django/3\.2\.(\d+)", "Django 3.2", Some("3.2.$1")),
+        m("http", r"Server: Django/3\.1\.(\d+)", "Django 3.1", Some("3.1.$1")),
+        m("http", r"Server: Django/3\.0\.(\d+)", "Django 3.0", Some("3.0.$1")),
+
+        // Express specific versions
+        m("http", r"X-Powered-By: Express/4\.21\.(\d+)", "Express.js 4.21", Some("4.21.$1")),
+        m("http", r"X-Powered-By: Express/4\.20\.(\d+)", "Express.js 4.20", Some("4.20.$1")),
+        m("http", r"X-Powered-By: Express/4\.19\.(\d+)", "Express.js 4.19", Some("4.19.$1")),
+        m("http", r"X-Powered-By: Express/4\.18\.(\d+)", "Express.js 4.18", Some("4.18.$1")),
+        m("http", r"X-Powered-By: Express/4\.17\.(\d+)", "Express.js 4.17", Some("4.17.$1")),
+        m("http", r"X-Powered-By: Express/4\.16\.(\d+)", "Express.js 4.16", Some("4.16.$1")),
+        m("http", r"Server: Express/4\.21\.(\d+)", "Express.js 4.21", Some("4.21.$1")),
+        m("http", r"Server: Express/4\.20\.(\d+)", "Express.js 4.20", Some("4.20.$1")),
+        m("http", r"Server: Express/4\.18\.(\d+)", "Express.js 4.18", Some("4.18.$1")),
+        m("http", r"Server: Express/4\.17\.(\d+)", "Express.js 4.17", Some("4.17.$1")),
+
+        // Rails specific versions
+        m("http", r"X-Powered-By: Rails/7\.2\.(\d+)", "Ruby on Rails 7.2", Some("7.2.$1")),
+        m("http", r"X-Powered-By: Rails/7\.1\.(\d+)", "Ruby on Rails 7.1", Some("7.1.$1")),
+        m("http", r"X-Powered-By: Rails/7\.0\.(\d+)", "Ruby on Rails 7.0", Some("7.0.$1")),
+        m("http", r"X-Powered-By: Rails/6\.1\.(\d+)", "Ruby on Rails 6.1", Some("6.1.$1")),
+        m("http", r"X-Powered-By: Rails/6\.0\.(\d+)", "Ruby on Rails 6.0", Some("6.0.$1")),
+        m("http", r"Server: Puma.*Rails/7\.2", "Ruby on Rails 7.2 (Puma)", None),
+        m("http", r"Server: Puma.*Rails/7\.1", "Ruby on Rails 7.1 (Puma)", None),
+        m("http", r"Server: Puma.*Rails/7\.0", "Ruby on Rails 7.0 (Puma)", None),
+        m("http", r"Server: Puma.*Rails/6\.1", "Ruby on Rails 6.1 (Puma)", None),
+        m("http", r"Server: Puma.*Rails/6\.0", "Ruby on Rails 6.0 (Puma)", None),
+
+        // Laravel specific versions
+        m("http", r"X-Powered-By: Laravel/11\.(\d+)", "Laravel 11", Some("11.$1")),
+        m("http", r"X-Powered-By: Laravel/10\.(\d+)", "Laravel 10", Some("10.$1")),
+        m("http", r"X-Powered-By: Laravel/9\.(\d+)", "Laravel 9", Some("9.$1")),
+        m("http", r"Server: Laravel/11\.(\d+)", "Laravel 11", Some("11.$1")),
+        m("http", r"Server: Laravel/10\.(\d+)", "Laravel 10", Some("10.$1")),
+        m("http", r"Server: Laravel/9\.(\d+)", "Laravel 9", Some("9.$1")),
+
+        // Spring Boot specific versions
+        m("http", r"X-Powered-By: Spring Boot/3\.3\.(\d+)", "Spring Boot 3.3", Some("3.3.$1")),
+        m("http", r"X-Powered-By: Spring Boot/3\.2\.(\d+)", "Spring Boot 3.2", Some("3.2.$1")),
+        m("http", r"X-Powered-By: Spring Boot/3\.1\.(\d+)", "Spring Boot 3.1", Some("3.1.$1")),
+        m("http", r"X-Powered-By: Spring Boot/3\.0\.(\d+)", "Spring Boot 3.0", Some("3.0.$1")),
+        m("http", r"X-Powered-By: Spring Boot/2\.7\.(\d+)", "Spring Boot 2.7", Some("2.7.$1")),
+        m("http", r"X-Powered-By: Spring Boot/2\.6\.(\d+)", "Spring Boot 2.6", Some("2.6.$1")),
+        m("http", r"X-Powered-By: Spring Boot/2\.5\.(\d+)", "Spring Boot 2.5", Some("2.5.$1")),
+        m("http", r"X-Powered-By: Spring Boot/2\.4\.(\d+)", "Spring Boot 2.4", Some("2.4.$1")),
+        m("http", r"X-Powered-By: Spring Boot/2\.3\.(\d+)", "Spring Boot 2.3", Some("2.3.$1")),
+        m("http", r"X-Powered-By: Spring Boot/2\.2\.(\d+)", "Spring Boot 2.2", Some("2.2.$1")),
+        m("http", r"X-Powered-By: Spring Boot/2\.1\.(\d+)", "Spring Boot 2.1", Some("2.1.$1")),
+        m("http", r"X-Powered-By: Spring Boot/2\.0\.(\d+)", "Spring Boot 2.0", Some("2.0.$1")),
+
+        // ASP.NET Core specific versions
+        m("http", r"Server: Kestrel.*ASP\.NET Core/8\.0", "ASP.NET Core 8.0", None),
+        m("http", r"Server: Kestrel.*ASP\.NET Core/7\.0", "ASP.NET Core 7.0", None),
+        m("http", r"Server: Kestrel.*ASP\.NET Core/6\.0", "ASP.NET Core 6.0", None),
+        m("http", r"X-Powered-By: ASP\.NET Core/8\.0", "ASP.NET Core 8.0", None),
+        m("http", r"X-Powered-By: ASP\.NET Core/7\.0", "ASP.NET Core 7.0", None),
+        m("http", r"X-Powered-By: ASP\.NET Core/6\.0", "ASP.NET Core 6.0", None),
+        m("http", r"X-Powered-By: ASP\.NET Core/8\.0\.(\d+)", "ASP.NET Core 8.0", Some("8.0.$1")),
+        m("http", r"X-Powered-By: ASP\.NET Core/7\.0\.(\d+)", "ASP.NET Core 7.0", Some("7.0.$1")),
+        m("http", r"X-Powered-By: ASP\.NET Core/6\.0\.(\d+)", "ASP.NET Core 6.0", Some("6.0.$1")),
+
+        // Symfony specific versions
+        m("http", r"X-Powered-By: Symfony/7\.(\d+\.\d+)", "Symfony 7", Some("7.$1")),
+        m("http", r"X-Powered-By: Symfony/6\.(\d+\.\d+)", "Symfony 6", Some("6.$1")),
+        m("http", r"X-Powered-By: Symfony/5\.(\d+\.\d+)", "Symfony 5", Some("5.$1")),
+        m("http", r"X-Powered-By: Symfony/4\.(\d+\.\d+)", "Symfony 4", Some("4.$1")),
+        m("http", r"X-Powered-By: Symfony/7\.2\.(\d+)", "Symfony 7.2", Some("7.2.$1")),
+        m("http", r"X-Powered-By: Symfony/7\.1\.(\d+)", "Symfony 7.1", Some("7.1.$1")),
+        m("http", r"X-Powered-By: Symfony/6\.4\.(\d+)", "Symfony 6.4", Some("6.4.$1")),
+        m("http", r"X-Powered-By: Symfony/5\.4\.(\d+)", "Symfony 5.4", Some("5.4.$1")),
+
+        // Next.js specific versions
+        m("http", r"X-Powered-By: Next\.js/15\.(\d+\.\d+)", "Next.js 15", Some("15.$1")),
+        m("http", r"X-Powered-By: Next\.js/14\.(\d+\.\d+)", "Next.js 14", Some("14.$1")),
+        m("http", r"X-Powered-By: Next\.js/13\.(\d+\.\d+)", "Next.js 13", Some("13.$1")),
+        m("http", r"X-Powered-By: Next\.js/12\.(\d+\.\d+)", "Next.js 12", Some("12.$1")),
+        m("http", r"X-Powered-By: Next\.js/11\.(\d+\.\d+)", "Next.js 11", Some("11.$1")),
+        m("http", r"X-Powered-By: Next\.js/10\.(\d+\.\d+)", "Next.js 10", Some("10.$1")),
+
+        // Nuxt.js specific versions
+        m("http", r"X-Powered-By: Nuxt/3\.(\d+\.\d+)", "Nuxt.js 3", Some("3.$1")),
+        m("http", r"X-Powered-By: Nuxt/2\.(\d+\.\d+)", "Nuxt.js 2", Some("2.$1")),
+        m("http", r"X-Powered-By: Nuxt/3\.14\.(\d+)", "Nuxt.js 3.14", Some("3.14.$1")),
+        m("http", r"X-Powered-By: Nuxt/3\.13\.(\d+)", "Nuxt.js 3.13", Some("3.13.$1")),
+        m("http", r"X-Powered-By: Nuxt/3\.12\.(\d+)", "Nuxt.js 3.12", Some("3.12.$1")),
+        m("http", r"X-Powered-By: Nuxt/2\.17\.(\d+)", "Nuxt.js 2.17", Some("2.17.$1")),
+        m("http", r"X-Powered-By: Nuxt/2\.15\.(\d+)", "Nuxt.js 2.15", Some("2.15.$1")),
+
+        // Remix specific versions
+        m("http", r"X-Remix-Version: 2\.(\d+\.\d+)", "Remix 2", Some("2.$1")),
+        m("http", r"X-Remix-Version: 1\.(\d+\.\d+)", "Remix 1", Some("1.$1")),
+
+        // FastAPI/uvicorn specific versions
+        m("http", r"Server: uvicorn/0\.32\.(\d+)", "uvicorn 0.32", Some("0.32.$1")),
+        m("http", r"Server: uvicorn/0\.31\.(\d+)", "uvicorn 0.31", Some("0.31.$1")),
+        m("http", r"Server: uvicorn/0\.30\.(\d+)", "uvicorn 0.30", Some("0.30.$1")),
+        m("http", r"Server: uvicorn/0\.29\.(\d+)", "uvicorn 0.29", Some("0.29.$1")),
+        m("http", r"Server: uvicorn/0\.27\.(\d+)", "uvicorn 0.27", Some("0.27.$1")),
+        m("http", r"Server: uvicorn/0\.24\.(\d+)", "uvicorn 0.24", Some("0.24.$1")),
+
+        // Flask specific versions
+        m("http", r"Server: Werkzeug/3\.0\.(\d+) Python/3\.13", "Flask (Python 3.13)", Some("3.0.$1")),
+        m("http", r"Server: Werkzeug/3\.0\.(\d+) Python/3\.12", "Flask (Python 3.12)", Some("3.0.$1")),
+        m("http", r"Server: Werkzeug/3\.0\.(\d+) Python/3\.11", "Flask (Python 3.11)", Some("3.0.$1")),
+        m("http", r"Server: Werkzeug/2\.3\.(\d+) Python/3\.11", "Flask (Python 3.11)", Some("2.3.$1")),
+        m("http", r"Server: Werkzeug/2\.3\.(\d+) Python/3\.10", "Flask (Python 3.10)", Some("2.3.$1")),
+        m("http", r"Server: Werkzeug/2\.3\.(\d+) Python/3\.9", "Flask (Python 3.9)", Some("2.3.$1")),
+        m("http", r"Server: Werkzeug/2\.0\.(\d+) Python/3\.10", "Flask (Python 3.10)", Some("2.0.$1")),
+        m("http", r"Server: Werkzeug/2\.0\.(\d+) Python/3\.9", "Flask (Python 3.9)", Some("2.0.$1")),
+        m("http", r"Server: Werkzeug/2\.0\.(\d+) Python/3\.8", "Flask (Python 3.8)", Some("2.0.$1")),
+
+        // Django with Werkzeug (debug mode)
+        m("http", r"Server: Werkzeug.*Django/5\.1", "Django 5.1 (debug)", None),
+        m("http", r"Server: Werkzeug.*Django/5\.0", "Django 5.0 (debug)", None),
+        m("http", r"Server: Werkzeug.*Django/4\.2", "Django 4.2 (debug)", None),
+        m("http", r"Server: Werkzeug.*Django/4\.1", "Django 4.1 (debug)", None),
+
+        // Puma versions
+        m("http", r"Server: Puma (\d+\.\d+\.\d+)", "Puma", Some("$1")),
+        m("http", r"Server: Puma (\d+\.\d+)", "Puma", Some("$1")),
+        m("http", r"Server: Puma/6\.(\d+\.\d+)", "Puma 6", Some("6.$1")),
+        m("http", r"Server: Puma/5\.(\d+\.\d+)", "Puma 5", Some("5.$1")),
+
+        // Unicorn versions
+        m("http", r"Server: unicorn (\d+\.\d+\.\d+)", "Unicorn", Some("$1")),
+        m("http", r"Server: unicorn/6\.(\d+\.\d+)", "Unicorn 6", Some("6.$1")),
+        m("http", r"Server: unicorn/5\.(\d+\.\d+)", "Unicorn 5", Some("5.$1")),
+
+        // Gunicorn with Python versions
+        m("http", r"Server: gunicorn/22\.0\.(\d+).*Python/3\.13", "Gunicorn (Python 3.13)", Some("22.0.$1")),
+        m("http", r"Server: gunicorn/22\.0\.(\d+).*Python/3\.12", "Gunicorn (Python 3.12)", Some("22.0.$1")),
+        m("http", r"Server: gunicorn/21\.2\.(\d+).*Python/3\.12", "Gunicorn (Python 3.12)", Some("21.2.$1")),
+        m("http", r"Server: gunicorn/21\.2\.(\d+).*Python/3\.11", "Gunicorn (Python 3.11)", Some("21.2.$1")),
+        m("http", r"Server: gunicorn/20\.1\.(\d+).*Python/3\.11", "Gunicorn (Python 3.11)", Some("20.1.$1")),
+        m("http", r"Server: gunicorn/20\.1\.(\d+).*Python/3\.10", "Gunicorn (Python 3.10)", Some("20.1.$1")),
+
+        // SvelteKit versions
+        m("http", r"X-Powered-By: SvelteKit/(\d+\.\d+\.\d+)", "SvelteKit", Some("$1")),
+        m("http", r"Server: SvelteKit/(\d+\.\d+\.\d+)", "SvelteKit", Some("$1")),
+
+        // Remix with versions
+        m("http", r"Server: Remix/(\d+\.\d+\.\d+)", "Remix", Some("$1")),
+        m("http", r"X-Remix-Version: (\d+\.\d+\.\d+)", "Remix", Some("$1")),
+
+        // Hapi.js versions
+        m("http", r"Server: hapi/(\d+\.\d+\.\d+)", "hapi.js", Some("$1")),
+        m("http", r"Server: @hapi/hapi/(\d+\.\d+\.\d+)", "hapi.js", Some("$1")),
+
+        // Koa versions
+        m("http", r"X-Powered-By: Koa/(\d+\.\d+\.\d+)", "Koa", Some("$1")),
+        m("http", r"Server: Koa/(\d+\.\d+\.\d+)", "Koa", Some("$1")),
+
+        // Fastify versions
+        m("http", r"Server: fastify/(\d+\.\d+\.\d+)", "Fastify", Some("$1")),
+        m("http", r"Server: fastify/(\d+\.\d+)", "Fastify", Some("$1")),
+        m("http", r"Server: fastify", "Fastify", None),
+
+        // NestJS versions
+        m("http", r"X-Powered-By: NestJS", "NestJS", None),
+        m("http", r"Server: NestJS/(\d+\.\d+\.\d+)", "NestJS", Some("$1")),
+
+        // Phoenix (Elixir) versions
+        m("http", r"X-Powered-By: Phoenix/(\d+\.\d+\.\d+)", "Phoenix", Some("$1")),
+        m("http", r"Server: Phoenix/(\d+\.\d+\.\d+)", "Phoenix", Some("$1")),
+
+        // Akka HTTP versions
+        m("http", r"Server: Akka HTTP/10\.(\d+\.\d+)", "Akka HTTP 10", Some("10.$1")),
+        m("http", r"Server: Akka HTTP/10\.2\.(\d+)", "Akka HTTP 10.2", Some("10.2.$1")),
+        m("http", r"Server: Akka HTTP/10\.1\.(\d+)", "Akka HTTP 10.1", Some("10.1.$1")),
+
+        // Ktor versions
+        m("http", r"Server: Ktor/2\.(\d+\.\d+)", "Ktor 2", Some("2.$1")),
+        m("http", r"Server: Ktor/1\.(\d+\.\d+)", "Ktor 1", Some("1.$1")),
+        m("http", r"Server: Ktor/2\.3\.(\d+)", "Ktor 2.3", Some("2.3.$1")),
+        m("http", r"Server: Ktor/2\.2\.(\d+)", "Ktor 2.2", Some("2.2.$1")),
+        m("http", r"Server: Ktor/2\.1\.(\d+)", "Ktor 2.1", Some("2.1.$1")),
+        m("http", r"Server: Ktor/2\.0\.(\d+)", "Ktor 2.0", Some("2.0.$1")),
+    ]
+}
+
 /// Get all signatures combined
 pub fn all_signatures() -> Vec<MatchPattern> {
     let mut sigs = Vec::new();
@@ -4511,6 +5190,10 @@ pub fn all_signatures() -> Vec<MatchPattern> {
     sigs.extend(version_specific_database_signatures());
     sigs.extend(cloud_service_signatures());
     sigs.extend(cdn_extended_signatures());
+    sigs.extend(more_version_specific_web_server_signatures());
+    sigs.extend(more_version_specific_database_signatures());
+    sigs.extend(more_version_specific_language_signatures());
+    sigs.extend(more_version_specific_framework_signatures());
     sigs
 }
 
@@ -4545,7 +5228,7 @@ mod tests {
     #[test]
     fn test_all_signatures_count() {
         let sigs = all_signatures();
-        assert!(sigs.len() >= 2000, "Expected at least 2000 total signatures, got {}", sigs.len());
+        assert!(sigs.len() >= 3000, "Expected at least 3000 total signatures, got {}", sigs.len());
     }
 
     #[test]
