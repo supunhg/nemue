@@ -25,6 +25,10 @@ pub mod templates;
 pub mod groups;
 pub mod scheduler;
 pub mod notifications;
+pub mod cache;
+pub mod dedup;
+pub mod compression;
+pub mod encryption;
 
 pub use engine::ScanEngine;
 pub use target::{Target, TargetParser, TargetConfig};
@@ -86,6 +90,10 @@ pub use notifications::{
     NotificationMessage, NotificationMessageBuilder, NotificationRecord,
     NotificationManager,
 };
+pub use cache::{ScanCache, CacheConfig, CacheKey, CacheStats};
+pub use dedup::{ScanDeduplicator, DedupStats, DuplicateGroup};
+pub use compression::{ScanCompressor, CompressionConfig, CompressionAlgorithm, CompressionStats};
+pub use encryption::{ScanEncryptor, EncryptionKey, EncryptionConfig, EncryptionStats, EncryptedData};
 
 use serde::{Deserialize, Serialize};
 use std::net::IpAddr;

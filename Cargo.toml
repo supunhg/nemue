@@ -43,6 +43,9 @@ rmcp = { version = "0.16", features = ["server"] }  # MCP server support
 toml = "0.8"  # Config file parsing
 dirs = "5"  # XDG directory paths
 printpdf = "0.5"  # PDF report generation
+flate2 = "1.0"  # gzip compression
+zstd = "0.13"  # zstd compression
+aes-gcm = "0.10"  # AES-256-GCM encryption
 
 [dev-dependencies]
 tokio-test = "0.4"

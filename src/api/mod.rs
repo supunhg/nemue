@@ -14,6 +14,10 @@ pub mod websocket;
 pub mod graphql;
 pub mod versioning;
 pub mod docs;
+pub mod rate_limit;
+pub mod cache;
+pub mod pagination;
+pub mod filtering;
 
 use state::AppState;
 
