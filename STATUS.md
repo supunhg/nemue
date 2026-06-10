@@ -32,7 +32,7 @@ If you're picking up this project, here's what you need to know:
 - [x] Scan history and trend analysis
 
 ### Service Detection (Complete)
-- [x] 1575 service signatures with regex matching
+- [x] 2522 service signatures with regex matching
 - [x] Real probe sending in enhanced detector
 - [x] Service family detection
 - [x] OS hint detection from banners
@@ -40,13 +40,13 @@ If you're picking up this project, here's what you need to know:
 - [x] nmap-service-probes parser (can import Nmap's signatures)
 
 ### OS Fingerprinting (Complete)
-- [x] 43 OS signatures (Linux, Windows, macOS, FreeBSD, Cisco, etc.)
+- [x] 103 OS signatures (Linux, Windows, macOS, FreeBSD, Cisco, etc.)
 - [x] TCP/IP stack analysis
 - [x] Passive OS detection from banners
 - [x] IP ID sequence detection
 
 ### Lua Scripts (Complete)
-- [x] 202 scripts total
+- [x] 505 scripts total
 - [x] HTTP security (XSS, SQLi, CORS, HSTS, CSP, SSRF, XXE, etc.)
 - [x] SSH/SSL/FTP/SMTP/DNS/Database/Container/Cloud scripts
 - [x] NSE-compatible structure
