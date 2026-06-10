@@ -17,6 +17,7 @@ use nemue::reporting::{
     ScanMetrics, VulnerabilityMetrics as ReportingVulnMetrics,
 };
 use nemue::scanner::{ScanHistory, ScanResults, ScanResult, PortState, Protocol};
+use nemue::performance::{LockFreeQueue, BoundedQueue, AtomicFlag, MetricsCollector};
 use std::net::IpAddr;
 use chrono::Utc;
 
@@ -56,6 +57,30 @@ fn benchmark_port_parsing(c: &mut Criterion) {
 
     group.bench_function("overlapping_ranges", |b| {
         b.iter(|| PortParser::parse(black_box("1-1000,80-443,22-80")))
+    });
+
+    group.bench_function("protocol_spec_tcp_udp", |b| {
+        b.iter(|| PortParser::parse_protocol_spec(black_box("T:80,443 U:53,161")))
+    });
+
+    group.bench_function("protocol_spec_complex", |b| {
+        b.iter(|| PortParser::parse_protocol_spec(black_box("T:22,80,443,8080 U:53,161,162,631 S:22")))
+    });
+
+    group.bench_function("filter_by_ratio_09", |b| {
+        b.iter(|| PortParser::filter_by_ratio(black_box(0.9)))
+    });
+
+    group.bench_function("filter_by_ratio_05", |b| {
+        b.iter(|| PortParser::filter_by_ratio(black_box(0.5)))
+    });
+
+    group.bench_function("parse_error_invalid_port", |b| {
+        b.iter(|| PortParser::parse(black_box("99999")))
+    });
+
+    group.bench_function("parse_error_invalid_range", |b| {
+        b.iter(|| PortParser::parse(black_box("100-50")))
     });
 
     group.finish();
@@ -98,6 +123,38 @@ fn benchmark_target_parsing(c: &mut Criterion) {
     group.bench_function("mixed_formats", |b| {
         b.iter(|| TargetParser::parse(black_box("192.168.1.0/24,10.0.0.1-10,example.com")))
     });
+
+    group.bench_function("octet_range_small", |b| {
+        b.iter(|| TargetParser::parse(black_box("192.168.1.1-10")))
+    });
+
+    group.bench_function("octet_range_medium", |b| {
+        b.iter(|| TargetParser::parse(black_box("192.168.1-2.1-50")))
+    });
+
+    group.bench_function("octet_range_two_octets", |b| {
+        b.iter(|| TargetParser::parse(black_box("192.168.1-5.1-20")))
+    });
+
+    group.finish();
+}
+
+// =============================================================================
+// Target Scaling Benchmarks
+// =============================================================================
+fn benchmark_target_scaling(c: &mut Criterion) {
+    let mut group = c.benchmark_group("target_scaling");
+
+    for prefix_len in [30, 28, 26, 24].iter() {
+        let cidr = format!("192.168.0.0/{}", prefix_len);
+        group.bench_with_input(
+            BenchmarkId::from_parameter(&cidr),
+            &cidr,
+            |b, cidr| {
+                b.iter(|| TargetParser::parse(black_box(cidr)))
+            }
+        );
+    }
 
     group.finish();
 }
@@ -568,6 +625,56 @@ fn benchmark_os_fingerprinting(c: &mut Criterion) {
         })
     });
 
+    // Banner-based OS detection
+    group.bench_function("os_from_banner_windows_iis", |b| {
+        b.iter(|| OsFamily::from_banner(black_box("Server: Microsoft-IIS/10.0")))
+    });
+
+    group.bench_function("os_from_banner_linux_nginx", |b| {
+        b.iter(|| OsFamily::from_banner(black_box("Server: nginx/1.18.0 (Ubuntu)")))
+    });
+
+    group.bench_function("os_from_banner_ssh_ubuntu", |b| {
+        b.iter(|| OsFamily::from_banner(black_box("SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.5")))
+    });
+
+    group.bench_function("os_from_banner_cisco", |b| {
+        b.iter(|| OsFamily::from_banner(black_box("SSH-2.0-Cisco-1.25")))
+    });
+
+    group.bench_function("os_from_banner_none", |b| {
+        b.iter(|| OsFamily::from_banner(black_box("random data with no OS indicators")))
+    });
+
+    // Passive OS detection
+    group.bench_function("detect_passive_http_windows", |b| {
+        b.iter(|| detector.detect_passive(
+            black_box("Server: Microsoft-IIS/10.0"),
+            black_box("http"),
+        ))
+    });
+
+    group.bench_function("detect_passive_ssh_ubuntu", |b| {
+        b.iter(|| detector.detect_passive(
+            black_box("SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.5"),
+            black_box("ssh"),
+        ))
+    });
+
+    group.bench_function("detect_passive_ssh_cisco", |b| {
+        b.iter(|| detector.detect_passive(
+            black_box("SSH-2.0-Cisco-1.25"),
+            black_box("ssh"),
+        ))
+    });
+
+    group.bench_function("detect_passive_no_indicators", |b| {
+        b.iter(|| detector.detect_passive(
+            black_box("some generic banner"),
+            black_box("unknown"),
+        ))
+    });
+
     group.finish();
 }
 
@@ -693,6 +800,67 @@ fn benchmark_vuln_scanning(c: &mut Criterion) {
         b.iter(|| engine.list_by_category(black_box(&VulnCategory::Authentication)))
     });
 
+    // Exploit database benchmarks
+    group.bench_function("exploit_db_creation", |b| {
+        b.iter(|| nemue::vuln::ExploitDatabase::new())
+    });
+
+    let exploit_db = nemue::vuln::ExploitDatabase::new();
+
+    group.bench_function("exploit_get_log4shell", |b| {
+        b.iter(|| exploit_db.get_exploit(black_box("CVE-2021-44228")))
+    });
+
+    group.bench_function("exploit_get_eternalblue", |b| {
+        b.iter(|| exploit_db.get_exploit(black_box("CVE-2017-0144")))
+    });
+
+    group.bench_function("exploit_get_nonexistent", |b| {
+        b.iter(|| exploit_db.get_exploit(black_box("CVE-9999-9999")))
+    });
+
+    // Credential database scaling
+    group.bench_function("get_credentials_all_services", |b| {
+        b.iter(|| {
+            for svc in &["mysql", "postgresql", "mongodb", "redis", "tomcat", "cisco", "ssh", "ftp"] {
+                let _ = cred_db.get_credentials(black_box(svc));
+            }
+        })
+    });
+
+    group.bench_function("credentials_count_fast", |b| {
+        b.iter(|| cred_db.count())
+    });
+
+    group.bench_function("credentials_service_count_fast", |b| {
+        b.iter(|| cred_db.service_count())
+    });
+
+    // Multiple severity lookups
+    group.bench_function("severity_batch_classify", |b| {
+        b.iter(|| {
+            for score in [0.0, 1.5, 3.8, 5.5, 7.2, 9.1, 10.0] {
+                let _ = VulnSeverity::from_cvss(black_box(score));
+            }
+        })
+    });
+
+    // Multiple category lookups
+    group.bench_function("category_batch_as_str", |b| {
+        b.iter(|| {
+            for cat in &[
+                VulnCategory::Authentication,
+                VulnCategory::InfoDisclosure,
+                VulnCategory::RemoteCodeExecution,
+                VulnCategory::SqlInjection,
+                VulnCategory::Misconfiguration,
+                VulnCategory::Cryptography,
+            ] {
+                let _ = black_box(cat).as_str();
+            }
+        })
+    });
+
     group.finish();
 }
 
@@ -764,6 +932,83 @@ fn create_sample_report() -> ScanReport {
         .unwrap()
 }
 
+fn create_large_report(finding_count: usize) -> ScanReport {
+    let mut builder = ReportBuilder::new()
+        .metadata(ReportMetadata {
+            scan_id: "bench-scan-large".to_string(),
+            report_id: "bench-report-large".to_string(),
+            generated_at: Utc::now(),
+            scan_start: Utc::now(),
+            scan_end: Utc::now(),
+            target_count: 1000,
+            version: "0.2.1".to_string(),
+        })
+        .summary(ExecutiveSummary {
+            total_hosts: 1000,
+            hosts_up: 850,
+            total_ports: 10000,
+            open_ports: 4500,
+            vulnerabilities: VulnerabilitySummary {
+                critical: 30,
+                high: 80,
+                medium: 150,
+                low: 200,
+                info: 500,
+            },
+            risk_score: 7.2,
+            compliance_score: 78.5,
+        })
+        .compliance(ComplianceStatus {
+            frameworks: vec![],
+            overall_score: 78.5,
+        });
+
+    for i in 0..finding_count {
+        builder = builder.add_finding(Finding {
+            id: format!("finding-{:04}", i),
+            severity: match i % 5 {
+                0 => Severity::Critical,
+                1 => Severity::High,
+                2 => Severity::Medium,
+                3 => Severity::Low,
+                _ => Severity::Info,
+            },
+            title: format!("Vulnerability {} - {}", i, match i % 7 {
+                0 => "Remote Code Execution via Deserialization",
+                1 => "SQL Injection in User Authentication",
+                2 => "Cross-Site Scripting in Search Parameter",
+                3 => "Default Credentials on Database Server",
+                4 => "Unencrypted Communication Channel",
+                5 => "Missing Security Headers",
+                _ => "Information Disclosure via Error Messages",
+            }),
+            description: format!("Detailed description for vulnerability {} affecting multiple hosts in the network infrastructure", i),
+            affected_hosts: (0..5).map(|h| format!("192.168.{}.{}", i % 256, h + 1)).collect(),
+            cvss_score: Some(3.0 + (i as f64 * 0.07) % 7.0),
+            cve_ids: vec![format!("CVE-2024-{:04}", i)],
+            remediation: format!("Apply security patch or update to latest version for vulnerability {}", i),
+        });
+    }
+
+    for i in 0..5 {
+        builder = builder.add_recommendation(Recommendation {
+            priority: match i % 4 {
+                0 => Priority::Critical,
+                1 => Priority::High,
+                2 => Priority::Medium,
+                _ => Priority::Low,
+            },
+            category: ["Patch", "Configuration", "Authentication", "Encryption", "Monitoring"][i % 5].to_string(),
+            title: format!("Recommendation {}", i),
+            description: format!("Detailed recommendation for improving security posture {}", i),
+            impact: ["High", "Medium", "Low"][i % 3].to_string(),
+            effort: ["Low", "Medium", "High"][i % 3].to_string(),
+        });
+    }
+
+    builder.build().unwrap()
+}
+
 fn benchmark_report_generation(c: &mut Criterion) {
     let mut group = c.benchmark_group("report_generation");
 
@@ -783,6 +1028,10 @@ fn benchmark_report_generation(c: &mut Criterion) {
 
     group.bench_function("report_to_xml", |b| {
         b.iter(|| report.to_xml())
+    });
+
+    group.bench_function("report_to_markdown", |b| {
+        b.iter(|| nemue::reporting::MarkdownReportGenerator::generate(black_box(&report)))
     });
 
     // Report building
@@ -841,6 +1090,37 @@ fn benchmark_pdf_generation(c: &mut Criterion) {
             let pdf = PdfReportGenerator::generate(black_box(&report));
             black_box(pdf.len())
         })
+    });
+
+    // Large report benchmarks
+    group.bench_function("report_to_json_large", |b| {
+        let large_report = create_large_report(100);
+        b.iter(|| large_report.to_json())
+    });
+
+    group.bench_function("report_to_text_large", |b| {
+        let large_report = create_large_report(100);
+        b.iter(|| large_report.to_text())
+    });
+
+    group.bench_function("report_to_csv_large", |b| {
+        let large_report = create_large_report(100);
+        b.iter(|| large_report.to_csv())
+    });
+
+    group.bench_function("report_to_xml_large", |b| {
+        let large_report = create_large_report(100);
+        b.iter(|| large_report.to_xml())
+    });
+
+    group.bench_function("report_to_markdown_large", |b| {
+        let large_report = create_large_report(100);
+        b.iter(|| nemue::reporting::MarkdownReportGenerator::generate(black_box(&large_report)))
+    });
+
+    group.bench_function("pdf_generate_large", |b| {
+        let large_report = create_large_report(50);
+        b.iter(|| PdfReportGenerator::generate(black_box(&large_report)))
     });
 
     group.finish();
@@ -1172,12 +1452,161 @@ fn benchmark_intensity_levels(c: &mut Criterion) {
 }
 
 // =============================================================================
+// Performance Subsystem Benchmarks
+// =============================================================================
+fn benchmark_performance(c: &mut Criterion) {
+    let mut group = c.benchmark_group("performance");
+
+    // LockFreeQueue benchmarks
+    group.bench_function("lockfree_queue_push_pop", |b| {
+        let queue = LockFreeQueue::new();
+        b.iter(|| {
+            queue.push(black_box(42u64));
+            let _ = queue.pop();
+        })
+    });
+
+    group.bench_function("lockfree_queue_batch_100", |b| {
+        let queue = LockFreeQueue::new();
+        b.iter(|| {
+            for i in 0..100u64 {
+                queue.push(black_box(i));
+            }
+            for _ in 0..100 {
+                let _ = queue.pop();
+            }
+        })
+    });
+
+    group.bench_function("lockfree_queue_len", |b| {
+        let queue = LockFreeQueue::new();
+        for i in 0..50 {
+            queue.push(i);
+        }
+        b.iter(|| queue.len())
+    });
+
+    // BoundedQueue benchmarks
+    group.bench_function("bounded_queue_push_pop", |b| {
+        let queue = BoundedQueue::new(1024);
+        b.iter(|| {
+            let _ = queue.push(black_box(42u64));
+            let _ = queue.pop();
+        })
+    });
+
+    group.bench_function("bounded_queue_full_push", |b| {
+        let queue = BoundedQueue::new(16);
+        for i in 0..16 {
+            let _ = queue.push(i);
+        }
+        b.iter(|| {
+            let _ = queue.push(black_box(99u64));
+        })
+    });
+
+    // AtomicFlag benchmarks
+    group.bench_function("atomic_flag_set_get", |b| {
+        let flag = AtomicFlag::new(false);
+        b.iter(|| {
+            flag.set(black_box(true));
+            flag.get()
+        })
+    });
+
+    group.bench_function("atomic_flag_swap", |b| {
+        let flag = AtomicFlag::new(false);
+        b.iter(|| flag.swap(black_box(true)))
+    });
+
+    // MetricsCollector benchmarks
+    group.bench_function("metrics_increment_packets_sent", |b| {
+        let metrics = MetricsCollector::new();
+        b.iter(|| metrics.increment_packets_sent(black_box(1)))
+    });
+
+    group.bench_function("metrics_increment_packets_received", |b| {
+        let metrics = MetricsCollector::new();
+        b.iter(|| metrics.increment_packets_received(black_box(1)))
+    });
+
+    group.bench_function("metrics_add_bytes_sent", |b| {
+        let metrics = MetricsCollector::new();
+        b.iter(|| metrics.add_bytes_sent(black_box(1500)))
+    });
+
+    group.bench_function("metrics_increment_active_connections", |b| {
+        let metrics = MetricsCollector::new();
+        b.iter(|| metrics.increment_active_connections())
+    });
+
+    group.bench_function("metrics_increment_errors", |b| {
+        let metrics = MetricsCollector::new();
+        b.iter(|| metrics.increment_errors())
+    });
+
+    group.bench_function("metrics_reset", |b| {
+        let metrics = MetricsCollector::new();
+        metrics.increment_packets_sent(1000);
+        metrics.add_bytes_sent(1_500_000);
+        b.iter(|| metrics.reset())
+    });
+
+    group.finish();
+}
+
+// =============================================================================
+// Scan Diff Benchmarks
+// =============================================================================
+fn benchmark_scan_diff(c: &mut Criterion) {
+    let mut group = c.benchmark_group("scan_diff");
+
+    let scan_a = create_multi_port_results(&[
+        (22, PortState::Open, Some("ssh")),
+        (80, PortState::Open, Some("http")),
+        (443, PortState::Open, Some("https")),
+        (3306, PortState::Open, Some("mysql")),
+        (8080, PortState::Closed, None),
+    ]);
+
+    let scan_b = create_multi_port_results(&[
+        (22, PortState::Open, Some("ssh")),
+        (80, PortState::Open, Some("nginx")),
+        (443, PortState::Open, Some("https")),
+        (3306, PortState::Filtered, None),
+        (8080, PortState::Open, Some("http-proxy")),
+        (9090, PortState::Open, Some("prometheus")),
+    ]);
+
+    group.bench_function("compare_scans_small", |b| {
+        b.iter(|| nemue::scanner::diff::compare_scans(black_box(&scan_a), black_box(&scan_b)))
+    });
+
+    // Larger diff
+    let ports_a: Vec<(u16, PortState, Option<&str>)> = (1..=100)
+        .map(|p| (p, if p % 3 == 0 { PortState::Open } else { PortState::Closed }, Some("http")))
+        .collect();
+    let ports_b: Vec<(u16, PortState, Option<&str>)> = (1..=100)
+        .map(|p| (p, if p % 2 == 0 { PortState::Open } else { PortState::Filtered }, Some("http")))
+        .collect();
+    let large_a = create_multi_port_results(&ports_a);
+    let large_b = create_multi_port_results(&ports_b);
+
+    group.bench_function("compare_scans_100_ports", |b| {
+        b.iter(|| nemue::scanner::diff::compare_scans(black_box(&large_a), black_box(&large_b)))
+    });
+
+    group.finish();
+}
+
+// =============================================================================
 // Criterion Groups
 // =============================================================================
 criterion_group!(
     benches,
     benchmark_port_parsing,
     benchmark_target_parsing,
+    benchmark_target_scaling,
     benchmark_timing,
     benchmark_script_args,
     benchmark_string_operations,
@@ -1195,6 +1624,8 @@ criterion_group!(
     benchmark_scan_history,
     benchmark_trend_analysis,
     benchmark_intensity_levels,
+    benchmark_performance,
+    benchmark_scan_diff,
 );
 
 criterion_main!(benches);

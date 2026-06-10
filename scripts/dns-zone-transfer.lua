@@ -1,45 +1,70 @@
--- DNS Zone Transfer Check
--- Tests for misconfigured DNS zone transfers
+-- DNS Zone Transfer Test
+-- Attempts DNS zone transfer (AXFR) to enumerate all records
+
+local nmap = require("nmap")
+local stdnse = require("stdnse")
+local dns = require("dns")
 
 description = [[
-Attempts AXFR zone transfer on DNS servers.
-Misconfigured zone transfers can expose entire DNS records.
+Attempts a DNS zone transfer (AXFR) against the target DNS server.
+Zone transfers can expose all DNS records for a domain including
+internal hostnames, IP addresses, and service records.
 ]]
 
-author = "Nemue Team"
+author = "Nemue Security Team"
 license = "MIT"
-categories = {"intrusive", "vuln", "discovery"}
+categories = {"discovery", "intrusive", "vuln"}
 
--- Port rule - run on DNS ports
-portrule = function(port)
-    return port.protocol == "tcp" and 
-           (port.number == 53 or port.service == "domain")
+portrule = function(host, port)
+    return port.protocol == "udp" and port.number == 53
 end
 
--- Main action
 action = function(host, port)
-    local result = {}
-    
-    table.insert(result, "DNS Zone Transfer Test:")
-    table.insert(result, "  Domain: example.com")
-    table.insert(result, "  Query Type: AXFR")
-    table.insert(result, "  Status: TRANSFER ALLOWED")
-    
-    table.insert(result, "\nDiscovered Records:")
-    table.insert(result, "  example.com.           SOA   ns1.example.com. admin.example.com.")
-    table.insert(result, "  example.com.           NS    ns1.example.com.")
-    table.insert(result, "  example.com.           A     192.168.1.1")
-    table.insert(result, "  www.example.com.       A     192.168.1.2")
-    table.insert(result, "  mail.example.com.      A     192.168.1.3")
-    table.insert(result, "  vpn.example.com.       A     192.168.1.4")
-    table.insert(result, "  admin.example.com.     A     192.168.1.5")
-    table.insert(result, "  internal.example.com.  A     10.0.0.1")
-    
-    table.insert(result, "\nSecurity Assessment:")
-    table.insert(result, "  [!] VULNERABLE: Unrestricted zone transfer")
-    table.insert(result, "  [!] CRITICAL: Internal hostnames exposed")
-    table.insert(result, "  Impact: Network reconnaissance, information disclosure")
-    table.insert(result, "  Recommendation: Restrict AXFR to authorized secondary DNS servers only")
-    
-    return table.concat(result, "\n")
+    local results = {}
+    local domain = stdnse.get_script_args("dns-zone-transfer.domain")
+
+    if not domain then
+        if host.name and #host.name > 0 then
+            domain = host.name
+        else
+            domain = host.ip
+        end
+    end
+
+    table.insert(results, "Testing zone transfer for: " .. domain)
+
+    local status, response = dns.query(domain, {
+        type = "AXFR",
+        server = host.ip,
+    })
+
+    if status and response then
+        if response.answers and #response.answers > 0 then
+            table.insert(results, "VULNERABLE: Zone transfer successful!")
+            table.insert(results, "Records found: " .. #response.answers)
+            table.insert(results, "")
+
+            for i, record in ipairs(response.answers) do
+                if i > 50 then
+                    table.insert(results, "... and " .. (#response.answers - 50) .. " more records")
+                    break
+                end
+                local entry = (record.name or "?") .. " " ..
+                              (record.ttl or "?") .. " " ..
+                              (record.class or "IN") .. " " ..
+                              (record.type or "?") .. " " ..
+                              (record[1] or "")
+                table.insert(results, "  " .. entry)
+            end
+        else
+            table.insert(results, "Zone transfer denied (no records returned)")
+        end
+    else
+        table.insert(results, "Zone transfer failed or denied")
+        if response then
+            table.insert(results, "Response: " .. tostring(response))
+        end
+    end
+
+    return stdnse.format_output(true, results)
 end
