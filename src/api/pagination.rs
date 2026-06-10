@@ -98,12 +98,7 @@ pub fn paginate<T: Clone + Serialize>(
         .unwrap_or(0)
         .min(items.len());
 
-    let page: Vec<T> = items
-        .iter()
-        .skip(offset)
-        .take(limit)
-        .cloned()
-        .collect();
+    let page: Vec<T> = items.iter().skip(offset).take(limit).cloned().collect();
 
     let page_count = page.len();
     let next_offset = offset + page_count;
@@ -132,25 +127,28 @@ pub fn paginate<T: Clone + Serialize>(
 }
 
 /// Build Link headers for a request path
-pub fn build_link_headers(
-    base_path: &str,
-    meta: &PaginationMeta,
-    limit: usize,
-) -> LinkHeaders {
+pub fn build_link_headers(base_path: &str, meta: &PaginationMeta, limit: usize) -> LinkHeaders {
     let first = format!("{}?limit={}", base_path, limit);
     let last_offset = if meta.total > 0 {
         ((meta.total - 1) / limit) * limit
     } else {
         0
     };
-    let last = format!("{}?cursor={}&limit={}", base_path, CursorCodec::encode(last_offset), limit);
+    let last = format!(
+        "{}?cursor={}&limit={}",
+        base_path,
+        CursorCodec::encode(last_offset),
+        limit
+    );
 
-    let next = meta.next_cursor.as_ref().map(|c| {
-        format!("{}?cursor={}&limit={}", base_path, c, limit)
-    });
-    let prev = meta.prev_cursor.as_ref().map(|c| {
-        format!("{}?cursor={}&limit={}", base_path, c, limit)
-    });
+    let next = meta
+        .next_cursor
+        .as_ref()
+        .map(|c| format!("{}?cursor={}&limit={}", base_path, c, limit));
+    let prev = meta
+        .prev_cursor
+        .as_ref()
+        .map(|c| format!("{}?cursor={}&limit={}", base_path, c, limit));
 
     LinkHeaders {
         next,
@@ -160,10 +158,11 @@ pub fn build_link_headers(
     }
 }
 
-const BASE64_ALPHABET: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+const BASE64_ALPHABET: &[u8; 64] =
+    b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
 fn base64_encode(data: &[u8]) -> String {
-    let mut out = String::with_capacity((data.len() * 4 + 2) / 3);
+    let mut out = String::with_capacity((data.len() * 4).div_ceil(3));
     for chunk in data.chunks(3) {
         let b0 = chunk[0] as u32;
         let b1 = chunk.get(1).copied().unwrap_or(0) as u32;

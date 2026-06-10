@@ -1,8 +1,8 @@
 // Memory pool allocator for efficient packet handling
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, Ordering};
-use tokio::sync::Mutex;
 use std::collections::VecDeque;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 // Common packet sizes for pre-allocation: TCP header(20), Ethernet MTU(1500), etc.
 const COMMON_SIZES: &[usize] = &[40, 64, 128, 256, 512, 1500];
@@ -36,7 +36,7 @@ impl Drop for PooledBuffer {
         if let Some(pool) = self.pool.take() {
             let buf = std::mem::take(&mut self.data);
             // Best-effort return to pool; if lock is contended, buffer is dropped
-            if let Some(mut pool) = pool.try_lock().ok() {
+            if let Ok(mut pool) = pool.try_lock() {
                 pool.return_buffer(buf);
             }
         }
@@ -62,7 +62,11 @@ pub struct BufferPool {
 }
 
 impl BufferPool {
-    pub fn new(buffer_size: usize, initial_capacity: usize, max_pool_size: usize) -> Arc<Mutex<Self>> {
+    pub fn new(
+        buffer_size: usize,
+        initial_capacity: usize,
+        max_pool_size: usize,
+    ) -> Arc<Mutex<Self>> {
         let mut buffers = VecDeque::with_capacity(initial_capacity);
         for _ in 0..initial_capacity {
             buffers.push_back(vec![0u8; buffer_size]);
@@ -123,7 +127,10 @@ impl BufferPool {
         let data = {
             let mut pool_guard = pool.lock().await;
             // Try to find a buffer that's at least min_size
-            let idx = pool_guard.buffers.iter().position(|b| b.capacity() >= min_size);
+            let idx = pool_guard
+                .buffers
+                .iter()
+                .position(|b| b.capacity() >= min_size);
             if let Some(i) = idx {
                 pool_guard.hits.fetch_add(1, Ordering::Relaxed);
                 let mut buf = pool_guard.buffers.remove(i).unwrap();
@@ -161,7 +168,11 @@ impl BufferPool {
             available_buffers: self.buffers.len(),
             hits,
             misses,
-            hit_rate: if total > 0 { hits as f64 / total as f64 } else { 0.0 },
+            hit_rate: if total > 0 {
+                hits as f64 / total as f64
+            } else {
+                0.0
+            },
         }
     }
 }

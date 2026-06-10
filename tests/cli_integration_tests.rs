@@ -1,18 +1,18 @@
 // CLI Integration Tests
 // Tests command-line interface functionality
 
-use std::process::Command;
 use std::fs;
+use std::process::Command;
 
 fn get_binary_path() -> String {
     // Use release binary for tests (or debug if release not available)
     let mut path = std::env::current_dir().unwrap();
     path.push("target");
-    
+
     // Check for release binary first, fall back to debug
     let release_path = path.join("release").join("nemue");
     let debug_path = path.join("debug").join("nemue");
-    
+
     if release_path.exists() {
         release_path.to_str().unwrap().to_string()
     } else {
@@ -99,7 +99,7 @@ fn test_invalid_timing_template() {
 #[test]
 fn test_output_file_json() {
     let temp_file = "/tmp/nemue_test_output.json";
-    
+
     let output = Command::new(get_binary_path())
         .args(&["scan", "127.0.0.1", "-p", "1-10", "-o", temp_file, "-q"])
         .output()
@@ -107,7 +107,7 @@ fn test_output_file_json() {
 
     assert!(output.status.success());
     assert!(std::path::Path::new(temp_file).exists());
-    
+
     // Cleanup
     let _ = fs::remove_file(temp_file);
 }
@@ -122,7 +122,7 @@ fn test_script_updatedb_flag() {
     // Should exit early after database update
     let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);
-    
+
     // Either succeeds or fails with directory not found
     assert!(stdout.contains("script") || stderr.contains("directory"));
 }
@@ -143,11 +143,17 @@ fn test_script_help_nonexistent() {
 fn test_fine_grained_timing_flags() {
     let output = Command::new(get_binary_path())
         .args(&[
-            "scan", "127.0.0.1", "-p", "80",
-            "--min-rtt-timeout", "100ms",
-            "--max-rtt-timeout", "2s",
-            "--max-rate", "1000",
-            "-q"
+            "scan",
+            "127.0.0.1",
+            "-p",
+            "80",
+            "--min-rtt-timeout",
+            "100ms",
+            "--max-rtt-timeout",
+            "2s",
+            "--max-rate",
+            "1000",
+            "-q",
         ])
         .output()
         .expect("Failed to execute nemue");
@@ -199,9 +205,13 @@ fn test_verbose_flag() {
 fn test_script_args_parsing() {
     let output = Command::new(get_binary_path())
         .args(&[
-            "scan", "127.0.0.1", "-p", "80",
-            "--script-args", "user=admin,pass=test",
-            "-q"
+            "scan",
+            "127.0.0.1",
+            "-p",
+            "80",
+            "--script-args",
+            "user=admin,pass=test",
+            "-q",
         ])
         .output()
         .expect("Failed to execute nemue");
@@ -214,12 +224,19 @@ fn test_script_args_parsing() {
 fn test_multiple_timing_overrides() {
     let output = Command::new(get_binary_path())
         .args(&[
-            "scan", "127.0.0.1", "-p", "1-10",
-            "-T", "4",
-            "--max-rate", "5000",
-            "--min-parallelism", "50",
-            "--max-retries", "2",
-            "-q"
+            "scan",
+            "127.0.0.1",
+            "-p",
+            "1-10",
+            "-T",
+            "4",
+            "--max-rate",
+            "5000",
+            "--min-parallelism",
+            "50",
+            "--max-retries",
+            "2",
+            "-q",
         ])
         .output()
         .expect("Failed to execute nemue");

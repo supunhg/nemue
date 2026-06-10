@@ -132,14 +132,16 @@ impl RuleCondition {
                 let b: f64 = self.value.parse().unwrap_or(0.0);
                 a < b
             }
-            super::playbooks::ConditionOperator::Regex => {
-                regex::Regex::new(&self.value)
-                    .map(|re| re.is_match(actual))
-                    .unwrap_or(false)
-            }
+            super::playbooks::ConditionOperator::Regex => regex::Regex::new(&self.value)
+                .map(|re| re.is_match(actual))
+                .unwrap_or(false),
         };
 
-        if self.negate { !result } else { result }
+        if self.negate {
+            !result
+        } else {
+            result
+        }
     }
 }
 
@@ -530,24 +532,12 @@ impl RuleEngine {
         for rule in &mut self.rules {
             let matched = rule.evaluate(context);
             if matched {
-                let log = RuleEvaluationLog::new(
-                    &rule.id,
-                    &rule.name,
-                    true,
-                    true,
-                    context,
-                );
+                let log = RuleEvaluationLog::new(&rule.id, &rule.name, true, true, context);
                 logs.push(log);
                 rule.trigger();
                 triggered_ids.push(rule.id.clone());
             } else if rule.is_active() {
-                let log = RuleEvaluationLog::new(
-                    &rule.id,
-                    &rule.name,
-                    false,
-                    false,
-                    context,
-                );
+                let log = RuleEvaluationLog::new(&rule.id, &rule.name, false, false, context);
                 logs.push(log);
             }
         }
@@ -560,10 +550,7 @@ impl RuleEngine {
     }
 
     pub fn get_triggered_rules(&self, context: &HashMap<String, String>) -> Vec<&ScanRule> {
-        self.rules
-            .iter()
-            .filter(|r| r.evaluate(context))
-            .collect()
+        self.rules.iter().filter(|r| r.evaluate(context)).collect()
     }
 
     pub fn evaluation_log(&self) -> &[RuleEvaluationLog] {
@@ -835,13 +822,14 @@ mod tests {
 
     #[test]
     fn test_scan_rule_evaluate_and_trigger() {
-        let mut rule = ScanRule::new("test", "desc", RuleCategory::Notification)
-            .with_condition(RuleCondition::new(
+        let mut rule = ScanRule::new("test", "desc", RuleCategory::Notification).with_condition(
+            RuleCondition::new(
                 RuleConditionType::PortOpen,
                 "port",
                 ConditionOperator::Equals,
                 "22",
-            ));
+            ),
+        );
 
         let context = HashMap::from([("port".to_string(), "22".to_string())]);
         assert!(rule.evaluate(&context));
@@ -948,13 +936,14 @@ mod tests {
 
     #[test]
     fn test_scan_rule_inactive() {
-        let mut rule = ScanRule::new("test", "desc", RuleCategory::Notification)
-            .with_condition(RuleCondition::new(
+        let mut rule = ScanRule::new("test", "desc", RuleCategory::Notification).with_condition(
+            RuleCondition::new(
                 RuleConditionType::PortOpen,
                 "port",
                 ConditionOperator::Equals,
                 "22",
-            ));
+            ),
+        );
 
         let context = HashMap::from([("port".to_string(), "22".to_string())]);
         assert!(rule.evaluate(&context));
@@ -1007,7 +996,10 @@ mod tests {
     #[test]
     fn test_rule_condition_type_display() {
         assert_eq!(RuleConditionType::PortOpen.to_string(), "port_open");
-        assert_eq!(RuleConditionType::ScanCompleted.to_string(), "scan_completed");
+        assert_eq!(
+            RuleConditionType::ScanCompleted.to_string(),
+            "scan_completed"
+        );
         assert_eq!(
             RuleConditionType::Custom("my_cond".to_string()).to_string(),
             "my_cond"
@@ -1101,13 +1093,14 @@ mod tests {
         );
 
         engine.add_rule(
-            ScanRule::new("http-alert", "desc", RuleCategory::Notification)
-                .with_condition(RuleCondition::new(
+            ScanRule::new("http-alert", "desc", RuleCategory::Notification).with_condition(
+                RuleCondition::new(
                     RuleConditionType::PortOpen,
                     "port",
                     ConditionOperator::Equals,
                     "80",
-                )),
+                ),
+            ),
         );
 
         let context = HashMap::from([("port".to_string(), "22".to_string())]);
@@ -1205,13 +1198,12 @@ mod tests {
     fn test_rule_engine_serialization() {
         let mut engine = RuleEngine::with_defaults();
         engine.add_rule(
-            ScanRule::new("test", "desc", RuleCategory::Custom)
-                .with_condition(RuleCondition::new(
-                    RuleConditionType::PortOpen,
-                    "port",
-                    ConditionOperator::Equals,
-                    "22",
-                )),
+            ScanRule::new("test", "desc", RuleCategory::Custom).with_condition(RuleCondition::new(
+                RuleConditionType::PortOpen,
+                "port",
+                ConditionOperator::Equals,
+                "22",
+            )),
         );
 
         let json = serde_json::to_string(&engine).unwrap();
@@ -1225,13 +1217,12 @@ mod tests {
     fn test_rule_engine_clear_log() {
         let mut engine = RuleEngine::new();
         engine.add_rule(
-            ScanRule::new("test", "desc", RuleCategory::Custom)
-                .with_condition(RuleCondition::new(
-                    RuleConditionType::PortOpen,
-                    "port",
-                    ConditionOperator::Equals,
-                    "22",
-                )),
+            ScanRule::new("test", "desc", RuleCategory::Custom).with_condition(RuleCondition::new(
+                RuleConditionType::PortOpen,
+                "port",
+                ConditionOperator::Equals,
+                "22",
+            )),
         );
 
         let context = HashMap::from([("port".to_string(), "22".to_string())]);

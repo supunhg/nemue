@@ -1,16 +1,16 @@
-mod json;
-mod xml;
 pub mod display;
+mod json;
 pub mod nmap_formats;
 pub mod nmap_import;
+mod xml;
 
-use anyhow::{anyhow, Result};
 use crate::scanner::ScanResults;
+use anyhow::{anyhow, Result};
 
 pub use display::DisplayFormatter;
 pub use nmap_formats::{
-    NmapOutputFormat, NormalOutputFormatter, GrepableOutputFormatter,
-    ReasonOutputFormatter, ScanStatistics, OutputManager,
+    GrepableOutputFormatter, NmapOutputFormat, NormalOutputFormatter, OutputManager,
+    ReasonOutputFormatter, ScanStatistics,
 };
 pub use nmap_import::import_nmap_xml;
 

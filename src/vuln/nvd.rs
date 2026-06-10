@@ -58,7 +58,8 @@ impl CvssV4Metrics {
         Self {
             base_score: score,
             severity: CvssV4Severity::from_score(score),
-            vector_string: "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N".to_string(),
+            vector_string: "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N"
+                .to_string(),
             attack_vector: "NETWORK".to_string(),
             attack_complexity: "LOW".to_string(),
             attack_requirements: "NONE".to_string(),
@@ -216,22 +217,56 @@ impl CvssV3Metrics {
     }
 
     fn expand_av(v: &str) -> String {
-        match v { "N" => "NETWORK", "A" => "ADJACENT", "L" => "LOCAL", "P" => "PHYSICAL", _ => "UNKNOWN" }.to_string()
+        match v {
+            "N" => "NETWORK",
+            "A" => "ADJACENT",
+            "L" => "LOCAL",
+            "P" => "PHYSICAL",
+            _ => "UNKNOWN",
+        }
+        .to_string()
     }
     fn expand_ac(v: &str) -> String {
-        match v { "L" => "LOW", "H" => "HIGH", _ => "UNKNOWN" }.to_string()
+        match v {
+            "L" => "LOW",
+            "H" => "HIGH",
+            _ => "UNKNOWN",
+        }
+        .to_string()
     }
     fn expand_pr(v: &str) -> String {
-        match v { "N" => "NONE", "L" => "LOW", "H" => "HIGH", _ => "UNKNOWN" }.to_string()
+        match v {
+            "N" => "NONE",
+            "L" => "LOW",
+            "H" => "HIGH",
+            _ => "UNKNOWN",
+        }
+        .to_string()
     }
     fn expand_ui(v: &str) -> String {
-        match v { "N" => "NONE", "R" => "REQUIRED", _ => "UNKNOWN" }.to_string()
+        match v {
+            "N" => "NONE",
+            "R" => "REQUIRED",
+            _ => "UNKNOWN",
+        }
+        .to_string()
     }
     fn expand_s(v: &str) -> String {
-        match v { "U" => "UNCHANGED", "C" => "CHANGED", _ => "UNKNOWN" }.to_string()
+        match v {
+            "U" => "UNCHANGED",
+            "C" => "CHANGED",
+            _ => "UNKNOWN",
+        }
+        .to_string()
     }
     fn expand_impact(v: &str) -> String {
-        match v { "N" => "NONE", "L" => "LOW", "H" => "HIGH", _ => "UNKNOWN" }.to_string()
+        match v {
+            "N" => "NONE",
+            "L" => "LOW",
+            "H" => "HIGH",
+            _ => "UNKNOWN",
+        }
+        .to_string()
     }
 
     pub fn is_easily_exploitable(&self) -> bool {
@@ -273,7 +308,9 @@ impl VersionRange {
     }
 
     fn parse_version(v: &str) -> Vec<u32> {
-        v.split('.').filter_map(|part| part.parse::<u32>().ok()).collect()
+        v.split('.')
+            .filter_map(|part| part.parse::<u32>().ok())
+            .collect()
     }
 
     fn version_lt(a: &str, b: &str) -> bool {
@@ -355,26 +392,62 @@ impl NvdDatabase {
 
         self.add_entry(NvdCveEntry {
             cve_id: "CVE-2014-0160".to_string(),
-            description: "OpenSSL 1.0.1 before 1.0.1g do not properly handle Heartbeat Extension packets.".to_string(),
+            description:
+                "OpenSSL 1.0.1 before 1.0.1g do not properly handle Heartbeat Extension packets."
+                    .to_string(),
             published_date: "2014-04-07".to_string(),
             last_modified_date: "2020-10-15".to_string(),
-            cvss_v3: Some(CvssV3Metrics { base_score: 7.5, severity: CvssV3Severity::High, vector_string: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N".to_string(), attack_vector: "NETWORK".to_string(), attack_complexity: "LOW".to_string(), privileges_required: "NONE".to_string(), user_interaction: "NONE".to_string(), scope: "UNCHANGED".to_string(), confidentiality_impact: "HIGH".to_string(), integrity_impact: "NONE".to_string(), availability_impact: "NONE".to_string() }),
+            cvss_v3: Some(CvssV3Metrics {
+                base_score: 7.5,
+                severity: CvssV3Severity::High,
+                vector_string: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N".to_string(),
+                attack_vector: "NETWORK".to_string(),
+                attack_complexity: "LOW".to_string(),
+                privileges_required: "NONE".to_string(),
+                user_interaction: "NONE".to_string(),
+                scope: "UNCHANGED".to_string(),
+                confidentiality_impact: "HIGH".to_string(),
+                integrity_impact: "NONE".to_string(),
+                availability_impact: "NONE".to_string(),
+            }),
             cvss_v4: Some(CvssV4Metrics::from_score(7.5)),
             cvss_v2_score: Some(5.0),
             epss: Some(EpssData::new("CVE-2014-0160", 0.95, 99.0)),
             affected_products: vec!["cpe:2.3:a:openssl:openssl:1.0.1:*:*:*:*:*:*:*".to_string()],
-            affected_versions: vec![VersionRange { product: "openssl:openssl".to_string(), version_start: Some("1.0.1".to_string()), version_end: Some("1.0.1f".to_string()), end_inclusive: true, affected_versions: vec![] }],
-            references: vec!["https://heartbleed.com/".to_string(), "https://nvd.nist.gov/vuln/detail/CVE-2014-0160".to_string()],
+            affected_versions: vec![VersionRange {
+                product: "openssl:openssl".to_string(),
+                version_start: Some("1.0.1".to_string()),
+                version_end: Some("1.0.1f".to_string()),
+                end_inclusive: true,
+                affected_versions: vec![],
+            }],
+            references: vec![
+                "https://heartbleed.com/".to_string(),
+                "https://nvd.nist.gov/vuln/detail/CVE-2014-0160".to_string(),
+            ],
             cwe: vec!["CWE-125".to_string()],
             exploit_available: true,
         });
 
         self.add_entry(NvdCveEntry {
             cve_id: "CVE-2019-0708".to_string(),
-            description: "A remote code execution vulnerability exists in Remote Desktop Services.".to_string(),
+            description: "A remote code execution vulnerability exists in Remote Desktop Services."
+                .to_string(),
             published_date: "2019-05-16".to_string(),
             last_modified_date: "2020-08-24".to_string(),
-            cvss_v3: Some(CvssV3Metrics { base_score: 9.8, severity: CvssV3Severity::Critical, vector_string: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H".to_string(), attack_vector: "NETWORK".to_string(), attack_complexity: "LOW".to_string(), privileges_required: "NONE".to_string(), user_interaction: "NONE".to_string(), scope: "UNCHANGED".to_string(), confidentiality_impact: "HIGH".to_string(), integrity_impact: "HIGH".to_string(), availability_impact: "HIGH".to_string() }),
+            cvss_v3: Some(CvssV3Metrics {
+                base_score: 9.8,
+                severity: CvssV3Severity::Critical,
+                vector_string: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H".to_string(),
+                attack_vector: "NETWORK".to_string(),
+                attack_complexity: "LOW".to_string(),
+                privileges_required: "NONE".to_string(),
+                user_interaction: "NONE".to_string(),
+                scope: "UNCHANGED".to_string(),
+                confidentiality_impact: "HIGH".to_string(),
+                integrity_impact: "HIGH".to_string(),
+                availability_impact: "HIGH".to_string(),
+            }),
             cvss_v4: Some(CvssV4Metrics::from_score(9.8)),
             cvss_v2_score: Some(10.0),
             epss: Some(EpssData::new("CVE-2019-0708", 0.96, 99.2)),
@@ -390,12 +463,30 @@ impl NvdDatabase {
             description: "Apache Tomcat AJP connector allows remote code execution.".to_string(),
             published_date: "2020-02-24".to_string(),
             last_modified_date: "2021-07-21".to_string(),
-            cvss_v3: Some(CvssV3Metrics { base_score: 9.8, severity: CvssV3Severity::Critical, vector_string: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H".to_string(), attack_vector: "NETWORK".to_string(), attack_complexity: "LOW".to_string(), privileges_required: "NONE".to_string(), user_interaction: "NONE".to_string(), scope: "UNCHANGED".to_string(), confidentiality_impact: "HIGH".to_string(), integrity_impact: "HIGH".to_string(), availability_impact: "HIGH".to_string() }),
+            cvss_v3: Some(CvssV3Metrics {
+                base_score: 9.8,
+                severity: CvssV3Severity::Critical,
+                vector_string: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H".to_string(),
+                attack_vector: "NETWORK".to_string(),
+                attack_complexity: "LOW".to_string(),
+                privileges_required: "NONE".to_string(),
+                user_interaction: "NONE".to_string(),
+                scope: "UNCHANGED".to_string(),
+                confidentiality_impact: "HIGH".to_string(),
+                integrity_impact: "HIGH".to_string(),
+                availability_impact: "HIGH".to_string(),
+            }),
             cvss_v4: Some(CvssV4Metrics::from_score(9.8)),
             cvss_v2_score: Some(7.5),
             epss: Some(EpssData::new("CVE-2020-1938", 0.94, 98.8)),
             affected_products: vec!["cpe:2.3:a:apache:tomcat:*:*:*:*:*:*:*:*".to_string()],
-            affected_versions: vec![VersionRange { product: "apache:tomcat".to_string(), version_start: Some("6.0".to_string()), version_end: Some("9.0.31".to_string()), end_inclusive: false, affected_versions: vec![] }],
+            affected_versions: vec![VersionRange {
+                product: "apache:tomcat".to_string(),
+                version_start: Some("6.0".to_string()),
+                version_end: Some("9.0.31".to_string()),
+                end_inclusive: false,
+                affected_versions: vec![],
+            }],
             references: vec!["https://nvd.nist.gov/vuln/detail/CVE-2020-1938".to_string()],
             cwe: vec!["CWE-285".to_string()],
             exploit_available: true,
@@ -467,10 +558,24 @@ impl NvdDatabase {
 
         self.add_entry(NvdCveEntry {
             cve_id: "CVE-2021-34527".to_string(),
-            description: "Windows Print Spooler Remote Code Execution Vulnerability (PrintNightmare).".to_string(),
+            description:
+                "Windows Print Spooler Remote Code Execution Vulnerability (PrintNightmare)."
+                    .to_string(),
             published_date: "2021-07-02".to_string(),
             last_modified_date: "2023-11-07".to_string(),
-            cvss_v3: Some(CvssV3Metrics { base_score: 8.8, severity: CvssV3Severity::High, vector_string: "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H".to_string(), attack_vector: "NETWORK".to_string(), attack_complexity: "LOW".to_string(), privileges_required: "LOW".to_string(), user_interaction: "NONE".to_string(), scope: "UNCHANGED".to_string(), confidentiality_impact: "HIGH".to_string(), integrity_impact: "HIGH".to_string(), availability_impact: "HIGH".to_string() }),
+            cvss_v3: Some(CvssV3Metrics {
+                base_score: 8.8,
+                severity: CvssV3Severity::High,
+                vector_string: "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H".to_string(),
+                attack_vector: "NETWORK".to_string(),
+                attack_complexity: "LOW".to_string(),
+                privileges_required: "LOW".to_string(),
+                user_interaction: "NONE".to_string(),
+                scope: "UNCHANGED".to_string(),
+                confidentiality_impact: "HIGH".to_string(),
+                integrity_impact: "HIGH".to_string(),
+                availability_impact: "HIGH".to_string(),
+            }),
             cvss_v4: Some(CvssV4Metrics::from_score(8.8)),
             cvss_v2_score: None,
             epss: Some(EpssData::new("CVE-2021-34527", 0.90, 98.0)),
@@ -502,11 +607,25 @@ impl NvdDatabase {
             description: "Progress MOVEit Transfer SQL injection vulnerability.".to_string(),
             published_date: "2023-06-02".to_string(),
             last_modified_date: "2023-11-07".to_string(),
-            cvss_v3: Some(CvssV3Metrics { base_score: 9.8, severity: CvssV3Severity::Critical, vector_string: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H".to_string(), attack_vector: "NETWORK".to_string(), attack_complexity: "LOW".to_string(), privileges_required: "NONE".to_string(), user_interaction: "NONE".to_string(), scope: "UNCHANGED".to_string(), confidentiality_impact: "HIGH".to_string(), integrity_impact: "HIGH".to_string(), availability_impact: "HIGH".to_string() }),
+            cvss_v3: Some(CvssV3Metrics {
+                base_score: 9.8,
+                severity: CvssV3Severity::Critical,
+                vector_string: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H".to_string(),
+                attack_vector: "NETWORK".to_string(),
+                attack_complexity: "LOW".to_string(),
+                privileges_required: "NONE".to_string(),
+                user_interaction: "NONE".to_string(),
+                scope: "UNCHANGED".to_string(),
+                confidentiality_impact: "HIGH".to_string(),
+                integrity_impact: "HIGH".to_string(),
+                availability_impact: "HIGH".to_string(),
+            }),
             cvss_v4: Some(CvssV4Metrics::from_score(9.8)),
             cvss_v2_score: None,
             epss: Some(EpssData::new("CVE-2023-34362", 0.96, 99.5)),
-            affected_products: vec!["cpe:2.3:a:progress:moveit_transfer:*:*:*:*:*:*:*:*".to_string()],
+            affected_products: vec![
+                "cpe:2.3:a:progress:moveit_transfer:*:*:*:*:*:*:*:*".to_string()
+            ],
             affected_versions: vec![],
             references: vec!["https://nvd.nist.gov/vuln/detail/CVE-2023-34362".to_string()],
             cwe: vec!["CWE-89".to_string()],
@@ -515,15 +634,36 @@ impl NvdDatabase {
 
         self.add_entry(NvdCveEntry {
             cve_id: "CVE-2024-1709".to_string(),
-            description: "ConnectWise ScreenConnect authentication bypass vulnerability.".to_string(),
+            description: "ConnectWise ScreenConnect authentication bypass vulnerability."
+                .to_string(),
             published_date: "2024-02-21".to_string(),
             last_modified_date: "2024-03-14".to_string(),
-            cvss_v3: Some(CvssV3Metrics { base_score: 10.0, severity: CvssV3Severity::Critical, vector_string: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H".to_string(), attack_vector: "NETWORK".to_string(), attack_complexity: "LOW".to_string(), privileges_required: "NONE".to_string(), user_interaction: "NONE".to_string(), scope: "CHANGED".to_string(), confidentiality_impact: "HIGH".to_string(), integrity_impact: "HIGH".to_string(), availability_impact: "HIGH".to_string() }),
+            cvss_v3: Some(CvssV3Metrics {
+                base_score: 10.0,
+                severity: CvssV3Severity::Critical,
+                vector_string: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H".to_string(),
+                attack_vector: "NETWORK".to_string(),
+                attack_complexity: "LOW".to_string(),
+                privileges_required: "NONE".to_string(),
+                user_interaction: "NONE".to_string(),
+                scope: "CHANGED".to_string(),
+                confidentiality_impact: "HIGH".to_string(),
+                integrity_impact: "HIGH".to_string(),
+                availability_impact: "HIGH".to_string(),
+            }),
             cvss_v4: Some(CvssV4Metrics::from_score(10.0)),
             cvss_v2_score: None,
             epss: Some(EpssData::new("CVE-2024-1709", 0.97, 99.8)),
-            affected_products: vec!["cpe:2.3:a:connectwise:screenconnect:*:*:*:*:*:*:*:*".to_string()],
-            affected_versions: vec![VersionRange { product: "connectwise:screenconnect".to_string(), version_start: None, version_end: Some("23.9.8".to_string()), end_inclusive: false, affected_versions: vec![] }],
+            affected_products: vec![
+                "cpe:2.3:a:connectwise:screenconnect:*:*:*:*:*:*:*:*".to_string()
+            ],
+            affected_versions: vec![VersionRange {
+                product: "connectwise:screenconnect".to_string(),
+                version_start: None,
+                version_end: Some("23.9.8".to_string()),
+                end_inclusive: false,
+                affected_versions: vec![],
+            }],
             references: vec!["https://nvd.nist.gov/vuln/detail/CVE-2024-1709".to_string()],
             cwe: vec!["CWE-288".to_string()],
             exploit_available: true,
@@ -560,11 +700,17 @@ impl NvdDatabase {
     }
 
     pub fn get_cvss_score(&self, cve_id: &str) -> Option<f32> {
-        self.entries.get(cve_id).and_then(|e| e.cvss_v3.as_ref()).map(|m| m.base_score)
+        self.entries
+            .get(cve_id)
+            .and_then(|e| e.cvss_v3.as_ref())
+            .map(|m| m.base_score)
     }
 
     pub fn get_cvss_v4_score(&self, cve_id: &str) -> Option<f32> {
-        self.entries.get(cve_id).and_then(|e| e.cvss_v4.as_ref()).map(|m| m.base_score)
+        self.entries
+            .get(cve_id)
+            .and_then(|e| e.cvss_v4.as_ref())
+            .map(|m| m.base_score)
     }
 
     pub fn get_best_cvss_score(&self, cve_id: &str) -> Option<f32> {
@@ -574,30 +720,46 @@ impl NvdDatabase {
     }
 
     pub fn get_severity(&self, cve_id: &str) -> Option<&CvssV3Severity> {
-        self.entries.get(cve_id).and_then(|e| e.cvss_v3.as_ref()).map(|m| &m.severity)
+        self.entries
+            .get(cve_id)
+            .and_then(|e| e.cvss_v3.as_ref())
+            .map(|m| &m.severity)
     }
 
     pub fn get_epss(&self, cve_id: &str) -> Option<&EpssData> {
-        self.epss_data.get(cve_id)
+        self.epss_data
+            .get(cve_id)
             .or_else(|| self.entries.get(cve_id).and_then(|e| e.epss.as_ref()))
     }
 
     pub fn is_high_epss_risk(&self, cve_id: &str) -> bool {
-        self.get_epss(cve_id).map(|e| e.is_high_risk()).unwrap_or(false)
+        self.get_epss(cve_id)
+            .map(|e| e.is_high_risk())
+            .unwrap_or(false)
     }
 
     pub fn get_high_epss_cves(&self) -> Vec<&NvdCveEntry> {
-        self.entries.values()
-            .filter(|e| e.epss.as_ref().map(|epss| epss.is_high_risk()).unwrap_or(false))
+        self.entries
+            .values()
+            .filter(|e| {
+                e.epss
+                    .as_ref()
+                    .map(|epss| epss.is_high_risk())
+                    .unwrap_or(false)
+            })
             .collect()
     }
 
     pub fn has_exploit(&self, cve_id: &str) -> bool {
-        self.entries.get(cve_id).map(|e| e.exploit_available).unwrap_or(false)
+        self.entries
+            .get(cve_id)
+            .map(|e| e.exploit_available)
+            .unwrap_or(false)
     }
 
     pub fn is_version_affected(&self, cve_id: &str, version: &str) -> bool {
-        self.entries.get(cve_id)
+        self.entries
+            .get(cve_id)
             .map(|e| e.affected_versions.iter().any(|vr| vr.is_affected(version)))
             .unwrap_or(false)
     }
@@ -607,19 +769,27 @@ impl NvdDatabase {
     }
 
     pub fn get_critical_cves(&self) -> Vec<&NvdCveEntry> {
-        self.entries.values()
-            .filter(|e| e.cvss_v3.as_ref().map(|m| m.severity == CvssV3Severity::Critical).unwrap_or(false))
+        self.entries
+            .values()
+            .filter(|e| {
+                e.cvss_v3
+                    .as_ref()
+                    .map(|m| m.severity == CvssV3Severity::Critical)
+                    .unwrap_or(false)
+            })
             .collect()
     }
 
     pub fn get_cves_by_cwe(&self, cwe_id: &str) -> Vec<&NvdCveEntry> {
-        self.entries.values()
+        self.entries
+            .values()
             .filter(|e| e.cwe.contains(&cwe_id.to_string()))
             .collect()
     }
 
     pub fn get_cves_by_product(&self, cpe_pattern: &str) -> Vec<&NvdCveEntry> {
-        self.entries.values()
+        self.entries
+            .values()
             .filter(|e| e.affected_products.iter().any(|p| p.contains(cpe_pattern)))
             .collect()
     }
@@ -664,7 +834,10 @@ mod tests {
         let log4shell = db.get_cve("CVE-2021-44228").unwrap();
         assert_eq!(log4shell.cve_id, "CVE-2021-44228");
         assert_eq!(log4shell.cvss_v3.as_ref().unwrap().base_score, 10.0);
-        assert_eq!(log4shell.cvss_v3.as_ref().unwrap().severity, CvssV3Severity::Critical);
+        assert_eq!(
+            log4shell.cvss_v3.as_ref().unwrap().severity,
+            CvssV3Severity::Critical
+        );
     }
 
     #[test]
@@ -722,7 +895,9 @@ mod tests {
         let db = NvdDatabase::new();
         let critical = db.get_critical_cves();
         assert!(critical.len() >= 3, "Should have 3+ critical CVEs");
-        assert!(critical.iter().all(|c| c.cvss_v3.as_ref().unwrap().severity == CvssV3Severity::Critical));
+        assert!(critical
+            .iter()
+            .all(|c| c.cvss_v3.as_ref().unwrap().severity == CvssV3Severity::Critical));
     }
 
     #[test]

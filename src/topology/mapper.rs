@@ -1,8 +1,8 @@
 // Network topology mapping and visualization
-use std::net::IpAddr;
+use crate::topology::{DeviceInfo, DeviceType, TracerouteResult};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
-use crate::topology::{TracerouteResult, DeviceInfo, DeviceType};
+use std::net::IpAddr;
 
 /// Network segment (subnet)
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -115,10 +115,16 @@ impl TopologyMap {
 
         // Add nodes with cluster by segment
         for segment in &self.segments {
-            dot.push_str(&format!("  subgraph cluster_{} {{\n", segment.network.replace('.', "_").replace('/', "_")));
-            dot.push_str(&format!("    label=\"{} ({})\";\n", segment.network, segment.segment_type));
+            dot.push_str(&format!(
+                "  subgraph cluster_{} {{\n",
+                segment.network.replace(['.', '/'], "_")
+            ));
+            dot.push_str(&format!(
+                "    label=\"{} ({})\";\n",
+                segment.network, segment.segment_type
+            ));
             dot.push_str("    style=dashed;\n");
-            
+
             for addr in &segment.devices {
                 if let Some(info) = self.devices.get(addr) {
                     let label = format!("{}\\n{}", addr, info.device_type);
@@ -152,7 +158,10 @@ impl TopologyMap {
         for i in 0..self.path_to_target.len().saturating_sub(1) {
             let from = &self.path_to_target[i];
             let to = &self.path_to_target[i + 1];
-            dot.push_str(&format!("  \"{}\" -> \"{}\" [color=red, penwidth=2];\n", from, to));
+            dot.push_str(&format!(
+                "  \"{}\" -> \"{}\" [color=red, penwidth=2];\n",
+                from, to
+            ));
         }
 
         dot.push_str("}\n");
@@ -195,7 +204,9 @@ impl TopologyMap {
     pub fn get_statistics(&self) -> TopologyStatistics {
         let mut device_counts: HashMap<String, usize> = HashMap::new();
         for info in self.devices.values() {
-            *device_counts.entry(info.device_type.to_string()).or_insert(0) += 1;
+            *device_counts
+                .entry(info.device_type.to_string())
+                .or_insert(0) += 1;
         }
 
         let mut os_counts: HashMap<String, usize> = HashMap::new();
@@ -217,7 +228,8 @@ impl TopologyMap {
 
     /// Find devices by type
     pub fn find_devices_by_type(&self, device_type: DeviceType) -> Vec<&IpAddr> {
-        self.devices.iter()
+        self.devices
+            .iter()
             .filter(|(_, info)| info.device_type == device_type)
             .map(|(addr, _)| addr)
             .collect()
@@ -225,9 +237,13 @@ impl TopologyMap {
 
     /// Find devices by OS
     pub fn find_devices_by_os(&self, os: &str) -> Vec<&IpAddr> {
-        self.devices.iter()
+        self.devices
+            .iter()
             .filter(|(_, info)| {
-                info.os_family.as_ref().map(|os_family| os_family.contains(os)).unwrap_or(false)
+                info.os_family
+                    .as_ref()
+                    .map(|os_family| os_family.contains(os))
+                    .unwrap_or(false)
             })
             .map(|(addr, _)| addr)
             .collect()
@@ -351,7 +367,9 @@ impl NetworkMapper {
         // Generate metadata
         let mut device_type_distribution = HashMap::new();
         for info in self.devices.values() {
-            *device_type_distribution.entry(info.device_type.to_string()).or_insert(0) += 1;
+            *device_type_distribution
+                .entry(info.device_type.to_string())
+                .or_insert(0) += 1;
         }
 
         let mut os_distribution = HashMap::new();
@@ -385,7 +403,10 @@ impl NetworkMapper {
     }
 
     /// Build topology from multiple traceroutes
-    pub fn build_multi_topology(&self, trace_results: &[TracerouteResult]) -> Result<TopologyMap, String> {
+    pub fn build_multi_topology(
+        &self,
+        trace_results: &[TracerouteResult],
+    ) -> Result<TopologyMap, String> {
         if trace_results.is_empty() {
             return Err("No traceroute results provided".to_string());
         }
@@ -411,7 +432,7 @@ impl NetworkMapper {
         let mut segment_map: HashMap<String, Vec<IpAddr>> = HashMap::new();
         for addr in &path {
             let network = Self::get_network_prefix(*addr);
-            segment_map.entry(network.clone()).or_insert_with(Vec::new).push(*addr);
+            segment_map.entry(network.clone()).or_default().push(*addr);
         }
 
         for (network, devices) in segment_map {
@@ -428,7 +449,9 @@ impl NetworkMapper {
         // Generate metadata
         let mut device_type_distribution = HashMap::new();
         for info in self.devices.values() {
-            *device_type_distribution.entry(info.device_type.to_string()).or_insert(0) += 1;
+            *device_type_distribution
+                .entry(info.device_type.to_string())
+                .or_insert(0) += 1;
         }
 
         let mut os_distribution = HashMap::new();
@@ -482,8 +505,8 @@ impl Default for NetworkMapper {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::str::FromStr;
     use crate::topology::DeviceType;
+    use std::str::FromStr;
 
     #[test]
     fn test_network_mapper_creation() {
@@ -539,36 +562,54 @@ mod tests {
     #[test]
     fn test_classify_device_by_ports() {
         let mapper = NetworkMapper::new();
-        
+
         // Router (DNS, DHCP, SNMP)
-        assert_eq!(mapper.classify_device_by_ports(&[53, 67, 161]), DeviceType::Router);
-        
+        assert_eq!(
+            mapper.classify_device_by_ports(&[53, 67, 161]),
+            DeviceType::Router
+        );
+
         // Switch (Telnet without HTTP)
         assert_eq!(mapper.classify_device_by_ports(&[23]), DeviceType::Switch);
-        
+
         // Printer
-        assert_eq!(mapper.classify_device_by_ports(&[515, 631]), DeviceType::Printer);
-        
+        assert_eq!(
+            mapper.classify_device_by_ports(&[515, 631]),
+            DeviceType::Printer
+        );
+
         // VoIP
-        assert_eq!(mapper.classify_device_by_ports(&[5060, 5061]), DeviceType::VoIP);
-        
+        assert_eq!(
+            mapper.classify_device_by_ports(&[5060, 5061]),
+            DeviceType::VoIP
+        );
+
         // Camera
-        assert_eq!(mapper.classify_device_by_ports(&[554, 8554]), DeviceType::Camera);
-        
+        assert_eq!(
+            mapper.classify_device_by_ports(&[554, 8554]),
+            DeviceType::Camera
+        );
+
         // Server (LDAP, SMB)
-        assert_eq!(mapper.classify_device_by_ports(&[389, 445]), DeviceType::Server);
+        assert_eq!(
+            mapper.classify_device_by_ports(&[389, 445]),
+            DeviceType::Server
+        );
     }
 
     #[test]
     fn test_topology_map_to_dot() {
         let mut devices = HashMap::new();
         let router = IpAddr::from_str("192.168.1.1").unwrap();
-        devices.insert(router, DeviceInfo {
-            device_type: DeviceType::Router,
-            os_family: Some("Cisco IOS".to_string()),
-            vendor: Some("Cisco".to_string()),
-            hostname: Some("gw1".to_string()),
-        });
+        devices.insert(
+            router,
+            DeviceInfo {
+                device_type: DeviceType::Router,
+                os_family: Some("Cisco IOS".to_string()),
+                vendor: Some("Cisco".to_string()),
+                hostname: Some("gw1".to_string()),
+            },
+        );
 
         let map = TopologyMap {
             target: IpAddr::from_str("8.8.8.8").unwrap(),
@@ -605,18 +646,24 @@ mod tests {
     #[test]
     fn test_topology_statistics() {
         let mut devices = HashMap::new();
-        devices.insert(IpAddr::from_str("192.168.1.1").unwrap(), DeviceInfo {
-            device_type: DeviceType::Router,
-            os_family: Some("Linux".to_string()),
-            vendor: None,
-            hostname: None,
-        });
-        devices.insert(IpAddr::from_str("192.168.1.2").unwrap(), DeviceInfo {
-            device_type: DeviceType::Switch,
-            os_family: Some("Cisco".to_string()),
-            vendor: None,
-            hostname: None,
-        });
+        devices.insert(
+            IpAddr::from_str("192.168.1.1").unwrap(),
+            DeviceInfo {
+                device_type: DeviceType::Router,
+                os_family: Some("Linux".to_string()),
+                vendor: None,
+                hostname: None,
+            },
+        );
+        devices.insert(
+            IpAddr::from_str("192.168.1.2").unwrap(),
+            DeviceInfo {
+                device_type: DeviceType::Switch,
+                os_family: Some("Cisco".to_string()),
+                vendor: None,
+                hostname: None,
+            },
+        );
 
         let map = TopologyMap {
             target: IpAddr::from_str("8.8.8.8").unwrap(),
@@ -645,18 +692,24 @@ mod tests {
     #[test]
     fn test_find_devices_by_type() {
         let mut devices = HashMap::new();
-        devices.insert(IpAddr::from_str("192.168.1.1").unwrap(), DeviceInfo {
-            device_type: DeviceType::Router,
-            os_family: None,
-            vendor: None,
-            hostname: None,
-        });
-        devices.insert(IpAddr::from_str("192.168.1.2").unwrap(), DeviceInfo {
-            device_type: DeviceType::Switch,
-            os_family: None,
-            vendor: None,
-            hostname: None,
-        });
+        devices.insert(
+            IpAddr::from_str("192.168.1.1").unwrap(),
+            DeviceInfo {
+                device_type: DeviceType::Router,
+                os_family: None,
+                vendor: None,
+                hostname: None,
+            },
+        );
+        devices.insert(
+            IpAddr::from_str("192.168.1.2").unwrap(),
+            DeviceInfo {
+                device_type: DeviceType::Switch,
+                os_family: None,
+                vendor: None,
+                hostname: None,
+            },
+        );
 
         let map = TopologyMap {
             target: IpAddr::from_str("8.8.8.8").unwrap(),

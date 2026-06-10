@@ -177,10 +177,16 @@ impl BacnetSecurityFinding {
             BacnetSecurityFinding::UnencryptedProtocol => "BACnet/IP traffic is unencrypted",
             BacnetSecurityFinding::WhoIsBroadcast => "Device responds to Who-Is broadcasts",
             BacnetSecurityFinding::ObjectEnumerationPossible => "Device objects can be enumerated",
-            BacnetSecurityFinding::DeviceIdentExposed => "Device identification information is exposed",
+            BacnetSecurityFinding::DeviceIdentExposed => {
+                "Device identification information is exposed"
+            }
             BacnetSecurityFinding::WriteAccessAvailable => "Write property operations are accepted",
-            BacnetSecurityFinding::ReinitializeDeviceSupported => "Device supports Reinitialize-Device service",
-            BacnetSecurityFinding::DeviceCommunicationControlSupported => "Device supports Device-Communication-Control",
+            BacnetSecurityFinding::ReinitializeDeviceSupported => {
+                "Device supports Reinitialize-Device service"
+            }
+            BacnetSecurityFinding::DeviceCommunicationControlSupported => {
+                "Device supports Device-Communication-Control"
+            }
             BacnetSecurityFinding::DefaultPortUsed => "Device listens on default BACnet port 47808",
         }
     }
@@ -350,10 +356,7 @@ impl BacnetScanner {
                 info.segmentation_support = data[data_start + 12];
             }
             if data.len() >= data_start + 15 {
-                info.vendor_id = u16::from_be_bytes([
-                    data[data_start + 13],
-                    data[data_start + 14],
-                ]);
+                info.vendor_id = u16::from_be_bytes([data[data_start + 13], data[data_start + 14]]);
                 info.vendor_name = Some(self.vendor_name_from_id(info.vendor_id));
             }
         }
@@ -407,7 +410,10 @@ impl BacnetScanner {
     }
 
     /// Assess security posture of the BACnet device
-    pub fn assess_security(&self, device_info: Option<&BacnetDeviceInfo>) -> Vec<BacnetSecurityFinding> {
+    pub fn assess_security(
+        &self,
+        device_info: Option<&BacnetDeviceInfo>,
+    ) -> Vec<BacnetSecurityFinding> {
         let mut findings = Vec::new();
 
         findings.push(BacnetSecurityFinding::NoAuthentication);
@@ -429,11 +435,8 @@ impl BacnetScanner {
 
             // Check for dangerous objects/services
             for obj in &info.object_list {
-                match obj.object_type {
-                    BacnetObjectType::Command => {
-                        findings.push(BacnetSecurityFinding::WriteAccessAvailable);
-                    }
-                    _ => {}
+                if obj.object_type == BacnetObjectType::Command {
+                    findings.push(BacnetSecurityFinding::WriteAccessAvailable);
                 }
             }
         }
@@ -549,23 +552,42 @@ mod tests {
     fn test_bacnet_object_type_description() {
         assert_eq!(BacnetObjectType::AnalogInput.description(), "Analog Input");
         assert_eq!(BacnetObjectType::Device.description(), "Device");
-        assert_eq!(BacnetObjectType::BinaryOutput.description(), "Binary Output");
+        assert_eq!(
+            BacnetObjectType::BinaryOutput.description(),
+            "Binary Output"
+        );
     }
 
     #[test]
     fn test_bacnet_security_finding_severity() {
-        assert_eq!(BacnetSecurityFinding::ReinitializeDeviceSupported.severity(), "CRITICAL");
-        assert_eq!(BacnetSecurityFinding::DeviceCommunicationControlSupported.severity(), "CRITICAL");
+        assert_eq!(
+            BacnetSecurityFinding::ReinitializeDeviceSupported.severity(),
+            "CRITICAL"
+        );
+        assert_eq!(
+            BacnetSecurityFinding::DeviceCommunicationControlSupported.severity(),
+            "CRITICAL"
+        );
         assert_eq!(BacnetSecurityFinding::NoAuthentication.severity(), "HIGH");
-        assert_eq!(BacnetSecurityFinding::WriteAccessAvailable.severity(), "HIGH");
-        assert_eq!(BacnetSecurityFinding::UnencryptedProtocol.severity(), "MEDIUM");
+        assert_eq!(
+            BacnetSecurityFinding::WriteAccessAvailable.severity(),
+            "HIGH"
+        );
+        assert_eq!(
+            BacnetSecurityFinding::UnencryptedProtocol.severity(),
+            "MEDIUM"
+        );
         assert_eq!(BacnetSecurityFinding::WhoIsBroadcast.severity(), "LOW");
     }
 
     #[test]
     fn test_bacnet_security_finding_description() {
-        assert!(!BacnetSecurityFinding::NoAuthentication.description().is_empty());
-        assert!(!BacnetSecurityFinding::ReinitializeDeviceSupported.description().is_empty());
+        assert!(!BacnetSecurityFinding::NoAuthentication
+            .description()
+            .is_empty());
+        assert!(!BacnetSecurityFinding::ReinitializeDeviceSupported
+            .description()
+            .is_empty());
     }
 
     #[test]
@@ -639,7 +661,11 @@ mod tests {
             }],
         };
         let findings = scanner.assess_security(Some(&info));
-        assert!(findings.iter().any(|f| matches!(f, BacnetSecurityFinding::DeviceIdentExposed)));
-        assert!(findings.iter().any(|f| matches!(f, BacnetSecurityFinding::ObjectEnumerationPossible)));
+        assert!(findings
+            .iter()
+            .any(|f| matches!(f, BacnetSecurityFinding::DeviceIdentExposed)));
+        assert!(findings
+            .iter()
+            .any(|f| matches!(f, BacnetSecurityFinding::ObjectEnumerationPossible)));
     }
 }

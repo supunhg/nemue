@@ -11,7 +11,7 @@ fn split_respecting_quotes(input: &str, separator: char) -> Vec<&str> {
     let mut start = 0;
     let mut in_quote = false;
     let mut quote_char = ' ';
-    
+
     for (i, c) in input.char_indices() {
         if (c == '"' || c == '\'') && !in_quote {
             in_quote = true;
@@ -23,12 +23,12 @@ fn split_respecting_quotes(input: &str, separator: char) -> Vec<&str> {
             start = i + 1;
         }
     }
-    
+
     // Add remaining part
     if start < input.len() {
         parts.push(&input[start..]);
     }
-    
+
     parts
 }
 
@@ -60,10 +60,10 @@ impl ScriptArgs {
         // Support both comma and semicolon as separators
         // Use semicolon if present (takes precedence), otherwise comma
         let separator = if input.contains(';') { ';' } else { ',' };
-        
+
         // Split while respecting quoted strings
         let pairs = split_respecting_quotes(input, separator);
-        
+
         for pair in pairs {
             let pair = pair.trim();
             if pair.is_empty() {
@@ -85,7 +85,7 @@ impl ScriptArgs {
             if key.is_empty() {
                 return Err(anyhow!("Empty key in argument: '{}'", pair));
             }
-            
+
             if value.is_empty() {
                 return Err(anyhow!("Empty value in argument: '{}'", pair));
             }
@@ -148,7 +148,7 @@ impl ScriptArgs {
                 // Check if # is inside quotes
                 let before_hash = &value[..hash_pos];
                 let quote_count = before_hash.matches('"').count();
-                if quote_count % 2 == 0 {
+                if quote_count.is_multiple_of(2) {
                     // Even number of quotes, # is a comment
                     before_hash.trim()
                 } else {
@@ -186,7 +186,10 @@ impl ScriptArgs {
 
     /// Get argument value with default
     pub fn get_or(&self, key: &str, default: &str) -> String {
-        self.args.get(key).cloned().unwrap_or_else(|| default.to_string())
+        self.args
+            .get(key)
+            .cloned()
+            .unwrap_or_else(|| default.to_string())
     }
 
     /// Check if argument exists
@@ -201,7 +204,8 @@ impl ScriptArgs {
 
     /// Convert to Lua-compatible table representation
     pub fn to_lua_table(&self) -> String {
-        let mut entries: Vec<String> = self.args
+        let mut entries: Vec<String> = self
+            .args
             .iter()
             .map(|(k, v)| format!("{}=\"{}\"", k, v.replace('"', "\\\"")))
             .collect();
@@ -300,9 +304,9 @@ timeout=30
     fn test_merge_args() {
         let mut args1 = ScriptArgs::parse("user=admin,pass=old").unwrap();
         let args2 = ScriptArgs::parse("pass=new,timeout=30").unwrap();
-        
+
         args1.merge(args2);
-        
+
         assert_eq!(args1.get("user"), Some(&"admin".to_string()));
         assert_eq!(args1.get("pass"), Some(&"new".to_string())); // Overwritten
         assert_eq!(args1.get("timeout"), Some(&"30".to_string()));

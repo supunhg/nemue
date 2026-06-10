@@ -95,13 +95,14 @@ impl ScanTemplate {
     }
 
     pub fn scan_type_enum(&self) -> Option<ScanType> {
-        ScanType::from_nmap_flag(&self.scan_type)
-            .or_else(|| match self.scan_type.to_lowercase().as_str() {
+        ScanType::from_nmap_flag(&self.scan_type).or_else(|| {
+            match self.scan_type.to_lowercase().as_str() {
                 "connect" => Some(ScanType::Connect),
                 "syn" => Some(ScanType::Syn),
                 "udp" => Some(ScanType::Udp),
                 _ => None,
-            })
+            }
+        })
     }
 }
 
@@ -354,7 +355,9 @@ impl TemplateBuilder {
     }
 
     pub fn metadata(mut self, key: &str, value: &str) -> Self {
-        self.template.metadata.insert(key.to_string(), value.to_string());
+        self.template
+            .metadata
+            .insert(key.to_string(), value.to_string());
         self
     }
 
@@ -408,16 +411,14 @@ mod tests {
 
     #[test]
     fn test_template_scan_type_enum() {
-        let tmpl = ScanTemplate::new("t", "d", TemplateCategory::Quick)
-            .with_scan_type("connect");
+        let tmpl = ScanTemplate::new("t", "d", TemplateCategory::Quick).with_scan_type("connect");
         assert_eq!(tmpl.scan_type_enum(), Some(ScanType::Connect));
 
-        let tmpl_syn = ScanTemplate::new("t", "d", TemplateCategory::Quick)
-            .with_scan_type("syn");
+        let tmpl_syn = ScanTemplate::new("t", "d", TemplateCategory::Quick).with_scan_type("syn");
         assert_eq!(tmpl_syn.scan_type_enum(), Some(ScanType::Syn));
 
-        let tmpl_flag = ScanTemplate::new("t", "d", TemplateCategory::Stealth)
-            .with_scan_type("-sF");
+        let tmpl_flag =
+            ScanTemplate::new("t", "d", TemplateCategory::Stealth).with_scan_type("-sF");
         assert_eq!(tmpl_flag.scan_type_enum(), Some(ScanType::Fin));
     }
 

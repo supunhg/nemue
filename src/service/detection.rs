@@ -325,7 +325,8 @@ impl ServiceDetector {
         let addr = SocketAddr::new(target, port);
 
         // Try to connect and grab banner (use longer timeout for service detection)
-        let detect_timeout = Duration::from_millis(self.timeout_duration.as_millis().max(5000) as u64);
+        let detect_timeout =
+            Duration::from_millis(self.timeout_duration.as_millis().max(5000) as u64);
         let banner = match timeout(detect_timeout, self.grab_banner(addr)).await {
             Ok(Ok(b)) => Some(b),
             _ => None,
@@ -351,16 +352,24 @@ impl ServiceDetector {
         match timeout(Duration::from_millis(2000), stream.read(&mut buffer)).await {
             Ok(Ok(n)) if n > 0 => {
                 let banner = String::from_utf8_lossy(&buffer[..n]).to_string();
-                debug!("Received initial banner from port {}: {}", addr.port(), banner.trim());
-                
+                debug!(
+                    "Received initial banner from port {}: {}",
+                    addr.port(),
+                    banner.trim()
+                );
+
                 // Check if this is a MySQL handshake (starts with packet length and protocol version)
                 if n >= 5 && addr.port() == 3306 {
                     // MySQL handshake starts with: [packet_length: 3 bytes] [packet_number: 1 byte] [protocol_version: 1 byte]
-                    if buffer[4] == 10 || buffer[4] == 9 {  // Protocol version 10 or 9
-                        return Ok(format!("MYSQL_HANDSHAKE:{}", String::from_utf8_lossy(&buffer[5..n.min(100)])));
+                    if buffer[4] == 10 || buffer[4] == 9 {
+                        // Protocol version 10 or 9
+                        return Ok(format!(
+                            "MYSQL_HANDSHAKE:{}",
+                            String::from_utf8_lossy(&buffer[5..n.min(100)])
+                        ));
                     }
                 }
-                
+
                 return Ok(banner);
             }
             _ => {}
@@ -370,17 +379,18 @@ impl ServiceDetector {
         if addr.port() == 135 {
             // Simple DCE/RPC probe to trigger response
             let rpc_probe = vec![
-                0x05, 0x00, 0x0b, 0x03, 0x10, 0x00, 0x00, 0x00,
-                0x48, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x05, 0x00, 0x0b, 0x03, 0x10, 0x00, 0x00, 0x00, 0x48, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00,
             ];
             let _ = stream.write_all(&rpc_probe).await;
-            
+
             match timeout(Duration::from_millis(1000), stream.read(&mut buffer)).await {
-                Ok(Ok(n)) if n > 0 => {
+                Ok(Ok(n))
+                    if n > 0
                     // Check for DCE/RPC response
-                    if n >= 10 && buffer[0] == 0x05 && buffer[1] == 0x00 {
-                        return Ok("MSRPC".to_string());
-                    }
+                    && n >= 10 && buffer[0] == 0x05 && buffer[1] == 0x00 =>
+                {
+                    return Ok("MSRPC".to_string());
                 }
                 _ => {}
             }
@@ -388,8 +398,10 @@ impl ServiceDetector {
 
         // If no immediate banner, try HTTP probe for web servers
         if addr.port() == 80 || addr.port() == 443 || addr.port() == 8080 || addr.port() == 8443 {
-            stream.write_all(b"GET / HTTP/1.0\r\nHost: target\r\n\r\n").await?;
-            
+            stream
+                .write_all(b"GET / HTTP/1.0\r\nHost: target\r\n\r\n")
+                .await?;
+
             // Read multiple chunks to get full response
             let mut full_response = Vec::new();
             loop {
@@ -400,7 +412,9 @@ impl ServiceDetector {
                         if full_response.windows(4).any(|w| w == b"\r\n\r\n") {
                             // Got headers, read a bit more for body
                             tokio::time::sleep(Duration::from_millis(100)).await;
-                            match timeout(Duration::from_millis(500), stream.read(&mut buffer)).await {
+                            match timeout(Duration::from_millis(500), stream.read(&mut buffer))
+                                .await
+                            {
                                 Ok(Ok(m)) if m > 0 => full_response.extend_from_slice(&buffer[..m]),
                                 _ => {}
                             }
@@ -414,7 +428,7 @@ impl ServiceDetector {
                     _ => break,
                 }
             }
-            
+
             if !full_response.is_empty() {
                 let banner = String::from_utf8_lossy(&full_response).to_string();
                 debug!("Received HTTP response: {} bytes", banner.len());
@@ -435,7 +449,7 @@ impl ServiceDetector {
             // Just connecting successfully is enough to identify it
             return Ok("tcpwrapped".to_string());
         }
-        
+
         Ok(String::new())
     }
 
@@ -478,8 +492,8 @@ impl ServiceDetector {
         }
 
         // Check for MySQL handshake
-        if banner.starts_with("MYSQL_HANDSHAKE:") {
-            let version_info = &banner[16..]; // Skip "MYSQL_HANDSHAKE:"
+        if let Some(version_info) = banner.strip_prefix("MYSQL_HANDSHAKE:") {
+            // Skip "MYSQL_HANDSHAKE:"
             let version = self.extract_mysql_version(version_info);
             return Some(ServiceInfo {
                 port,
@@ -549,10 +563,12 @@ impl ServiceDetector {
 
         // HTTP detection (before generic probes)
         if banner_lower.contains("http/") {
-            let version = self.extract_server_version(banner).or_else(|| self.extract_version(banner));
+            let version = self
+                .extract_server_version(banner)
+                .or_else(|| self.extract_version(banner));
             let mut product = self.extract_server(banner);
             let extra_info = self.extract_server_extra(banner);
-            let mut os_hint = self.detect_os_hint(banner);
+            let os_hint = self.detect_os_hint(banner);
 
             if product.is_none() {
                 if let Some((powered_by, powered_ver)) = self.extract_x_powered_by(banner) {
@@ -596,7 +612,9 @@ impl ServiceDetector {
         }
 
         // FTP detection (before generic probes)
-        if banner_lower.starts_with("220") && (port == 21 || self.extract_ftp_product(banner).is_some()) {
+        if banner_lower.starts_with("220")
+            && (port == 21 || self.extract_ftp_product(banner).is_some())
+        {
             let product = self.extract_ftp_product(banner);
             let version = self.extract_ftp_version(banner);
             let cpe = self.generate_cpe("ftp", product.as_deref(), version.as_deref());
@@ -638,7 +656,7 @@ impl ServiceDetector {
         // Check against compiled signatures (regex-based matching)
         let banner_bytes = banner.as_bytes();
         let mut best_match: Option<ServiceInfo> = None;
-        
+
         for sig in &self.signatures {
             if let Some(caps) = sig.regex.captures(banner_bytes) {
                 let version = sig.version_template.as_ref().map(|tmpl| {
@@ -653,12 +671,12 @@ impl ServiceDetector {
                     }
                     result
                 });
-                
+
                 let confidence = if sig.is_softmatch { 60 } else { 90 };
                 let service_family = self.detect_service_family(&sig.service, banner);
                 let os_hint = self.detect_os_hint(banner);
                 let cpe = self.generate_cpe(&sig.service, Some(&sig.product), version.as_deref());
-                
+
                 let info = ServiceInfo {
                     port,
                     protocol: "tcp".to_string(),
@@ -672,19 +690,19 @@ impl ServiceDetector {
                     os_hint,
                     cpe,
                 };
-                
+
                 // Hard match wins over soft match
                 if !sig.is_softmatch {
                     return Some(info);
                 }
-                
+
                 // Keep best soft match as fallback
                 if best_match.is_none() || confidence > best_match.as_ref().unwrap().confidence {
                     best_match = Some(info);
                 }
             }
         }
-        
+
         if let Some(info) = best_match {
             return Some(info);
         }
@@ -696,7 +714,11 @@ impl ServiceDetector {
                     let service_family = self.detect_service_family(&pattern.service, banner);
                     let os_hint = self.detect_os_hint(banner);
                     let version = self.extract_version(banner);
-                    let cpe = self.generate_cpe(&pattern.service, pattern.product.as_deref(), version.as_deref());
+                    let cpe = self.generate_cpe(
+                        &pattern.service,
+                        pattern.product.as_deref(),
+                        version.as_deref(),
+                    );
                     return Some(ServiceInfo {
                         port,
                         protocol: "tcp".to_string(),
@@ -766,7 +788,10 @@ impl ServiceDetector {
         }
 
         // RDP detection
-        if banner_lower.contains("rdp") || banner_lower.contains("terminal services") || (port == 3389 && !banner.is_empty()) {
+        if banner_lower.contains("rdp")
+            || banner_lower.contains("terminal services")
+            || (port == 3389 && !banner.is_empty())
+        {
             return Some(ServiceInfo {
                 port,
                 protocol: "tcp".to_string(),
@@ -783,7 +808,7 @@ impl ServiceDetector {
         }
 
         // VNC detection
-        if banner_lower.contains("rfb") || (port >= 5900 && port <= 5910 && !banner.is_empty()) {
+        if banner_lower.contains("rfb") || ((5900..=5910).contains(&port) && !banner.is_empty()) {
             let version = self.extract_vnc_version(banner);
             return Some(ServiceInfo {
                 port,
@@ -801,7 +826,10 @@ impl ServiceDetector {
         }
 
         // Telnet detection
-        if banner_lower.contains("telnet") || banner_lower.contains("login:") || banner_lower.contains("password:") {
+        if banner_lower.contains("telnet")
+            || banner_lower.contains("login:")
+            || banner_lower.contains("password:")
+        {
             return Some(ServiceInfo {
                 port,
                 protocol: "tcp".to_string(),
@@ -818,7 +846,10 @@ impl ServiceDetector {
         }
 
         // Redis detection
-        if banner_lower.contains("redis_version") || banner_lower.contains("+ok") || banner_lower.contains("$-1") {
+        if banner_lower.contains("redis_version")
+            || banner_lower.contains("+ok")
+            || banner_lower.contains("$-1")
+        {
             let version = self.extract_redis_version(banner);
             return Some(ServiceInfo {
                 port,
@@ -930,11 +961,11 @@ impl ServiceDetector {
             21 => ("ftp", None, 70, "file-transfer", None, None),
             69 => ("tftp", None, 60, "file-transfer", None, None),
             115 => ("sftp", None, 70, "file-transfer", None, None),
-            
+
             // SSH/Telnet
             22 => ("ssh", None, 80, "remote-access", None, None),
             23 => ("telnet", None, 70, "remote-access", None, None),
-            
+
             // Mail
             25 => ("smtp", None, 70, "mail", None, None),
             110 => ("pop3", None, 70, "mail", None, None),
@@ -943,10 +974,10 @@ impl ServiceDetector {
             587 => ("submission", None, 70, "mail", None, None),
             993 => ("imaps", None, 75, "mail", None, None),
             995 => ("pop3s", None, 75, "mail", None, None),
-            
+
             // DNS
             53 => ("domain", None, 80, "dns", None, None),
-            
+
             // HTTP/Web
             80 => ("http", None, 85, "web", None, None),
             443 => ("https", None, 85, "web", None, None),
@@ -956,92 +987,288 @@ impl ServiceDetector {
             8081 => ("http-alt", None, 70, "web", None, None),
             8443 => ("https-alt", None, 80, "web", None, None),
             8888 => ("http-alt", None, 70, "web", None, None),
-            
+
             // Windows RPC/DCOM
-            135 => ("msrpc", Some("Microsoft Windows RPC"), 85, "rpc", Some("Windows"), Some("cpe:/o:microsoft:windows")),
-            593 => ("http-rpc-epmap", Some("Microsoft DCOM"), 75, "rpc", Some("Windows"), Some("cpe:/o:microsoft:windows")),
-            
+            135 => (
+                "msrpc",
+                Some("Microsoft Windows RPC"),
+                85,
+                "rpc",
+                Some("Windows"),
+                Some("cpe:/o:microsoft:windows"),
+            ),
+            593 => (
+                "http-rpc-epmap",
+                Some("Microsoft DCOM"),
+                75,
+                "rpc",
+                Some("Windows"),
+                Some("cpe:/o:microsoft:windows"),
+            ),
+
             // SMB/NetBIOS
-            137 => ("netbios-ns", Some("Microsoft Windows netbios-ns"), 75, "netbios", Some("Windows"), Some("cpe:/o:microsoft:windows")),
-            138 => ("netbios-dgm", Some("Microsoft Windows netbios-dgm"), 75, "netbios", Some("Windows"), Some("cpe:/o:microsoft:windows")),
-            139 => ("netbios-ssn", Some("Microsoft Windows netbios-ssn"), 75, "netbios", Some("Windows"), Some("cpe:/o:microsoft:windows")),
-            445 => ("microsoft-ds", Some("Microsoft Windows SMB"), 80, "netbios", Some("Windows"), Some("cpe:/o:microsoft:windows")),
-            
+            137 => (
+                "netbios-ns",
+                Some("Microsoft Windows netbios-ns"),
+                75,
+                "netbios",
+                Some("Windows"),
+                Some("cpe:/o:microsoft:windows"),
+            ),
+            138 => (
+                "netbios-dgm",
+                Some("Microsoft Windows netbios-dgm"),
+                75,
+                "netbios",
+                Some("Windows"),
+                Some("cpe:/o:microsoft:windows"),
+            ),
+            139 => (
+                "netbios-ssn",
+                Some("Microsoft Windows netbios-ssn"),
+                75,
+                "netbios",
+                Some("Windows"),
+                Some("cpe:/o:microsoft:windows"),
+            ),
+            445 => (
+                "microsoft-ds",
+                Some("Microsoft Windows SMB"),
+                80,
+                "netbios",
+                Some("Windows"),
+                Some("cpe:/o:microsoft:windows"),
+            ),
+
             // Directory
-            88 => ("kerberos", Some("Microsoft Windows Kerberos"), 75, "directory", Some("Windows"), Some("cpe:/o:microsoft:windows")),
+            88 => (
+                "kerberos",
+                Some("Microsoft Windows Kerberos"),
+                75,
+                "directory",
+                Some("Windows"),
+                Some("cpe:/o:microsoft:windows"),
+            ),
             389 => ("ldap", None, 80, "directory", None, None),
             636 => ("ldaps", None, 80, "directory", None, None),
             3268 => ("ldap-gc", None, 75, "directory", None, None),
             3269 => ("ldap-gc-ssl", None, 75, "directory", None, None),
-            
+
             // Databases
-            1433 => ("ms-sql-s", Some("Microsoft SQL Server"), 80, "database", None, Some("cpe:/a:microsoft:sql_server")),
-            1521 => ("oracle", Some("Oracle Database"), 80, "database", None, Some("cpe:/a:oracle:database")),
-            3306 => ("mysql", Some("MySQL"), 85, "database", None, Some("cpe:/a:mysql:mysql")),
-            5432 => ("postgresql", Some("PostgreSQL"), 85, "database", None, Some("cpe:/a:postgresql:postgresql")),
-            6379 => ("redis", Some("Redis"), 85, "database", None, Some("cpe:/a:redis:redis")),
-            7000 | 7001 => ("cassandra", Some("Apache Cassandra"), 75, "database", None, None),
-            9042 => ("cassandra-cql", Some("Apache Cassandra CQL"), 80, "database", None, None),
-            9200 => ("elasticsearch", Some("Elasticsearch"), 85, "search", None, Some("cpe:/a:elastic:elasticsearch")),
-            9300 => ("elasticsearch-cluster", Some("Elasticsearch"), 80, "search", None, Some("cpe:/a:elastic:elasticsearch")),
+            1433 => (
+                "ms-sql-s",
+                Some("Microsoft SQL Server"),
+                80,
+                "database",
+                None,
+                Some("cpe:/a:microsoft:sql_server"),
+            ),
+            1521 => (
+                "oracle",
+                Some("Oracle Database"),
+                80,
+                "database",
+                None,
+                Some("cpe:/a:oracle:database"),
+            ),
+            3306 => (
+                "mysql",
+                Some("MySQL"),
+                85,
+                "database",
+                None,
+                Some("cpe:/a:mysql:mysql"),
+            ),
+            5432 => (
+                "postgresql",
+                Some("PostgreSQL"),
+                85,
+                "database",
+                None,
+                Some("cpe:/a:postgresql:postgresql"),
+            ),
+            6379 => (
+                "redis",
+                Some("Redis"),
+                85,
+                "database",
+                None,
+                Some("cpe:/a:redis:redis"),
+            ),
+            7000 | 7001 => (
+                "cassandra",
+                Some("Apache Cassandra"),
+                75,
+                "database",
+                None,
+                None,
+            ),
+            9042 => (
+                "cassandra-cql",
+                Some("Apache Cassandra CQL"),
+                80,
+                "database",
+                None,
+                None,
+            ),
+            9200 => (
+                "elasticsearch",
+                Some("Elasticsearch"),
+                85,
+                "search",
+                None,
+                Some("cpe:/a:elastic:elasticsearch"),
+            ),
+            9300 => (
+                "elasticsearch-cluster",
+                Some("Elasticsearch"),
+                80,
+                "search",
+                None,
+                Some("cpe:/a:elastic:elasticsearch"),
+            ),
             11211 => ("memcached", Some("Memcached"), 80, "database", None, None),
-            27017 => ("mongodb", Some("MongoDB"), 85, "database", None, Some("cpe:/a:mongodb:mongodb")),
-            27018 => ("mongodb-shard", Some("MongoDB"), 80, "database", None, Some("cpe:/a:mongodb:mongodb")),
-            27019 => ("mongodb-config", Some("MongoDB"), 80, "database", None, Some("cpe:/a:mongodb:mongodb")),
-            5984 => ("couchdb", Some("Apache CouchDB"), 75, "database", None, None),
-            
+            27017 => (
+                "mongodb",
+                Some("MongoDB"),
+                85,
+                "database",
+                None,
+                Some("cpe:/a:mongodb:mongodb"),
+            ),
+            27018 => (
+                "mongodb-shard",
+                Some("MongoDB"),
+                80,
+                "database",
+                None,
+                Some("cpe:/a:mongodb:mongodb"),
+            ),
+            27019 => (
+                "mongodb-config",
+                Some("MongoDB"),
+                80,
+                "database",
+                None,
+                Some("cpe:/a:mongodb:mongodb"),
+            ),
+            5984 => (
+                "couchdb",
+                Some("Apache CouchDB"),
+                75,
+                "database",
+                None,
+                None,
+            ),
+
             // Remote desktop/VNC
-            3389 => ("rdp", Some("Microsoft Terminal Services"), 85, "remote-access", Some("Windows"), Some("cpe:/o:microsoft:windows")),
+            3389 => (
+                "rdp",
+                Some("Microsoft Terminal Services"),
+                85,
+                "remote-access",
+                Some("Windows"),
+                Some("cpe:/o:microsoft:windows"),
+            ),
             5900..=5910 => ("vnc", Some("VNC"), 80, "remote-access", None, None),
-            
+
             // Message queues
             5672 => ("amqp", Some("RabbitMQ"), 75, "messaging", None, None),
             1883 => ("mqtt", None, 75, "messaging", None, None),
             8883 => ("mqtt-tls", None, 75, "messaging", None, None),
             9092 => ("kafka", Some("Apache Kafka"), 80, "messaging", None, None),
-            61616 => ("activemq", Some("Apache ActiveMQ"), 75, "messaging", None, None),
-            
+            61616 => (
+                "activemq",
+                Some("Apache ActiveMQ"),
+                75,
+                "messaging",
+                None,
+                None,
+            ),
+
             // Monitoring/Management
             161 | 162 => ("snmp", None, 75, "management", None, None),
             514 => ("syslog", None, 70, "management", None, None),
             8086 => ("influxdb", Some("InfluxDB"), 75, "monitoring", None, None),
-            9090 => ("prometheus", Some("Prometheus"), 75, "monitoring", None, None),
-            
+            9090 => (
+                "prometheus",
+                Some("Prometheus"),
+                75,
+                "monitoring",
+                None,
+                None,
+            ),
+
             // Container/Orchestration
-            2375 => ("docker", Some("Docker"), 80, "container", None, Some("cpe:/a:docker:docker")),
-            2376 => ("docker-tls", Some("Docker"), 80, "container", None, Some("cpe:/a:docker:docker")),
+            2375 => (
+                "docker",
+                Some("Docker"),
+                80,
+                "container",
+                None,
+                Some("cpe:/a:docker:docker"),
+            ),
+            2376 => (
+                "docker-tls",
+                Some("Docker"),
+                80,
+                "container",
+                None,
+                Some("cpe:/a:docker:docker"),
+            ),
             2379 | 2380 => ("etcd", Some("etcd"), 75, "container", None, None),
-            6443 => ("kubernetes-api", Some("Kubernetes"), 80, "container", None, Some("cpe:/a:kubernetes:kubernetes")),
-            8500 => ("consul", Some("HashiCorp Consul"), 75, "container", None, None),
-            
+            6443 => (
+                "kubernetes-api",
+                Some("Kubernetes"),
+                80,
+                "container",
+                None,
+                Some("cpe:/a:kubernetes:kubernetes"),
+            ),
+            8500 => (
+                "consul",
+                Some("HashiCorp Consul"),
+                75,
+                "container",
+                None,
+                None,
+            ),
+
             // Web frameworks (common dev ports)
             3000 => ("node-http", Some("Node.js"), 65, "web", None, None),
-            4200 => ("angular-dev", Some("Angular Dev Server"), 65, "web", None, None),
+            4200 => (
+                "angular-dev",
+                Some("Angular Dev Server"),
+                65,
+                "web",
+                None,
+                None,
+            ),
             5000 => ("flask", Some("Flask"), 65, "web", None, None),
             9418 => ("git", Some("Git"), 70, "vcs", None, None),
-            
+
             // SIP/VoIP
             5060 | 5061 => ("sip", None, 75, "voip", None, None),
-            
+
             // Routing
             179 => ("bgp", None, 80, "routing", None, None),
-            
+
             // RPC
             111 => ("rpcbind", None, 75, "rpc", None, None),
-            
+
             // Printing
             515 => ("printer", None, 70, "printing", None, None),
             631 => ("ipp", None, 75, "printing", None, None),
-            
+
             // NTP
             123 => ("ntp", None, 75, "time", None, None),
-            
+
             // DHCP
             67 | 68 => ("dhcp", None, 75, "network", None, None),
-            
+
             // Tor
             9001 | 9030 => ("tor", None, 70, "anonymity", None, None),
-            
+
             _ => ("unknown", None, 25, "unknown", None, None),
         };
 
@@ -1068,7 +1295,9 @@ impl ServiceDetector {
                 if word.contains('/') {
                     let parts: Vec<&str> = word.splitn(2, '/').collect();
                     if parts.len() == 2 {
-                        let ver = parts[1].trim_matches(|c: char| !c.is_alphanumeric() && c != '.' && c != '-' && c != '_');
+                        let ver = parts[1].trim_matches(|c: char| {
+                            !c.is_alphanumeric() && c != '.' && c != '-' && c != '_'
+                        });
                         if ver.chars().any(|c| c.is_numeric()) && ver.len() < 64 {
                             return Some(ver.to_string());
                         }
@@ -1086,7 +1315,7 @@ impl ServiceDetector {
                 // Pattern: word vX.Y.Z (e.g., "ProFTPD v1.3.5e")
                 if word.starts_with('v') && word.len() > 1 {
                     let ver = &word[1..];
-                    if ver.chars().next().map_or(false, |c| c.is_numeric()) && ver.len() < 64 {
+                    if ver.chars().next().is_some_and(|c| c.is_numeric()) && ver.len() < 64 {
                         return Some(ver.to_string());
                     }
                 }
@@ -1096,8 +1325,11 @@ impl ServiceDetector {
     }
 
     fn extract_server(&self, banner: &str) -> Option<String> {
-        if let Some(server_line) = banner.lines().find(|l| l.to_lowercase().starts_with("server:")) {
-            let server = server_line.splitn(2, ':').nth(1)?.trim();
+        if let Some(server_line) = banner
+            .lines()
+            .find(|l| l.to_lowercase().starts_with("server:"))
+        {
+            let server = server_line.split_once(':')?.1.trim();
             // "Apache/2.4.7 (Ubuntu)" -> "Apache"
             if let Some(name) = server.split('/').next() {
                 let name = name.trim();
@@ -1117,14 +1349,21 @@ impl ServiceDetector {
     }
 
     fn extract_server_version(&self, banner: &str) -> Option<String> {
-        if let Some(server_line) = banner.lines().find(|l| l.to_lowercase().starts_with("server:")) {
-            let server = server_line.splitn(2, ':').nth(1)?.trim();
+        if let Some(server_line) = banner
+            .lines()
+            .find(|l| l.to_lowercase().starts_with("server:"))
+        {
+            let server = server_line.split_once(':')?.1.trim();
             // "Apache/2.4.7 (Ubuntu)" -> "2.4.7"
             if server.contains('/') {
-                let after_slash = server.splitn(2, '/').nth(1)?.trim();
-                let ver = after_slash.split_whitespace().next()
+                let after_slash = server.split_once('/')?.1.trim();
+                let ver = after_slash
+                    .split_whitespace()
+                    .next()
                     .unwrap_or(after_slash)
-                    .trim_matches(|c: char| !c.is_alphanumeric() && c != '.' && c != '-' && c != '_');
+                    .trim_matches(|c: char| {
+                        !c.is_alphanumeric() && c != '.' && c != '-' && c != '_'
+                    });
                 if ver.chars().any(|c| c.is_numeric()) {
                     return Some(ver.to_string());
                 }
@@ -1134,8 +1373,11 @@ impl ServiceDetector {
     }
 
     fn extract_server_extra(&self, banner: &str) -> Option<String> {
-        if let Some(server_line) = banner.lines().find(|l| l.to_lowercase().starts_with("server:")) {
-            let server = server_line.splitn(2, ':').nth(1)?.trim();
+        if let Some(server_line) = banner
+            .lines()
+            .find(|l| l.to_lowercase().starts_with("server:"))
+        {
+            let server = server_line.split_once(':')?.1.trim();
             // "Apache/2.4.7 (Ubuntu)" -> "Ubuntu"
             if let Some(start) = server.find('(') {
                 if let Some(end) = server[start..].find(')') {
@@ -1150,8 +1392,11 @@ impl ServiceDetector {
     }
 
     fn extract_x_powered_by(&self, banner: &str) -> Option<(String, Option<String>)> {
-        if let Some(line) = banner.lines().find(|l| l.to_lowercase().starts_with("x-powered-by:")) {
-            let value = line.splitn(2, ':').nth(1)?.trim();
+        if let Some(line) = banner
+            .lines()
+            .find(|l| l.to_lowercase().starts_with("x-powered-by:"))
+        {
+            let value = line.split_once(':')?.1.trim();
             // "PHP/7.4.3" -> ("PHP", Some("7.4.3"))
             if let Some(idx) = value.find('/') {
                 let product = value[..idx].trim().to_string();
@@ -1177,11 +1422,14 @@ impl ServiceDetector {
             // or: SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.1
             let after_proto = ssh_line.splitn(3, '-').nth(2)?;
             // after_proto = "OpenSSH_8.2p1 Ubuntu-4ubuntu0.5"
-            let parts: Vec<&str> = after_proto.splitn(2, |c: char| c == '_' || c == ' ').collect();
+            let parts: Vec<&str> = after_proto.splitn(2, ['_', ' ']).collect();
             if parts.len() >= 2 {
                 let version_part = parts[1];
                 // version_part = "8.2p1 Ubuntu-4ubuntu0.5" or "8.2p1"
-                let ver = version_part.split_whitespace().next().unwrap_or(version_part);
+                let ver = version_part
+                    .split_whitespace()
+                    .next()
+                    .unwrap_or(version_part);
                 return Some(ver.to_string());
             }
             // Fallback: try to find version in the line
@@ -1235,7 +1483,16 @@ impl ServiceDetector {
         // Pattern: 220 FileZilla Server 0.9.60
         let line = banner.lines().find(|l| l.starts_with("220"))?;
         let content = line.strip_prefix("220").unwrap_or(line).trim();
-        for server_name in &["ProFTPD", "vsFTPd", "FileZilla Server", "FileZilla", "Pure-FTPd", "WU-FTPD", "NcFTP", "Serv-U"] {
+        for server_name in &[
+            "ProFTPD",
+            "vsFTPd",
+            "FileZilla Server",
+            "FileZilla",
+            "Pure-FTPd",
+            "WU-FTPD",
+            "NcFTP",
+            "Serv-U",
+        ] {
             if let Some(idx) = content.find(server_name) {
                 let rest = &content[idx + server_name.len()..].trim();
                 if let Some(word) = rest.split_whitespace().next() {
@@ -1251,7 +1508,16 @@ impl ServiceDetector {
     fn extract_ftp_product(&self, banner: &str) -> Option<String> {
         let line = banner.lines().find(|l| l.starts_with("220"))?;
         let content = line.strip_prefix("220").unwrap_or(line).trim();
-        for server_name in &["ProFTPD", "vsFTPd", "FileZilla Server", "FileZilla", "Pure-FTPd", "WU-FTPD", "NcFTP", "Serv-U"] {
+        for server_name in &[
+            "ProFTPD",
+            "vsFTPd",
+            "FileZilla Server",
+            "FileZilla",
+            "Pure-FTPd",
+            "WU-FTPD",
+            "NcFTP",
+            "Serv-U",
+        ] {
             if content.contains(server_name) {
                 return Some(server_name.to_string());
             }
@@ -1265,7 +1531,15 @@ impl ServiceDetector {
         // Pattern: 220 mail.example.com ESMTP Postfix (Ubuntu)
         // Pattern: 220 mail.example.com ESMTP Sendmail
         // Pattern: 220 mail.example.com Microsoft ESMTP MAIL Service
-        for server_name in &["Postfix", "Sendmail", "Exim", "Microsoft ESMTP", "Exchange", "Dovecot", "qmail"] {
+        for server_name in &[
+            "Postfix",
+            "Sendmail",
+            "Exim",
+            "Microsoft ESMTP",
+            "Exchange",
+            "Dovecot",
+            "qmail",
+        ] {
             if content.contains(server_name) {
                 return Some(server_name.to_string());
             }
@@ -1329,77 +1603,117 @@ impl ServiceDetector {
         let banner_lower = banner.to_lowercase();
 
         // Database services
-        if service_lower.contains("mysql") || service_lower.contains("postgres") 
-            || service_lower.contains("redis") || service_lower.contains("mongo")
-            || service_lower.contains("cassandra") || service_lower.contains("elasticsearch")
-            || service_lower.contains("memcached") || service_lower.contains("couchdb")
-            || service_lower.contains("influxdb") || service_lower.contains("mssql")
-            || service_lower.contains("oracle") || service_lower.contains("database") {
+        if service_lower.contains("mysql")
+            || service_lower.contains("postgres")
+            || service_lower.contains("redis")
+            || service_lower.contains("mongo")
+            || service_lower.contains("cassandra")
+            || service_lower.contains("elasticsearch")
+            || service_lower.contains("memcached")
+            || service_lower.contains("couchdb")
+            || service_lower.contains("influxdb")
+            || service_lower.contains("mssql")
+            || service_lower.contains("oracle")
+            || service_lower.contains("database")
+        {
             return Some("database".to_string());
         }
 
         // Web services
-        if service_lower.contains("http") || service_lower.contains("web")
-            || banner_lower.contains("server:") || banner_lower.contains("http/") {
+        if service_lower.contains("http")
+            || service_lower.contains("web")
+            || banner_lower.contains("server:")
+            || banner_lower.contains("http/")
+        {
             return Some("web".to_string());
         }
 
         // Mail services
-        if service_lower.contains("smtp") || service_lower.contains("imap")
-            || service_lower.contains("pop3") || service_lower.contains("mail")
-            || service_lower.contains("exchange") {
+        if service_lower.contains("smtp")
+            || service_lower.contains("imap")
+            || service_lower.contains("pop3")
+            || service_lower.contains("mail")
+            || service_lower.contains("exchange")
+        {
             return Some("mail".to_string());
         }
 
         // Remote access
-        if service_lower.contains("ssh") || service_lower.contains("telnet")
-            || service_lower.contains("rdp") || service_lower.contains("vnc")
-            || service_lower.contains("remote") {
+        if service_lower.contains("ssh")
+            || service_lower.contains("telnet")
+            || service_lower.contains("rdp")
+            || service_lower.contains("vnc")
+            || service_lower.contains("remote")
+        {
             return Some("remote-access".to_string());
         }
 
         // File transfer
-        if service_lower.contains("ftp") || service_lower.contains("sftp")
-            || service_lower.contains("tftp") || service_lower.contains("smb")
-            || service_lower.contains("netbios") || service_lower.contains("nfs") {
+        if service_lower.contains("ftp")
+            || service_lower.contains("sftp")
+            || service_lower.contains("tftp")
+            || service_lower.contains("smb")
+            || service_lower.contains("netbios")
+            || service_lower.contains("nfs")
+        {
             return Some("file-transfer".to_string());
         }
 
         // Directory services
-        if service_lower.contains("ldap") || service_lower.contains("kerberos")
-            || service_lower.contains("active-directory") || service_lower.contains("dns") {
+        if service_lower.contains("ldap")
+            || service_lower.contains("kerberos")
+            || service_lower.contains("active-directory")
+            || service_lower.contains("dns")
+        {
             return Some("directory".to_string());
         }
 
         // Messaging
-        if service_lower.contains("amqp") || service_lower.contains("mqtt")
-            || service_lower.contains("kafka") || service_lower.contains("activemq")
-            || service_lower.contains("rabbitmq") || service_lower.contains("stomp") {
+        if service_lower.contains("amqp")
+            || service_lower.contains("mqtt")
+            || service_lower.contains("kafka")
+            || service_lower.contains("activemq")
+            || service_lower.contains("rabbitmq")
+            || service_lower.contains("stomp")
+        {
             return Some("messaging".to_string());
         }
 
         // Container/Orchestration
-        if service_lower.contains("docker") || service_lower.contains("kubernetes")
-            || service_lower.contains("etcd") || service_lower.contains("consul") {
+        if service_lower.contains("docker")
+            || service_lower.contains("kubernetes")
+            || service_lower.contains("etcd")
+            || service_lower.contains("consul")
+        {
             return Some("container".to_string());
         }
 
         // Monitoring
-        if service_lower.contains("snmp") || service_lower.contains("prometheus")
-            || service_lower.contains("grafana") || service_lower.contains("zabbix")
-            || service_lower.contains("nagios") || service_lower.contains("syslog") {
+        if service_lower.contains("snmp")
+            || service_lower.contains("prometheus")
+            || service_lower.contains("grafana")
+            || service_lower.contains("zabbix")
+            || service_lower.contains("nagios")
+            || service_lower.contains("syslog")
+        {
             return Some("monitoring".to_string());
         }
 
         // Routing
-        if service_lower.contains("bgp") || service_lower.contains("ospf")
-            || service_lower.contains("eigrp") || service_lower.contains("rip") {
+        if service_lower.contains("bgp")
+            || service_lower.contains("ospf")
+            || service_lower.contains("eigrp")
+            || service_lower.contains("rip")
+        {
             return Some("routing".to_string());
         }
 
         // VoIP
-        if service_lower.contains("sip") || service_lower.contains("h.323")
-            || service_lower.contains("rtp") || service_lower.contains("voip") {
+        if service_lower.contains("sip")
+            || service_lower.contains("h.323")
+            || service_lower.contains("rtp")
+            || service_lower.contains("voip")
+        {
             return Some("voip".to_string());
         }
 
@@ -1410,58 +1724,88 @@ impl ServiceDetector {
         let banner_lower = banner.to_lowercase();
 
         // Windows indicators
-        if banner_lower.contains("windows") || banner_lower.contains("microsoft")
-            || banner_lower.contains("iis") || banner_lower.contains("asp.net")
-            || banner_lower.contains("win32") || banner_lower.contains("win64") {
+        if banner_lower.contains("windows")
+            || banner_lower.contains("microsoft")
+            || banner_lower.contains("iis")
+            || banner_lower.contains("asp.net")
+            || banner_lower.contains("win32")
+            || banner_lower.contains("win64")
+        {
             return Some("Windows".to_string());
         }
 
         // Linux indicators
-        if banner_lower.contains("ubuntu") || banner_lower.contains("debian")
-            || banner_lower.contains("centos") || banner_lower.contains("rhel")
-            || banner_lower.contains("fedora") || banner_lower.contains("suse")
-            || banner_lower.contains("linux") || banner_lower.contains("apache")
-            || banner_lower.contains("nginx") || banner_lower.contains("php/") {
+        if banner_lower.contains("ubuntu")
+            || banner_lower.contains("debian")
+            || banner_lower.contains("centos")
+            || banner_lower.contains("rhel")
+            || banner_lower.contains("fedora")
+            || banner_lower.contains("suse")
+            || banner_lower.contains("linux")
+            || banner_lower.contains("apache")
+            || banner_lower.contains("nginx")
+            || banner_lower.contains("php/")
+        {
             return Some("Linux".to_string());
         }
 
         // macOS indicators
-        if banner_lower.contains("macos") || banner_lower.contains("darwin")
-            || banner_lower.contains("mac os") || banner_lower.contains("apple") {
+        if banner_lower.contains("macos")
+            || banner_lower.contains("darwin")
+            || banner_lower.contains("mac os")
+            || banner_lower.contains("apple")
+        {
             return Some("macOS".to_string());
         }
 
         // BSD indicators
-        if banner_lower.contains("freebsd") || banner_lower.contains("openbsd")
-            || banner_lower.contains("netbsd") || banner_lower.contains("bsd") {
+        if banner_lower.contains("freebsd")
+            || banner_lower.contains("openbsd")
+            || banner_lower.contains("netbsd")
+            || banner_lower.contains("bsd")
+        {
             return Some("BSD".to_string());
         }
 
         // Solaris indicators
-        if banner_lower.contains("solaris") || banner_lower.contains("sunos")
-            || banner_lower.contains("sun os") {
+        if banner_lower.contains("solaris")
+            || banner_lower.contains("sunos")
+            || banner_lower.contains("sun os")
+        {
             return Some("Solaris".to_string());
         }
 
         // Cisco indicators
-        if banner_lower.contains("cisco") || banner_lower.contains("ios")
-            || banner_lower.contains("nx-os") || banner_lower.contains("asa") {
+        if banner_lower.contains("cisco")
+            || banner_lower.contains("ios")
+            || banner_lower.contains("nx-os")
+            || banner_lower.contains("asa")
+        {
             return Some("Cisco IOS".to_string());
         }
 
         // Network device indicators
-        if banner_lower.contains("juniper") || banner_lower.contains("fortinet")
-            || banner_lower.contains("palo alto") || banner_lower.contains("mikrotik")
-            || banner_lower.contains("aruba") || banner_lower.contains("arista") {
+        if banner_lower.contains("juniper")
+            || banner_lower.contains("fortinet")
+            || banner_lower.contains("palo alto")
+            || banner_lower.contains("mikrotik")
+            || banner_lower.contains("aruba")
+            || banner_lower.contains("arista")
+        {
             return Some("Network Device".to_string());
         }
 
         None
     }
 
-    fn generate_cpe(&self, service: &str, product: Option<&str>, version: Option<&str>) -> Option<String> {
+    fn generate_cpe(
+        &self,
+        service: &str,
+        product: Option<&str>,
+        version: Option<&str>,
+    ) -> Option<String> {
         let service_lower = service.to_lowercase();
-        
+
         // Map service to CPE vendor:product
         let (vendor, product_name) = if service_lower.contains("mysql") {
             ("mysql", "mysql")
@@ -1473,11 +1817,17 @@ impl ServiceDetector {
             ("mongodb", "mongodb")
         } else if service_lower.contains("elasticsearch") {
             ("elastic", "elasticsearch")
-        } else if service_lower.contains("apache") || product.map_or(false, |p| p.to_lowercase().contains("apache")) {
+        } else if service_lower.contains("apache")
+            || product.is_some_and(|p| p.to_lowercase().contains("apache"))
+        {
             ("apache", "http_server")
-        } else if service_lower.contains("nginx") || product.map_or(false, |p| p.to_lowercase().contains("nginx")) {
+        } else if service_lower.contains("nginx")
+            || product.is_some_and(|p| p.to_lowercase().contains("nginx"))
+        {
             ("nginx", "nginx")
-        } else if service_lower.contains("iis") || product.map_or(false, |p| p.to_lowercase().contains("iis")) {
+        } else if service_lower.contains("iis")
+            || product.is_some_and(|p| p.to_lowercase().contains("iis"))
+        {
             ("microsoft", "iis")
         } else if service_lower.contains("ssh") || service_lower.contains("openssh") {
             ("openbsd", "openssh")
@@ -1510,11 +1860,11 @@ mod tests {
     #[test]
     fn test_detect_by_port() {
         let detector = ServiceDetector::new(1000);
-        
+
         let info = detector.detect_by_port(80, None);
         assert_eq!(info.service, "http");
         assert_eq!(info.service_family, Some("web".to_string()));
-        
+
         let info = detector.detect_by_port(22, None);
         assert_eq!(info.service, "ssh");
         assert_eq!(info.service_family, Some("remote-access".to_string()));
@@ -1524,10 +1874,10 @@ mod tests {
     fn test_analyze_http_banner() {
         let detector = ServiceDetector::new(1000);
         let banner = "HTTP/1.1 200 OK\r\nServer: nginx/1.18.0\r\n";
-        
+
         let info = detector.analyze_banner(80, banner);
         assert!(info.is_some());
-        
+
         let info = info.unwrap();
         assert_eq!(info.service, "http");
         assert!(info.confidence >= 80);
@@ -1538,10 +1888,10 @@ mod tests {
     fn test_analyze_ssh_banner() {
         let detector = ServiceDetector::new(1000);
         let banner = "SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.5";
-        
+
         let info = detector.analyze_banner(22, banner);
         assert!(info.is_some());
-        
+
         let info = info.unwrap();
         assert_eq!(info.service, "ssh");
         assert_eq!(info.product, Some("OpenSSH".to_string()));
@@ -1552,44 +1902,92 @@ mod tests {
     #[test]
     fn test_detect_service_family() {
         let detector = ServiceDetector::new(1000);
-        
-        assert_eq!(detector.detect_service_family("mysql", ""), Some("database".to_string()));
-        assert_eq!(detector.detect_service_family("http", ""), Some("web".to_string()));
-        assert_eq!(detector.detect_service_family("smtp", ""), Some("mail".to_string()));
-        assert_eq!(detector.detect_service_family("ssh", ""), Some("remote-access".to_string()));
-        assert_eq!(detector.detect_service_family("ftp", ""), Some("file-transfer".to_string()));
-        assert_eq!(detector.detect_service_family("ldap", ""), Some("directory".to_string()));
-        assert_eq!(detector.detect_service_family("amqp", ""), Some("messaging".to_string()));
-        assert_eq!(detector.detect_service_family("docker", ""), Some("container".to_string()));
-        assert_eq!(detector.detect_service_family("snmp", ""), Some("monitoring".to_string()));
-        assert_eq!(detector.detect_service_family("bgp", ""), Some("routing".to_string()));
-        assert_eq!(detector.detect_service_family("sip", ""), Some("voip".to_string()));
+
+        assert_eq!(
+            detector.detect_service_family("mysql", ""),
+            Some("database".to_string())
+        );
+        assert_eq!(
+            detector.detect_service_family("http", ""),
+            Some("web".to_string())
+        );
+        assert_eq!(
+            detector.detect_service_family("smtp", ""),
+            Some("mail".to_string())
+        );
+        assert_eq!(
+            detector.detect_service_family("ssh", ""),
+            Some("remote-access".to_string())
+        );
+        assert_eq!(
+            detector.detect_service_family("ftp", ""),
+            Some("file-transfer".to_string())
+        );
+        assert_eq!(
+            detector.detect_service_family("ldap", ""),
+            Some("directory".to_string())
+        );
+        assert_eq!(
+            detector.detect_service_family("amqp", ""),
+            Some("messaging".to_string())
+        );
+        assert_eq!(
+            detector.detect_service_family("docker", ""),
+            Some("container".to_string())
+        );
+        assert_eq!(
+            detector.detect_service_family("snmp", ""),
+            Some("monitoring".to_string())
+        );
+        assert_eq!(
+            detector.detect_service_family("bgp", ""),
+            Some("routing".to_string())
+        );
+        assert_eq!(
+            detector.detect_service_family("sip", ""),
+            Some("voip".to_string())
+        );
     }
 
     #[test]
     fn test_detect_os_hint() {
         let detector = ServiceDetector::new(1000);
-        
-        assert_eq!(detector.detect_os_hint("Server: Microsoft-IIS/10.0"), Some("Windows".to_string()));
-        assert_eq!(detector.detect_os_hint("Server: nginx/1.18.0 (Ubuntu)"), Some("Linux".to_string()));
-        assert_eq!(detector.detect_os_hint("Server: Apache/2.4.41 (Ubuntu)"), Some("Linux".to_string()));
-        assert_eq!(detector.detect_os_hint("SSH-2.0-OpenSSH_8.2p1 Ubuntu"), Some("Linux".to_string()));
-        assert_eq!(detector.detect_os_hint("SSH-2.0-Cisco-1.25"), Some("Cisco IOS".to_string()));
+
+        assert_eq!(
+            detector.detect_os_hint("Server: Microsoft-IIS/10.0"),
+            Some("Windows".to_string())
+        );
+        assert_eq!(
+            detector.detect_os_hint("Server: nginx/1.18.0 (Ubuntu)"),
+            Some("Linux".to_string())
+        );
+        assert_eq!(
+            detector.detect_os_hint("Server: Apache/2.4.41 (Ubuntu)"),
+            Some("Linux".to_string())
+        );
+        assert_eq!(
+            detector.detect_os_hint("SSH-2.0-OpenSSH_8.2p1 Ubuntu"),
+            Some("Linux".to_string())
+        );
+        assert_eq!(
+            detector.detect_os_hint("SSH-2.0-Cisco-1.25"),
+            Some("Cisco IOS".to_string())
+        );
     }
 
     #[test]
     fn test_generate_cpe() {
         let detector = ServiceDetector::new(1000);
-        
+
         let cpe = detector.generate_cpe("mysql", None, Some("8.0.28"));
         assert_eq!(cpe, Some("cpe:/a:mysql:mysql:8.0.28".to_string()));
-        
+
         let cpe = detector.generate_cpe("http", Some("nginx"), Some("1.18.0"));
         assert_eq!(cpe, Some("cpe:/a:nginx:nginx:1.18.0".to_string()));
-        
+
         let cpe = detector.generate_cpe("ssh", None, Some("8.2p1"));
         assert_eq!(cpe, Some("cpe:/a:openbsd:openssh:8.2p1".to_string()));
-        
+
         let cpe = detector.generate_cpe("unknown_service", None, None);
         assert_eq!(cpe, None);
     }
@@ -1597,16 +1995,16 @@ mod tests {
     #[test]
     fn test_detect_by_port_database_services() {
         let detector = ServiceDetector::new(1000);
-        
+
         let info = detector.detect_by_port(3306, None);
         assert_eq!(info.service, "mysql");
         assert_eq!(info.service_family, Some("database".to_string()));
         assert!(info.cpe.is_some());
-        
+
         let info = detector.detect_by_port(5432, None);
         assert_eq!(info.service, "postgresql");
         assert_eq!(info.service_family, Some("database".to_string()));
-        
+
         let info = detector.detect_by_port(6379, None);
         assert_eq!(info.service, "redis");
         assert_eq!(info.service_family, Some("database".to_string()));
@@ -1615,7 +2013,7 @@ mod tests {
     #[test]
     fn test_detect_by_port_routing() {
         let detector = ServiceDetector::new(1000);
-        
+
         let info = detector.detect_by_port(179, None);
         assert_eq!(info.service, "bgp");
         assert_eq!(info.service_family, Some("routing".to_string()));
@@ -1624,7 +2022,7 @@ mod tests {
     #[test]
     fn test_detect_by_port_management() {
         let detector = ServiceDetector::new(1000);
-        
+
         let info = detector.detect_by_port(161, None);
         assert_eq!(info.service, "snmp");
         assert_eq!(info.service_family, Some("management".to_string()));
@@ -1633,10 +2031,10 @@ mod tests {
     #[test]
     fn test_extract_vnc_version() {
         let detector = ServiceDetector::new(1000);
-        
+
         let version = detector.extract_vnc_version("RFB 003.008");
         assert_eq!(version, Some("003.008".to_string()));
-        
+
         let version = detector.extract_vnc_version("RFB 003.007");
         assert_eq!(version, Some("003.007".to_string()));
     }
@@ -1644,8 +2042,9 @@ mod tests {
     #[test]
     fn test_extract_redis_version() {
         let detector = ServiceDetector::new(1000);
-        
-        let version = detector.extract_redis_version("# Server\r\nredis_version:6.2.6\r\nredis_mode:standalone");
+
+        let version = detector
+            .extract_redis_version("# Server\r\nredis_version:6.2.6\r\nredis_mode:standalone");
         assert_eq!(version, Some("6.2.6".to_string()));
     }
 
@@ -1653,7 +2052,7 @@ mod tests {
     fn test_service_info_has_new_fields() {
         let detector = ServiceDetector::new(1000);
         let info = detector.detect_by_port(80, Some("test banner".to_string()));
-        
+
         assert!(info.service_family.is_some());
         assert!(info.banner.is_some());
         assert!(info.confidence > 0);
@@ -1662,12 +2061,12 @@ mod tests {
     #[test]
     fn test_detect_by_port_windows_services() {
         let detector = ServiceDetector::new(1000);
-        
+
         let info = detector.detect_by_port(135, None);
         assert_eq!(info.service, "msrpc");
         assert_eq!(info.os_hint, Some("Windows".to_string()));
         assert!(info.cpe.is_some());
-        
+
         let info = detector.detect_by_port(445, None);
         assert_eq!(info.service, "microsoft-ds");
         assert_eq!(info.os_hint, Some("Windows".to_string()));
@@ -1677,32 +2076,50 @@ mod tests {
     fn test_extract_ssh_version_with_extra() {
         let detector = ServiceDetector::new(1000);
         let banner = "SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.1";
-        
-        assert_eq!(detector.extract_ssh_version(banner), Some("8.9p1".to_string()));
-        assert_eq!(detector.extract_ssh_extra(banner), Some("Ubuntu-3ubuntu0.1".to_string()));
-        assert_eq!(detector.extract_ssh_protocol(banner), Some("SSH-2.0".to_string()));
+
+        assert_eq!(
+            detector.extract_ssh_version(banner),
+            Some("8.9p1".to_string())
+        );
+        assert_eq!(
+            detector.extract_ssh_extra(banner),
+            Some("Ubuntu-3ubuntu0.1".to_string())
+        );
+        assert_eq!(
+            detector.extract_ssh_protocol(banner),
+            Some("SSH-2.0".to_string())
+        );
     }
 
     #[test]
     fn test_extract_ssh_version_no_extra() {
         let detector = ServiceDetector::new(1000);
         let banner = "SSH-2.0-OpenSSH_8.2p1";
-        
-        assert_eq!(detector.extract_ssh_version(banner), Some("8.2p1".to_string()));
+
+        assert_eq!(
+            detector.extract_ssh_version(banner),
+            Some("8.2p1".to_string())
+        );
         assert_eq!(detector.extract_ssh_extra(banner), None);
-        assert_eq!(detector.extract_ssh_protocol(banner), Some("SSH-2.0".to_string()));
+        assert_eq!(
+            detector.extract_ssh_protocol(banner),
+            Some("SSH-2.0".to_string())
+        );
     }
 
     #[test]
     fn test_analyze_ssh_banner_with_extra() {
         let detector = ServiceDetector::new(1000);
         let banner = "SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.1";
-        
+
         let info = detector.analyze_banner(22, banner).unwrap();
         assert_eq!(info.service, "ssh");
         assert_eq!(info.product, Some("OpenSSH".to_string()));
         assert_eq!(info.version, Some("8.9p1".to_string()));
-        assert_eq!(info.extra_info, Some("SSH-2.0; Ubuntu-3ubuntu0.1".to_string()));
+        assert_eq!(
+            info.extra_info,
+            Some("SSH-2.0; Ubuntu-3ubuntu0.1".to_string())
+        );
         assert_eq!(info.os_hint, Some("Linux".to_string()));
     }
 
@@ -1710,27 +2127,39 @@ mod tests {
     fn test_extract_server_version() {
         let detector = ServiceDetector::new(1000);
         let banner = "HTTP/1.1 200 OK\r\nServer: Apache/2.4.7 (Ubuntu)\r\n";
-        
+
         assert_eq!(detector.extract_server(banner), Some("Apache".to_string()));
-        assert_eq!(detector.extract_server_version(banner), Some("2.4.7".to_string()));
-        assert_eq!(detector.extract_server_extra(banner), Some("Ubuntu".to_string()));
+        assert_eq!(
+            detector.extract_server_version(banner),
+            Some("2.4.7".to_string())
+        );
+        assert_eq!(
+            detector.extract_server_extra(banner),
+            Some("Ubuntu".to_string())
+        );
     }
 
     #[test]
     fn test_extract_server_nginx() {
         let detector = ServiceDetector::new(1000);
         let banner = "HTTP/1.1 200 OK\r\nServer: nginx/1.18.0 (Ubuntu)\r\n";
-        
+
         assert_eq!(detector.extract_server(banner), Some("nginx".to_string()));
-        assert_eq!(detector.extract_server_version(banner), Some("1.18.0".to_string()));
-        assert_eq!(detector.extract_server_extra(banner), Some("Ubuntu".to_string()));
+        assert_eq!(
+            detector.extract_server_version(banner),
+            Some("1.18.0".to_string())
+        );
+        assert_eq!(
+            detector.extract_server_extra(banner),
+            Some("Ubuntu".to_string())
+        );
     }
 
     #[test]
     fn test_extract_x_powered_by() {
         let detector = ServiceDetector::new(1000);
         let banner = "HTTP/1.1 200 OK\r\nX-Powered-By: PHP/7.4.3\r\n";
-        
+
         let result = detector.extract_x_powered_by(banner);
         assert_eq!(result, Some(("PHP".to_string(), Some("7.4.3".to_string()))));
     }
@@ -1739,7 +2168,7 @@ mod tests {
     fn test_analyze_http_apache_banner() {
         let detector = ServiceDetector::new(1000);
         let banner = "HTTP/1.1 200 OK\r\nServer: Apache/2.4.7 (Ubuntu)\r\n";
-        
+
         let info = detector.analyze_banner(80, banner).unwrap();
         assert_eq!(info.service, "http");
         assert_eq!(info.product, Some("Apache httpd".to_string()));
@@ -1752,16 +2181,22 @@ mod tests {
     fn test_extract_ftp_version() {
         let detector = ServiceDetector::new(1000);
         let banner = "220 ProFTPD 1.3.5e Server";
-        
-        assert_eq!(detector.extract_ftp_product(banner), Some("ProFTPD".to_string()));
-        assert_eq!(detector.extract_ftp_version(banner), Some("1.3.5e".to_string()));
+
+        assert_eq!(
+            detector.extract_ftp_product(banner),
+            Some("ProFTPD".to_string())
+        );
+        assert_eq!(
+            detector.extract_ftp_version(banner),
+            Some("1.3.5e".to_string())
+        );
     }
 
     #[test]
     fn test_analyze_ftp_banner() {
         let detector = ServiceDetector::new(1000);
         let banner = "220 ProFTPD 1.3.5e Server";
-        
+
         let info = detector.analyze_banner(21, banner).unwrap();
         assert_eq!(info.service, "ftp");
         assert_eq!(info.product, Some("ProFTPD".to_string()));
@@ -1772,16 +2207,22 @@ mod tests {
     fn test_extract_smtp_product() {
         let detector = ServiceDetector::new(1000);
         let banner = "220 mail.example.com ESMTP Postfix (Ubuntu)";
-        
-        assert_eq!(detector.extract_smtp_product(banner), Some("Postfix".to_string()));
-        assert_eq!(detector.extract_smtp_extra(banner), Some("Ubuntu".to_string()));
+
+        assert_eq!(
+            detector.extract_smtp_product(banner),
+            Some("Postfix".to_string())
+        );
+        assert_eq!(
+            detector.extract_smtp_extra(banner),
+            Some("Ubuntu".to_string())
+        );
     }
 
     #[test]
     fn test_analyze_smtp_banner() {
         let detector = ServiceDetector::new(1000);
         let banner = "220 mail.example.com ESMTP Postfix (Ubuntu)";
-        
+
         let info = detector.analyze_banner(25, banner).unwrap();
         assert_eq!(info.service, "smtp");
         assert_eq!(info.product, Some("Postfix".to_string()));
@@ -1791,18 +2232,27 @@ mod tests {
     #[test]
     fn test_extract_version_word_version_pattern() {
         let detector = ServiceDetector::new(1000);
-        assert_eq!(detector.extract_version("Postfix version 3.6.4"), Some("3.6.4".to_string()));
+        assert_eq!(
+            detector.extract_version("Postfix version 3.6.4"),
+            Some("3.6.4".to_string())
+        );
     }
 
     #[test]
     fn test_extract_version_v_prefix_pattern() {
         let detector = ServiceDetector::new(1000);
-        assert_eq!(detector.extract_version("ProFTPD v1.3.5e Server"), Some("1.3.5e".to_string()));
+        assert_eq!(
+            detector.extract_version("ProFTPD v1.3.5e Server"),
+            Some("1.3.5e".to_string())
+        );
     }
 
     #[test]
     fn test_extract_version_slash_pattern() {
         let detector = ServiceDetector::new(1000);
-        assert_eq!(detector.extract_version("Apache/2.4.7 (Ubuntu)"), Some("2.4.7".to_string()));
+        assert_eq!(
+            detector.extract_version("Apache/2.4.7 (Ubuntu)"),
+            Some("2.4.7".to_string())
+        );
     }
 }

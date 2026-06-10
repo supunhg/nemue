@@ -306,9 +306,7 @@ mod tests {
         let results = create_test_results(5);
 
         let mut buffer = Vec::new();
-        encryptor
-            .encrypt_to_writer(&results, &mut buffer)
-            .unwrap();
+        encryptor.encrypt_to_writer(&results, &mut buffer).unwrap();
         assert!(!buffer.is_empty());
 
         let mut cursor = std::io::Cursor::new(buffer);

@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::IpAddr;
@@ -131,11 +132,7 @@ impl ScanDeduplicator {
             })
             .collect();
 
-        deduped_results.sort_by(|a, b| {
-            a.target
-                .cmp(&b.target)
-                .then(a.port.cmp(&b.port))
-        });
+        deduped_results.sort_by(|a, b| a.target.cmp(&b.target).then(a.port.cmp(&b.port)));
 
         let dedup_ratio = if total_input > 0 {
             duplicates_found as f64 / total_input as f64
@@ -186,10 +183,7 @@ impl ScanDeduplicator {
                 protocol: key.protocol,
                 count: entries.len(),
                 states: entries.iter().map(|e| format!("{:?}", e.state)).collect(),
-                services: entries
-                    .iter()
-                    .filter_map(|e| e.service.clone())
-                    .collect(),
+                services: entries.iter().filter_map(|e| e.service.clone()).collect(),
             })
             .collect()
     }

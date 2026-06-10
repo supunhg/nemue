@@ -1,9 +1,9 @@
 pub mod anomaly;
-pub mod threat;
-pub mod predictive;
 pub mod nlp;
+pub mod predictive;
+pub mod threat;
 
 pub use anomaly::{AnomalyDetector, AnomalyResult, AnomalyType};
-pub use threat::{MlThreatScorer, IpReputation, DomainReputation, ServiceRisk, VulnPriority};
-pub use predictive::{PredictiveEngine, VulnPrediction, AttackVector, VersionPrediction};
-pub use nlp::{NlpEngine, NlpReport, Entity, ServiceClassification};
+pub use nlp::{Entity, NlpEngine, NlpReport, ServiceClassification};
+pub use predictive::{AttackVector, PredictiveEngine, VersionPrediction, VulnPrediction};
+pub use threat::{DomainReputation, IpReputation, MlThreatScorer, ServiceRisk, VulnPriority};

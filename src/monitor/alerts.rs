@@ -139,10 +139,7 @@ impl AlertRule {
     }
 
     pub fn condition_string(&self) -> String {
-        format!(
-            "{} {} {}",
-            self.metric_name, self.operator, self.threshold
-        )
+        format!("{} {} {}", self.metric_name, self.operator, self.threshold)
     }
 }
 
@@ -536,7 +533,10 @@ impl AlertManager {
     }
 
     pub fn active_alert_count(&self) -> usize {
-        self.active_alerts.values().filter(|a| a.is_active()).count()
+        self.active_alerts
+            .values()
+            .filter(|a| a.is_active())
+            .count()
     }
 
     pub fn total_alert_count(&self) -> usize {
@@ -688,9 +688,13 @@ mod tests {
 
     #[test]
     fn test_alert_channel_creation() {
-        let channel = AlertChannel::new("email-critical", AlertChannelType::Email, "oncall@example.com")
-            .with_min_severity(AlertSeverity::High)
-            .with_metadata("smtp_server", "smtp.example.com");
+        let channel = AlertChannel::new(
+            "email-critical",
+            AlertChannelType::Email,
+            "oncall@example.com",
+        )
+        .with_min_severity(AlertSeverity::High)
+        .with_metadata("smtp_server", "smtp.example.com");
 
         assert_eq!(channel.name, "email-critical");
         assert_eq!(channel.channel_type, AlertChannelType::Email);
@@ -701,9 +705,8 @@ mod tests {
 
     #[test]
     fn test_alert_channel_accepts_severity() {
-        let channel =
-            AlertChannel::new("slack", AlertChannelType::Slack, "#alerts")
-                .with_min_severity(AlertSeverity::Medium);
+        let channel = AlertChannel::new("slack", AlertChannelType::Slack, "#alerts")
+            .with_min_severity(AlertSeverity::Medium);
 
         assert!(!channel.accepts_severity(AlertSeverity::Info));
         assert!(!channel.accepts_severity(AlertSeverity::Low));
@@ -749,7 +752,13 @@ mod tests {
 
     #[test]
     fn test_alert_lifecycle() {
-        let rule = AlertRule::new("test", "m", ComparisonOperator::GreaterThan, 0.0, AlertSeverity::Low);
+        let rule = AlertRule::new(
+            "test",
+            "m",
+            ComparisonOperator::GreaterThan,
+            0.0,
+            AlertSeverity::Low,
+        );
         let mut alert = Alert::new(&rule, 1.0);
 
         assert_eq!(alert.status, AlertStatus::Active);
@@ -767,7 +776,13 @@ mod tests {
 
     #[test]
     fn test_alert_silence() {
-        let rule = AlertRule::new("test", "m", ComparisonOperator::GreaterThan, 0.0, AlertSeverity::Low);
+        let rule = AlertRule::new(
+            "test",
+            "m",
+            ComparisonOperator::GreaterThan,
+            0.0,
+            AlertSeverity::Low,
+        );
         let mut alert = Alert::new(&rule, 1.0);
         alert.silence();
         assert_eq!(alert.status, AlertStatus::Silenced);
@@ -775,7 +790,13 @@ mod tests {
 
     #[test]
     fn test_alert_escalate() {
-        let rule = AlertRule::new("test", "m", ComparisonOperator::GreaterThan, 0.0, AlertSeverity::Low);
+        let rule = AlertRule::new(
+            "test",
+            "m",
+            ComparisonOperator::GreaterThan,
+            0.0,
+            AlertSeverity::Low,
+        );
         let mut alert = Alert::new(&rule, 1.0);
         alert.escalate();
         alert.escalate();
@@ -784,7 +805,13 @@ mod tests {
 
     #[test]
     fn test_alert_add_notification() {
-        let rule = AlertRule::new("test", "m", ComparisonOperator::GreaterThan, 0.0, AlertSeverity::Low);
+        let rule = AlertRule::new(
+            "test",
+            "m",
+            ComparisonOperator::GreaterThan,
+            0.0,
+            AlertSeverity::Low,
+        );
         let mut alert = Alert::new(&rule, 1.0);
         alert.add_notification(AlertNotification {
             channel_id: "ch1".to_string(),
@@ -798,7 +825,13 @@ mod tests {
 
     #[test]
     fn test_alert_duration() {
-        let rule = AlertRule::new("test", "m", ComparisonOperator::GreaterThan, 0.0, AlertSeverity::Low);
+        let rule = AlertRule::new(
+            "test",
+            "m",
+            ComparisonOperator::GreaterThan,
+            0.0,
+            AlertSeverity::Low,
+        );
         let alert = Alert::new(&rule, 1.0);
         let duration = alert.duration_seconds();
         assert!(duration >= 0);
@@ -807,7 +840,13 @@ mod tests {
     #[test]
     fn test_alert_manager_add_rule() {
         let mut mgr = AlertManager::new();
-        let rule = AlertRule::new("test", "m", ComparisonOperator::GreaterThan, 0.0, AlertSeverity::Low);
+        let rule = AlertRule::new(
+            "test",
+            "m",
+            ComparisonOperator::GreaterThan,
+            0.0,
+            AlertSeverity::Low,
+        );
         let id = mgr.add_rule(rule);
         assert!(mgr.get_rule(&id).is_some());
         assert_eq!(mgr.rule_count(), 1);
@@ -816,7 +855,13 @@ mod tests {
     #[test]
     fn test_alert_manager_remove_rule() {
         let mut mgr = AlertManager::new();
-        let rule = AlertRule::new("test", "m", ComparisonOperator::GreaterThan, 0.0, AlertSeverity::Low);
+        let rule = AlertRule::new(
+            "test",
+            "m",
+            ComparisonOperator::GreaterThan,
+            0.0,
+            AlertSeverity::Low,
+        );
         let id = rule.id.clone();
         mgr.add_rule(rule);
         assert!(mgr.remove_rule(&id));
@@ -896,8 +941,20 @@ mod tests {
     #[test]
     fn test_alert_manager_evaluate_different_metrics() {
         let mut mgr = AlertManager::new();
-        mgr.add_rule(AlertRule::new("cpu_rule", "cpu", ComparisonOperator::GreaterThan, 90.0, AlertSeverity::High));
-        mgr.add_rule(AlertRule::new("mem_rule", "mem", ComparisonOperator::GreaterThan, 80.0, AlertSeverity::Medium));
+        mgr.add_rule(AlertRule::new(
+            "cpu_rule",
+            "cpu",
+            ComparisonOperator::GreaterThan,
+            90.0,
+            AlertSeverity::High,
+        ));
+        mgr.add_rule(AlertRule::new(
+            "mem_rule",
+            "mem",
+            ComparisonOperator::GreaterThan,
+            80.0,
+            AlertSeverity::Medium,
+        ));
 
         let alerts = mgr.evaluate_rules("cpu", 95.0);
         assert_eq!(alerts.len(), 1);
@@ -1074,8 +1131,20 @@ mod tests {
     #[test]
     fn test_alert_manager_list_rules() {
         let mut mgr = AlertManager::new();
-        mgr.add_rule(AlertRule::new("a", "m", ComparisonOperator::GreaterThan, 0.0, AlertSeverity::Low));
-        mgr.add_rule(AlertRule::new("b", "m", ComparisonOperator::GreaterThan, 0.0, AlertSeverity::High));
+        mgr.add_rule(AlertRule::new(
+            "a",
+            "m",
+            ComparisonOperator::GreaterThan,
+            0.0,
+            AlertSeverity::Low,
+        ));
+        mgr.add_rule(AlertRule::new(
+            "b",
+            "m",
+            ComparisonOperator::GreaterThan,
+            0.0,
+            AlertSeverity::High,
+        ));
         assert_eq!(mgr.list_rules().len(), 2);
     }
 
@@ -1096,8 +1165,14 @@ mod tests {
 
     #[test]
     fn test_alert_rule_serialization() {
-        let rule = AlertRule::new("test", "cpu", ComparisonOperator::GreaterThan, 90.0, AlertSeverity::High)
-            .with_label("env", "prod");
+        let rule = AlertRule::new(
+            "test",
+            "cpu",
+            ComparisonOperator::GreaterThan,
+            90.0,
+            AlertSeverity::High,
+        )
+        .with_label("env", "prod");
 
         let json = serde_json::to_string(&rule).unwrap();
         let loaded: AlertRule = serde_json::from_str(&json).unwrap();
@@ -1116,7 +1191,13 @@ mod tests {
 
     #[test]
     fn test_alert_serialization() {
-        let rule = AlertRule::new("test", "m", ComparisonOperator::GreaterThan, 0.0, AlertSeverity::Low);
+        let rule = AlertRule::new(
+            "test",
+            "m",
+            ComparisonOperator::GreaterThan,
+            0.0,
+            AlertSeverity::Low,
+        );
         let alert = Alert::new(&rule, 5.0);
         let json = serde_json::to_string(&alert).unwrap();
         let loaded: Alert = serde_json::from_str(&json).unwrap();

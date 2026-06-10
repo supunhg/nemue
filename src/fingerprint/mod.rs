@@ -2,7 +2,10 @@ pub mod os;
 pub mod stack;
 
 pub use os::{OsDetector, OsFamily, OsFingerprint};
-pub use stack::{StackAnalyzer, StackFingerprint, TcpSignature, IcmpSignature, IpSignature, SignatureDatabase, IdSequence, OsSignature};
+pub use stack::{
+    IcmpSignature, IdSequence, IpSignature, OsSignature, SignatureDatabase, StackAnalyzer,
+    StackFingerprint, TcpSignature,
+};
 
-pub mod scan_cache;
 pub mod dedup;
+pub mod scan_cache;

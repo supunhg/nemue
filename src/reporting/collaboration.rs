@@ -1,6 +1,6 @@
 // Report collaboration with shared reports, comments, annotations, versioning, and access control
-use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CollaborationManager {
@@ -168,6 +168,12 @@ pub enum CollabAction {
     ResolveComment,
 }
 
+impl Default for CollaborationManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CollaborationManager {
     pub fn new() -> Self {
         Self {
@@ -177,7 +183,12 @@ impl CollaborationManager {
         }
     }
 
-    pub fn create_shared_report(&mut self, report_id: &str, title: &str, owner: &str) -> &SharedReport {
+    pub fn create_shared_report(
+        &mut self,
+        report_id: &str,
+        title: &str,
+        owner: &str,
+    ) -> &SharedReport {
         let report = SharedReport {
             report_id: report_id.to_string(),
             title: title.to_string(),
@@ -196,11 +207,15 @@ impl CollaborationManager {
     }
 
     pub fn get_report(&self, report_id: &str) -> Option<&SharedReport> {
-        self.shared_reports.iter().find(|r| r.report_id == report_id)
+        self.shared_reports
+            .iter()
+            .find(|r| r.report_id == report_id)
     }
 
     pub fn get_report_mut(&mut self, report_id: &str) -> Option<&mut SharedReport> {
-        self.shared_reports.iter_mut().find(|r| r.report_id == report_id)
+        self.shared_reports
+            .iter_mut()
+            .find(|r| r.report_id == report_id)
     }
 
     pub fn delete_report(&mut self, report_id: &str) -> bool {
@@ -226,7 +241,13 @@ impl CollaborationManager {
         false
     }
 
-    pub fn log_action(&mut self, user: &str, action: CollabAction, resource_id: &str, details: &str) {
+    pub fn log_action(
+        &mut self,
+        user: &str,
+        action: CollabAction,
+        resource_id: &str,
+        details: &str,
+    ) {
         self.audit_log.push(CollabAuditEntry {
             timestamp: Utc::now(),
             user: user.to_string(),
@@ -238,7 +259,11 @@ impl CollaborationManager {
 
     pub fn get_audit_log(&self, resource_id: Option<&str>) -> Vec<&CollabAuditEntry> {
         match resource_id {
-            Some(id) => self.audit_log.iter().filter(|e| e.resource_id == id).collect(),
+            Some(id) => self
+                .audit_log
+                .iter()
+                .filter(|e| e.resource_id == id)
+                .collect(),
             None => self.audit_log.iter().collect(),
         }
     }
@@ -248,12 +273,21 @@ impl CollaborationManager {
     }
 
     pub fn get_access_policy(&self, policy_id: &str) -> Option<&AccessPolicy> {
-        self.access_policies.iter().find(|p| p.policy_id == policy_id)
+        self.access_policies
+            .iter()
+            .find(|p| p.policy_id == policy_id)
     }
 }
 
 impl SharedReport {
-    pub fn add_version(&mut self, version_id: &str, created_by: &str, change_summary: &str, content_hash: &str, size_bytes: u64) {
+    pub fn add_version(
+        &mut self,
+        version_id: &str,
+        created_by: &str,
+        change_summary: &str,
+        content_hash: &str,
+        size_bytes: u64,
+    ) {
         let version_number = self.versions.len() as u32 + 1;
         self.versions.push(ReportVersion {
             version_id: version_id.to_string(),
@@ -272,10 +306,19 @@ impl SharedReport {
     }
 
     pub fn get_version(&self, version_number: u32) -> Option<&ReportVersion> {
-        self.versions.iter().find(|v| v.version_number == version_number)
+        self.versions
+            .iter()
+            .find(|v| v.version_number == version_number)
     }
 
-    pub fn add_comment(&mut self, comment_id: &str, author: &str, content: &str, finding_id: Option<&str>, parent_comment_id: Option<&str>) {
+    pub fn add_comment(
+        &mut self,
+        comment_id: &str,
+        author: &str,
+        content: &str,
+        finding_id: Option<&str>,
+        parent_comment_id: Option<&str>,
+    ) {
         self.comments.push(Comment {
             comment_id: comment_id.to_string(),
             author: author.to_string(),
@@ -291,15 +334,25 @@ impl SharedReport {
     }
 
     pub fn get_comments_for_finding(&self, finding_id: &str) -> Vec<&Comment> {
-        self.comments.iter().filter(|c| c.finding_id.as_deref() == Some(finding_id)).collect()
+        self.comments
+            .iter()
+            .filter(|c| c.finding_id.as_deref() == Some(finding_id))
+            .collect()
     }
 
     pub fn get_thread_comments(&self, parent_id: &str) -> Vec<&Comment> {
-        self.comments.iter().filter(|c| c.parent_comment_id.as_deref() == Some(parent_id)).collect()
+        self.comments
+            .iter()
+            .filter(|c| c.parent_comment_id.as_deref() == Some(parent_id))
+            .collect()
     }
 
     pub fn resolve_comment(&mut self, comment_id: &str) -> bool {
-        if let Some(comment) = self.comments.iter_mut().find(|c| c.comment_id == comment_id) {
+        if let Some(comment) = self
+            .comments
+            .iter_mut()
+            .find(|c| c.comment_id == comment_id)
+        {
             comment.resolved = true;
             comment.updated_at = Some(Utc::now());
             self.updated_at = Utc::now();
@@ -319,16 +372,26 @@ impl SharedReport {
     }
 
     pub fn get_annotations_by_type(&self, kind: &AnnotationKind) -> Vec<&Annotation> {
-        self.annotations.iter().filter(|a| &a.annotation_type == kind).collect()
+        self.annotations
+            .iter()
+            .filter(|a| &a.annotation_type == kind)
+            .collect()
     }
 
     pub fn remove_annotation(&mut self, annotation_id: &str) -> bool {
         let len = self.annotations.len();
-        self.annotations.retain(|a| a.annotation_id != annotation_id);
+        self.annotations
+            .retain(|a| a.annotation_id != annotation_id);
         self.annotations.len() < len
     }
 
-    pub fn share_with(&mut self, shared_with: &str, permission: Permission, shared_by: &str, expires_at: Option<DateTime<Utc>>) {
+    pub fn share_with(
+        &mut self,
+        shared_with: &str,
+        permission: Permission,
+        shared_by: &str,
+        expires_at: Option<DateTime<Utc>>,
+    ) {
         self.shares.retain(|s| s.shared_with != shared_with);
         self.shares.push(ShareEntry {
             shared_with: shared_with.to_string(),
@@ -439,8 +502,7 @@ impl AccessPolicy {
         if pattern == "*" {
             return true;
         }
-        if pattern.ends_with('*') {
-            let prefix = &pattern[..pattern.len() - 1];
+        if let Some(prefix) = pattern.strip_suffix('*') {
             return value.starts_with(prefix);
         }
         pattern == value
@@ -489,7 +551,10 @@ mod tests {
 
         assert_eq!(report.versions.len(), 2);
         assert_eq!(report.latest_version().unwrap().version_number, 2);
-        assert_eq!(report.get_version(1).unwrap().change_summary, "Initial version");
+        assert_eq!(
+            report.get_version(1).unwrap().change_summary,
+            "Initial version"
+        );
     }
 
     #[test]
@@ -546,8 +611,16 @@ mod tests {
         });
 
         assert_eq!(report.annotations.len(), 2);
-        assert_eq!(report.get_annotations_by_type(&AnnotationKind::Highlight).len(), 1);
-        assert_eq!(report.get_annotations_by_type(&AnnotationKind::Flag).len(), 1);
+        assert_eq!(
+            report
+                .get_annotations_by_type(&AnnotationKind::Highlight)
+                .len(),
+            1
+        );
+        assert_eq!(
+            report.get_annotations_by_type(&AnnotationKind::Flag).len(),
+            1
+        );
 
         assert!(report.remove_annotation("a1"));
         assert_eq!(report.annotations.len(), 1);
@@ -559,7 +632,12 @@ mod tests {
         let report = mgr.get_report_mut("r1").unwrap();
 
         report.share_with("bob", Permission::View, "alice", None);
-        report.share_with("charlie", Permission::Edit, "alice", Some(Utc::now() + chrono::Duration::days(30)));
+        report.share_with(
+            "charlie",
+            Permission::Edit,
+            "alice",
+            Some(Utc::now() + chrono::Duration::days(30)),
+        );
 
         assert_eq!(report.shares.len(), 2);
         assert_eq!(report.get_users_with_access().len(), 3); // owner + 2 shares
@@ -597,7 +675,12 @@ mod tests {
         let (mut mgr, _) = setup_collab();
         {
             let report = mgr.get_report_mut("r1").unwrap();
-            report.share_with("bob", Permission::View, "alice", Some(Utc::now() - chrono::Duration::hours(1)));
+            report.share_with(
+                "bob",
+                Permission::View,
+                "alice",
+                Some(Utc::now() - chrono::Duration::hours(1)),
+            );
         }
 
         assert!(!mgr.check_permission("bob", "r1", Permission::View));

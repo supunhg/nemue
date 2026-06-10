@@ -1,5 +1,5 @@
 // Markdown report generation
-use crate::reporting::{ScanReport, Severity, Priority};
+use crate::reporting::{Priority, ScanReport, Severity};
 
 pub struct MarkdownReportGenerator;
 
@@ -48,8 +48,12 @@ impl MarkdownReportGenerator {
              | Open Ports | {}/{} |\n\
              | Risk Score | {:.1}/10 |\n\
              | Compliance Score | {:.1}% |\n\n",
-            s.total_hosts, s.hosts_up, s.open_ports, s.total_ports,
-            s.risk_score, s.compliance_score
+            s.total_hosts,
+            s.hosts_up,
+            s.open_ports,
+            s.total_ports,
+            s.risk_score,
+            s.compliance_score
         )
     }
 
@@ -67,11 +71,21 @@ impl MarkdownReportGenerator {
              | {} Low | {} | {:.1}% |\n\
              | {} Info | {} | {:.1}% |\n\n",
             total,
-            Self::severity_icon(&Severity::Critical), v.critical, Self::pct(v.critical, total),
-            Self::severity_icon(&Severity::High), v.high, Self::pct(v.high, total),
-            Self::severity_icon(&Severity::Medium), v.medium, Self::pct(v.medium, total),
-            Self::severity_icon(&Severity::Low), v.low, Self::pct(v.low, total),
-            Self::severity_icon(&Severity::Info), v.info, Self::pct(v.info, total),
+            Self::severity_icon(&Severity::Critical),
+            v.critical,
+            Self::pct(v.critical, total),
+            Self::severity_icon(&Severity::High),
+            v.high,
+            Self::pct(v.high, total),
+            Self::severity_icon(&Severity::Medium),
+            v.medium,
+            Self::pct(v.medium, total),
+            Self::severity_icon(&Severity::Low),
+            v.low,
+            Self::pct(v.low, total),
+            Self::severity_icon(&Severity::Info),
+            v.info,
+            Self::pct(v.info, total),
         )
     }
 
@@ -86,21 +100,41 @@ impl MarkdownReportGenerator {
 
         for (i, finding) in report.findings.iter().enumerate() {
             let icon = Self::severity_icon(&finding.severity);
-            let cvss = finding.cvss_score.map_or("-".to_string(), |s| format!("{:.1}", s));
-            let cves = if finding.cve_ids.is_empty() { "-".to_string() } else { finding.cve_ids.join(", ") };
+            let cvss = finding
+                .cvss_score
+                .map_or("-".to_string(), |s| format!("{:.1}", s));
+            let cves = if finding.cve_ids.is_empty() {
+                "-".to_string()
+            } else {
+                finding.cve_ids.join(", ")
+            };
             md.push_str(&format!(
                 "| {} | {} {:?} | {} | {} | {} | {} |\n",
-                i + 1, icon, finding.severity, finding.title,
-                finding.affected_hosts.len(), cvss, cves
+                i + 1,
+                icon,
+                finding.severity,
+                finding.title,
+                finding.affected_hosts.len(),
+                cvss,
+                cves
             ));
         }
 
         md.push_str("\n### Detailed Findings\n\n");
         for (i, finding) in report.findings.iter().enumerate() {
             let icon = Self::severity_icon(&finding.severity);
-            md.push_str(&format!("#### {}. {} {} {:?}\n\n", i + 1, icon, finding.title, finding.severity));
+            md.push_str(&format!(
+                "#### {}. {} {} {:?}\n\n",
+                i + 1,
+                icon,
+                finding.title,
+                finding.severity
+            ));
             md.push_str(&format!("**Description:** {}\n\n", finding.description));
-            md.push_str(&format!("**Affected Hosts:** {}\n\n", finding.affected_hosts.join(", ")));
+            md.push_str(&format!(
+                "**Affected Hosts:** {}\n\n",
+                finding.affected_hosts.join(", ")
+            ));
             if let Some(cvss) = finding.cvss_score {
                 md.push_str(&format!("**CVSS Score:** {:.1}\n\n", cvss));
             }
@@ -181,7 +215,11 @@ impl MarkdownReportGenerator {
     }
 
     fn pct(value: usize, total: usize) -> f64 {
-        if total == 0 { 0.0 } else { value as f64 / total as f64 * 100.0 }
+        if total == 0 {
+            0.0
+        } else {
+            value as f64 / total as f64 * 100.0
+        }
     }
 }
 
@@ -316,16 +354,33 @@ mod tests {
     fn test_markdown_empty_findings() {
         let report = ReportBuilder::new()
             .metadata(ReportMetadata {
-                scan_id: "s".to_string(), report_id: "r".to_string(),
-                generated_at: Utc::now(), scan_start: Utc::now(), scan_end: Utc::now(),
-                target_count: 0, version: "0.1.0".to_string(),
+                scan_id: "s".to_string(),
+                report_id: "r".to_string(),
+                generated_at: Utc::now(),
+                scan_start: Utc::now(),
+                scan_end: Utc::now(),
+                target_count: 0,
+                version: "0.1.0".to_string(),
             })
             .summary(ExecutiveSummary {
-                total_hosts: 0, hosts_up: 0, total_ports: 0, open_ports: 0,
-                vulnerabilities: VulnerabilitySummary { critical: 0, high: 0, medium: 0, low: 0, info: 0 },
-                risk_score: 0.0, compliance_score: 0.0,
+                total_hosts: 0,
+                hosts_up: 0,
+                total_ports: 0,
+                open_ports: 0,
+                vulnerabilities: VulnerabilitySummary {
+                    critical: 0,
+                    high: 0,
+                    medium: 0,
+                    low: 0,
+                    info: 0,
+                },
+                risk_score: 0.0,
+                compliance_score: 0.0,
             })
-            .compliance(ComplianceStatus { frameworks: vec![], overall_score: 0.0 })
+            .compliance(ComplianceStatus {
+                frameworks: vec![],
+                overall_score: 0.0,
+            })
             .build()
             .unwrap();
         let md = MarkdownReportGenerator::generate(&report);
@@ -334,14 +389,26 @@ mod tests {
 
     #[test]
     fn test_severity_icon() {
-        assert_eq!(MarkdownReportGenerator::severity_icon(&Severity::Critical), "[CRIT]");
-        assert_eq!(MarkdownReportGenerator::severity_icon(&Severity::Info), "[INFO]");
+        assert_eq!(
+            MarkdownReportGenerator::severity_icon(&Severity::Critical),
+            "[CRIT]"
+        );
+        assert_eq!(
+            MarkdownReportGenerator::severity_icon(&Severity::Info),
+            "[INFO]"
+        );
     }
 
     #[test]
     fn test_priority_icon() {
-        assert_eq!(MarkdownReportGenerator::priority_icon(&Priority::Critical), "[!]");
-        assert_eq!(MarkdownReportGenerator::priority_icon(&Priority::Low), "[~]");
+        assert_eq!(
+            MarkdownReportGenerator::priority_icon(&Priority::Critical),
+            "[!]"
+        );
+        assert_eq!(
+            MarkdownReportGenerator::priority_icon(&Priority::Low),
+            "[~]"
+        );
     }
 
     #[test]

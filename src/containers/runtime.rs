@@ -193,18 +193,10 @@ impl RuntimeScanner {
 
     /// Scan containerd configuration
     fn scan_containerd(&self) -> Option<RuntimeInfo> {
-        let version_output = Command::new("containerd")
-            .arg("--version")
-            .output()
-            .ok()?;
+        let version_output = Command::new("containerd").arg("--version").output().ok()?;
 
         let version_str = String::from_utf8_lossy(&version_output.stdout);
-        let version = version_str
-            .lines()
-            .next()
-            .unwrap_or("")
-            .trim()
-            .to_string();
+        let version = version_str.lines().next().unwrap_or("").trim().to_string();
 
         // Try to read containerd config
         let config_output = Command::new("containerd")
@@ -239,18 +231,10 @@ impl RuntimeScanner {
 
     /// Scan CRI-O configuration
     fn scan_crio(&self) -> Option<RuntimeInfo> {
-        let version_output = Command::new("crio")
-            .arg("--version")
-            .output()
-            .ok()?;
+        let version_output = Command::new("crio").arg("--version").output().ok()?;
 
         let version_str = String::from_utf8_lossy(&version_output.stdout);
-        let version = version_str
-            .lines()
-            .next()
-            .unwrap_or("")
-            .trim()
-            .to_string();
+        let version = version_str.lines().next().unwrap_or("").trim().to_string();
 
         // Try to read CRI-O config
         let config_paths = ["/etc/crio/crio.conf", "/etc/crio/crio.conf.d/"];
@@ -261,7 +245,8 @@ impl RuntimeScanner {
             }
         }
 
-        let seccomp_enabled = !config_str.contains("seccomp_enabled = false") && !config_str.contains("\"\"");
+        let seccomp_enabled =
+            !config_str.contains("seccomp_enabled = false") && !config_str.contains("\"\"");
         let apparmor_enabled = !config_str.contains("apparmor_enabled = false");
 
         Some(RuntimeInfo {
@@ -283,10 +268,7 @@ impl RuntimeScanner {
 
     /// Scan Podman configuration
     fn scan_podman(&self) -> Option<RuntimeInfo> {
-        let version_output = Command::new("podman")
-            .arg("--version")
-            .output()
-            .ok()?;
+        let version_output = Command::new("podman").arg("--version").output().ok()?;
 
         let version_str = String::from_utf8_lossy(&version_output.stdout);
         let version = version_str
@@ -364,7 +346,9 @@ impl RuntimeScanner {
             .output()
             .ok()?;
 
-        let version = String::from_utf8_lossy(&version_output.stdout).trim().to_string();
+        let version = String::from_utf8_lossy(&version_output.stdout)
+            .trim()
+            .to_string();
 
         let info_output = Command::new("docker")
             .arg("info")
@@ -473,14 +457,19 @@ impl RuntimeScanner {
 
             // Check version-specific issues
             if self.config.check_version {
-                findings.extend(self.check_version_vulnerabilities(&info.runtime_type, &info.version));
+                findings
+                    .extend(self.check_version_vulnerabilities(&info.runtime_type, &info.version));
             }
         }
 
         findings
     }
 
-    fn check_version_vulnerabilities(&self, runtime_type: &RuntimeType, version: &str) -> Vec<RuntimeFinding> {
+    fn check_version_vulnerabilities(
+        &self,
+        runtime_type: &RuntimeType,
+        version: &str,
+    ) -> Vec<RuntimeFinding> {
         let mut findings = Vec::new();
 
         // Check for known old versions (simplified - real implementation would check CVE databases)
@@ -575,8 +564,14 @@ mod tests {
     #[test]
     fn test_extract_config_value() {
         let config = "root = \"/var/lib/containerd\"\nlevel = \"info\"\n";
-        assert_eq!(RuntimeScanner::extract_config_value(config, "root"), "/var/lib/containerd");
-        assert_eq!(RuntimeScanner::extract_config_value(config, "level"), "info");
+        assert_eq!(
+            RuntimeScanner::extract_config_value(config, "root"),
+            "/var/lib/containerd"
+        );
+        assert_eq!(
+            RuntimeScanner::extract_config_value(config, "level"),
+            "info"
+        );
         assert_eq!(RuntimeScanner::extract_config_value(config, "missing"), "");
     }
 
@@ -596,7 +591,9 @@ mod tests {
             ..Default::default()
         };
         let findings = scanner.assess_security(&results);
-        assert!(findings.iter().any(|f| f.severity == ContainerSeverity::High && f.title.contains("Seccomp")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == ContainerSeverity::High && f.title.contains("Seccomp")));
     }
 
     #[test]
@@ -615,7 +612,9 @@ mod tests {
             ..Default::default()
         };
         let findings = scanner.assess_security(&results);
-        assert!(findings.iter().any(|f| f.severity == ContainerSeverity::Medium && f.title.contains("AppArmor")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == ContainerSeverity::Medium && f.title.contains("AppArmor")));
     }
 
     #[test]
@@ -634,7 +633,9 @@ mod tests {
             ..Default::default()
         };
         let findings = scanner.assess_security(&results);
-        assert!(findings.iter().any(|f| f.severity == ContainerSeverity::Low && f.title.contains("SELinux")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == ContainerSeverity::Low && f.title.contains("SELinux")));
     }
 
     #[test]
@@ -653,7 +654,10 @@ mod tests {
             ..Default::default()
         };
         let findings = scanner.assess_security(&results);
-        assert!(findings.iter().any(|f| f.severity == ContainerSeverity::Medium && f.title.contains("no_new_privileges")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == ContainerSeverity::Medium
+                && f.title.contains("no_new_privileges")));
     }
 
     #[test]
@@ -672,7 +676,12 @@ mod tests {
             ..Default::default()
         };
         let findings = scanner.assess_security(&results);
-        assert!(findings.iter().any(|f| f.severity == ContainerSeverity::Medium && f.title.contains("User namespace")));
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.severity == ContainerSeverity::Medium
+                    && f.title.contains("User namespace"))
+        );
     }
 
     #[test]

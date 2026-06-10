@@ -4,9 +4,9 @@ use std::collections::HashMap;
 use std::time::Instant;
 use uuid::Uuid;
 
+use super::cicd::CiCdConfig;
 use super::models::*;
 use super::webhooks::WebhookConfig;
-use super::cicd::CiCdConfig;
 
 pub struct AppState {
     scans: HashMap<Uuid, ScanInfo>,
@@ -204,7 +204,9 @@ impl AppState {
     pub fn active_scans(&self) -> usize {
         self.scans
             .values()
-            .filter(|s| s.status.status == ScanState::Running || s.status.status == ScanState::Queued)
+            .filter(|s| {
+                s.status.status == ScanState::Running || s.status.status == ScanState::Queued
+            })
             .count()
     }
 

@@ -1,10 +1,10 @@
+use nemue::api::models::*;
+use nemue::api::state::AppState;
+use nemue::performance::{AtomicFlag, BoundedQueue, LockFreeQueue, MetricsCollector};
+use nemue::scanner::{PortParser, TargetParser};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
-use nemue::api::state::AppState;
-use nemue::api::models::*;
-use nemue::scanner::{PortParser, TargetParser};
-use nemue::performance::{LockFreeQueue, BoundedQueue, AtomicFlag, MetricsCollector};
 
 #[tokio::test]
 async fn test_rapid_scan_creation_stress() {
@@ -17,7 +17,12 @@ async fn test_rapid_scan_creation_stress() {
         let state = state.clone();
         handles.push(tokio::spawn(async move {
             let request = ScanRequest {
-                targets: vec![format!("10.{}.{}.{}", (i / 65536) % 256, (i / 256) % 256, i % 256)],
+                targets: vec![format!(
+                    "10.{}.{}.{}",
+                    (i / 65536) % 256,
+                    (i / 256) % 256,
+                    i % 256
+                )],
                 ports: vec![80],
                 scan_type: ScanType::Tcp,
                 timing: TimingTemplate::Normal,
@@ -40,7 +45,11 @@ async fn test_rapid_scan_creation_stress() {
     let stats = state.get_stats();
 
     assert_eq!(stats.total_scans, 200);
-    assert!(elapsed < Duration::from_secs(10), "200 scans took {:?}", elapsed);
+    assert!(
+        elapsed < Duration::from_secs(10),
+        "200 scans took {:?}",
+        elapsed
+    );
 }
 
 #[test]
@@ -52,7 +61,11 @@ fn test_port_parser_stress() {
     }
 
     let elapsed = start.elapsed();
-    assert!(elapsed < Duration::from_secs(10), "100k port parses took {:?}", elapsed);
+    assert!(
+        elapsed < Duration::from_secs(10),
+        "100k port parses took {:?}",
+        elapsed
+    );
 }
 
 #[test]
@@ -64,7 +77,11 @@ fn test_target_parser_stress() {
     }
 
     let elapsed = start.elapsed();
-    assert!(elapsed < Duration::from_secs(10), "100k target parses took {:?}", elapsed);
+    assert!(
+        elapsed < Duration::from_secs(10),
+        "100k target parses took {:?}",
+        elapsed
+    );
 }
 
 #[test]
@@ -82,7 +99,11 @@ fn test_lockfree_queue_stress() {
 
     let elapsed = start.elapsed();
     assert!(queue.is_empty());
-    assert!(elapsed < Duration::from_secs(5), "Queue stress test took {:?}", elapsed);
+    assert!(
+        elapsed < Duration::from_secs(5),
+        "Queue stress test took {:?}",
+        elapsed
+    );
 }
 
 #[test]
@@ -101,7 +122,11 @@ fn test_bounded_queue_stress() {
 
     let elapsed = start.elapsed();
     assert!(count <= 1000);
-    assert!(elapsed < Duration::from_secs(5), "Bounded queue stress test took {:?}", elapsed);
+    assert!(
+        elapsed < Duration::from_secs(5),
+        "Bounded queue stress test took {:?}",
+        elapsed
+    );
 }
 
 #[test]
@@ -115,7 +140,11 @@ fn test_atomic_flag_stress() {
     }
 
     let elapsed = start.elapsed();
-    assert!(elapsed < Duration::from_secs(5), "Atomic flag stress test took {:?}", elapsed);
+    assert!(
+        elapsed < Duration::from_secs(5),
+        "Atomic flag stress test took {:?}",
+        elapsed
+    );
 }
 
 #[tokio::test]
@@ -133,7 +162,11 @@ async fn test_metrics_collector_stress() {
     let elapsed = start.elapsed();
     let snapshot = metrics.snapshot().await;
     assert_eq!(snapshot.packets_sent, 1000000);
-    assert!(elapsed < Duration::from_secs(5), "Metrics stress test took {:?}", elapsed);
+    assert!(
+        elapsed < Duration::from_secs(5),
+        "Metrics stress test took {:?}",
+        elapsed
+    );
 }
 
 #[tokio::test]

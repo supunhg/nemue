@@ -92,11 +92,7 @@ impl ResponseCache {
     /// Try to serve from cache. Returns `CacheResult::Hit` if a fresh entry
     /// exists, or `CacheResult::Stale` with the stale entry for conditional
     /// revalidation.
-    pub async fn lookup(
-        &self,
-        cache_key: &str,
-        if_none_match: Option<&str>,
-    ) -> CacheResult {
+    pub async fn lookup(&self, cache_key: &str, if_none_match: Option<&str>) -> CacheResult {
         let entries = self.entries.read().await;
         match entries.get(cache_key) {
             Some(entry) => {
@@ -238,7 +234,10 @@ mod tests {
     #[tokio::test]
     async fn test_cache_miss() {
         let cache = ResponseCache::new(test_config());
-        assert!(matches!(cache.lookup("missing", None).await, CacheResult::Miss));
+        assert!(matches!(
+            cache.lookup("missing", None).await,
+            CacheResult::Miss
+        ));
     }
 
     #[tokio::test]
@@ -285,11 +284,12 @@ mod tests {
     #[tokio::test]
     async fn test_invalidate() {
         let cache = ResponseCache::new(test_config());
-        cache
-            .store("key1", b"v".to_vec(), "text/plain", None)
-            .await;
+        cache.store("key1", b"v".to_vec(), "text/plain", None).await;
         assert!(cache.invalidate("key1").await);
-        assert!(matches!(cache.lookup("key1", None).await, CacheResult::Miss));
+        assert!(matches!(
+            cache.lookup("key1", None).await,
+            CacheResult::Miss
+        ));
     }
 
     #[tokio::test]
@@ -319,15 +319,9 @@ mod tests {
         };
         let cache = ResponseCache::new(config);
 
-        cache
-            .store("a", b"1".to_vec(), "text/plain", None)
-            .await;
-        cache
-            .store("b", b"2".to_vec(), "text/plain", None)
-            .await;
-        cache
-            .store("c", b"3".to_vec(), "text/plain", None)
-            .await;
+        cache.store("a", b"1".to_vec(), "text/plain", None).await;
+        cache.store("b", b"2".to_vec(), "text/plain", None).await;
+        cache.store("c", b"3".to_vec(), "text/plain", None).await;
 
         assert_eq!(cache.len().await, 2);
         assert!(matches!(cache.lookup("a", None).await, CacheResult::Miss));
@@ -346,9 +340,7 @@ mod tests {
     #[tokio::test]
     async fn test_clear() {
         let cache = ResponseCache::new(test_config());
-        cache
-            .store("k", b"v".to_vec(), "text/plain", None)
-            .await;
+        cache.store("k", b"v".to_vec(), "text/plain", None).await;
         cache.clear().await;
         assert!(cache.is_empty().await);
     }

@@ -1,6 +1,6 @@
 // Report scheduling with recurring generation, distribution, and archiving
-use serde::{Serialize, Deserialize};
-use chrono::{DateTime, Utc, Duration};
+use chrono::{DateTime, Duration, Utc};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -185,7 +185,10 @@ impl ReportScheduler {
 
     pub fn get_due_schedules(&self) -> Vec<&ReportSchedule> {
         let now = Utc::now();
-        self.schedules.iter().filter(|s| s.enabled && s.next_run <= now).collect()
+        self.schedules
+            .iter()
+            .filter(|s| s.enabled && s.next_run <= now)
+            .collect()
     }
 
     pub fn mark_executed(&mut self, schedule_id: &str, next_run: DateTime<Utc>) {
@@ -222,19 +225,31 @@ impl ReportScheduler {
         self.generation_log.push(entry);
     }
 
-    pub fn get_archive_entries(&self, report_type: Option<&ScheduledReportType>) -> Vec<&ArchiveEntry> {
+    pub fn get_archive_entries(
+        &self,
+        report_type: Option<&ScheduledReportType>,
+    ) -> Vec<&ArchiveEntry> {
         match report_type {
-            Some(t) => self.archive.entries.iter().filter(|e| &e.report_type == t).collect(),
+            Some(t) => self
+                .archive
+                .entries
+                .iter()
+                .filter(|e| &e.report_type == t)
+                .collect(),
             None => self.archive.entries.iter().collect(),
         }
     }
 
     pub fn archive_stats(&self) -> ArchiveStats {
         let total_size: u64 = self.archive.entries.iter().map(|e| e.size_bytes).sum();
-        let by_type = self.archive.entries.iter().fold(HashMap::new(), |mut acc, e| {
-            *acc.entry(format!("{:?}", e.report_type)).or_insert(0usize) += 1;
-            acc
-        });
+        let by_type = self
+            .archive
+            .entries
+            .iter()
+            .fold(HashMap::new(), |mut acc, e| {
+                *acc.entry(format!("{:?}", e.report_type)).or_insert(0usize) += 1;
+                acc
+            });
 
         ArchiveStats {
             total_entries: self.archive.entries.len(),
@@ -256,7 +271,12 @@ pub struct ArchiveStats {
 }
 
 impl ReportSchedule {
-    pub fn new(id: &str, name: &str, report_type: ScheduledReportType, recurrence: Recurrence) -> Self {
+    pub fn new(
+        id: &str,
+        name: &str,
+        report_type: ScheduledReportType,
+        recurrence: Recurrence,
+    ) -> Self {
         Self {
             id: id.to_string(),
             name: name.to_string(),
@@ -356,14 +376,23 @@ impl DistributionList {
 impl ReportArchive {
     pub fn search(&self, query: &str) -> Vec<&ArchiveEntry> {
         let query_lower = query.to_lowercase();
-        self.entries.iter().filter(|e| {
-            e.file_path.to_lowercase().contains(&query_lower)
-                || e.metadata.targets.iter().any(|t| t.to_lowercase().contains(&query_lower))
-        }).collect()
+        self.entries
+            .iter()
+            .filter(|e| {
+                e.file_path.to_lowercase().contains(&query_lower)
+                    || e.metadata
+                        .targets
+                        .iter()
+                        .any(|t| t.to_lowercase().contains(&query_lower))
+            })
+            .collect()
     }
 
     pub fn entries_in_range(&self, start: DateTime<Utc>, end: DateTime<Utc>) -> Vec<&ArchiveEntry> {
-        self.entries.iter().filter(|e| e.generated_at >= start && e.generated_at <= end).collect()
+        self.entries
+            .iter()
+            .filter(|e| e.generated_at >= start && e.generated_at <= end)
+            .collect()
     }
 }
 
@@ -372,9 +401,14 @@ mod tests {
     use super::*;
 
     fn sample_schedule(id: &str) -> ReportSchedule {
-        ReportSchedule::new(id, "Weekly Scan Report", ScheduledReportType::FullScan, Recurrence::Weekly)
-            .with_targets(vec!["192.168.1.0/24".to_string()])
-            .with_formats(vec![OutputFormat::Html, OutputFormat::Pdf])
+        ReportSchedule::new(
+            id,
+            "Weekly Scan Report",
+            ScheduledReportType::FullScan,
+            Recurrence::Weekly,
+        )
+        .with_targets(vec!["192.168.1.0/24".to_string()])
+        .with_formats(vec![OutputFormat::Html, OutputFormat::Pdf])
     }
 
     #[test]
@@ -426,12 +460,27 @@ mod tests {
         let past = Utc::now() - Duration::hours(1);
         let future = Utc::now() + Duration::hours(1);
 
-        let due = ReportSchedule::new("s1", "Due", ScheduledReportType::FullScan, Recurrence::Daily)
-            .with_next_run(past);
-        let not_due = ReportSchedule::new("s2", "Not Due", ScheduledReportType::FullScan, Recurrence::Daily)
-            .with_next_run(future);
+        let due = ReportSchedule::new(
+            "s1",
+            "Due",
+            ScheduledReportType::FullScan,
+            Recurrence::Daily,
+        )
+        .with_next_run(past);
+        let not_due = ReportSchedule::new(
+            "s2",
+            "Not Due",
+            ScheduledReportType::FullScan,
+            Recurrence::Daily,
+        )
+        .with_next_run(future);
         let disabled = {
-            let mut s = ReportSchedule::new("s3", "Disabled", ScheduledReportType::FullScan, Recurrence::Daily);
+            let mut s = ReportSchedule::new(
+                "s3",
+                "Disabled",
+                ScheduledReportType::FullScan,
+                Recurrence::Daily,
+            );
             s.next_run = past;
             s.enabled = false;
             s
@@ -652,10 +701,15 @@ mod tests {
 
     #[test]
     fn test_schedule_builder() {
-        let schedule = ReportSchedule::new("s1", "Daily Compliance", ScheduledReportType::ComplianceReport, Recurrence::Daily)
-            .with_targets(vec!["10.0.0.0/8".to_string()])
-            .with_formats(vec![OutputFormat::Pdf])
-            .with_distribution("dl1");
+        let schedule = ReportSchedule::new(
+            "s1",
+            "Daily Compliance",
+            ScheduledReportType::ComplianceReport,
+            Recurrence::Daily,
+        )
+        .with_targets(vec!["10.0.0.0/8".to_string()])
+        .with_formats(vec![OutputFormat::Pdf])
+        .with_distribution("dl1");
 
         assert_eq!(schedule.config.targets.len(), 1);
         assert_eq!(schedule.config.output_formats, vec![OutputFormat::Pdf]);
@@ -674,7 +728,12 @@ mod tests {
 
     #[test]
     fn test_calculate_next_run() {
-        let schedule = ReportSchedule::new("s1", "Test", ScheduledReportType::FullScan, Recurrence::Daily);
+        let schedule = ReportSchedule::new(
+            "s1",
+            "Test",
+            ScheduledReportType::FullScan,
+            Recurrence::Daily,
+        );
         let next = schedule.calculate_next_run();
         assert!(next > Utc::now());
     }
@@ -708,13 +767,22 @@ mod tests {
         });
 
         assert_eq!(scheduler.generation_log.len(), 1);
-        assert_eq!(scheduler.generation_log[0].status, GenerationStatus::Success);
+        assert_eq!(
+            scheduler.generation_log[0].status,
+            GenerationStatus::Success
+        );
     }
 
     #[test]
     fn test_schedule_report_types() {
-        assert_ne!(ScheduledReportType::FullScan, ScheduledReportType::ExecutiveSummary);
-        assert_ne!(ScheduledReportType::ComplianceReport, ScheduledReportType::VulnerabilityTrend);
+        assert_ne!(
+            ScheduledReportType::FullScan,
+            ScheduledReportType::ExecutiveSummary
+        );
+        assert_ne!(
+            ScheduledReportType::ComplianceReport,
+            ScheduledReportType::VulnerabilityTrend
+        );
     }
 
     #[test]

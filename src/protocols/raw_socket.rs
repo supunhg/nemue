@@ -65,17 +65,20 @@ impl RawSocket {
     pub fn send(&self, packet: &[u8]) -> Result<()> {
         match &self.inner {
             #[cfg(target_os = "linux")]
-            PlatformSocket::Linux { interface, source_ip } => {
-                Self::linux_send(interface, *source_ip, packet)
-            }
+            PlatformSocket::Linux {
+                interface,
+                source_ip,
+            } => Self::linux_send(interface, *source_ip, packet),
             #[cfg(target_os = "macos")]
-            PlatformSocket::Macos { interface, source_ip } => {
-                Self::macos_send(interface, *source_ip, packet)
-            }
+            PlatformSocket::Macos {
+                interface,
+                source_ip,
+            } => Self::macos_send(interface, *source_ip, packet),
             #[cfg(target_os = "windows")]
-            PlatformSocket::Windows { interface, source_ip } => {
-                Self::windows_send(interface, *source_ip, packet)
-            }
+            PlatformSocket::Windows {
+                interface,
+                source_ip,
+            } => Self::windows_send(interface, *source_ip, packet),
             #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
             _ => Err(anyhow!("Unsupported platform")),
         }
@@ -85,17 +88,11 @@ impl RawSocket {
     pub fn receive(&self, buffer: &mut [u8]) -> Result<usize> {
         match &self.inner {
             #[cfg(target_os = "linux")]
-            PlatformSocket::Linux { interface, .. } => {
-                Self::linux_receive(interface, buffer)
-            }
+            PlatformSocket::Linux { interface, .. } => Self::linux_receive(interface, buffer),
             #[cfg(target_os = "macos")]
-            PlatformSocket::Macos { interface, .. } => {
-                Self::macos_receive(interface, buffer)
-            }
+            PlatformSocket::Macos { interface, .. } => Self::macos_receive(interface, buffer),
             #[cfg(target_os = "windows")]
-            PlatformSocket::Windows { interface, .. } => {
-                Self::windows_receive(interface, buffer)
-            }
+            PlatformSocket::Windows { interface, .. } => Self::windows_receive(interface, buffer),
             #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
             _ => Err(anyhow!("Unsupported platform")),
         }
@@ -105,17 +102,11 @@ impl RawSocket {
     pub fn set_bpf_filter(&self, filter: &str) -> Result<()> {
         match &self.inner {
             #[cfg(target_os = "linux")]
-            PlatformSocket::Linux { interface, .. } => {
-                Self::linux_set_bpf(interface, filter)
-            }
+            PlatformSocket::Linux { interface, .. } => Self::linux_set_bpf(interface, filter),
             #[cfg(target_os = "macos")]
-            PlatformSocket::Macos { interface, .. } => {
-                Self::macos_set_bpf(interface, filter)
-            }
+            PlatformSocket::Macos { interface, .. } => Self::macos_set_bpf(interface, filter),
             #[cfg(target_os = "windows")]
-            PlatformSocket::Windows { interface, .. } => {
-                Self::windows_set_bpf(interface, filter)
-            }
+            PlatformSocket::Windows { interface, .. } => Self::windows_set_bpf(interface, filter),
             #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
             _ => Err(anyhow!("Unsupported platform")),
         }
@@ -161,7 +152,9 @@ impl RawSocket {
         }
         #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
         {
-            Err(anyhow!("Unsupported platform: only Linux, macOS, and Windows are supported"))
+            Err(anyhow!(
+                "Unsupported platform: only Linux, macOS, and Windows are supported"
+            ))
         }
     }
 
@@ -222,7 +215,8 @@ impl RawSocket {
             _ => return Err(anyhow!("Failed to create raw socket")),
         };
 
-        let _ = tx.send_to(packet, None)
+        let _ = tx
+            .send_to(packet, None)
             .ok_or_else(|| anyhow!("Failed to send packet"))?;
 
         Ok(())
@@ -295,17 +289,23 @@ impl RawSocket {
 
     #[cfg(target_os = "windows")]
     fn windows_send(interface: &str, source_ip: Ipv4Addr, packet: &[u8]) -> Result<()> {
-        Err(anyhow!("Windows raw sockets require Npcap. Install from https://npcap.com/"))
+        Err(anyhow!(
+            "Windows raw sockets require Npcap. Install from https://npcap.com/"
+        ))
     }
 
     #[cfg(target_os = "windows")]
     fn windows_receive(interface: &str, buffer: &mut [u8]) -> Result<usize> {
-        Err(anyhow!("Windows raw sockets require Npcap. Install from https://npcap.com/"))
+        Err(anyhow!(
+            "Windows raw sockets require Npcap. Install from https://npcap.com/"
+        ))
     }
 
     #[cfg(target_os = "windows")]
     fn windows_set_bpf(interface: &str, filter: &str) -> Result<()> {
-        Err(anyhow!("Windows raw sockets require Npcap. Install from https://npcap.com/"))
+        Err(anyhow!(
+            "Windows raw sockets require Npcap. Install from https://npcap.com/"
+        ))
     }
 }
 

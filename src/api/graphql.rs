@@ -217,16 +217,20 @@ impl GraphQLExecutor {
     async fn resolve_scans(&self) -> GraphQLResponse {
         let state = self.app_state.read().await;
         let response = state.list_scans(1, 100);
-        let scans: Vec<serde_json::Value> = response.scans.iter().map(|s| {
-            serde_json::json!({
-                "scanId": s.scan_id.to_string(),
-                "status": format!("{:?}", s.status).to_lowercase(),
-                "targetsCount": s.targets_count,
-                "portsCount": s.ports_count,
-                "startedAt": s.started_at.to_rfc3339(),
-                "completedAt": s.completed_at.map(|dt| dt.to_rfc3339()),
+        let scans: Vec<serde_json::Value> = response
+            .scans
+            .iter()
+            .map(|s| {
+                serde_json::json!({
+                    "scanId": s.scan_id.to_string(),
+                    "status": format!("{:?}", s.status).to_lowercase(),
+                    "targetsCount": s.targets_count,
+                    "portsCount": s.ports_count,
+                    "startedAt": s.started_at.to_rfc3339(),
+                    "completedAt": s.completed_at.map(|dt| dt.to_rfc3339()),
+                })
             })
-        }).collect();
+            .collect();
 
         GraphQLResponse::success(serde_json::json!({
             "scans": {
@@ -333,9 +337,11 @@ fn extract_string_list(
     if let Some(vars) = variables {
         if let Some(val) = vars.get(field) {
             if let Some(arr) = val.as_array() {
-                return Some(arr.iter()
-                    .filter_map(|v| v.as_str().map(|s| s.to_string()))
-                    .collect());
+                return Some(
+                    arr.iter()
+                        .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                        .collect(),
+                );
             }
         }
     }
@@ -346,7 +352,8 @@ fn extract_string_list(
         if let Some(bracket_start) = rest.find('[') {
             if let Some(bracket_end) = rest.find(']') {
                 let inner = &rest[bracket_start + 1..bracket_end];
-                let items: Vec<String> = inner.split(',')
+                let items: Vec<String> = inner
+                    .split(',')
                     .map(|s| s.trim().trim_matches('"').trim_matches('\'').to_string())
                     .filter(|s| !s.is_empty())
                     .collect();
@@ -368,9 +375,11 @@ fn extract_u16_list(
     if let Some(vars) = variables {
         if let Some(val) = vars.get(field) {
             if let Some(arr) = val.as_array() {
-                return Some(arr.iter()
-                    .filter_map(|v| v.as_u64().map(|n| n as u16))
-                    .collect());
+                return Some(
+                    arr.iter()
+                        .filter_map(|v| v.as_u64().map(|n| n as u16))
+                        .collect(),
+                );
             }
         }
     }
@@ -381,7 +390,8 @@ fn extract_u16_list(
         if let Some(bracket_start) = rest.find('[') {
             if let Some(bracket_end) = rest.find(']') {
                 let inner = &rest[bracket_start + 1..bracket_end];
-                let items: Vec<u16> = inner.split(',')
+                let items: Vec<u16> = inner
+                    .split(',')
                     .map(|s| s.trim().trim_matches('"').trim_matches('\''))
                     .filter_map(|s| s.parse().ok())
                     .collect();
@@ -409,7 +419,8 @@ pub async fn graphql_get_handler(
     data: actix_web::web::Data<Arc<RwLock<AppState>>>,
 ) -> actix_web::HttpResponse {
     let q = query.get("query").cloned().unwrap_or_default();
-    let variables = query.get("variables")
+    let variables = query
+        .get("variables")
         .and_then(|v| serde_json::from_str(v).ok());
 
     let request = GraphQLRequest {
@@ -427,7 +438,7 @@ pub fn graphql_config(cfg: &mut actix_web::web::ServiceConfig) {
     cfg.service(
         actix_web::web::scope("/graphql")
             .route("", actix_web::web::post().to(graphql_handler))
-            .route("", actix_web::web::get().to(graphql_get_handler))
+            .route("", actix_web::web::get().to(graphql_get_handler)),
     );
 }
 
@@ -606,7 +617,10 @@ mod tests {
         };
 
         let executor = GraphQLExecutor::new(state);
-        let query = format!(r#"{{ scan(id: "{}") {{ scanId status progress }} }}"#, scan_id);
+        let query = format!(
+            r#"{{ scan(id: "{}") {{ scanId status progress }} }}"#,
+            scan_id
+        );
         let req = GraphQLRequest {
             query,
             variables: None,
@@ -642,7 +656,10 @@ mod tests {
     fn test_extract_string_list_from_query() {
         let query = r#"mutation { startScan(targets: ["a.com", "b.com"], ports: [80]) }"#;
         let targets = extract_string_list(query, None, "targets");
-        assert_eq!(targets, Some(vec!["a.com".to_string(), "b.com".to_string()]));
+        assert_eq!(
+            targets,
+            Some(vec!["a.com".to_string(), "b.com".to_string()])
+        );
     }
 
     #[test]

@@ -6,15 +6,24 @@
 //! - CIS Docker and Kubernetes benchmark compliance
 //! - Container runtime scanning (containerd, CRI-O, Podman)
 
+pub mod compliance;
 pub mod docker;
 pub mod kubernetes;
-pub mod compliance;
 pub mod runtime;
 
-pub use docker::{DockerScanner, DockerConfig, DockerResults, DockerContainer, DockerImage, DockerNetwork, DockerVolume, DockerSecurityFinding};
-pub use kubernetes::{KubernetesScanner, KubeConfig, KubernetesResults, KubePod, KubeService, KubeDeployment, KubeRbacAssessment, KubeSecurityFinding};
-pub use compliance::{ComplianceScanner, ComplianceConfig, ComplianceReport, ComplianceCheck, ComplianceResult, BenchmarkType};
-pub use runtime::{RuntimeScanner, RuntimeConfig, RuntimeResults, RuntimeType, RuntimeFinding};
+pub use compliance::{
+    BenchmarkType, ComplianceCheck, ComplianceConfig, ComplianceReport, ComplianceResult,
+    ComplianceScanner,
+};
+pub use docker::{
+    DockerConfig, DockerContainer, DockerImage, DockerNetwork, DockerResults, DockerScanner,
+    DockerSecurityFinding, DockerVolume,
+};
+pub use kubernetes::{
+    KubeConfig, KubeDeployment, KubePod, KubeRbacAssessment, KubeSecurityFinding, KubeService,
+    KubernetesResults, KubernetesScanner,
+};
+pub use runtime::{RuntimeConfig, RuntimeFinding, RuntimeResults, RuntimeScanner, RuntimeType};
 
 use serde::{Deserialize, Serialize};
 
@@ -225,13 +234,15 @@ mod tests {
     fn test_assessment_score_calculation() {
         let mut assessment = ContainerSecurityAssessment::new();
         let mut docker_results = DockerResults::default();
-        docker_results.security_findings.push(DockerSecurityFinding {
-            title: "Test".to_string(),
-            description: "Test".to_string(),
-            severity: ContainerSeverity::Critical,
-            category: "test".to_string(),
-            recommendation: "Fix it".to_string(),
-        });
+        docker_results
+            .security_findings
+            .push(DockerSecurityFinding {
+                title: "Test".to_string(),
+                description: "Test".to_string(),
+                severity: ContainerSeverity::Critical,
+                category: "test".to_string(),
+                recommendation: "Fix it".to_string(),
+            });
         assessment.docker_results = Some(docker_results);
         assessment.calculate_score();
 

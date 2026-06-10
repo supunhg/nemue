@@ -276,8 +276,14 @@ impl HealthMonitor {
 
         health.components = self.checks.values().cloned().collect();
 
-        let has_unhealthy = health.components.iter().any(|c| c.status == HealthStatus::Unhealthy);
-        let has_degraded = health.components.iter().any(|c| c.status == HealthStatus::Degraded);
+        let has_unhealthy = health
+            .components
+            .iter()
+            .any(|c| c.status == HealthStatus::Unhealthy);
+        let has_degraded = health
+            .components
+            .iter()
+            .any(|c| c.status == HealthStatus::Degraded);
 
         health.overall_status = if has_unhealthy {
             HealthStatus::Unhealthy
@@ -362,10 +368,26 @@ mod tests {
     #[test]
     fn test_system_health_counts() {
         let mut health = SystemHealth::new("1.0.0", 3600);
-        health.components.push(HealthCheck::new("a", ComponentType::Service, HealthStatus::Healthy));
-        health.components.push(HealthCheck::new("b", ComponentType::Database, HealthStatus::Degraded));
-        health.components.push(HealthCheck::new("c", ComponentType::Cache, HealthStatus::Unhealthy));
-        health.components.push(HealthCheck::new("d", ComponentType::Network, HealthStatus::Healthy));
+        health.components.push(HealthCheck::new(
+            "a",
+            ComponentType::Service,
+            HealthStatus::Healthy,
+        ));
+        health.components.push(HealthCheck::new(
+            "b",
+            ComponentType::Database,
+            HealthStatus::Degraded,
+        ));
+        health.components.push(HealthCheck::new(
+            "c",
+            ComponentType::Cache,
+            HealthStatus::Unhealthy,
+        ));
+        health.components.push(HealthCheck::new(
+            "d",
+            ComponentType::Network,
+            HealthStatus::Healthy,
+        ));
 
         assert_eq!(health.healthy_count(), 2);
         assert_eq!(health.degraded_count(), 1);
@@ -463,7 +485,11 @@ mod tests {
     #[test]
     fn test_health_monitor_update_check() {
         let mut monitor = HealthMonitor::new("1.0.0");
-        monitor.register_check(HealthCheck::new("svc", ComponentType::Service, HealthStatus::Healthy));
+        monitor.register_check(HealthCheck::new(
+            "svc",
+            ComponentType::Service,
+            HealthStatus::Healthy,
+        ));
         assert!(monitor.get_check("svc").unwrap().is_healthy());
 
         monitor.update_check(
@@ -477,8 +503,16 @@ mod tests {
     #[test]
     fn test_health_monitor_system_health_all_healthy() {
         let mut monitor = HealthMonitor::new("1.0.0");
-        monitor.register_check(HealthCheck::new("a", ComponentType::Service, HealthStatus::Healthy));
-        monitor.register_check(HealthCheck::new("b", ComponentType::Database, HealthStatus::Healthy));
+        monitor.register_check(HealthCheck::new(
+            "a",
+            ComponentType::Service,
+            HealthStatus::Healthy,
+        ));
+        monitor.register_check(HealthCheck::new(
+            "b",
+            ComponentType::Database,
+            HealthStatus::Healthy,
+        ));
 
         let health = monitor.get_system_health();
         assert_eq!(health.overall_status, HealthStatus::Healthy);
@@ -489,8 +523,16 @@ mod tests {
     #[test]
     fn test_health_monitor_system_health_degraded() {
         let mut monitor = HealthMonitor::new("1.0.0");
-        monitor.register_check(HealthCheck::new("a", ComponentType::Service, HealthStatus::Healthy));
-        monitor.register_check(HealthCheck::new("b", ComponentType::Cache, HealthStatus::Degraded));
+        monitor.register_check(HealthCheck::new(
+            "a",
+            ComponentType::Service,
+            HealthStatus::Healthy,
+        ));
+        monitor.register_check(HealthCheck::new(
+            "b",
+            ComponentType::Cache,
+            HealthStatus::Degraded,
+        ));
 
         let health = monitor.get_system_health();
         assert_eq!(health.overall_status, HealthStatus::Degraded);
@@ -500,9 +542,21 @@ mod tests {
     #[test]
     fn test_health_monitor_system_health_unhealthy() {
         let mut monitor = HealthMonitor::new("1.0.0");
-        monitor.register_check(HealthCheck::new("a", ComponentType::Service, HealthStatus::Healthy));
-        monitor.register_check(HealthCheck::new("b", ComponentType::Database, HealthStatus::Unhealthy));
-        monitor.register_check(HealthCheck::new("c", ComponentType::Cache, HealthStatus::Degraded));
+        monitor.register_check(HealthCheck::new(
+            "a",
+            ComponentType::Service,
+            HealthStatus::Healthy,
+        ));
+        monitor.register_check(HealthCheck::new(
+            "b",
+            ComponentType::Database,
+            HealthStatus::Unhealthy,
+        ));
+        monitor.register_check(HealthCheck::new(
+            "c",
+            ComponentType::Cache,
+            HealthStatus::Degraded,
+        ));
 
         let health = monitor.get_system_health();
         assert_eq!(health.overall_status, HealthStatus::Unhealthy);
@@ -520,7 +574,11 @@ mod tests {
     #[test]
     fn test_health_monitor_all_healthy_includes_dependencies() {
         let mut monitor = HealthMonitor::new("1.0.0");
-        monitor.register_check(HealthCheck::new("svc", ComponentType::Service, HealthStatus::Healthy));
+        monitor.register_check(HealthCheck::new(
+            "svc",
+            ComponentType::Service,
+            HealthStatus::Healthy,
+        ));
 
         let mut dep = DependencyHealth::new("ext", "https://ext.example.com");
         dep.record_failure("err");
@@ -553,9 +611,11 @@ mod tests {
     #[test]
     fn test_system_health_serialization() {
         let mut health = SystemHealth::new("2.0.0", 7200);
-        health
-            .components
-            .push(HealthCheck::new("api", ComponentType::Service, HealthStatus::Healthy));
+        health.components.push(HealthCheck::new(
+            "api",
+            ComponentType::Service,
+            HealthStatus::Healthy,
+        ));
 
         let json = serde_json::to_string(&health).unwrap();
         let loaded: SystemHealth = serde_json::from_str(&json).unwrap();

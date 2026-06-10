@@ -1,21 +1,30 @@
 use actix_web::{web, HttpRequest, HttpResponse};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
 
 use super::state::AppState;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", content = "payload")]
 pub enum WsClientMessage {
-    Subscribe { scan_id: String },
-    Unsubscribe { scan_id: String },
+    Subscribe {
+        scan_id: String,
+    },
+    Unsubscribe {
+        scan_id: String,
+    },
     Ping,
-    GetStatus { scan_id: String },
-    StreamLogs { scan_id: String, level: Option<String> },
+    GetStatus {
+        scan_id: String,
+    },
+    StreamLogs {
+        scan_id: String,
+        level: Option<String>,
+    },
     StopStream,
 }
 
@@ -150,7 +159,10 @@ impl WsSession {
                 });
                 result
             }
-            WsClientMessage::StreamLogs { scan_id: _, level: _ } => {
+            WsClientMessage::StreamLogs {
+                scan_id: _,
+                level: _,
+            } => {
                 let resp = WsServerMessage::LogEntry(LogEntry {
                     scan_id: "system".to_string(),
                     level: "info".to_string(),
@@ -241,7 +253,7 @@ pub fn ws_config(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/ws")
             .route("", web::get().to(ws_handler))
-            .route("/scans", web::get().to(ws_handler))
+            .route("/scans", web::get().to(ws_handler)),
     );
 }
 
@@ -276,7 +288,9 @@ mod tests {
         session.handle_message(r#"{"type":"Subscribe","payload":{"scan_id":"scan-1"}}"#);
         assert!(session.is_subscribed_to("scan-1"));
 
-        let response = session.handle_message(r#"{"type":"Unsubscribe","payload":{"scan_id":"scan-1"}}"#).unwrap();
+        let response = session
+            .handle_message(r#"{"type":"Unsubscribe","payload":{"scan_id":"scan-1"}}"#)
+            .unwrap();
         assert!(response.contains("Unsubscribed"));
         assert!(!session.is_subscribed_to("scan-1"));
     }
@@ -305,7 +319,11 @@ mod tests {
         let state = Arc::new(RwLock::new(AppState::new()));
         let mut session = WsSession::new(state);
 
-        let response = session.handle_message(r#"{"type":"StreamLogs","payload":{"scan_id":"scan-1","level":"info"}}"#).unwrap();
+        let response = session
+            .handle_message(
+                r#"{"type":"StreamLogs","payload":{"scan_id":"scan-1","level":"info"}}"#,
+            )
+            .unwrap();
         assert!(response.contains("LogEntry"));
         assert!(response.contains("Log streaming connected"));
     }

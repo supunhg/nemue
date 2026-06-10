@@ -1,5 +1,5 @@
 // HTML/SVG interactive visualization for network topology
-use crate::topology::{TopologyMap, DeviceInfo, DeviceType};
+use crate::topology::{DeviceInfo, DeviceType, TopologyMap};
 
 /// Visualization engine for network topology
 pub struct VisualizationEngine;
@@ -10,7 +10,7 @@ impl VisualizationEngine {
         let nodes_json = Self::nodes_to_json(map);
         let links_json = Self::links_to_json(map);
         let js_code = Self::get_d3_script(&nodes_json, &links_json);
-        
+
         format!(
             concat!(
                 "<!DOCTYPE html>\n",
@@ -163,14 +163,14 @@ simulation.on('tick', () => {{
     node.attr('cx', d => d.x).attr('cy', d => d.y);
 }});
 </script>"#,
-            nodes_json,
-            links_json
+            nodes_json, links_json
         )
     }
 
     /// Generate SVG topology diagram
     pub fn generate_svg(map: &TopologyMap) -> String {
-        let mut svg = String::from(r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800">"#);
+        let mut svg =
+            String::from(r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800">"#);
         svg.push_str("\n  <style>");
         svg.push_str("\n    .device { stroke: #333; stroke-width: 2; }");
         svg.push_str("\n    .link { stroke: #999; stroke-width: 2; fill: none; }");
@@ -210,7 +210,9 @@ simulation.on('tick', () => {{
             ));
             svg.push_str(&format!(
                 "  <text class=\"label\" x=\"{}\" y=\"{}\" text-anchor=\"middle\">{}</text>\n",
-                x, y_pos + 50, addr
+                x,
+                y_pos + 50,
+                addr
             ));
         }
 
@@ -220,7 +222,7 @@ simulation.on('tick', () => {{
 
     fn nodes_to_json(map: &TopologyMap) -> String {
         let mut nodes = Vec::new();
-        
+
         for (addr, info) in &map.devices {
             let color = match info.device_type {
                 DeviceType::Router => "#4a90e2",
@@ -230,9 +232,9 @@ simulation.on('tick', () => {{
                 DeviceType::Workstation => "#ab47bc",
                 _ => "#78909c",
             };
-            
+
             let importance = Self::calculate_importance(info);
-            
+
             nodes.push(format!(
                 r#"{{"id": "{}", "label": "{}", "type": "{:?}", "color": "{}", "importance": {}, "os": {}, "hostname": {}}}"#,
                 addr,
@@ -244,13 +246,13 @@ simulation.on('tick', () => {{
                 info.hostname.as_ref().map(|s| format!("\"{}\"", s)).unwrap_or_else(|| "null".to_string())
             ));
         }
-        
+
         format!("[{}]", nodes.join(", "))
     }
 
     fn links_to_json(map: &TopologyMap) -> String {
         let mut links = Vec::new();
-        
+
         for i in 0..map.path_to_target.len().saturating_sub(1) {
             let source = &map.path_to_target[i];
             let target = &map.path_to_target[i + 1];
@@ -259,7 +261,7 @@ simulation.on('tick', () => {{
                 source, target
             ));
         }
-        
+
         format!("[{}]", links.join(", "))
     }
 
@@ -278,20 +280,23 @@ simulation.on('tick', () => {{
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::topology::mapper::{SegmentType, TopologyMetadata};
     use std::collections::HashMap;
     use std::net::IpAddr;
     use std::str::FromStr;
-    use crate::topology::mapper::{TopologyMetadata, SegmentType};
 
     fn create_test_map() -> TopologyMap {
         let mut devices = HashMap::new();
         let router = IpAddr::from_str("192.168.1.1").unwrap();
-        devices.insert(router, DeviceInfo {
-            device_type: DeviceType::Router,
-            os_family: Some("Cisco IOS".to_string()),
-            vendor: Some("Cisco".to_string()),
-            hostname: Some("gw1".to_string()),
-        });
+        devices.insert(
+            router,
+            DeviceInfo {
+                device_type: DeviceType::Router,
+                os_family: Some("Cisco IOS".to_string()),
+                vendor: Some("Cisco".to_string()),
+                hostname: Some("gw1".to_string()),
+            },
+        );
 
         TopologyMap {
             target: IpAddr::from_str("8.8.8.8").unwrap(),

@@ -1,12 +1,12 @@
 // Passive network discovery module
 // Monitors network traffic to discover hosts and services without sending probes
 
-use std::net::IpAddr;
-use std::collections::HashMap;
-use std::time::Duration;
 use chrono::{DateTime, Utc};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::net::IpAddr;
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 /// Passive discovery configuration
 #[derive(Debug, Clone)]
@@ -152,7 +152,7 @@ impl PassiveDiscovery {
         // 2. Capture packets in promiscuous mode
         // 3. Parse DNS, ARP, DHCP, and service banners
         // 4. Update host and service information
-        
+
         // For now, return Ok as placeholder
         Ok(())
     }
@@ -162,13 +162,13 @@ impl PassiveDiscovery {
         // Parse packet headers
         // Extract IP addresses, ports, and payload
         // Update statistics
-        
+
         let mut total_packets = self.total_packets.lock().unwrap();
         *total_packets += 1;
-        
+
         let mut total_bytes = self.total_bytes.lock().unwrap();
         *total_bytes += packet_data.len() as u64;
-        
+
         Ok(())
     }
 
@@ -186,10 +186,10 @@ impl PassiveDiscovery {
             let mac = observation.mac.clone();
             let ip = observation.ip;
             let timestamp = observation.timestamp;
-            
+
             let mut arp_obs = self.arp_observations.lock().unwrap();
             arp_obs.push(observation);
-            
+
             // Update host information
             let mut hosts = self.hosts.lock().unwrap();
             let host = hosts.entry(ip).or_insert_with(|| PassiveHost {
@@ -204,7 +204,7 @@ impl PassiveDiscovery {
                 services: Vec::new(),
                 os_fingerprint: None,
             });
-            
+
             host.last_seen = timestamp;
             host.mac_address = Some(mac);
         }
@@ -215,22 +215,24 @@ impl PassiveDiscovery {
         if self.config.capture_dhcp {
             let mut dhcp_obs = self.dhcp_observations.lock().unwrap();
             dhcp_obs.push(observation.clone());
-            
+
             // Update host information
             let mut hosts = self.hosts.lock().unwrap();
-            let host = hosts.entry(observation.assigned_ip).or_insert_with(|| PassiveHost {
-                ip_address: observation.assigned_ip,
-                mac_address: Some(observation.client_mac.clone()),
-                hostname: observation.hostname.clone(),
-                vendor: None,
-                first_seen: observation.timestamp,
-                last_seen: observation.timestamp,
-                packet_count: 0,
-                byte_count: 0,
-                services: Vec::new(),
-                os_fingerprint: None,
-            });
-            
+            let host = hosts
+                .entry(observation.assigned_ip)
+                .or_insert_with(|| PassiveHost {
+                    ip_address: observation.assigned_ip,
+                    mac_address: Some(observation.client_mac.clone()),
+                    hostname: observation.hostname.clone(),
+                    vendor: None,
+                    first_seen: observation.timestamp,
+                    last_seen: observation.timestamp,
+                    packet_count: 0,
+                    byte_count: 0,
+                    services: Vec::new(),
+                    os_fingerprint: None,
+                });
+
             host.last_seen = observation.timestamp;
             host.mac_address = Some(observation.client_mac);
             if observation.hostname.is_some() {
@@ -264,7 +266,7 @@ impl PassiveDiscovery {
     /// Identify service from port and banner
     fn identify_service(port: u16, banner: &str) -> Option<String> {
         let banner_lower = banner.to_lowercase();
-        
+
         match port {
             21 => Some("ftp".to_string()),
             22 => Some("ssh".to_string()),
@@ -299,7 +301,7 @@ impl PassiveDiscovery {
     fn extract_version(banner: &str) -> Option<String> {
         // Try to extract version information from banner
         // Common patterns: "Apache/2.4.41", "OpenSSH_8.0", "nginx/1.18.0", etc.
-        
+
         let patterns = [
             r"(\d+\.\d+\.\d+)",
             r"v(\d+\.\d+\.\d+)",
@@ -307,7 +309,7 @@ impl PassiveDiscovery {
             r"[_/](\d+\.\d+)",
             r"[_/](\d+\.\d+\.\d+)",
         ];
-        
+
         for pattern in &patterns {
             if let Ok(re) = regex::Regex::new(pattern) {
                 if let Some(captures) = re.captures(banner) {
@@ -317,7 +319,7 @@ impl PassiveDiscovery {
                 }
             }
         }
-        
+
         None
     }
 
@@ -356,11 +358,9 @@ impl PassiveDiscovery {
         let hosts = self.get_hosts();
         let total_packets = *self.total_packets.lock().unwrap();
         let total_bytes = *self.total_bytes.lock().unwrap();
-        
-        let services_discovered = hosts.iter()
-            .map(|h| h.services.len())
-            .sum();
-        
+
+        let services_discovered = hosts.iter().map(|h| h.services.len()).sum();
+
         PassiveResult {
             hosts,
             total_packets,
@@ -371,12 +371,16 @@ impl PassiveDiscovery {
     }
 
     /// Merge with active scan results
-    pub fn merge_with_active(&self, active_hosts: &mut HashMap<IpAddr, crate::scanner::DiscoveryResult>) {
+    pub fn merge_with_active(
+        &self,
+        active_hosts: &mut HashMap<IpAddr, crate::scanner::DiscoveryResult>,
+    ) {
         let passive_hosts = self.get_hosts();
-        
+
         for passive_host in passive_hosts {
-            let active_entry = active_hosts.entry(passive_host.ip_address).or_insert_with(|| {
-                crate::scanner::DiscoveryResult {
+            let active_entry = active_hosts
+                .entry(passive_host.ip_address)
+                .or_insert_with(|| crate::scanner::DiscoveryResult {
                     target: passive_host.ip_address,
                     is_up: true,
                     responding_methods: vec![],
@@ -385,9 +389,8 @@ impl PassiveDiscovery {
                     mac_address: passive_host.mac_address.clone(),
                     vendor: passive_host.vendor.clone(),
                     distance: None,
-                }
-            });
-            
+                });
+
             // Merge information
             if passive_host.hostname.is_some() && active_entry.hostname.is_none() {
                 active_entry.hostname = passive_host.hostname;
@@ -497,7 +500,7 @@ mod tests {
             ttl: 3600,
             timestamp: Utc::now(),
         };
-        
+
         discovery.record_dns(observation);
         let dns_obs = discovery.get_dns_observations();
         assert_eq!(dns_obs.len(), 1);
@@ -513,7 +516,7 @@ mod tests {
             is_request: true,
             timestamp: Utc::now(),
         };
-        
+
         discovery.record_arp(observation);
         let hosts = discovery.get_hosts();
         assert_eq!(hosts.len(), 1);
@@ -529,7 +532,7 @@ mod tests {
             hostname: Some("my-laptop".to_string()),
             timestamp: Utc::now(),
         };
-        
+
         discovery.record_dhcp(observation);
         let hosts = discovery.get_hosts();
         assert_eq!(hosts.len(), 1);
@@ -538,9 +541,18 @@ mod tests {
 
     #[test]
     fn test_identify_service() {
-        assert_eq!(PassiveDiscovery::identify_service(22, ""), Some("ssh".to_string()));
-        assert_eq!(PassiveDiscovery::identify_service(80, ""), Some("http".to_string()));
-        assert_eq!(PassiveDiscovery::identify_service(443, ""), Some("https".to_string()));
+        assert_eq!(
+            PassiveDiscovery::identify_service(22, ""),
+            Some("ssh".to_string())
+        );
+        assert_eq!(
+            PassiveDiscovery::identify_service(80, ""),
+            Some("http".to_string())
+        );
+        assert_eq!(
+            PassiveDiscovery::identify_service(443, ""),
+            Some("https".to_string())
+        );
         assert_eq!(PassiveDiscovery::identify_service(12345, ""), None);
     }
 
@@ -566,17 +578,14 @@ mod tests {
             PassiveDiscovery::extract_version("OpenSSH_8.0"),
             Some("8.0".to_string())
         );
-        assert_eq!(
-            PassiveDiscovery::extract_version("no version here"),
-            None
-        );
+        assert_eq!(PassiveDiscovery::extract_version("no version here"), None);
     }
 
     #[test]
     fn test_record_banner() {
         let discovery = PassiveDiscovery::new(PassiveConfig::default());
         let ip = IpAddr::from_str("192.168.1.100").unwrap();
-        
+
         // First add host via ARP
         discovery.record_arp(ArpObservation {
             ip,
@@ -584,10 +593,10 @@ mod tests {
             is_request: true,
             timestamp: Utc::now(),
         });
-        
+
         // Then record banner
         discovery.record_banner(ip, 22, "tcp", "SSH-2.0-OpenSSH_8.0");
-        
+
         let hosts = discovery.get_hosts();
         assert_eq!(hosts.len(), 1);
         assert_eq!(hosts[0].services.len(), 1);
@@ -597,7 +606,7 @@ mod tests {
     #[test]
     fn test_passive_result() {
         let discovery = PassiveDiscovery::new(PassiveConfig::default());
-        
+
         // Add some test data
         discovery.record_arp(ArpObservation {
             ip: IpAddr::from_str("192.168.1.1").unwrap(),
@@ -605,7 +614,7 @@ mod tests {
             is_request: true,
             timestamp: Utc::now(),
         });
-        
+
         let result = discovery.get_result();
         assert_eq!(result.hosts.len(), 1);
         assert_eq!(result.services_discovered, 0);
@@ -619,7 +628,7 @@ mod tests {
             .with_arp_capture(true)
             .with_max_hosts(1000)
             .build();
-        
+
         assert_eq!(discovery.config.monitor_duration, Duration::from_secs(60));
         assert!(!discovery.config.capture_dns);
         assert!(discovery.config.capture_arp);
@@ -629,18 +638,18 @@ mod tests {
     #[test]
     fn test_clear() {
         let discovery = PassiveDiscovery::new(PassiveConfig::default());
-        
+
         discovery.record_arp(ArpObservation {
             ip: IpAddr::from_str("192.168.1.1").unwrap(),
             mac: "00:11:22:33:44:55".to_string(),
             is_request: true,
             timestamp: Utc::now(),
         });
-        
+
         assert_eq!(discovery.get_hosts().len(), 1);
-        
+
         discovery.clear();
-        
+
         assert_eq!(discovery.get_hosts().len(), 0);
         assert_eq!(discovery.get_arp_observations().len(), 0);
     }

@@ -175,12 +175,16 @@ impl EnipSecurityFinding {
         match self {
             EnipSecurityFinding::NoAuthentication => "EtherNet/IP has no authentication enabled",
             EnipSecurityFinding::UnencryptedProtocol => "EtherNet/IP traffic is unencrypted",
-            EnipSecurityFinding::SessionRegistration => "Sessions can be registered without authentication",
+            EnipSecurityFinding::SessionRegistration => {
+                "Sessions can be registered without authentication"
+            }
             EnipSecurityFinding::IdentityExposed => "Device identity information is exposed",
             EnipSecurityFinding::ListServicesExposed => "Device services can be enumerated",
             EnipSecurityFinding::SendRRDataAccepted => "SendRRData commands are accepted",
             EnipSecurityFinding::DeviceResetSupported => "Device supports remote reset commands",
-            EnipSecurityFinding::DefaultPortUsed => "Device listens on default EtherNet/IP port 44818",
+            EnipSecurityFinding::DefaultPortUsed => {
+                "Device listens on default EtherNet/IP port 44818"
+            }
         }
     }
 }
@@ -319,19 +323,24 @@ impl EnipScanner {
 
         let item_count_offset = 24;
         if data.len() > item_count_offset + 2 {
-            info.item_count = u16::from_be_bytes([data[item_count_offset], data[item_count_offset + 1]]);
+            info.item_count =
+                u16::from_be_bytes([data[item_count_offset], data[item_count_offset + 1]]);
         }
 
         // Parse CIP Identity item (type code 0x000C)
         if data.len() > item_count_offset + 30 {
-            let item_type = u16::from_be_bytes([data[item_count_offset + 2], data[item_count_offset + 3]]);
+            let item_type =
+                u16::from_be_bytes([data[item_count_offset + 2], data[item_count_offset + 3]]);
             if item_type == 0x000C {
-                let _item_length = u16::from_be_bytes([data[item_count_offset + 4], data[item_count_offset + 5]]);
+                let _item_length =
+                    u16::from_be_bytes([data[item_count_offset + 4], data[item_count_offset + 5]]);
 
                 let ident_offset = item_count_offset + 6;
                 if data.len() > ident_offset + 20 {
-                    info.vendor_id = u16::from_be_bytes([data[ident_offset], data[ident_offset + 1]]);
-                    let device_type_code = u16::from_be_bytes([data[ident_offset + 2], data[ident_offset + 3]]);
+                    info.vendor_id =
+                        u16::from_be_bytes([data[ident_offset], data[ident_offset + 1]]);
+                    let device_type_code =
+                        u16::from_be_bytes([data[ident_offset + 2], data[ident_offset + 3]]);
                     info.device_type = DeviceType::from_type_code(device_type_code);
                     info.serial_number = u32::from_be_bytes([
                         data[ident_offset + 12],
@@ -348,7 +357,8 @@ impl EnipScanner {
                         let name_start = name_len_offset + 1;
                         if data.len() >= name_start + name_len {
                             info.product_name = Some(
-                                String::from_utf8_lossy(&data[name_start..name_start + name_len]).to_string(),
+                                String::from_utf8_lossy(&data[name_start..name_start + name_len])
+                                    .to_string(),
                             );
                         }
                     }
@@ -422,7 +432,10 @@ impl EnipScanner {
     }
 
     /// Assess security posture of the EtherNet/IP device
-    pub fn assess_security(&self, device_info: Option<&EnipDeviceInfo>) -> Vec<EnipSecurityFinding> {
+    pub fn assess_security(
+        &self,
+        device_info: Option<&EnipDeviceInfo>,
+    ) -> Vec<EnipSecurityFinding> {
         let mut findings = Vec::new();
 
         findings.push(EnipSecurityFinding::NoAuthentication);
@@ -438,7 +451,10 @@ impl EnipScanner {
                 findings.push(EnipSecurityFinding::ListServicesExposed);
             }
 
-            if info.supported_commands.contains(&EnipCommand::RegisterSession) {
+            if info
+                .supported_commands
+                .contains(&EnipCommand::RegisterSession)
+            {
                 findings.push(EnipSecurityFinding::SessionRegistration);
             }
 
@@ -485,9 +501,18 @@ mod tests {
 
     #[test]
     fn test_enip_command_from_u16() {
-        assert_eq!(EnipCommand::from_u16(0x0004), Some(EnipCommand::ListServices));
-        assert_eq!(EnipCommand::from_u16(0x0063), Some(EnipCommand::ListIdentity));
-        assert_eq!(EnipCommand::from_u16(0x0065), Some(EnipCommand::RegisterSession));
+        assert_eq!(
+            EnipCommand::from_u16(0x0004),
+            Some(EnipCommand::ListServices)
+        );
+        assert_eq!(
+            EnipCommand::from_u16(0x0063),
+            Some(EnipCommand::ListIdentity)
+        );
+        assert_eq!(
+            EnipCommand::from_u16(0x0065),
+            Some(EnipCommand::RegisterSession)
+        );
         assert_eq!(EnipCommand::from_u16(0x006F), Some(EnipCommand::SendRRData));
         assert_eq!(EnipCommand::from_u16(0xFFFF), None);
     }
@@ -495,7 +520,10 @@ mod tests {
     #[test]
     fn test_enip_command_description() {
         assert_eq!(EnipCommand::ListIdentity.description(), "List Identity");
-        assert_eq!(EnipCommand::RegisterSession.description(), "Register Session");
+        assert_eq!(
+            EnipCommand::RegisterSession.description(),
+            "Register Session"
+        );
         assert_eq!(EnipCommand::SendRRData.description(), "Send RR Data");
     }
 
@@ -505,7 +533,10 @@ mod tests {
             DeviceType::from_type_code(0x0C),
             DeviceType::ProgrammableLogicController
         );
-        assert_eq!(DeviceType::from_type_code(0x17), DeviceType::HumanMachineInterface);
+        assert_eq!(
+            DeviceType::from_type_code(0x17),
+            DeviceType::HumanMachineInterface
+        );
         assert_eq!(DeviceType::from_type_code(0x19), DeviceType::IoModule);
         assert_eq!(DeviceType::from_type_code(0xFF), DeviceType::Unknown);
     }
@@ -516,22 +547,35 @@ mod tests {
             DeviceType::ProgrammableLogicController.description(),
             "Programmable Logic Controller (PLC)"
         );
-        assert_eq!(DeviceType::HumanMachineInterface.description(), "Human Machine Interface (HMI)");
+        assert_eq!(
+            DeviceType::HumanMachineInterface.description(),
+            "Human Machine Interface (HMI)"
+        );
     }
 
     #[test]
     fn test_enip_security_finding_severity() {
-        assert_eq!(EnipSecurityFinding::DeviceResetSupported.severity(), "CRITICAL");
+        assert_eq!(
+            EnipSecurityFinding::DeviceResetSupported.severity(),
+            "CRITICAL"
+        );
         assert_eq!(EnipSecurityFinding::NoAuthentication.severity(), "HIGH");
         assert_eq!(EnipSecurityFinding::SendRRDataAccepted.severity(), "HIGH");
-        assert_eq!(EnipSecurityFinding::UnencryptedProtocol.severity(), "MEDIUM");
+        assert_eq!(
+            EnipSecurityFinding::UnencryptedProtocol.severity(),
+            "MEDIUM"
+        );
         assert_eq!(EnipSecurityFinding::IdentityExposed.severity(), "LOW");
     }
 
     #[test]
     fn test_enip_security_finding_description() {
-        assert!(!EnipSecurityFinding::NoAuthentication.description().is_empty());
-        assert!(!EnipSecurityFinding::SessionRegistration.description().is_empty());
+        assert!(!EnipSecurityFinding::NoAuthentication
+            .description()
+            .is_empty());
+        assert!(!EnipSecurityFinding::SessionRegistration
+            .description()
+            .is_empty());
     }
 
     #[test]
@@ -561,7 +605,8 @@ mod tests {
     #[test]
     fn test_enip_header_with_data() {
         let scanner = EnipScanner::new(1000);
-        let header = scanner.build_enip_header(EnipCommand::RegisterSession, &[0x01, 0x02, 0x03, 0x04]);
+        let header =
+            scanner.build_enip_header(EnipCommand::RegisterSession, &[0x01, 0x02, 0x03, 0x04]);
         assert_eq!(header.len(), 28);
         // Length = 4
         assert_eq!(header[2], 0x00);
@@ -571,7 +616,9 @@ mod tests {
     #[tokio::test]
     async fn test_detect_enip_on_closed_port() {
         let scanner = EnipScanner::new(200);
-        let result = scanner.detect_enip(IpAddr::V4([127, 0, 0, 1].into()), 1).await;
+        let result = scanner
+            .detect_enip(IpAddr::V4([127, 0, 0, 1].into()), 1)
+            .await;
         assert!(result.is_ok());
         assert!(!result.unwrap());
     }
@@ -597,8 +644,14 @@ mod tests {
             supported_commands: vec![EnipCommand::ListIdentity, EnipCommand::RegisterSession],
         };
         let findings = scanner.assess_security(Some(&info));
-        assert!(findings.iter().any(|f| matches!(f, EnipSecurityFinding::IdentityExposed)));
-        assert!(findings.iter().any(|f| matches!(f, EnipSecurityFinding::SessionRegistration)));
-        assert!(findings.iter().any(|f| matches!(f, EnipSecurityFinding::ListServicesExposed)));
+        assert!(findings
+            .iter()
+            .any(|f| matches!(f, EnipSecurityFinding::IdentityExposed)));
+        assert!(findings
+            .iter()
+            .any(|f| matches!(f, EnipSecurityFinding::SessionRegistration)));
+        assert!(findings
+            .iter()
+            .any(|f| matches!(f, EnipSecurityFinding::ListServicesExposed)));
     }
 }

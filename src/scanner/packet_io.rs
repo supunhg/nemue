@@ -14,7 +14,10 @@ pub struct PacketIO {
 impl PacketIO {
     /// Create a new PacketIO for the given interface
     pub fn new(interface: String, local_ip: Ipv4Addr) -> Self {
-        Self { interface, local_ip }
+        Self {
+            interface,
+            local_ip,
+        }
     }
 
     /// Get the local IP address
@@ -65,6 +68,12 @@ pub struct InterfaceCache {
     cached: Arc<Mutex<Option<(String, Ipv4Addr)>>>,
 }
 
+impl Default for InterfaceCache {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl InterfaceCache {
     pub fn new() -> Self {
         Self {
@@ -93,10 +102,7 @@ mod tests {
 
     #[test]
     fn test_multi_port_filter() {
-        let filter = PacketIO::build_multi_port_filter(
-            "10.0.0.1".parse().unwrap(),
-            &[22, 80, 443],
-        );
+        let filter = PacketIO::build_multi_port_filter("10.0.0.1".parse().unwrap(), &[22, 80, 443]);
         assert!(filter.contains("tcp port 22"));
         assert!(filter.contains("tcp port 80"));
         assert!(filter.contains("tcp port 443"));

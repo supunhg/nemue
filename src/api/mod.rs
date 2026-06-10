@@ -1,23 +1,23 @@
-use actix_web::{web, App, HttpServer};
 use actix_cors::Cors;
+use actix_web::{web, App, HttpServer};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-pub mod models;
-pub mod handlers;
-pub mod state;
 pub mod auth;
-pub mod webhooks;
-pub mod cicd;
-pub mod security;
-pub mod websocket;
-pub mod graphql;
-pub mod versioning;
-pub mod docs;
-pub mod rate_limit;
 pub mod cache;
-pub mod pagination;
+pub mod cicd;
+pub mod docs;
 pub mod filtering;
+pub mod graphql;
+pub mod handlers;
+pub mod models;
+pub mod pagination;
+pub mod rate_limit;
+pub mod security;
+pub mod state;
+pub mod versioning;
+pub mod webhooks;
+pub mod websocket;
 
 use state::AppState;
 
@@ -74,15 +74,27 @@ pub async fn start_server(bind_addr: &str) -> std::io::Result<()> {
                     .route("/scans", web::post().to(handlers::start_scan))
                     .route("/scans", web::get().to(handlers::list_scans))
                     .route("/scans/{scan_id}", web::get().to(handlers::get_scan_status))
-                    .route("/scans/{scan_id}/results", web::get().to(handlers::get_scan_results))
-                    .route("/scans/{scan_id}/cancel", web::post().to(handlers::cancel_scan))
+                    .route(
+                        "/scans/{scan_id}/results",
+                        web::get().to(handlers::get_scan_results),
+                    )
+                    .route(
+                        "/scans/{scan_id}/cancel",
+                        web::post().to(handlers::cancel_scan),
+                    )
                     .route("/scans/{scan_id}", web::delete().to(handlers::delete_scan))
                     .route("/webhooks", web::post().to(handlers::register_webhook))
                     .route("/webhooks", web::get().to(handlers::list_webhooks))
-                    .route("/webhooks/{webhook_id}", web::delete().to(handlers::delete_webhook))
-                    .route("/webhooks/{webhook_id}/test", web::post().to(handlers::test_webhook))
+                    .route(
+                        "/webhooks/{webhook_id}",
+                        web::delete().to(handlers::delete_webhook),
+                    )
+                    .route(
+                        "/webhooks/{webhook_id}/test",
+                        web::post().to(handlers::test_webhook),
+                    )
                     .route("/cicd/config", web::get().to(handlers::get_cicd_config))
-                    .route("/cicd/evaluate", web::post().to(handlers::evaluate_cicd))
+                    .route("/cicd/evaluate", web::post().to(handlers::evaluate_cicd)),
             )
     })
     .bind(bind_addr)?

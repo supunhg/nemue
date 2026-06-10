@@ -204,7 +204,10 @@ impl WorkflowStep {
 
     pub fn is_ready(&self, completed_ids: &std::collections::HashSet<&str>) -> bool {
         self.status == WorkflowStepStatus::Pending
-            && self.dependencies.iter().all(|dep| completed_ids.contains(dep.as_str()))
+            && self
+                .dependencies
+                .iter()
+                .all(|dep| completed_ids.contains(dep.as_str()))
     }
 
     pub fn mark_waiting(&mut self) {
@@ -316,19 +319,31 @@ impl Workflow {
     }
 
     pub fn completed_steps(&self) -> usize {
-        self.steps.iter().filter(|s| s.status == WorkflowStepStatus::Completed).count()
+        self.steps
+            .iter()
+            .filter(|s| s.status == WorkflowStepStatus::Completed)
+            .count()
     }
 
     pub fn failed_steps(&self) -> usize {
-        self.steps.iter().filter(|s| s.status == WorkflowStepStatus::Failed).count()
+        self.steps
+            .iter()
+            .filter(|s| s.status == WorkflowStepStatus::Failed)
+            .count()
     }
 
     pub fn pending_steps(&self) -> usize {
-        self.steps.iter().filter(|s| s.status == WorkflowStepStatus::Pending).count()
+        self.steps
+            .iter()
+            .filter(|s| s.status == WorkflowStepStatus::Pending)
+            .count()
     }
 
     pub fn running_steps(&self) -> usize {
-        self.steps.iter().filter(|s| s.status == WorkflowStepStatus::Running).count()
+        self.steps
+            .iter()
+            .filter(|s| s.status == WorkflowStepStatus::Running)
+            .count()
     }
 
     pub fn is_complete(&self) -> bool {
@@ -347,15 +362,19 @@ impl Workflow {
         if self.steps.is_empty() {
             return 0.0;
         }
-        let done = self.steps.iter().filter(|s| {
-            matches!(
-                s.status,
-                WorkflowStepStatus::Completed
-                    | WorkflowStepStatus::Failed
-                    | WorkflowStepStatus::Skipped
-                    | WorkflowStepStatus::Cancelled
-            )
-        }).count();
+        let done = self
+            .steps
+            .iter()
+            .filter(|s| {
+                matches!(
+                    s.status,
+                    WorkflowStepStatus::Completed
+                        | WorkflowStepStatus::Failed
+                        | WorkflowStepStatus::Skipped
+                        | WorkflowStepStatus::Cancelled
+                )
+            })
+            .count();
         done as f64 / self.steps.len() as f64
     }
 
@@ -464,9 +483,11 @@ impl WorkflowExecutionEngine {
     pub fn mark_step_running(&mut self, step_id: &str) -> bool {
         if let Some(step) = self.workflow.get_step_mut(step_id) {
             step.mark_running();
-            self.execution_log.push(
-                ExecutionLogEntry::new(step_id, &step.name.clone(), "started"),
-            );
+            self.execution_log.push(ExecutionLogEntry::new(
+                step_id,
+                &step.name.clone(),
+                "started",
+            ));
             true
         } else {
             false
@@ -491,14 +512,15 @@ impl WorkflowExecutionEngine {
         if let Some(step) = self.workflow.get_step_mut(step_id) {
             step.mark_failed(error);
             self.execution_log.push(
-                ExecutionLogEntry::new(step_id, &step.name.clone(), "failed")
-                    .with_details(error),
+                ExecutionLogEntry::new(step_id, &step.name.clone(), "failed").with_details(error),
             );
             if step.can_retry() {
                 step.status = WorkflowStepStatus::Pending;
-                self.execution_log.push(
-                    ExecutionLogEntry::new(step_id, &step.name.clone(), "retry_scheduled"),
-                );
+                self.execution_log.push(ExecutionLogEntry::new(
+                    step_id,
+                    &step.name.clone(),
+                    "retry_scheduled",
+                ));
             }
             self.check_workflow_completion();
             true
@@ -510,9 +532,11 @@ impl WorkflowExecutionEngine {
     pub fn mark_step_skipped(&mut self, step_id: &str) -> bool {
         if let Some(step) = self.workflow.get_step_mut(step_id) {
             step.mark_skipped();
-            self.execution_log.push(
-                ExecutionLogEntry::new(step_id, &step.name.clone(), "skipped"),
-            );
+            self.execution_log.push(ExecutionLogEntry::new(
+                step_id,
+                &step.name.clone(),
+                "skipped",
+            ));
             self.check_workflow_completion();
             true
         } else {
@@ -524,7 +548,9 @@ impl WorkflowExecutionEngine {
         for step in &mut self.workflow.steps {
             if matches!(
                 step.status,
-                WorkflowStepStatus::Pending | WorkflowStepStatus::WaitingForDeps | WorkflowStepStatus::Running
+                WorkflowStepStatus::Pending
+                    | WorkflowStepStatus::WaitingForDeps
+                    | WorkflowStepStatus::Running
             ) {
                 step.mark_cancelled();
             }
@@ -560,7 +586,9 @@ impl WorkflowBuilder {
     }
 
     pub fn variable(mut self, key: &str, value: &str) -> Self {
-        self.workflow.variables.insert(key.to_string(), value.to_string());
+        self.workflow
+            .variables
+            .insert(key.to_string(), value.to_string());
         self
     }
 
@@ -722,8 +750,7 @@ mod tests {
 
     #[test]
     fn test_workflow_step_can_retry() {
-        let mut step = WorkflowStep::new_scan("test", "10.0.0.1", "80", "connect")
-            .with_retry(2, 5);
+        let mut step = WorkflowStep::new_scan("test", "10.0.0.1", "80", "connect").with_retry(2, 5);
 
         step.mark_running();
         step.mark_failed("err");
@@ -846,8 +873,7 @@ mod tests {
         let s1_id = s1.id.clone();
         wf.add_step(s1);
 
-        let s2 = WorkflowStep::new_scan("s2", "10.0.0.1", "443", "connect")
-            .with_dependency(&s1_id);
+        let s2 = WorkflowStep::new_scan("s2", "10.0.0.1", "443", "connect").with_dependency(&s1_id);
         wf.add_step(s2);
 
         let s3 = WorkflowStep::new_scan("s3", "10.0.0.2", "80", "connect");
@@ -889,8 +915,7 @@ mod tests {
     #[test]
     fn test_execution_engine_step_retry() {
         let mut wf = Workflow::new("test", "desc");
-        let s1 = WorkflowStep::new_scan("s1", "10.0.0.1", "80", "connect")
-            .with_retry(2, 5);
+        let s1 = WorkflowStep::new_scan("s1", "10.0.0.1", "80", "connect").with_retry(2, 5);
         let s1_id = s1.id.clone();
         wf.add_step(s1);
 
@@ -995,7 +1020,10 @@ mod tests {
     #[test]
     fn test_workflow_step_status_display() {
         assert_eq!(WorkflowStepStatus::Pending.to_string(), "pending");
-        assert_eq!(WorkflowStepStatus::WaitingForDeps.to_string(), "waiting_for_deps");
+        assert_eq!(
+            WorkflowStepStatus::WaitingForDeps.to_string(),
+            "waiting_for_deps"
+        );
         assert_eq!(WorkflowStepStatus::Running.to_string(), "running");
         assert_eq!(WorkflowStepStatus::Completed.to_string(), "completed");
         assert_eq!(WorkflowStepStatus::Failed.to_string(), "failed");

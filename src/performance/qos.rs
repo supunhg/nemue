@@ -84,6 +84,12 @@ pub enum Priority {
     Low,
 }
 
+impl Default for TrafficShaper {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TrafficShaper {
     pub fn new() -> Self {
         Self {
@@ -158,10 +164,10 @@ mod tests {
     #[tokio::test]
     async fn test_bandwidth_throttle_basic() {
         let throttle = BandwidthThrottle::new(1000);
-        
+
         throttle.acquire(500).await;
         assert_eq!(throttle.bytes_sent().await, 500);
-        
+
         throttle.acquire(400).await;
         assert_eq!(throttle.bytes_sent().await, 900);
     }
@@ -169,9 +175,9 @@ mod tests {
     #[tokio::test]
     async fn test_bandwidth_throttle_limit() {
         let throttle = BandwidthThrottle::new(1000);
-        
+
         assert_eq!(throttle.get_limit().await, 1000);
-        
+
         throttle.set_limit(2000).await;
         assert_eq!(throttle.get_limit().await, 2000);
     }
@@ -179,12 +185,12 @@ mod tests {
     #[tokio::test]
     async fn test_bandwidth_throttle_window_reset() {
         let throttle = BandwidthThrottle::new(1000);
-        
+
         throttle.acquire(1000).await;
         assert_eq!(throttle.bytes_sent().await, 1000);
-        
+
         tokio::time::sleep(Duration::from_millis(1100)).await;
-        
+
         throttle.acquire(500).await;
         assert_eq!(throttle.bytes_sent().await, 500);
     }
@@ -192,11 +198,11 @@ mod tests {
     #[tokio::test]
     async fn test_traffic_shaper_priority() {
         let shaper = TrafficShaper::new();
-        
+
         shaper.enqueue(vec![1], Priority::Low).await;
         shaper.enqueue(vec![2], Priority::High).await;
         shaper.enqueue(vec![3], Priority::Normal).await;
-        
+
         // Should dequeue in priority order
         assert_eq!(shaper.dequeue().await, Some(vec![2])); // High
         assert_eq!(shaper.dequeue().await, Some(vec![3])); // Normal
@@ -207,12 +213,12 @@ mod tests {
     #[tokio::test]
     async fn test_traffic_shaper_queue_lengths() {
         let shaper = TrafficShaper::new();
-        
+
         shaper.enqueue(vec![1], Priority::High).await;
         shaper.enqueue(vec![2], Priority::High).await;
         shaper.enqueue(vec![3], Priority::Normal).await;
         shaper.enqueue(vec![4], Priority::Low).await;
-        
+
         let (high, normal, low) = shaper.queue_lengths().await;
         assert_eq!(high, 2);
         assert_eq!(normal, 1);

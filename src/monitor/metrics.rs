@@ -57,7 +57,7 @@ impl MetricLabels {
 
     pub fn to_sorted_string(&self) -> String {
         let mut pairs: Vec<_> = self.labels.iter().collect();
-        pairs.sort_by(|(a, _), (b, _)| a.cmp(b));
+        pairs.sort_by_key(|(a, _)| *a);
         pairs
             .iter()
             .map(|(k, v)| format!("{}=\"{}\"", k, v))
@@ -132,10 +132,7 @@ pub struct HistogramBucket {
 
 impl HistogramBucket {
     pub fn new(upper_bound: f64, count: u64) -> Self {
-        Self {
-            upper_bound,
-            count,
-        }
+        Self { upper_bound, count }
     }
 }
 
@@ -187,11 +184,12 @@ impl Histogram {
     }
 
     pub fn with_buckets(mut self, bounds: &[f64]) -> Self {
-        self.buckets = bounds
-            .iter()
-            .map(|&b| HistogramBucket::new(b, 0))
-            .collect();
-        if self.buckets.last().map_or(true, |b| b.upper_bound != f64::INFINITY) {
+        self.buckets = bounds.iter().map(|&b| HistogramBucket::new(b, 0)).collect();
+        if self
+            .buckets
+            .last()
+            .is_none_or(|b| b.upper_bound != f64::INFINITY)
+        {
             self.buckets.push(HistogramBucket::new(f64::INFINITY, 0));
         }
         self
@@ -505,10 +503,7 @@ impl MetricsRegistry {
             timestamp: Utc::now(),
         };
 
-        let samples = self
-            .samples
-            .entry(name.to_string())
-            .or_insert_with(Vec::new);
+        let samples = self.samples.entry(name.to_string()).or_default();
         samples.push(sample);
 
         if samples.len() > self.max_samples_per_metric {
@@ -595,10 +590,7 @@ impl MetricsRegistry {
             output.push_str(&format!("# TYPE {} summary\n", name));
 
             for q in &summary.quantiles {
-                output.push_str(&format!(
-                    "{{quantile=\"{}\"}} {}\n",
-                    q.quantile, q.value
-                ));
+                output.push_str(&format!("{{quantile=\"{}\"}} {}\n", q.quantile, q.value));
             }
             output.push_str(&format!("{}_sum {}\n", name, summary.sum));
             output.push_str(&format!("{}_count {}\n", name, summary.count));
@@ -698,8 +690,13 @@ mod tests {
 
     #[test]
     fn test_metric_creation() {
-        let metric = Metric::new("requests_total", MetricType::Counter, 42.0, "Total requests")
-            .with_labels(MetricLabels::new().with("method", "GET"));
+        let metric = Metric::new(
+            "requests_total",
+            MetricType::Counter,
+            42.0,
+            "Total requests",
+        )
+        .with_labels(MetricLabels::new().with("method", "GET"));
 
         assert_eq!(metric.name, "requests_total");
         assert_eq!(metric.metric_type, MetricType::Counter);
@@ -769,7 +766,11 @@ mod tests {
         assert_eq!(summary.mean(), 50.5);
         assert_eq!(summary.quantiles.len(), 3);
 
-        let p50 = summary.quantiles.iter().find(|q| q.quantile == 0.5).unwrap();
+        let p50 = summary
+            .quantiles
+            .iter()
+            .find(|q| q.quantile == 0.5)
+            .unwrap();
         assert!((p50.value - 50.0).abs() < 5.0);
     }
 

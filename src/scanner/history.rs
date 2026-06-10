@@ -86,10 +86,7 @@ impl ScanHistory {
     }
 
     pub fn entries_for_target(&self, target: &str) -> Vec<&HistoryEntry> {
-        self.scans
-            .iter()
-            .filter(|e| e.target == target)
-            .collect()
+        self.scans.iter().filter(|e| e.target == target).collect()
     }
 
     pub fn len(&self) -> usize {
@@ -221,8 +218,14 @@ mod tests {
     #[test]
     fn test_get_latest() {
         let mut history = ScanHistory::new();
-        history.add_entry("target1".to_string(), create_test_results(80, PortState::Open));
-        history.add_entry("target2".to_string(), create_test_results(443, PortState::Open));
+        history.add_entry(
+            "target1".to_string(),
+            create_test_results(80, PortState::Open),
+        );
+        history.add_entry(
+            "target2".to_string(),
+            create_test_results(443, PortState::Open),
+        );
 
         let latest = history.get_latest().unwrap();
         assert_eq!(latest.target, "target2");
@@ -233,10 +236,16 @@ mod tests {
         let mut history = ScanHistory::new();
         assert!(history.get_previous().is_none());
 
-        history.add_entry("target1".to_string(), create_test_results(80, PortState::Open));
+        history.add_entry(
+            "target1".to_string(),
+            create_test_results(80, PortState::Open),
+        );
         assert!(history.get_previous().is_none());
 
-        history.add_entry("target2".to_string(), create_test_results(443, PortState::Open));
+        history.add_entry(
+            "target2".to_string(),
+            create_test_results(443, PortState::Open),
+        );
         let prev = history.get_previous().unwrap();
         assert_eq!(prev.target, "target1");
     }
@@ -245,7 +254,10 @@ mod tests {
     fn test_max_entries() {
         let mut history = ScanHistory::with_max_entries(3);
         for i in 0..5 {
-            history.add_entry(format!("target{}", i), create_test_results(80, PortState::Open));
+            history.add_entry(
+                format!("target{}", i),
+                create_test_results(80, PortState::Open),
+            );
         }
         assert_eq!(history.len(), 3);
         assert_eq!(history.scans[0].target, "target2");
@@ -254,9 +266,18 @@ mod tests {
     #[test]
     fn test_entries_for_target() {
         let mut history = ScanHistory::new();
-        history.add_entry("192.168.1.1".to_string(), create_test_results(80, PortState::Open));
-        history.add_entry("192.168.1.2".to_string(), create_test_results(443, PortState::Open));
-        history.add_entry("192.168.1.1".to_string(), create_test_results(22, PortState::Open));
+        history.add_entry(
+            "192.168.1.1".to_string(),
+            create_test_results(80, PortState::Open),
+        );
+        history.add_entry(
+            "192.168.1.2".to_string(),
+            create_test_results(443, PortState::Open),
+        );
+        history.add_entry(
+            "192.168.1.1".to_string(),
+            create_test_results(22, PortState::Open),
+        );
 
         let entries = history.entries_for_target("192.168.1.1");
         assert_eq!(entries.len(), 2);
@@ -321,8 +342,14 @@ mod tests {
     #[test]
     fn test_serialization_roundtrip() {
         let mut history = ScanHistory::new();
-        history.add_entry("192.168.1.1".to_string(), create_test_results(80, PortState::Open));
-        history.add_entry("192.168.1.1".to_string(), create_test_results(443, PortState::Closed));
+        history.add_entry(
+            "192.168.1.1".to_string(),
+            create_test_results(80, PortState::Open),
+        );
+        history.add_entry(
+            "192.168.1.1".to_string(),
+            create_test_results(443, PortState::Closed),
+        );
 
         let json = serde_json::to_string(&history).unwrap();
         let loaded: ScanHistory = serde_json::from_str(&json).unwrap();
@@ -335,7 +362,10 @@ mod tests {
     #[test]
     fn test_save_load_file() {
         let mut history = ScanHistory::new();
-        history.add_entry("192.168.1.1".to_string(), create_test_results(80, PortState::Open));
+        history.add_entry(
+            "192.168.1.1".to_string(),
+            create_test_results(80, PortState::Open),
+        );
 
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("test_history.json");

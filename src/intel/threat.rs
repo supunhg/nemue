@@ -119,7 +119,7 @@ impl ThreatDatabase {
     /// Check against local threat blacklist
     fn check_local_blacklist(&self, ip: &str) -> ThreatInfo {
         // Known malicious IP patterns (simplified for demo)
-        let _known_threats = vec![
+        let _known_threats = [
             ("192.0.2.0/24", "TEST-NET-1 (RFC 5737)", 0),
             ("198.51.100.0/24", "TEST-NET-2 (RFC 5737)", 0),
             ("203.0.113.0/24", "TEST-NET-3 (RFC 5737)", 0),
@@ -127,9 +127,9 @@ impl ThreatDatabase {
 
         // Check for known C2 servers (example IPs - not real)
         let c2_patterns = vec![
-            "45.142.",   // Common VPS provider
-            "185.220.",  // Tor exit nodes
-            "194.180.",  // Bulletproof hosting
+            "45.142.",  // Common VPS provider
+            "185.220.", // Tor exit nodes
+            "194.180.", // Bulletproof hosting
         ];
 
         let mut categories = Vec::new();
@@ -178,7 +178,7 @@ impl ThreatDatabase {
     /// Check if an IP is in known botnet ranges
     pub fn is_botnet(&self, ip: &IpAddr) -> bool {
         let ip_str = ip.to_string();
-        
+
         // Common botnet IP patterns (simplified)
         let botnet_patterns = vec![
             "185.220.", // Tor exit nodes often used by botnets

@@ -32,7 +32,7 @@ pub enum OsFamily {
     Cisco,
     NetworkDevice,
     Android,
-    iOS,
+    Ios,
     ChromeOS,
     Embedded,
     Unknown,
@@ -65,7 +65,7 @@ impl OsFamily {
             OsFamily::Cisco => "Cisco IOS",
             OsFamily::NetworkDevice => "Network Device",
             OsFamily::Android => "Android",
-            OsFamily::iOS => "iOS",
+            OsFamily::Ios => "iOS",
             OsFamily::ChromeOS => "ChromeOS",
             OsFamily::Embedded => "Embedded",
             OsFamily::Unknown => "Unknown",
@@ -76,23 +76,32 @@ impl OsFamily {
         let lower = banner.to_lowercase();
         if lower.contains("windows") || lower.contains("microsoft") {
             Some(OsFamily::Windows)
-        } else if lower.contains("ubuntu") || lower.contains("debian") || lower.contains("centos") 
-            || lower.contains("rhel") || lower.contains("fedora") || lower.contains("suse")
-            || lower.contains("linux") {
+        } else if lower.contains("ubuntu")
+            || lower.contains("debian")
+            || lower.contains("centos")
+            || lower.contains("rhel")
+            || lower.contains("fedora")
+            || lower.contains("suse")
+            || lower.contains("linux")
+        {
             Some(OsFamily::Linux)
         } else if lower.contains("macos") || lower.contains("darwin") || lower.contains("mac os") {
             Some(OsFamily::MacOS)
-        } else if lower.contains("freebsd") || lower.contains("openbsd") || lower.contains("netbsd") {
+        } else if lower.contains("freebsd") || lower.contains("openbsd") || lower.contains("netbsd")
+        {
             Some(OsFamily::BSD)
         } else if lower.contains("solaris") || lower.contains("sunos") {
             Some(OsFamily::Solaris)
         } else if lower.contains("android") {
             Some(OsFamily::Android)
         } else if lower.contains("iphone") || lower.contains("ipad") || lower.contains("ios") {
-            Some(OsFamily::iOS)
+            Some(OsFamily::Ios)
         } else if lower.contains("cisco") || lower.contains("ios") {
             Some(OsFamily::Cisco)
-        } else if lower.contains("juniper") || lower.contains("fortinet") || lower.contains("palo alto") {
+        } else if lower.contains("juniper")
+            || lower.contains("fortinet")
+            || lower.contains("palo alto")
+        {
             Some(OsFamily::NetworkDevice)
         } else {
             None
@@ -101,6 +110,12 @@ impl OsFamily {
 }
 
 pub struct OsDetector;
+
+impl Default for OsDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl OsDetector {
     pub fn new() -> Self {
@@ -208,11 +223,9 @@ impl OsDetector {
             details.push_str(&format!("TS={}; ", ts));
             confidence += 5;
 
-            if ts > 0 {
-                if matches!(os_family, OsFamily::Linux) {
-                    details.push_str("High-res timestamp (Linux); ");
-                    confidence += 5;
-                }
+            if ts > 0 && matches!(os_family, OsFamily::Linux) {
+                details.push_str("High-res timestamp (Linux); ");
+                confidence += 5;
             }
         }
 
@@ -268,17 +281,19 @@ impl OsDetector {
 
             let opts_str = tcp_options.join(",");
 
-            if opts_str.contains("mss") 
-                && opts_str.contains("nop") 
-                && opts_str.contains("sackOK") 
-                && matches!(os_family, OsFamily::Windows) {
+            if opts_str.contains("mss")
+                && opts_str.contains("nop")
+                && opts_str.contains("sackOK")
+                && matches!(os_family, OsFamily::Windows)
+            {
                 confidence += 15;
                 details.push_str("Windows TCP stack; ");
             }
 
-            if opts_str.contains("timestamp") 
-                && opts_str.contains("sackOK") 
-                && matches!(os_family, OsFamily::Linux) {
+            if opts_str.contains("timestamp")
+                && opts_str.contains("sackOK")
+                && matches!(os_family, OsFamily::Linux)
+            {
                 confidence += 15;
                 details.push_str("Linux TCP stack; ");
             }
@@ -286,7 +301,8 @@ impl OsDetector {
             if opts_str.contains("timestamp")
                 && opts_str.contains("sackOK")
                 && ttl == 64
-                && window_size == Some(65535) {
+                && window_size == Some(65535)
+            {
                 os_family = OsFamily::MacOS;
                 os_version = Some("macOS 10.x+".to_string());
                 os_generation = Some("Modern".to_string());
@@ -297,10 +313,10 @@ impl OsDetector {
             if opts_str.contains("timestamp")
                 && opts_str.contains("sackOK")
                 && ttl == 64
-                && window_size.map_or(false, |w| w <= 65535) {
-                if matches!(os_family, OsFamily::Linux) {
-                    details.push_str("Possible Android; ");
-                }
+                && window_size.is_some()
+                && matches!(os_family, OsFamily::Linux)
+            {
+                details.push_str("Possible Android; ");
             }
         }
 
@@ -324,11 +340,19 @@ impl OsDetector {
         }
     }
 
-    pub fn detect(&self, ttl: u8, window_size: Option<u16>, tcp_options: Vec<String>) -> OsFingerprint {
+    pub fn detect(
+        &self,
+        ttl: u8,
+        window_size: Option<u16>,
+        tcp_options: Vec<String>,
+    ) -> OsFingerprint {
         self.detect_advanced(ttl, window_size, tcp_options, None, None, None)
     }
 
-    pub fn detect_from_multiple(&self, fingerprints: Vec<(u8, Option<u16>, Vec<String>)>) -> OsFingerprint {
+    pub fn detect_from_multiple(
+        &self,
+        fingerprints: Vec<(u8, Option<u16>, Vec<String>)>,
+    ) -> OsFingerprint {
         if fingerprints.is_empty() {
             return OsFingerprint {
                 target: "0.0.0.0".parse().unwrap(),
@@ -352,13 +376,15 @@ impl OsDetector {
         let mut result = self.detect(ttl, window_size, tcp_options);
 
         if fingerprints.len() > 1 {
-            let consistent = fingerprints.iter().all(|(t, _, _)| {
-                OsFamily::from_ttl(*t) == result.os_family.clone().unwrap()
-            });
+            let consistent = fingerprints
+                .iter()
+                .all(|(t, _, _)| OsFamily::from_ttl(*t) == result.os_family.clone().unwrap());
 
             if consistent {
                 result.confidence = (result.confidence + 10).min(100);
-                result.details.push_str(&format!(" (verified by {} probes)", fingerprints.len()));
+                result
+                    .details
+                    .push_str(&format!(" (verified by {} probes)", fingerprints.len()));
             }
         }
 
@@ -381,12 +407,13 @@ impl OsDetector {
             os_family = Some(OsFamily::Windows);
             confidence += 30;
             indicators.push("IIS/ASP.NET detected".to_string());
-        } else if service_lower.contains("apache") || service_lower.contains("nginx") {
-            if banner.to_lowercase().contains("ubuntu") || banner.to_lowercase().contains("debian") {
-                os_family = Some(OsFamily::Linux);
-                confidence += 25;
-                indicators.push("Linux web server".to_string());
-            }
+        } else if (service_lower.contains("apache") || service_lower.contains("nginx"))
+            && (banner.to_lowercase().contains("ubuntu")
+                || banner.to_lowercase().contains("debian"))
+        {
+            os_family = Some(OsFamily::Linux);
+            confidence += 25;
+            indicators.push("Linux web server".to_string());
         }
 
         if service_lower.contains("ssh") {
@@ -428,8 +455,12 @@ mod tests {
     #[test]
     fn test_detect_linux() {
         let detector = OsDetector::new();
-        let result = detector.detect(64, Some(29200), vec!["mss".to_string(), "sackOK".to_string()]);
-        
+        let result = detector.detect(
+            64,
+            Some(29200),
+            vec!["mss".to_string(), "sackOK".to_string()],
+        );
+
         assert_eq!(result.os_family, Some(OsFamily::Linux));
         assert!(result.confidence >= 60);
     }
@@ -437,8 +468,12 @@ mod tests {
     #[test]
     fn test_detect_windows() {
         let detector = OsDetector::new();
-        let result = detector.detect(128, Some(64240), vec!["mss".to_string(), "timestamp".to_string()]);
-        
+        let result = detector.detect(
+            128,
+            Some(64240),
+            vec!["mss".to_string(), "timestamp".to_string()],
+        );
+
         assert_eq!(result.os_family, Some(OsFamily::Windows));
         assert!(result.confidence >= 70);
     }
@@ -449,14 +484,24 @@ mod tests {
         let result = detector.detect_advanced(
             64,
             Some(29200),
-            vec!["mss".to_string(), "sackOK".to_string(), "timestamp".to_string(), "nop".to_string(), "wscale".to_string()],
+            vec![
+                "mss".to_string(),
+                "sackOK".to_string(),
+                "timestamp".to_string(),
+                "nop".to_string(),
+                "wscale".to_string(),
+            ],
             Some(12345678),
             Some(7),
             Some(1460),
         );
-        
+
         assert_eq!(result.os_family, Some(OsFamily::Linux));
-        assert!(result.confidence >= 80, "Expected confidence >= 80, got {}", result.confidence);
+        assert!(
+            result.confidence >= 80,
+            "Expected confidence >= 80, got {}",
+            result.confidence
+        );
         assert_eq!(result.window_scaling, Some(7));
         assert_eq!(result.max_segment_size, Some(1460));
     }
@@ -472,7 +517,7 @@ mod tests {
             Some(8),
             Some(1460),
         );
-        
+
         assert_eq!(result.os_family, Some(OsFamily::Windows));
         assert_eq!(result.os_version, Some("Windows 10/11/2016+".to_string()));
         assert!(result.confidence >= 80);
@@ -484,12 +529,16 @@ mod tests {
         let result = detector.detect_advanced(
             64,
             Some(65535),
-            vec!["mss".to_string(), "timestamp".to_string(), "sackOK".to_string()],
+            vec![
+                "mss".to_string(),
+                "timestamp".to_string(),
+                "sackOK".to_string(),
+            ],
             Some(50000),
             None,
             Some(1460),
         );
-        
+
         assert_eq!(result.os_family, Some(OsFamily::MacOS));
         assert!(result.confidence >= 70);
     }
@@ -497,31 +546,46 @@ mod tests {
     #[test]
     fn test_new_os_families() {
         assert_eq!(OsFamily::Android.as_str(), "Android");
-        assert_eq!(OsFamily::iOS.as_str(), "iOS");
+        assert_eq!(OsFamily::Ios.as_str(), "iOS");
         assert_eq!(OsFamily::ChromeOS.as_str(), "ChromeOS");
         assert_eq!(OsFamily::Embedded.as_str(), "Embedded");
     }
 
     #[test]
     fn test_os_from_banner() {
-        assert_eq!(OsFamily::from_banner("Server: Microsoft-IIS/10.0"), Some(OsFamily::Windows));
-        assert_eq!(OsFamily::from_banner("Server: nginx/1.18.0 (Ubuntu)"), Some(OsFamily::Linux));
-        assert_eq!(OsFamily::from_banner("SSH-2.0-OpenSSH_8.2p1 Ubuntu"), Some(OsFamily::Linux));
-        assert_eq!(OsFamily::from_banner("SSH-2.0-Cisco-1.25"), Some(OsFamily::Cisco));
-        assert_eq!(OsFamily::from_banner("Server: Apache/2.4.41 (Ubuntu)"), Some(OsFamily::Linux));
+        assert_eq!(
+            OsFamily::from_banner("Server: Microsoft-IIS/10.0"),
+            Some(OsFamily::Windows)
+        );
+        assert_eq!(
+            OsFamily::from_banner("Server: nginx/1.18.0 (Ubuntu)"),
+            Some(OsFamily::Linux)
+        );
+        assert_eq!(
+            OsFamily::from_banner("SSH-2.0-OpenSSH_8.2p1 Ubuntu"),
+            Some(OsFamily::Linux)
+        );
+        assert_eq!(
+            OsFamily::from_banner("SSH-2.0-Cisco-1.25"),
+            Some(OsFamily::Cisco)
+        );
+        assert_eq!(
+            OsFamily::from_banner("Server: Apache/2.4.41 (Ubuntu)"),
+            Some(OsFamily::Linux)
+        );
         assert_eq!(OsFamily::from_banner("random banner"), None);
     }
 
     #[test]
     fn test_passive_detection() {
         let detector = OsDetector::new();
-        
+
         let result = detector.detect_passive("Server: Microsoft-IIS/10.0", "http");
         assert!(result.is_some());
         let (family, conf) = result.unwrap();
         assert_eq!(family, OsFamily::Windows);
         assert!(conf > 0);
-        
+
         let result = detector.detect_passive("SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.5", "ssh");
         assert!(result.is_some());
         let (family, conf) = result.unwrap();
@@ -532,7 +596,7 @@ mod tests {
     #[test]
     fn test_os_generation() {
         let detector = OsDetector::new();
-        
+
         let result = detector.detect_advanced(
             128,
             Some(8192),
@@ -542,7 +606,7 @@ mod tests {
             Some(1460),
         );
         assert_eq!(result.os_generation, Some("Legacy".to_string()));
-        
+
         let result = detector.detect_advanced(
             128,
             Some(64240),
@@ -565,7 +629,7 @@ mod tests {
             None,
             Some(1460),
         );
-        
+
         assert_eq!(result.os_family, Some(OsFamily::Cisco));
         assert!(result.confidence >= 50);
     }
@@ -581,7 +645,7 @@ mod tests {
             None,
             Some(1460),
         );
-        
+
         assert_eq!(result.os_family, Some(OsFamily::Solaris));
         assert!(result.confidence >= 50);
     }

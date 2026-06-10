@@ -1,10 +1,10 @@
 use anyhow::{anyhow, Result};
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-use std::time::Duration;
-use tokio::time::timeout;
 use pnet::packet::ip::IpNextHeaderProtocols;
 use pnet::packet::ipv4::MutableIpv4Packet;
 use rand::Rng;
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::time::Duration;
+use tokio::time::timeout;
 
 use crate::scanner::{PortState, ScanResult};
 
@@ -106,12 +106,18 @@ impl SctpScanner {
         if self.use_raw_sockets {
             self.raw_cookie_echo_scan(target, port).await
         } else {
-            self.fallback_scan(target, port, SctpScanType::CookieEcho).await
+            self.fallback_scan(target, port, SctpScanType::CookieEcho)
+                .await
         }
     }
 
     /// Perform an SCTP scan with the specified scan type
-    pub async fn scan(&self, target: IpAddr, port: u16, scan_type: SctpScanType) -> Result<ScanResult> {
+    pub async fn scan(
+        &self,
+        target: IpAddr,
+        port: u16,
+        scan_type: SctpScanType,
+    ) -> Result<ScanResult> {
         match scan_type {
             SctpScanType::Init => self.init_scan(target, port).await,
             SctpScanType::CookieEcho => self.cookie_echo_scan(target, port).await,
@@ -129,7 +135,8 @@ impl SctpScanner {
         let init_tag: u32 = rand::thread_rng().gen();
 
         let packet = self.build_sctp_init_packet(target_ipv4, src_port, port, init_tag)?;
-        self.send_and_receive(target_ipv4, src_port, port, &packet, "INIT").await
+        self.send_and_receive(target_ipv4, src_port, port, &packet, "INIT")
+            .await
     }
 
     /// Raw SCTP COOKIE-ECHO scan using pnet
@@ -142,7 +149,8 @@ impl SctpScanner {
         let src_port: u16 = rand::thread_rng().gen_range(1024..65535);
 
         let packet = self.build_sctp_cookie_echo_packet(target_ipv4, src_port, port)?;
-        self.send_and_receive(target_ipv4, src_port, port, &packet, "COOKIE-ECHO").await
+        self.send_and_receive(target_ipv4, src_port, port, &packet, "COOKIE-ECHO")
+            .await
     }
 
     /// Send SCTP packet and analyze response
@@ -172,25 +180,35 @@ impl SctpScanner {
             loop {
                 match rx.next() {
                     Ok(frame) => {
-                        if frame.len() < 14 { continue; }
+                        if frame.len() < 14 {
+                            continue;
+                        }
                         let ip_data = &frame[14..];
                         if let Some(ipv4) = Ipv4Packet::new(ip_data) {
-                            if ipv4.get_source() != target { continue; }
-                            if ipv4.get_next_level_protocol() != IpNextHeaderProtocols::Sctp { continue; }
+                            if ipv4.get_source() != target {
+                                continue;
+                            }
+                            if ipv4.get_next_level_protocol() != IpNextHeaderProtocols::Sctp {
+                                continue;
+                            }
 
                             let offset = (ipv4.get_header_length() as usize) * 4;
-                            if ip_data.len() < offset + 12 { continue; }
+                            if ip_data.len() < offset + 12 {
+                                continue;
+                            }
 
                             let sctp_data = &ip_data[offset..];
                             let dest_port_check = u16::from_be_bytes([sctp_data[2], sctp_data[3]]);
-                            if dest_port_check != src_port { continue; }
+                            if dest_port_check != src_port {
+                                continue;
+                            }
 
                             if sctp_data.len() >= 16 {
                                 let chunk_type = sctp_data[12];
                                 match chunk_type {
-                                    2 => return Ok(PortState::Open),    // INIT-ACK
-                                    6 => return Ok(PortState::Closed),  // ABORT
-                                    11 => return Ok(PortState::Open),   // COOKIE-ACK
+                                    2 => return Ok(PortState::Open),   // INIT-ACK
+                                    6 => return Ok(PortState::Closed), // ABORT
+                                    11 => return Ok(PortState::Open),  // COOKIE-ACK
                                     _ => continue,
                                 }
                             }
@@ -200,7 +218,9 @@ impl SctpScanner {
                 }
             }
             Ok(PortState::Filtered) as Result<PortState>
-        }).await {
+        })
+        .await
+        {
             Ok(Ok(state)) => state,
             Ok(Err(e)) => return Err(e),
             Err(_) => PortState::Filtered,
@@ -275,7 +295,7 @@ impl SctpScanner {
             chunk[0] = SctpChunkType::Init as u8; // Chunk type
             chunk[1] = 0; // Flags
             chunk[2..4].copy_from_slice(&20u16.to_be_bytes()); // Length
-            // Initiate Tag
+                                                               // Initiate Tag
             chunk[4..8].copy_from_slice(&init_tag.to_be_bytes());
             // Advertised Receiver Window Credit (a_rwnd)
             chunk[8..12].copy_from_slice(&65535u32.to_be_bytes());

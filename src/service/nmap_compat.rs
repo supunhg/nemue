@@ -122,12 +122,21 @@ fn parse_port_ranges(s: &str) -> Result<Vec<PortRange>> {
     for part in s.split(',') {
         let part = part.trim();
         if let Some((start_s, end_s)) = part.split_once('-') {
-            let start: u16 = start_s.parse().map_err(|_| anyhow!("Invalid port: {}", start_s))?;
-            let end: u16 = end_s.parse().map_err(|_| anyhow!("Invalid port: {}", end_s))?;
+            let start: u16 = start_s
+                .parse()
+                .map_err(|_| anyhow!("Invalid port: {}", start_s))?;
+            let end: u16 = end_s
+                .parse()
+                .map_err(|_| anyhow!("Invalid port: {}", end_s))?;
             ranges.push(PortRange { start, end });
         } else {
-            let port: u16 = part.parse().map_err(|_| anyhow!("Invalid port: {}", part))?;
-            ranges.push(PortRange { start: port, end: port });
+            let port: u16 = part
+                .parse()
+                .map_err(|_| anyhow!("Invalid port: {}", part))?;
+            ranges.push(PortRange {
+                start: port,
+                end: port,
+            });
         }
     }
     Ok(ranges)
@@ -357,7 +366,10 @@ fn find_template_close(s: &str) -> Option<usize> {
 fn parse_probe_option(line: &str, probe: &mut NmapProbe) -> Result<()> {
     let line = line.trim();
     if let Some(val) = line.strip_prefix("rarity ") {
-        probe.rarity = val.trim().parse().map_err(|_| anyhow!("Invalid rarity: {}", val))?;
+        probe.rarity = val
+            .trim()
+            .parse()
+            .map_err(|_| anyhow!("Invalid rarity: {}", val))?;
     } else if let Some(val) = line.strip_prefix("fallback ") {
         probe.fallback = Some(val.trim().to_string());
     } else if let Some(val) = line.strip_prefix("ports ") {
@@ -380,13 +392,19 @@ fn parse_port_list(s: &str) -> Result<Vec<u16>> {
     for part in s.split(',') {
         let part = part.trim();
         if let Some((start_s, end_s)) = part.split_once('-') {
-            let start: u16 = start_s.parse().map_err(|_| anyhow!("Invalid port: {}", start_s))?;
-            let end: u16 = end_s.parse().map_err(|_| anyhow!("Invalid port: {}", end_s))?;
+            let start: u16 = start_s
+                .parse()
+                .map_err(|_| anyhow!("Invalid port: {}", start_s))?;
+            let end: u16 = end_s
+                .parse()
+                .map_err(|_| anyhow!("Invalid port: {}", end_s))?;
             for p in start..=end {
                 ports.push(p);
             }
         } else {
-            let port: u16 = part.parse().map_err(|_| anyhow!("Invalid port: {}", part))?;
+            let port: u16 = part
+                .parse()
+                .map_err(|_| anyhow!("Invalid port: {}", part))?;
             ports.push(port);
         }
     }
@@ -503,7 +521,10 @@ Probe UDP DNSVersionBindReq q|\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00|
 
         assert_eq!(file.probes[2].name, "DNSVersionBindReq");
         assert_eq!(file.probes[2].protocol, "UDP");
-        assert_eq!(file.probes[2].data, &[0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+        assert_eq!(
+            file.probes[2].data,
+            &[0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+        );
     }
 
     #[test]
@@ -524,13 +545,28 @@ softmatch http m|^HTTP/|
 
         assert_eq!(probe.matches[0].service, "http");
         assert_eq!(probe.matches[0].pattern, r"^HTTP/1\.[01] \d\d\d");
-        assert_eq!(probe.matches[0].version_info.product, Some("Apache httpd".to_string()));
+        assert_eq!(
+            probe.matches[0].version_info.product,
+            Some("Apache httpd".to_string())
+        );
 
-        assert_eq!(probe.matches[1].version_info.version, Some("$1".to_string()));
+        assert_eq!(
+            probe.matches[1].version_info.version,
+            Some("$1".to_string())
+        );
 
-        assert_eq!(probe.matches[2].version_info.product, Some("OpenSSH".to_string()));
-        assert_eq!(probe.matches[2].version_info.version, Some("$2".to_string()));
-        assert_eq!(probe.matches[2].version_info.info, Some("protocol $1".to_string()));
+        assert_eq!(
+            probe.matches[2].version_info.product,
+            Some("OpenSSH".to_string())
+        );
+        assert_eq!(
+            probe.matches[2].version_info.version,
+            Some("$2".to_string())
+        );
+        assert_eq!(
+            probe.matches[2].version_info.info,
+            Some("protocol $1".to_string())
+        );
 
         assert_eq!(probe.softmatches[0].service, "http");
         assert_eq!(probe.softmatches[0].pattern, r"^HTTP/");

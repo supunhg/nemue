@@ -1,6 +1,6 @@
 // Report customization: sections, branding, severity levels, recommendations
-use serde::{Serialize, Deserialize};
 use crate::reporting::Priority;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReportCustomization {
@@ -45,8 +45,14 @@ pub enum SectionContent {
     Text(String),
     Markdown(String),
     KeyValue(Vec<(String, String)>),
-    Table { headers: Vec<String>, rows: Vec<Vec<String>> },
-    Chart { chart_type: ChartType, data: Vec<(String, f64)> },
+    Table {
+        headers: Vec<String>,
+        rows: Vec<Vec<String>>,
+    },
+    Chart {
+        chart_type: ChartType,
+        data: Vec<(String, f64)>,
+    },
     FindingSummary,
     ComplianceOverview,
     RiskMatrix,
@@ -154,7 +160,9 @@ impl ReportCustomization {
     }
 
     pub fn get_severity_for_score(&self, score: f64) -> Option<&CustomSeverity> {
-        self.severity_levels.iter().find(|s| score >= s.score_range_min && score <= s.score_range_max)
+        self.severity_levels
+            .iter()
+            .find(|s| score >= s.score_range_min && score <= s.score_range_max)
     }
 
     pub fn get_section(&self, id: &str) -> Option<&CustomSection> {
@@ -182,12 +190,18 @@ impl ReportCustomization {
                 html.push_str(&format!("    <p>{}</p>\n", text));
             }
             SectionContent::Markdown(md) => {
-                html.push_str(&format!("    <div class=\"markdown\">{}</div>\n", Self::simple_md_to_html(md)));
+                html.push_str(&format!(
+                    "    <div class=\"markdown\">{}</div>\n",
+                    Self::simple_md_to_html(md)
+                ));
             }
             SectionContent::KeyValue(pairs) => {
                 html.push_str("    <dl>\n");
                 for (key, value) in pairs {
-                    html.push_str(&format!("      <dt><strong>{}</strong></dt><dd>{}</dd>\n", key, value));
+                    html.push_str(&format!(
+                        "      <dt><strong>{}</strong></dt><dd>{}</dd>\n",
+                        key, value
+                    ));
                 }
                 html.push_str("    </dl>\n");
             }
@@ -216,7 +230,9 @@ impl ReportCustomization {
                 html.push_str("    <p class=\"placeholder\">[Compliance overview rendered from report data]</p>\n");
             }
             SectionContent::RiskMatrix => {
-                html.push_str("    <p class=\"placeholder\">[Risk matrix rendered from report data]</p>\n");
+                html.push_str(
+                    "    <p class=\"placeholder\">[Risk matrix rendered from report data]</p>\n",
+                );
             }
             SectionContent::CustomHtml(inner_html) => {
                 html.push_str(inner_html);
@@ -238,7 +254,10 @@ impl ReportCustomization {
             } else if line.starts_with("- ") {
                 html.push_str(&format!("<li>{}</li>\n", &line[2..]));
             } else if line.starts_with("**") && line.ends_with("**") {
-                html.push_str(&format!("<p><strong>{}</strong></p>\n", &line[2..line.len()-2]));
+                html.push_str(&format!(
+                    "<p><strong>{}</strong></p>\n",
+                    &line[2..line.len() - 2]
+                ));
             } else if line.is_empty() {
                 html.push('\n');
             } else {
@@ -255,7 +274,11 @@ impl ReportCustomization {
             ChartType::Bar | ChartType::Line => {
                 html.push_str("      <div class=\"bar-chart\" style=\"display:flex;align-items:flex-end;height:150px;gap:8px;\">\n");
                 for (label, value) in data {
-                    let height = if max_val > 0.0 { (value / max_val * 140.0) as u32 } else { 0 };
+                    let height = if max_val > 0.0 {
+                        (value / max_val * 140.0) as u32
+                    } else {
+                        0
+                    };
                     html.push_str(&format!(
                         "        <div style=\"display:flex;flex-direction:column;align-items:center;\">\n\
                          \x20         <div style=\"background:#007bff;width:30px;height:{}px;\"></div>\n\
@@ -270,8 +293,15 @@ impl ReportCustomization {
                 let total: f64 = data.iter().map(|(_, v)| v).sum();
                 html.push_str("      <table>\n");
                 for (label, value) in data {
-                    let pct = if total > 0.0 { value / total * 100.0 } else { 0.0 };
-                    html.push_str(&format!("        <tr><td>{}</td><td>{:.1}</td><td>{:.1}%</td></tr>\n", label, value, pct));
+                    let pct = if total > 0.0 {
+                        value / total * 100.0
+                    } else {
+                        0.0
+                    };
+                    html.push_str(&format!(
+                        "        <tr><td>{}</td><td>{:.1}</td><td>{:.1}%</td></tr>\n",
+                        label, value, pct
+                    ));
                 }
                 html.push_str("      </table>\n");
             }
@@ -306,7 +336,13 @@ impl CustomSection {
         }
     }
 
-    pub fn table(id: &str, title: &str, order: usize, headers: Vec<String>, rows: Vec<Vec<String>>) -> Self {
+    pub fn table(
+        id: &str,
+        title: &str,
+        order: usize,
+        headers: Vec<String>,
+        rows: Vec<Vec<String>>,
+    ) -> Self {
         Self {
             id: id.to_string(),
             title: title.to_string(),
@@ -316,7 +352,13 @@ impl CustomSection {
         }
     }
 
-    pub fn chart(id: &str, title: &str, order: usize, chart_type: ChartType, data: Vec<(String, f64)>) -> Self {
+    pub fn chart(
+        id: &str,
+        title: &str,
+        order: usize,
+        chart_type: ChartType,
+        data: Vec<(String, f64)>,
+    ) -> Self {
         Self {
             id: id.to_string(),
             title: title.to_string(),
@@ -406,7 +448,9 @@ mod tests {
     fn test_render_table_section_html() {
         let custom = ReportCustomization::new("Test");
         let section = CustomSection::table(
-            "t1", "Table", 1,
+            "t1",
+            "Table",
+            1,
             vec!["A".to_string(), "B".to_string()],
             vec![vec!["1".to_string(), "2".to_string()]],
         );
@@ -419,7 +463,9 @@ mod tests {
     fn test_render_chart_html() {
         let custom = ReportCustomization::new("Test");
         let section = CustomSection::chart(
-            "c1", "Chart", 1,
+            "c1",
+            "Chart",
+            1,
             ChartType::Bar,
             vec![("A".to_string(), 10.0), ("B".to_string(), 20.0)],
         );
@@ -496,7 +542,9 @@ mod tests {
     #[test]
     fn test_pie_chart_html() {
         let section = CustomSection::chart(
-            "pc", "Pie", 1,
+            "pc",
+            "Pie",
+            1,
             ChartType::Pie,
             vec![("A".to_string(), 30.0), ("B".to_string(), 70.0)],
         );

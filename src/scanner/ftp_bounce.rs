@@ -16,7 +16,7 @@ use tokio::net::TcpStream;
 use tokio::time::timeout;
 use tracing::{debug, info};
 
-use super::{PortState, ScanResult, Protocol};
+use super::{PortState, Protocol, ScanResult};
 
 /// FTP Bounce scan configuration
 pub struct FtpBounceConfig {
@@ -90,11 +90,15 @@ pub async fn ftp_bounce_scan(
     debug!("FTP: {}", line.trim());
 
     // Login
-    writer.write_all(format!("USER {}\r\n", config.username).as_bytes()).await?;
+    writer
+        .write_all(format!("USER {}\r\n", config.username).as_bytes())
+        .await?;
     reader.read_line(&mut line).await?;
     debug!("FTP: {}", line.trim());
 
-    writer.write_all(format!("PASS {}\r\n", config.password).as_bytes()).await?;
+    writer
+        .write_all(format!("PASS {}\r\n", config.password).as_bytes())
+        .await?;
     reader.read_line(&mut line).await?;
     debug!("FTP: {}", line.trim());
 
@@ -110,7 +114,8 @@ pub async fn ftp_bounce_scan(
     let mut results = Vec::new();
 
     for &port in ports {
-        let result = check_port_via_ftp(&mut reader, &mut writer, target, port, config.timeout_ms).await;
+        let result =
+            check_port_via_ftp(&mut reader, &mut writer, target, port, config.timeout_ms).await;
         match result {
             Ok(state) => {
                 results.push(ScanResult {
@@ -147,9 +152,18 @@ pub async fn ftp_bounce_scan(
 
     info!(
         "FTP bounce scan complete: {} open, {} closed, {} filtered",
-        results.iter().filter(|r| r.state == PortState::Open).count(),
-        results.iter().filter(|r| r.state == PortState::Closed).count(),
-        results.iter().filter(|r| r.state == PortState::Filtered).count(),
+        results
+            .iter()
+            .filter(|r| r.state == PortState::Open)
+            .count(),
+        results
+            .iter()
+            .filter(|r| r.state == PortState::Closed)
+            .count(),
+        results
+            .iter()
+            .filter(|r| r.state == PortState::Filtered)
+            .count(),
     );
 
     Ok(results)
@@ -169,8 +183,10 @@ async fn check_port_via_ftp(
     let octets = target.octets();
     let p1 = (port >> 8) as u8;
     let p2 = (port & 0xFF) as u8;
-    let port_cmd = format!("PORT {},{},{},{},{},{}\r\n",
-        octets[0], octets[1], octets[2], octets[3], p1, p2);
+    let port_cmd = format!(
+        "PORT {},{},{},{},{},{}\r\n",
+        octets[0], octets[1], octets[2], octets[3], p1, p2
+    );
 
     // Send PORT command
     writer.write_all(port_cmd.as_bytes()).await?;
@@ -201,17 +217,11 @@ async fn check_port_via_ftp(
                 // Data connection opened - port is open
                 // Read the listing data
                 let mut dummy = String::new();
-                let _ = timeout(
-                    Duration::from_millis(1000),
-                    reader.read_line(&mut dummy),
-                ).await;
+                let _ = timeout(Duration::from_millis(1000), reader.read_line(&mut dummy)).await;
 
                 // Read transfer complete message
                 line.clear();
-                let _ = timeout(
-                    Duration::from_millis(1000),
-                    reader.read_line(&mut line),
-                ).await;
+                let _ = timeout(Duration::from_millis(1000), reader.read_line(&mut line)).await;
 
                 Ok(PortState::Open)
             } else if line.starts_with("425") || line.starts_with("426") {

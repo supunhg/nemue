@@ -35,21 +35,19 @@ pub struct CiCdConfig {
     pub gitlab_token: Option<String>,
 }
 
-fn default_risk_threshold() -> u8 { 80 }
+fn default_risk_threshold() -> u8 {
+    80
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
+#[derive(Default)]
 pub enum CiCdOutputFormat {
+    #[default]
     Text,
     Json,
     Markdown,
     GitHubAnnotation,
-}
-
-impl Default for CiCdOutputFormat {
-    fn default() -> Self {
-        CiCdOutputFormat::Text
-    }
 }
 
 impl Default for CiCdConfig {
@@ -114,10 +112,7 @@ impl CiCdRunner {
         let mut exit_code = exit_codes::SUCCESS;
 
         if self.config.fail_on_vuln && total_vulnerabilities > 0 {
-            failures.push(format!(
-                "Found {} vulnerabilities",
-                total_vulnerabilities
-            ));
+            failures.push(format!("Found {} vulnerabilities", total_vulnerabilities));
             exit_code = exit_codes::VULNS_FOUND;
         }
 
@@ -148,8 +143,13 @@ impl CiCdRunner {
 
         let passed = failures.is_empty();
         let report = self.format_report(
-            scan_id, targets_scanned, total_open_ports,
-            total_vulnerabilities, risk_score, &failures, &warnings,
+            scan_id,
+            targets_scanned,
+            total_open_ports,
+            total_vulnerabilities,
+            risk_score,
+            &failures,
+            &warnings,
         );
 
         CiCdResult {
@@ -179,20 +179,35 @@ impl CiCdRunner {
     ) -> String {
         match self.config.output_format {
             CiCdOutputFormat::Text => self.format_text(
-                scan_id, targets_scanned, total_open_ports,
-                total_vulnerabilities, risk_score, failures, warnings,
+                scan_id,
+                targets_scanned,
+                total_open_ports,
+                total_vulnerabilities,
+                risk_score,
+                failures,
+                warnings,
             ),
             CiCdOutputFormat::Json => self.format_json(
-                scan_id, targets_scanned, total_open_ports,
-                total_vulnerabilities, risk_score, failures, warnings,
+                scan_id,
+                targets_scanned,
+                total_open_ports,
+                total_vulnerabilities,
+                risk_score,
+                failures,
+                warnings,
             ),
             CiCdOutputFormat::Markdown => self.format_markdown(
-                scan_id, targets_scanned, total_open_ports,
-                total_vulnerabilities, risk_score, failures, warnings,
+                scan_id,
+                targets_scanned,
+                total_open_ports,
+                total_vulnerabilities,
+                risk_score,
+                failures,
+                warnings,
             ),
-            CiCdOutputFormat::GitHubAnnotation => self.format_github_annotation(
-                scan_id, failures, warnings,
-            ),
+            CiCdOutputFormat::GitHubAnnotation => {
+                self.format_github_annotation(scan_id, failures, warnings)
+            }
         }
     }
 
@@ -207,13 +222,20 @@ impl CiCdRunner {
         warnings: &[String],
     ) -> String {
         let mut out = String::new();
-        out.push_str(&format!("=== Nemue CI/CD Scan Report ===\n"));
+        out.push_str("=== Nemue CI/CD Scan Report ===\n");
         out.push_str(&format!("Scan ID:        {}\n", scan_id));
         out.push_str(&format!("Targets:        {}\n", targets));
         out.push_str(&format!("Open Ports:     {}\n", ports));
         out.push_str(&format!("Vulnerabilities:{}\n", vulns));
         out.push_str(&format!("Risk Score:     {}/100\n", risk));
-        out.push_str(&format!("Result:         {}\n", if failures.is_empty() { "PASSED" } else { "FAILED" }));
+        out.push_str(&format!(
+            "Result:         {}\n",
+            if failures.is_empty() {
+                "PASSED"
+            } else {
+                "FAILED"
+            }
+        ));
 
         if !warnings.is_empty() {
             out.push_str("\nWarnings:\n");
@@ -266,7 +288,11 @@ impl CiCdRunner {
         failures: &[String],
         warnings: &[String],
     ) -> String {
-        let status = if failures.is_empty() { "PASSED" } else { "FAILED" };
+        let status = if failures.is_empty() {
+            "PASSED"
+        } else {
+            "FAILED"
+        };
         let emoji = if failures.is_empty() { "ok" } else { "fail" };
 
         let mut out = String::new();
@@ -311,7 +337,9 @@ impl CiCdRunner {
         }
 
         if failures.is_empty() && warnings.is_empty() {
-            out.push_str(&format!("::notice title=Nemue Scan {scan_id}::Security scan passed\n"));
+            out.push_str(&format!(
+                "::notice title=Nemue Scan {scan_id}::Security scan passed\n"
+            ));
         }
 
         out
@@ -346,8 +374,10 @@ impl CiCdRunner {
              | Open Ports | {} |\n\
              | Vulnerabilities | {} |\n\
              | Risk Score | {}/100 |\n",
-            result.scan_id, result.targets_scanned,
-            result.total_open_ports, result.total_vulnerabilities,
+            result.scan_id,
+            result.targets_scanned,
+            result.total_open_ports,
+            result.total_vulnerabilities,
             result.risk_score
         )
     }
@@ -517,9 +547,21 @@ mod tests {
 
     #[test]
     fn test_platform_serialization() {
-        assert_eq!(serde_json::to_string(&CiCdPlatform::GitHubActions).unwrap(), "\"githubactions\"");
-        assert_eq!(serde_json::to_string(&CiCdPlatform::GitLabCI).unwrap(), "\"gitlabci\"");
-        assert_eq!(serde_json::to_string(&CiCdPlatform::Jenkins).unwrap(), "\"jenkins\"");
-        assert_eq!(serde_json::to_string(&CiCdPlatform::Generic).unwrap(), "\"generic\"");
+        assert_eq!(
+            serde_json::to_string(&CiCdPlatform::GitHubActions).unwrap(),
+            "\"githubactions\""
+        );
+        assert_eq!(
+            serde_json::to_string(&CiCdPlatform::GitLabCI).unwrap(),
+            "\"gitlabci\""
+        );
+        assert_eq!(
+            serde_json::to_string(&CiCdPlatform::Jenkins).unwrap(),
+            "\"jenkins\""
+        );
+        assert_eq!(
+            serde_json::to_string(&CiCdPlatform::Generic).unwrap(),
+            "\"generic\""
+        );
     }
 }

@@ -1,8 +1,8 @@
 use actix_web::dev::ServiceRequest;
+use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::RwLock;
-use chrono::{DateTime, Utc, Duration};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -32,6 +32,12 @@ pub struct RotationEntry {
     pub reason: String,
 }
 
+impl Default for ApiKeyConfig {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ApiKeyConfig {
     pub fn new() -> Self {
         Self {
@@ -40,27 +46,39 @@ impl ApiKeyConfig {
     }
 
     pub fn add_key(&mut self, key: String, name: String, scopes: Vec<String>) {
-        self.keys.insert(key, ApiKeyInfo {
-            name,
-            enabled: true,
-            scopes,
-            created_at: Some(Utc::now().to_rfc3339()),
-            expires_at: None,
-            rotation_history: Vec::new(),
-            last_used_at: None,
-        });
+        self.keys.insert(
+            key,
+            ApiKeyInfo {
+                name,
+                enabled: true,
+                scopes,
+                created_at: Some(Utc::now().to_rfc3339()),
+                expires_at: None,
+                rotation_history: Vec::new(),
+                last_used_at: None,
+            },
+        );
     }
 
-    pub fn add_key_with_expiry(&mut self, key: String, name: String, scopes: Vec<String>, expires_at: DateTime<Utc>) {
-        self.keys.insert(key, ApiKeyInfo {
-            name,
-            enabled: true,
-            scopes,
-            created_at: Some(Utc::now().to_rfc3339()),
-            expires_at: Some(expires_at.to_rfc3339()),
-            rotation_history: Vec::new(),
-            last_used_at: None,
-        });
+    pub fn add_key_with_expiry(
+        &mut self,
+        key: String,
+        name: String,
+        scopes: Vec<String>,
+        expires_at: DateTime<Utc>,
+    ) {
+        self.keys.insert(
+            key,
+            ApiKeyInfo {
+                name,
+                enabled: true,
+                scopes,
+                created_at: Some(Utc::now().to_rfc3339()),
+                expires_at: Some(expires_at.to_rfc3339()),
+                rotation_history: Vec::new(),
+                last_used_at: None,
+            },
+        );
     }
 
     pub fn validate(&self, key: &str) -> Option<&ApiKeyInfo> {
@@ -110,14 +128,17 @@ impl ApiKeyConfig {
 
     pub fn keys_expiring_within(&self, duration: Duration) -> Vec<(&String, &ApiKeyInfo)> {
         let cutoff = Utc::now() + duration;
-        self.keys.iter().filter(|(_, info)| {
-            if let Some(expires) = &info.expires_at {
-                if let Ok(expiry) = DateTime::parse_from_rfc3339(expires) {
-                    return expiry.with_timezone(&Utc) <= cutoff;
+        self.keys
+            .iter()
+            .filter(|(_, info)| {
+                if let Some(expires) = &info.expires_at {
+                    if let Ok(expiry) = DateTime::parse_from_rfc3339(expires) {
+                        return expiry.with_timezone(&Utc) <= cutoff;
+                    }
                 }
-            }
-            false
-        }).collect()
+                false
+            })
+            .collect()
     }
 }
 
@@ -136,7 +157,13 @@ pub struct JwtClaims {
 }
 
 impl JwtClaims {
-    pub fn new(subject: String, issuer: String, audience: String, scopes: Vec<String>, ttl_seconds: i64) -> Self {
+    pub fn new(
+        subject: String,
+        issuer: String,
+        audience: String,
+        scopes: Vec<String>,
+        ttl_seconds: i64,
+    ) -> Self {
         let now = Utc::now();
         Self {
             sub: subject,
@@ -186,7 +213,12 @@ impl JwtService {
         self.encode(&claims)
     }
 
-    pub fn create_token_with_ttl(&self, subject: &str, scopes: Vec<String>, ttl: i64) -> Result<String, String> {
+    pub fn create_token_with_ttl(
+        &self,
+        subject: &str,
+        scopes: Vec<String>,
+        ttl: i64,
+    ) -> Result<String, String> {
         let claims = JwtClaims::new(
             subject.to_string(),
             self.issuer.clone(),
@@ -203,19 +235,19 @@ impl JwtService {
             return Err("Invalid JWT format".to_string());
         }
 
-        let payload = base64url_decode(parts[1])
-            .map_err(|_| "Invalid JWT payload encoding".to_string())?;
+        let payload =
+            base64url_decode(parts[1]).map_err(|_| "Invalid JWT payload encoding".to_string())?;
 
-        let claims: JwtClaims = serde_json::from_slice(&payload)
-            .map_err(|_| "Invalid JWT claims".to_string())?;
+        let claims: JwtClaims =
+            serde_json::from_slice(&payload).map_err(|_| "Invalid JWT claims".to_string())?;
 
         if claims.is_expired() {
             return Err("Token expired".to_string());
         }
 
         let expected_sig = self.sign(parts[0], parts[1]);
-        let provided_sig = base64url_decode(parts[2])
-            .map_err(|_| "Invalid JWT signature encoding".to_string())?;
+        let provided_sig =
+            base64url_decode(parts[2]).map_err(|_| "Invalid JWT signature encoding".to_string())?;
 
         if expected_sig != provided_sig {
             return Err("Invalid JWT signature".to_string());
@@ -226,8 +258,8 @@ impl JwtService {
 
     fn encode(&self, claims: &JwtClaims) -> Result<String, String> {
         let header = base64url_encode(b"{\"alg\":\"HS256\",\"typ\":\"JWT\"}");
-        let payload = serde_json::to_vec(claims)
-            .map_err(|e| format!("Failed to serialize claims: {}", e))?;
+        let payload =
+            serde_json::to_vec(claims).map_err(|e| format!("Failed to serialize claims: {}", e))?;
         let payload_b64 = base64url_encode(&payload);
         let signature = self.sign(&header, &payload_b64);
         let sig_b64 = base64url_encode(&signature);
@@ -324,7 +356,8 @@ impl OAuth2Client {
             ("client_secret", &self.config.client_secret),
         ];
 
-        let response = self.http_client
+        let response = self
+            .http_client
             .post(&self.config.token_url)
             .form(&params)
             .send()
@@ -332,10 +365,14 @@ impl OAuth2Client {
             .map_err(|e| format!("Token exchange failed: {}", e))?;
 
         if !response.status().is_success() {
-            return Err(format!("Token exchange returned status: {}", response.status()));
+            return Err(format!(
+                "Token exchange returned status: {}",
+                response.status()
+            ));
         }
 
-        response.json::<OAuth2TokenResponse>()
+        response
+            .json::<OAuth2TokenResponse>()
             .await
             .map_err(|e| format!("Failed to parse token response: {}", e))
     }
@@ -348,7 +385,8 @@ impl OAuth2Client {
             ("client_secret", &self.config.client_secret),
         ];
 
-        let response = self.http_client
+        let response = self
+            .http_client
             .post(&self.config.token_url)
             .form(&params)
             .send()
@@ -356,10 +394,14 @@ impl OAuth2Client {
             .map_err(|e| format!("Token refresh failed: {}", e))?;
 
         if !response.status().is_success() {
-            return Err(format!("Token refresh returned status: {}", response.status()));
+            return Err(format!(
+                "Token refresh returned status: {}",
+                response.status()
+            ));
         }
 
-        response.json::<OAuth2TokenResponse>()
+        response
+            .json::<OAuth2TokenResponse>()
             .await
             .map_err(|e| format!("Failed to parse refresh response: {}", e))
     }
@@ -423,10 +465,17 @@ impl SessionManager {
         }
     }
 
-    pub fn create_session(&self, user_id: &str, scopes: Vec<String>, ip: Option<String>, user_agent: Option<String>) -> Result<Session, String> {
+    pub fn create_session(
+        &self,
+        user_id: &str,
+        scopes: Vec<String>,
+        ip: Option<String>,
+        user_agent: Option<String>,
+    ) -> Result<Session, String> {
         let mut sessions = self.sessions.write().map_err(|e| e.to_string())?;
 
-        let user_sessions: Vec<_> = sessions.values()
+        let user_sessions: Vec<_> = sessions
+            .values()
             .filter(|s| s.user_id == user_id && !s.is_expired() && s.is_valid)
             .collect();
 
@@ -445,7 +494,10 @@ impl SessionManager {
 
     pub fn get_session(&self, session_id: &str) -> Option<Session> {
         let sessions = self.sessions.read().ok()?;
-        sessions.get(session_id).cloned().filter(|s| !s.is_expired() && s.is_valid)
+        sessions
+            .get(session_id)
+            .cloned()
+            .filter(|s| !s.is_expired() && s.is_valid)
     }
 
     pub fn touch_session(&self, session_id: &str) -> Result<(), String> {
@@ -492,12 +544,16 @@ impl SessionManager {
 
     pub fn active_sessions(&self) -> usize {
         let sessions = self.sessions.read().unwrap_or_else(|e| e.into_inner());
-        sessions.values().filter(|s| !s.is_expired() && s.is_valid).count()
+        sessions
+            .values()
+            .filter(|s| !s.is_expired() && s.is_valid)
+            .count()
     }
 
     pub fn user_sessions(&self, user_id: &str) -> Vec<Session> {
         let sessions = self.sessions.read().unwrap_or_else(|e| e.into_inner());
-        sessions.values()
+        sessions
+            .values()
             .filter(|s| s.user_id == user_id && !s.is_expired() && s.is_valid)
             .cloned()
             .collect()
@@ -616,8 +672,16 @@ fn base64url_decode(input: &str) -> Result<Vec<u8>, String> {
         }
         let a = char_to_sextet(chunk[0])? as u32;
         let b = char_to_sextet(chunk[1])? as u32;
-        let c = if chunk.len() > 2 && chunk[2] != b'=' { char_to_sextet(chunk[2])? as u32 } else { 0 };
-        let d = if chunk.len() > 3 && chunk[3] != b'=' { char_to_sextet(chunk[3])? as u32 } else { 0 };
+        let c = if chunk.len() > 2 && chunk[2] != b'=' {
+            char_to_sextet(chunk[2])? as u32
+        } else {
+            0
+        };
+        let d = if chunk.len() > 3 && chunk[3] != b'=' {
+            char_to_sextet(chunk[3])? as u32
+        } else {
+            0
+        };
 
         let triple = (a << 18) | (b << 12) | (c << 6) | d;
         result.push((triple >> 16) as u8);
@@ -673,11 +737,7 @@ mod tests {
     #[test]
     fn test_api_key_disabled() {
         let mut config = ApiKeyConfig::new();
-        config.add_key(
-            "disabled-key".to_string(),
-            "Disabled".to_string(),
-            vec![],
-        );
+        config.add_key("disabled-key".to_string(), "Disabled".to_string(), vec![]);
         config.keys.get_mut("disabled-key").unwrap().enabled = false;
 
         assert!(config.validate("disabled-key").is_none());
@@ -748,7 +808,9 @@ mod tests {
     #[test]
     fn test_jwt_service_create_and_validate() {
         let service = JwtService::new(b"test-secret", "nemue".to_string(), 3600);
-        let token = service.create_token("user1", vec!["read".to_string()]).unwrap();
+        let token = service
+            .create_token("user1", vec!["read".to_string()])
+            .unwrap();
 
         let claims = service.validate_token(&token).unwrap();
         assert_eq!(claims.sub, "user1");
@@ -758,14 +820,18 @@ mod tests {
     #[test]
     fn test_jwt_service_rejects_expired() {
         let service = JwtService::new(b"test-secret", "nemue".to_string(), -1);
-        let token = service.create_token("user1", vec!["read".to_string()]).unwrap();
+        let token = service
+            .create_token("user1", vec!["read".to_string()])
+            .unwrap();
         assert!(service.validate_token(&token).is_err());
     }
 
     #[test]
     fn test_jwt_service_rejects_tampered() {
         let service = JwtService::new(b"test-secret", "nemue".to_string(), 3600);
-        let token = service.create_token("user1", vec!["read".to_string()]).unwrap();
+        let token = service
+            .create_token("user1", vec!["read".to_string()])
+            .unwrap();
         let tampered = format!("{}X", token);
         assert!(service.validate_token(&tampered).is_err());
     }
@@ -792,12 +858,14 @@ mod tests {
     #[test]
     fn test_session_manager_create_and_get() {
         let manager = SessionManager::new(Duration::hours(1), 5);
-        let session = manager.create_session(
-            "user1",
-            vec!["read".to_string()],
-            Some("127.0.0.1".to_string()),
-            None,
-        ).unwrap();
+        let session = manager
+            .create_session(
+                "user1",
+                vec!["read".to_string()],
+                Some("127.0.0.1".to_string()),
+                None,
+            )
+            .unwrap();
 
         let retrieved = manager.get_session(&session.session_id);
         assert!(retrieved.is_some());
@@ -848,7 +916,11 @@ mod tests {
     #[test]
     fn test_api_key_rotation() {
         let mut config = ApiKeyConfig::new();
-        config.add_key("old-key".to_string(), "Test".to_string(), vec!["read".to_string()]);
+        config.add_key(
+            "old-key".to_string(),
+            "Test".to_string(),
+            vec!["read".to_string()],
+        );
 
         config.rotate_key("old-key", "new-key".to_string()).unwrap();
         assert!(config.validate("old-key").is_none());

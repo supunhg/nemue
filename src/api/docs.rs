@@ -213,7 +213,8 @@ impl OpenApiBuilder {
                 version: env!("CARGO_PKG_VERSION").to_string(),
                 description: "REST API for the Nemue Advanced Security Testing Framework. \
                     Provides endpoints for managing security scans, retrieving results, \
-                    configuring webhooks, and integrating with CI/CD pipelines.".to_string(),
+                    configuring webhooks, and integrating with CI/CD pipelines."
+                    .to_string(),
                 contact: Some(Contact {
                     name: Some("Nemue Project".to_string()),
                     url: Some("https://github.com/tabea/Nemue".to_string()),
@@ -271,194 +272,239 @@ impl OpenApiBuilder {
     fn build_paths() -> HashMap<String, PathItem> {
         let mut paths = HashMap::new();
 
-        paths.insert("/health".to_string(), PathItem {
-            get: Some(Operation {
-                tags: vec!["system".to_string()],
-                summary: "Health check".to_string(),
-                operation_id: "healthCheck".to_string(),
-                description: Some("Returns server health status, uptime, and active scan counts".to_string()),
-                parameters: None,
-                request_body: None,
-                responses: Self::responses_with("200", "Server is healthy", "HealthResponse"),
-                deprecated: None,
-                security: None,
-            }),
-            ..Default::default()
-        });
-
-        paths.insert("/api/v1/info".to_string(), PathItem {
-            get: Some(Operation {
-                tags: vec!["system".to_string()],
-                summary: "Server information and capabilities".to_string(),
-                operation_id: "serverInfo".to_string(),
-                description: Some("Returns server name, version, and supported capabilities".to_string()),
-                parameters: None,
-                request_body: None,
-                responses: Self::responses_with("200", "Server info", "ServerInfo"),
-                deprecated: None,
-                security: None,
-            }),
-            ..Default::default()
-        });
-
-        paths.insert("/api/v1/stats".to_string(), PathItem {
-            get: Some(Operation {
-                tags: vec!["system".to_string()],
-                summary: "Aggregated scan statistics".to_string(),
-                operation_id: "scanStats".to_string(),
-                description: Some("Returns aggregated statistics across all scans".to_string()),
-                parameters: None,
-                request_body: None,
-                responses: Self::responses_with("200", "Statistics", "ScanStats"),
-                deprecated: None,
-                security: None,
-            }),
-            ..Default::default()
-        });
-
-        paths.insert("/api/v1/scans".to_string(), PathItem {
-            post: Some(Operation {
-                tags: vec!["scans".to_string()],
-                summary: "Start a new scan".to_string(),
-                operation_id: "startScan".to_string(),
-                description: Some("Queues a new security scan with the specified targets and options".to_string()),
-                parameters: None,
-                request_body: Some(RequestBody {
-                    description: Some("Scan configuration".to_string()),
-                    required: Some(true),
-                    content: {
-                        let mut m = HashMap::new();
-                        m.insert("application/json".to_string(), MediaType {
-                            schema: Some(Self::schema_ref("ScanRequest")),
-                            example: Some(serde_json::json!({
-                                "targets": ["192.168.1.0/24"],
-                                "ports": [22, 80, 443],
-                                "scan_type": "tcp",
-                                "timing": "normal",
-                                "enable_service_detection": true,
-                                "enable_os_detection": false,
-                                "enable_vuln_check": true,
-                                "enable_threat_intel": false
-                            })),
-                            examples: None,
-                        });
-                        m
-                    },
+        paths.insert(
+            "/health".to_string(),
+            PathItem {
+                get: Some(Operation {
+                    tags: vec!["system".to_string()],
+                    summary: "Health check".to_string(),
+                    operation_id: "healthCheck".to_string(),
+                    description: Some(
+                        "Returns server health status, uptime, and active scan counts".to_string(),
+                    ),
+                    parameters: None,
+                    request_body: None,
+                    responses: Self::responses_with("200", "Server is healthy", "HealthResponse"),
+                    deprecated: None,
+                    security: None,
                 }),
-                responses: {
-                    let mut r = HashMap::new();
-                    r.insert("202".to_string(), Response {
-                        description: "Scan queued successfully".to_string(),
-                        content: Some(Self::json_content("ScanQueued")),
-                        headers: None,
-                    });
-                    r.insert("400".to_string(), Response {
-                        description: "Invalid request".to_string(),
-                        content: Some(Self::json_content("ApiError")),
-                        headers: None,
-                    });
-                    r
-                },
-                deprecated: None,
-                security: Some(vec![{
-                    let mut s = HashMap::new();
-                    s.insert("apiKey".to_string(), vec![]);
-                    s
-                }]),
-            }),
-            get: Some(Operation {
-                tags: vec!["scans".to_string()],
-                summary: "List all scans".to_string(),
-                operation_id: "listScans".to_string(),
-                description: Some("Returns a paginated list of all scans".to_string()),
-                parameters: Some(vec![
-                    Parameter {
-                        name: "page".to_string(),
-                        in_location: "query".to_string(),
-                        description: Some("Page number".to_string()),
-                        required: Some(false),
-                        schema: Some(Schema {
-                            schema_type: Some("integer".to_string()),
-                            default_value: Some(serde_json::json!(1)),
-                            minimum: Some(1.0),
-                            ..Default::default()
-                        }),
-                        deprecated: None,
-                    },
-                    Parameter {
-                        name: "per_page".to_string(),
-                        in_location: "query".to_string(),
-                        description: Some("Items per page (max 100)".to_string()),
-                        required: Some(false),
-                        schema: Some(Schema {
-                            schema_type: Some("integer".to_string()),
-                            default_value: Some(serde_json::json!(20)),
-                            minimum: Some(1.0),
-                            maximum: Some(100.0),
-                            ..Default::default()
-                        }),
-                        deprecated: None,
-                    },
-                ]),
-                request_body: None,
-                responses: Self::responses_with("200", "Scan list", "ScanListResponse"),
-                deprecated: None,
-                security: None,
-            }),
-            ..Default::default()
-        });
+                ..Default::default()
+            },
+        );
 
-        paths.insert("/api/v1/scans/{scan_id}".to_string(), PathItem {
-            get: Some(Operation {
-                tags: vec!["scans".to_string()],
-                summary: "Get scan status".to_string(),
-                operation_id: "getScanStatus".to_string(),
-                description: Some("Returns the current status and progress of a scan".to_string()),
-                parameters: Some(vec![Self::uuid_param("scan_id", "Scan ID")]),
-                request_body: None,
-                responses: {
-                    let mut r = HashMap::new();
-                    r.insert("200".to_string(), Response {
-                        description: "Scan status".to_string(),
-                        content: Some(Self::json_content("ScanStatus")),
-                        headers: None,
-                    });
-                    r.insert("404".to_string(), Response {
-                        description: "Scan not found".to_string(),
-                        content: Some(Self::json_content("ApiError")),
-                        headers: None,
-                    });
-                    r
-                },
-                deprecated: None,
-                security: None,
-            }),
-            delete: Some(Operation {
-                tags: vec!["scans".to_string()],
-                summary: "Delete a scan".to_string(),
-                operation_id: "deleteScan".to_string(),
-                description: Some("Deletes a scan and its results".to_string()),
-                parameters: Some(vec![Self::uuid_param("scan_id", "Scan ID")]),
-                request_body: None,
-                responses: {
-                    let mut r = HashMap::new();
-                    r.insert("200".to_string(), Response {
-                        description: "Scan deleted".to_string(),
-                        content: None,
-                        headers: None,
-                    });
-                    r.insert("404".to_string(), Response {
-                        description: "Scan not found".to_string(),
-                        content: Some(Self::json_content("ApiError")),
-                        headers: None,
-                    });
-                    r
-                },
-                deprecated: None,
-                security: None,
-            }),
-            ..Default::default()
-        });
+        paths.insert(
+            "/api/v1/info".to_string(),
+            PathItem {
+                get: Some(Operation {
+                    tags: vec!["system".to_string()],
+                    summary: "Server information and capabilities".to_string(),
+                    operation_id: "serverInfo".to_string(),
+                    description: Some(
+                        "Returns server name, version, and supported capabilities".to_string(),
+                    ),
+                    parameters: None,
+                    request_body: None,
+                    responses: Self::responses_with("200", "Server info", "ServerInfo"),
+                    deprecated: None,
+                    security: None,
+                }),
+                ..Default::default()
+            },
+        );
+
+        paths.insert(
+            "/api/v1/stats".to_string(),
+            PathItem {
+                get: Some(Operation {
+                    tags: vec!["system".to_string()],
+                    summary: "Aggregated scan statistics".to_string(),
+                    operation_id: "scanStats".to_string(),
+                    description: Some("Returns aggregated statistics across all scans".to_string()),
+                    parameters: None,
+                    request_body: None,
+                    responses: Self::responses_with("200", "Statistics", "ScanStats"),
+                    deprecated: None,
+                    security: None,
+                }),
+                ..Default::default()
+            },
+        );
+
+        paths.insert(
+            "/api/v1/scans".to_string(),
+            PathItem {
+                post: Some(Operation {
+                    tags: vec!["scans".to_string()],
+                    summary: "Start a new scan".to_string(),
+                    operation_id: "startScan".to_string(),
+                    description: Some(
+                        "Queues a new security scan with the specified targets and options"
+                            .to_string(),
+                    ),
+                    parameters: None,
+                    request_body: Some(RequestBody {
+                        description: Some("Scan configuration".to_string()),
+                        required: Some(true),
+                        content: {
+                            let mut m = HashMap::new();
+                            m.insert(
+                                "application/json".to_string(),
+                                MediaType {
+                                    schema: Some(Self::schema_ref("ScanRequest")),
+                                    example: Some(serde_json::json!({
+                                        "targets": ["192.168.1.0/24"],
+                                        "ports": [22, 80, 443],
+                                        "scan_type": "tcp",
+                                        "timing": "normal",
+                                        "enable_service_detection": true,
+                                        "enable_os_detection": false,
+                                        "enable_vuln_check": true,
+                                        "enable_threat_intel": false
+                                    })),
+                                    examples: None,
+                                },
+                            );
+                            m
+                        },
+                    }),
+                    responses: {
+                        let mut r = HashMap::new();
+                        r.insert(
+                            "202".to_string(),
+                            Response {
+                                description: "Scan queued successfully".to_string(),
+                                content: Some(Self::json_content("ScanQueued")),
+                                headers: None,
+                            },
+                        );
+                        r.insert(
+                            "400".to_string(),
+                            Response {
+                                description: "Invalid request".to_string(),
+                                content: Some(Self::json_content("ApiError")),
+                                headers: None,
+                            },
+                        );
+                        r
+                    },
+                    deprecated: None,
+                    security: Some(vec![{
+                        let mut s = HashMap::new();
+                        s.insert("apiKey".to_string(), vec![]);
+                        s
+                    }]),
+                }),
+                get: Some(Operation {
+                    tags: vec!["scans".to_string()],
+                    summary: "List all scans".to_string(),
+                    operation_id: "listScans".to_string(),
+                    description: Some("Returns a paginated list of all scans".to_string()),
+                    parameters: Some(vec![
+                        Parameter {
+                            name: "page".to_string(),
+                            in_location: "query".to_string(),
+                            description: Some("Page number".to_string()),
+                            required: Some(false),
+                            schema: Some(Schema {
+                                schema_type: Some("integer".to_string()),
+                                default_value: Some(serde_json::json!(1)),
+                                minimum: Some(1.0),
+                                ..Default::default()
+                            }),
+                            deprecated: None,
+                        },
+                        Parameter {
+                            name: "per_page".to_string(),
+                            in_location: "query".to_string(),
+                            description: Some("Items per page (max 100)".to_string()),
+                            required: Some(false),
+                            schema: Some(Schema {
+                                schema_type: Some("integer".to_string()),
+                                default_value: Some(serde_json::json!(20)),
+                                minimum: Some(1.0),
+                                maximum: Some(100.0),
+                                ..Default::default()
+                            }),
+                            deprecated: None,
+                        },
+                    ]),
+                    request_body: None,
+                    responses: Self::responses_with("200", "Scan list", "ScanListResponse"),
+                    deprecated: None,
+                    security: None,
+                }),
+                ..Default::default()
+            },
+        );
+
+        paths.insert(
+            "/api/v1/scans/{scan_id}".to_string(),
+            PathItem {
+                get: Some(Operation {
+                    tags: vec!["scans".to_string()],
+                    summary: "Get scan status".to_string(),
+                    operation_id: "getScanStatus".to_string(),
+                    description: Some(
+                        "Returns the current status and progress of a scan".to_string(),
+                    ),
+                    parameters: Some(vec![Self::uuid_param("scan_id", "Scan ID")]),
+                    request_body: None,
+                    responses: {
+                        let mut r = HashMap::new();
+                        r.insert(
+                            "200".to_string(),
+                            Response {
+                                description: "Scan status".to_string(),
+                                content: Some(Self::json_content("ScanStatus")),
+                                headers: None,
+                            },
+                        );
+                        r.insert(
+                            "404".to_string(),
+                            Response {
+                                description: "Scan not found".to_string(),
+                                content: Some(Self::json_content("ApiError")),
+                                headers: None,
+                            },
+                        );
+                        r
+                    },
+                    deprecated: None,
+                    security: None,
+                }),
+                delete: Some(Operation {
+                    tags: vec!["scans".to_string()],
+                    summary: "Delete a scan".to_string(),
+                    operation_id: "deleteScan".to_string(),
+                    description: Some("Deletes a scan and its results".to_string()),
+                    parameters: Some(vec![Self::uuid_param("scan_id", "Scan ID")]),
+                    request_body: None,
+                    responses: {
+                        let mut r = HashMap::new();
+                        r.insert(
+                            "200".to_string(),
+                            Response {
+                                description: "Scan deleted".to_string(),
+                                content: None,
+                                headers: None,
+                            },
+                        );
+                        r.insert(
+                            "404".to_string(),
+                            Response {
+                                description: "Scan not found".to_string(),
+                                content: Some(Self::json_content("ApiError")),
+                                headers: None,
+                            },
+                        );
+                        r
+                    },
+                    deprecated: None,
+                    security: None,
+                }),
+                ..Default::default()
+            },
+        );
 
         paths.insert("/api/v1/scans/{scan_id}/results".to_string(), PathItem {
             get: Some(Operation {
@@ -488,201 +534,235 @@ impl OpenApiBuilder {
             ..Default::default()
         });
 
-        paths.insert("/api/v1/scans/{scan_id}/cancel".to_string(), PathItem {
-            post: Some(Operation {
-                tags: vec!["scans".to_string()],
-                summary: "Cancel a running scan".to_string(),
-                operation_id: "cancelScan".to_string(),
-                description: Some("Cancels a queued or running scan".to_string()),
-                parameters: Some(vec![Self::uuid_param("scan_id", "Scan ID")]),
-                request_body: None,
-                responses: {
-                    let mut r = HashMap::new();
-                    r.insert("200".to_string(), Response {
-                        description: "Scan cancelled".to_string(),
-                        content: None,
-                        headers: None,
-                    });
-                    r.insert("400".to_string(), Response {
-                        description: "Cannot cancel".to_string(),
-                        content: Some(Self::json_content("ApiError")),
-                        headers: None,
-                    });
-                    r
-                },
-                deprecated: None,
-                security: None,
-            }),
-            ..Default::default()
-        });
-
-        paths.insert("/api/v1/webhooks".to_string(), PathItem {
-            post: Some(Operation {
-                tags: vec!["webhooks".to_string()],
-                summary: "Register a webhook".to_string(),
-                operation_id: "registerWebhook".to_string(),
-                description: Some("Registers a new webhook endpoint for scan notifications".to_string()),
-                parameters: None,
-                request_body: Some(RequestBody {
-                    description: Some("Webhook configuration".to_string()),
-                    required: Some(true),
-                    content: Self::json_content_map("RegisterWebhookRequest"),
+        paths.insert(
+            "/api/v1/scans/{scan_id}/cancel".to_string(),
+            PathItem {
+                post: Some(Operation {
+                    tags: vec!["scans".to_string()],
+                    summary: "Cancel a running scan".to_string(),
+                    operation_id: "cancelScan".to_string(),
+                    description: Some("Cancels a queued or running scan".to_string()),
+                    parameters: Some(vec![Self::uuid_param("scan_id", "Scan ID")]),
+                    request_body: None,
+                    responses: {
+                        let mut r = HashMap::new();
+                        r.insert(
+                            "200".to_string(),
+                            Response {
+                                description: "Scan cancelled".to_string(),
+                                content: None,
+                                headers: None,
+                            },
+                        );
+                        r.insert(
+                            "400".to_string(),
+                            Response {
+                                description: "Cannot cancel".to_string(),
+                                content: Some(Self::json_content("ApiError")),
+                                headers: None,
+                            },
+                        );
+                        r
+                    },
+                    deprecated: None,
+                    security: None,
                 }),
-                responses: Self::responses_with("201", "Webhook registered", "WebhookCreated"),
-                deprecated: None,
-                security: None,
-            }),
-            get: Some(Operation {
-                tags: vec!["webhooks".to_string()],
-                summary: "List registered webhooks".to_string(),
-                operation_id: "listWebhooks".to_string(),
-                description: Some("Returns all registered webhooks".to_string()),
-                parameters: None,
-                request_body: None,
-                responses: Self::responses_with("200", "Webhook list", "WebhookList"),
-                deprecated: None,
-                security: None,
-            }),
-            ..Default::default()
-        });
+                ..Default::default()
+            },
+        );
 
-        paths.insert("/api/v1/webhooks/{webhook_id}".to_string(), PathItem {
-            delete: Some(Operation {
-                tags: vec!["webhooks".to_string()],
-                summary: "Delete a webhook".to_string(),
-                operation_id: "deleteWebhook".to_string(),
-                description: Some("Removes a registered webhook".to_string()),
-                parameters: Some(vec![Self::uuid_param("webhook_id", "Webhook ID")]),
-                request_body: None,
-                responses: Self::responses_simple("200", "Webhook deleted"),
-                deprecated: None,
-                security: None,
-            }),
-            ..Default::default()
-        });
-
-        paths.insert("/api/v1/webhooks/{webhook_id}/test".to_string(), PathItem {
-            post: Some(Operation {
-                tags: vec!["webhooks".to_string()],
-                summary: "Send test delivery to webhook".to_string(),
-                operation_id: "testWebhook".to_string(),
-                description: Some("Sends a test payload to the webhook endpoint".to_string()),
-                parameters: Some(vec![Self::uuid_param("webhook_id", "Webhook ID")]),
-                request_body: None,
-                responses: Self::responses_with("200", "Delivery result", "WebhookDelivery"),
-                deprecated: None,
-                security: None,
-            }),
-            ..Default::default()
-        });
-
-        paths.insert("/api/v1/cicd/config".to_string(), PathItem {
-            get: Some(Operation {
-                tags: vec!["cicd".to_string()],
-                summary: "Get CI/CD integration configuration".to_string(),
-                operation_id: "getCiCdConfig".to_string(),
-                description: Some("Returns the current CI/CD integration settings".to_string()),
-                parameters: None,
-                request_body: None,
-                responses: Self::responses_with("200", "CI/CD config", "CiCdConfig"),
-                deprecated: None,
-                security: None,
-            }),
-            ..Default::default()
-        });
-
-        paths.insert("/api/v1/cicd/evaluate".to_string(), PathItem {
-            post: Some(Operation {
-                tags: vec!["cicd".to_string()],
-                summary: "Evaluate scan results for CI/CD pipeline".to_string(),
-                operation_id: "evaluateCiCd".to_string(),
-                description: Some("Evaluates scan results against CI/CD thresholds and returns pass/fail".to_string()),
-                parameters: None,
-                request_body: Some(RequestBody {
-                    description: Some("Evaluation parameters".to_string()),
-                    required: Some(true),
-                    content: Self::json_content_map("CiCdEvaluateRequest"),
+        paths.insert(
+            "/api/v1/webhooks".to_string(),
+            PathItem {
+                post: Some(Operation {
+                    tags: vec!["webhooks".to_string()],
+                    summary: "Register a webhook".to_string(),
+                    operation_id: "registerWebhook".to_string(),
+                    description: Some(
+                        "Registers a new webhook endpoint for scan notifications".to_string(),
+                    ),
+                    parameters: None,
+                    request_body: Some(RequestBody {
+                        description: Some("Webhook configuration".to_string()),
+                        required: Some(true),
+                        content: Self::json_content_map("RegisterWebhookRequest"),
+                    }),
+                    responses: Self::responses_with("201", "Webhook registered", "WebhookCreated"),
+                    deprecated: None,
+                    security: None,
                 }),
-                responses: Self::responses_with("200", "Evaluation result", "CiCdResult"),
-                deprecated: None,
-                security: None,
-            }),
-            ..Default::default()
-        });
+                get: Some(Operation {
+                    tags: vec!["webhooks".to_string()],
+                    summary: "List registered webhooks".to_string(),
+                    operation_id: "listWebhooks".to_string(),
+                    description: Some("Returns all registered webhooks".to_string()),
+                    parameters: None,
+                    request_body: None,
+                    responses: Self::responses_with("200", "Webhook list", "WebhookList"),
+                    deprecated: None,
+                    security: None,
+                }),
+                ..Default::default()
+            },
+        );
 
-        paths.insert("/api/v2/scans".to_string(), PathItem {
-            get: Some(Operation {
-                tags: vec!["scans".to_string()],
-                summary: "List all scans (v2)".to_string(),
-                operation_id: "listScansV2".to_string(),
-                description: Some("Returns scans with enhanced filtering and sorting".to_string()),
-                parameters: Some(vec![
-                    Parameter {
-                        name: "page".to_string(),
-                        in_location: "query".to_string(),
-                        description: Some("Page number".to_string()),
-                        required: Some(false),
-                        schema: Some(Schema {
-                            schema_type: Some("integer".to_string()),
-                            default_value: Some(serde_json::json!(1)),
-                            ..Default::default()
-                        }),
-                        deprecated: None,
-                    },
-                    Parameter {
-                        name: "per_page".to_string(),
-                        in_location: "query".to_string(),
-                        description: Some("Items per page".to_string()),
-                        required: Some(false),
-                        schema: Some(Schema {
-                            schema_type: Some("integer".to_string()),
-                            default_value: Some(serde_json::json!(20)),
-                            ..Default::default()
-                        }),
-                        deprecated: None,
-                    },
-                    Parameter {
-                        name: "status".to_string(),
-                        in_location: "query".to_string(),
-                        description: Some("Filter by status".to_string()),
-                        required: Some(false),
-                        schema: Some(Schema {
-                            schema_type: Some("string".to_string()),
-                            enum_values: Some(vec![
-                                "queued".to_string(),
-                                "running".to_string(),
-                                "completed".to_string(),
-                                "failed".to_string(),
-                                "cancelled".to_string(),
-                            ]),
-                            ..Default::default()
-                        }),
-                        deprecated: None,
-                    },
-                    Parameter {
-                        name: "sort_by".to_string(),
-                        in_location: "query".to_string(),
-                        description: Some("Sort field".to_string()),
-                        required: Some(false),
-                        schema: Some(Schema {
-                            schema_type: Some("string".to_string()),
-                            enum_values: Some(vec![
-                                "started_at".to_string(),
-                                "updated_at".to_string(),
-                                "status".to_string(),
-                            ]),
-                            ..Default::default()
-                        }),
-                        deprecated: None,
-                    },
-                ]),
-                request_body: None,
-                responses: Self::responses_with("200", "Scan list", "ScanListResponse"),
-                deprecated: None,
-                security: None,
-            }),
-            ..Default::default()
-        });
+        paths.insert(
+            "/api/v1/webhooks/{webhook_id}".to_string(),
+            PathItem {
+                delete: Some(Operation {
+                    tags: vec!["webhooks".to_string()],
+                    summary: "Delete a webhook".to_string(),
+                    operation_id: "deleteWebhook".to_string(),
+                    description: Some("Removes a registered webhook".to_string()),
+                    parameters: Some(vec![Self::uuid_param("webhook_id", "Webhook ID")]),
+                    request_body: None,
+                    responses: Self::responses_simple("200", "Webhook deleted"),
+                    deprecated: None,
+                    security: None,
+                }),
+                ..Default::default()
+            },
+        );
+
+        paths.insert(
+            "/api/v1/webhooks/{webhook_id}/test".to_string(),
+            PathItem {
+                post: Some(Operation {
+                    tags: vec!["webhooks".to_string()],
+                    summary: "Send test delivery to webhook".to_string(),
+                    operation_id: "testWebhook".to_string(),
+                    description: Some("Sends a test payload to the webhook endpoint".to_string()),
+                    parameters: Some(vec![Self::uuid_param("webhook_id", "Webhook ID")]),
+                    request_body: None,
+                    responses: Self::responses_with("200", "Delivery result", "WebhookDelivery"),
+                    deprecated: None,
+                    security: None,
+                }),
+                ..Default::default()
+            },
+        );
+
+        paths.insert(
+            "/api/v1/cicd/config".to_string(),
+            PathItem {
+                get: Some(Operation {
+                    tags: vec!["cicd".to_string()],
+                    summary: "Get CI/CD integration configuration".to_string(),
+                    operation_id: "getCiCdConfig".to_string(),
+                    description: Some("Returns the current CI/CD integration settings".to_string()),
+                    parameters: None,
+                    request_body: None,
+                    responses: Self::responses_with("200", "CI/CD config", "CiCdConfig"),
+                    deprecated: None,
+                    security: None,
+                }),
+                ..Default::default()
+            },
+        );
+
+        paths.insert(
+            "/api/v1/cicd/evaluate".to_string(),
+            PathItem {
+                post: Some(Operation {
+                    tags: vec!["cicd".to_string()],
+                    summary: "Evaluate scan results for CI/CD pipeline".to_string(),
+                    operation_id: "evaluateCiCd".to_string(),
+                    description: Some(
+                        "Evaluates scan results against CI/CD thresholds and returns pass/fail"
+                            .to_string(),
+                    ),
+                    parameters: None,
+                    request_body: Some(RequestBody {
+                        description: Some("Evaluation parameters".to_string()),
+                        required: Some(true),
+                        content: Self::json_content_map("CiCdEvaluateRequest"),
+                    }),
+                    responses: Self::responses_with("200", "Evaluation result", "CiCdResult"),
+                    deprecated: None,
+                    security: None,
+                }),
+                ..Default::default()
+            },
+        );
+
+        paths.insert(
+            "/api/v2/scans".to_string(),
+            PathItem {
+                get: Some(Operation {
+                    tags: vec!["scans".to_string()],
+                    summary: "List all scans (v2)".to_string(),
+                    operation_id: "listScansV2".to_string(),
+                    description: Some(
+                        "Returns scans with enhanced filtering and sorting".to_string(),
+                    ),
+                    parameters: Some(vec![
+                        Parameter {
+                            name: "page".to_string(),
+                            in_location: "query".to_string(),
+                            description: Some("Page number".to_string()),
+                            required: Some(false),
+                            schema: Some(Schema {
+                                schema_type: Some("integer".to_string()),
+                                default_value: Some(serde_json::json!(1)),
+                                ..Default::default()
+                            }),
+                            deprecated: None,
+                        },
+                        Parameter {
+                            name: "per_page".to_string(),
+                            in_location: "query".to_string(),
+                            description: Some("Items per page".to_string()),
+                            required: Some(false),
+                            schema: Some(Schema {
+                                schema_type: Some("integer".to_string()),
+                                default_value: Some(serde_json::json!(20)),
+                                ..Default::default()
+                            }),
+                            deprecated: None,
+                        },
+                        Parameter {
+                            name: "status".to_string(),
+                            in_location: "query".to_string(),
+                            description: Some("Filter by status".to_string()),
+                            required: Some(false),
+                            schema: Some(Schema {
+                                schema_type: Some("string".to_string()),
+                                enum_values: Some(vec![
+                                    "queued".to_string(),
+                                    "running".to_string(),
+                                    "completed".to_string(),
+                                    "failed".to_string(),
+                                    "cancelled".to_string(),
+                                ]),
+                                ..Default::default()
+                            }),
+                            deprecated: None,
+                        },
+                        Parameter {
+                            name: "sort_by".to_string(),
+                            in_location: "query".to_string(),
+                            description: Some("Sort field".to_string()),
+                            required: Some(false),
+                            schema: Some(Schema {
+                                schema_type: Some("string".to_string()),
+                                enum_values: Some(vec![
+                                    "started_at".to_string(),
+                                    "updated_at".to_string(),
+                                    "status".to_string(),
+                                ]),
+                                ..Default::default()
+                            }),
+                            deprecated: None,
+                        },
+                    ]),
+                    request_body: None,
+                    responses: Self::responses_with("200", "Scan list", "ScanListResponse"),
+                    deprecated: None,
+                    security: None,
+                }),
+                ..Default::default()
+            },
+        );
 
         paths
     }
@@ -690,211 +770,315 @@ impl OpenApiBuilder {
     fn build_components() -> Components {
         let mut schemas = HashMap::new();
 
-        schemas.insert("ScanRequest".to_string(), Schema {
-            schema_type: Some("object".to_string()),
-            required: Some(vec!["targets".to_string(), "ports".to_string()]),
-            properties: Some({
-                let mut p = HashMap::new();
-                p.insert("targets".to_string(), Schema {
-                    schema_type: Some("array".to_string()),
-                    items: Some(Box::new(Schema {
-                        schema_type: Some("string".to_string()),
-                        ..Default::default()
-                    })),
-                    description: Some("Target hosts or CIDR ranges".to_string()),
-                    ..Default::default()
-                });
-                p.insert("ports".to_string(), Schema {
-                    schema_type: Some("array".to_string()),
-                    items: Some(Box::new(Schema {
-                        schema_type: Some("integer".to_string()),
-                        ..Default::default()
-                    })),
-                    description: Some("Ports to scan".to_string()),
-                    ..Default::default()
-                });
-                p.insert("scan_type".to_string(), Schema {
-                    schema_type: Some("string".to_string()),
-                    enum_values: Some(vec![
-                        "tcp".to_string(), "udp".to_string(),
-                        "syn".to_string(), "connect".to_string(),
-                    ]),
-                    default_value: Some(serde_json::json!("tcp")),
-                    ..Default::default()
-                });
-                p.insert("timing".to_string(), Schema {
-                    schema_type: Some("string".to_string()),
-                    enum_values: Some(vec![
-                        "paranoid".to_string(), "sneaky".to_string(), "polite".to_string(),
-                        "normal".to_string(), "aggressive".to_string(), "insane".to_string(),
-                    ]),
-                    default_value: Some(serde_json::json!("normal")),
-                    ..Default::default()
-                });
-                p.insert("enable_service_detection".to_string(), Schema {
-                    schema_type: Some("boolean".to_string()),
-                    default_value: Some(serde_json::json!(false)),
-                    ..Default::default()
-                });
-                p.insert("enable_os_detection".to_string(), Schema {
-                    schema_type: Some("boolean".to_string()),
-                    default_value: Some(serde_json::json!(false)),
-                    ..Default::default()
-                });
-                p.insert("enable_vuln_check".to_string(), Schema {
-                    schema_type: Some("boolean".to_string()),
-                    default_value: Some(serde_json::json!(false)),
-                    ..Default::default()
-                });
-                p.insert("enable_threat_intel".to_string(), Schema {
-                    schema_type: Some("boolean".to_string()),
-                    default_value: Some(serde_json::json!(false)),
-                    ..Default::default()
-                });
-                p
-            }),
-            description: Some("Scan request configuration".to_string()),
-            ..Default::default()
-        });
+        schemas.insert(
+            "ScanRequest".to_string(),
+            Schema {
+                schema_type: Some("object".to_string()),
+                required: Some(vec!["targets".to_string(), "ports".to_string()]),
+                properties: Some({
+                    let mut p = HashMap::new();
+                    p.insert(
+                        "targets".to_string(),
+                        Schema {
+                            schema_type: Some("array".to_string()),
+                            items: Some(Box::new(Schema {
+                                schema_type: Some("string".to_string()),
+                                ..Default::default()
+                            })),
+                            description: Some("Target hosts or CIDR ranges".to_string()),
+                            ..Default::default()
+                        },
+                    );
+                    p.insert(
+                        "ports".to_string(),
+                        Schema {
+                            schema_type: Some("array".to_string()),
+                            items: Some(Box::new(Schema {
+                                schema_type: Some("integer".to_string()),
+                                ..Default::default()
+                            })),
+                            description: Some("Ports to scan".to_string()),
+                            ..Default::default()
+                        },
+                    );
+                    p.insert(
+                        "scan_type".to_string(),
+                        Schema {
+                            schema_type: Some("string".to_string()),
+                            enum_values: Some(vec![
+                                "tcp".to_string(),
+                                "udp".to_string(),
+                                "syn".to_string(),
+                                "connect".to_string(),
+                            ]),
+                            default_value: Some(serde_json::json!("tcp")),
+                            ..Default::default()
+                        },
+                    );
+                    p.insert(
+                        "timing".to_string(),
+                        Schema {
+                            schema_type: Some("string".to_string()),
+                            enum_values: Some(vec![
+                                "paranoid".to_string(),
+                                "sneaky".to_string(),
+                                "polite".to_string(),
+                                "normal".to_string(),
+                                "aggressive".to_string(),
+                                "insane".to_string(),
+                            ]),
+                            default_value: Some(serde_json::json!("normal")),
+                            ..Default::default()
+                        },
+                    );
+                    p.insert(
+                        "enable_service_detection".to_string(),
+                        Schema {
+                            schema_type: Some("boolean".to_string()),
+                            default_value: Some(serde_json::json!(false)),
+                            ..Default::default()
+                        },
+                    );
+                    p.insert(
+                        "enable_os_detection".to_string(),
+                        Schema {
+                            schema_type: Some("boolean".to_string()),
+                            default_value: Some(serde_json::json!(false)),
+                            ..Default::default()
+                        },
+                    );
+                    p.insert(
+                        "enable_vuln_check".to_string(),
+                        Schema {
+                            schema_type: Some("boolean".to_string()),
+                            default_value: Some(serde_json::json!(false)),
+                            ..Default::default()
+                        },
+                    );
+                    p.insert(
+                        "enable_threat_intel".to_string(),
+                        Schema {
+                            schema_type: Some("boolean".to_string()),
+                            default_value: Some(serde_json::json!(false)),
+                            ..Default::default()
+                        },
+                    );
+                    p
+                }),
+                description: Some("Scan request configuration".to_string()),
+                ..Default::default()
+            },
+        );
 
-        schemas.insert("HealthResponse".to_string(), Schema {
-            schema_type: Some("object".to_string()),
-            properties: Some({
-                let mut p = HashMap::new();
-                p.insert("status".to_string(), Schema {
-                    schema_type: Some("string".to_string()),
-                    example: Some(serde_json::json!("ok")),
-                    ..Default::default()
-                });
-                p.insert("version".to_string(), Schema {
-                    schema_type: Some("string".to_string()),
-                    ..Default::default()
-                });
-                p.insert("uptime_seconds".to_string(), Schema {
-                    schema_type: Some("integer".to_string()),
-                    ..Default::default()
-                });
-                p.insert("active_scans".to_string(), Schema {
-                    schema_type: Some("integer".to_string()),
-                    ..Default::default()
-                });
-                p.insert("completed_scans".to_string(), Schema {
-                    schema_type: Some("integer".to_string()),
-                    ..Default::default()
-                });
-                p
-            }),
-            ..Default::default()
-        });
+        schemas.insert(
+            "HealthResponse".to_string(),
+            Schema {
+                schema_type: Some("object".to_string()),
+                properties: Some({
+                    let mut p = HashMap::new();
+                    p.insert(
+                        "status".to_string(),
+                        Schema {
+                            schema_type: Some("string".to_string()),
+                            example: Some(serde_json::json!("ok")),
+                            ..Default::default()
+                        },
+                    );
+                    p.insert(
+                        "version".to_string(),
+                        Schema {
+                            schema_type: Some("string".to_string()),
+                            ..Default::default()
+                        },
+                    );
+                    p.insert(
+                        "uptime_seconds".to_string(),
+                        Schema {
+                            schema_type: Some("integer".to_string()),
+                            ..Default::default()
+                        },
+                    );
+                    p.insert(
+                        "active_scans".to_string(),
+                        Schema {
+                            schema_type: Some("integer".to_string()),
+                            ..Default::default()
+                        },
+                    );
+                    p.insert(
+                        "completed_scans".to_string(),
+                        Schema {
+                            schema_type: Some("integer".to_string()),
+                            ..Default::default()
+                        },
+                    );
+                    p
+                }),
+                ..Default::default()
+            },
+        );
 
-        schemas.insert("ApiError".to_string(), Schema {
-            schema_type: Some("object".to_string()),
-            properties: Some({
-                let mut p = HashMap::new();
-                p.insert("error".to_string(), Schema {
-                    schema_type: Some("string".to_string()),
-                    ..Default::default()
-                });
-                p.insert("message".to_string(), Schema {
-                    schema_type: Some("string".to_string()),
-                    ..Default::default()
-                });
-                p.insert("status_code".to_string(), Schema {
-                    schema_type: Some("integer".to_string()),
-                    ..Default::default()
-                });
-                p
-            }),
-            ..Default::default()
-        });
+        schemas.insert(
+            "ApiError".to_string(),
+            Schema {
+                schema_type: Some("object".to_string()),
+                properties: Some({
+                    let mut p = HashMap::new();
+                    p.insert(
+                        "error".to_string(),
+                        Schema {
+                            schema_type: Some("string".to_string()),
+                            ..Default::default()
+                        },
+                    );
+                    p.insert(
+                        "message".to_string(),
+                        Schema {
+                            schema_type: Some("string".to_string()),
+                            ..Default::default()
+                        },
+                    );
+                    p.insert(
+                        "status_code".to_string(),
+                        Schema {
+                            schema_type: Some("integer".to_string()),
+                            ..Default::default()
+                        },
+                    );
+                    p
+                }),
+                ..Default::default()
+            },
+        );
 
-        schemas.insert("RegisterWebhookRequest".to_string(), Schema {
-            schema_type: Some("object".to_string()),
-            required: Some(vec!["url".to_string(), "provider".to_string()]),
-            properties: Some({
-                let mut p = HashMap::new();
-                p.insert("url".to_string(), Schema {
-                    schema_type: Some("string".to_string()),
-                    format: Some("uri".to_string()),
-                    ..Default::default()
-                });
-                p.insert("provider".to_string(), Schema {
-                    schema_type: Some("string".to_string()),
-                    enum_values: Some(vec![
-                        "slack".to_string(), "discord".to_string(),
-                        "teams".to_string(), "custom".to_string(),
-                    ]),
-                    ..Default::default()
-                });
-                p.insert("secret".to_string(), Schema {
-                    schema_type: Some("string".to_string()),
-                    nullable: Some(true),
-                    ..Default::default()
-                });
-                p.insert("max_retries".to_string(), Schema {
-                    schema_type: Some("integer".to_string()),
-                    default_value: Some(serde_json::json!(3)),
-                    ..Default::default()
-                });
-                p
-            }),
-            ..Default::default()
-        });
+        schemas.insert(
+            "RegisterWebhookRequest".to_string(),
+            Schema {
+                schema_type: Some("object".to_string()),
+                required: Some(vec!["url".to_string(), "provider".to_string()]),
+                properties: Some({
+                    let mut p = HashMap::new();
+                    p.insert(
+                        "url".to_string(),
+                        Schema {
+                            schema_type: Some("string".to_string()),
+                            format: Some("uri".to_string()),
+                            ..Default::default()
+                        },
+                    );
+                    p.insert(
+                        "provider".to_string(),
+                        Schema {
+                            schema_type: Some("string".to_string()),
+                            enum_values: Some(vec![
+                                "slack".to_string(),
+                                "discord".to_string(),
+                                "teams".to_string(),
+                                "custom".to_string(),
+                            ]),
+                            ..Default::default()
+                        },
+                    );
+                    p.insert(
+                        "secret".to_string(),
+                        Schema {
+                            schema_type: Some("string".to_string()),
+                            nullable: Some(true),
+                            ..Default::default()
+                        },
+                    );
+                    p.insert(
+                        "max_retries".to_string(),
+                        Schema {
+                            schema_type: Some("integer".to_string()),
+                            default_value: Some(serde_json::json!(3)),
+                            ..Default::default()
+                        },
+                    );
+                    p
+                }),
+                ..Default::default()
+            },
+        );
 
-        schemas.insert("CiCdEvaluateRequest".to_string(), Schema {
-            schema_type: Some("object".to_string()),
-            required: Some(vec!["scan_id".to_string()]),
-            properties: Some({
-                let mut p = HashMap::new();
-                p.insert("scan_id".to_string(), Schema {
-                    schema_type: Some("string".to_string()),
-                    ..Default::default()
-                });
-                p.insert("targets_scanned".to_string(), Schema {
-                    schema_type: Some("integer".to_string()),
-                    ..Default::default()
-                });
-                p.insert("total_open_ports".to_string(), Schema {
-                    schema_type: Some("integer".to_string()),
-                    ..Default::default()
-                });
-                p.insert("total_vulnerabilities".to_string(), Schema {
-                    schema_type: Some("integer".to_string()),
-                    ..Default::default()
-                });
-                p.insert("risk_score".to_string(), Schema {
-                    schema_type: Some("integer".to_string()),
-                    minimum: Some(0.0),
-                    maximum: Some(100.0),
-                    ..Default::default()
-                });
-                p
-            }),
-            ..Default::default()
-        });
+        schemas.insert(
+            "CiCdEvaluateRequest".to_string(),
+            Schema {
+                schema_type: Some("object".to_string()),
+                required: Some(vec!["scan_id".to_string()]),
+                properties: Some({
+                    let mut p = HashMap::new();
+                    p.insert(
+                        "scan_id".to_string(),
+                        Schema {
+                            schema_type: Some("string".to_string()),
+                            ..Default::default()
+                        },
+                    );
+                    p.insert(
+                        "targets_scanned".to_string(),
+                        Schema {
+                            schema_type: Some("integer".to_string()),
+                            ..Default::default()
+                        },
+                    );
+                    p.insert(
+                        "total_open_ports".to_string(),
+                        Schema {
+                            schema_type: Some("integer".to_string()),
+                            ..Default::default()
+                        },
+                    );
+                    p.insert(
+                        "total_vulnerabilities".to_string(),
+                        Schema {
+                            schema_type: Some("integer".to_string()),
+                            ..Default::default()
+                        },
+                    );
+                    p.insert(
+                        "risk_score".to_string(),
+                        Schema {
+                            schema_type: Some("integer".to_string()),
+                            minimum: Some(0.0),
+                            maximum: Some(100.0),
+                            ..Default::default()
+                        },
+                    );
+                    p
+                }),
+                ..Default::default()
+            },
+        );
 
         Components {
             schemas: Some(schemas),
             security_schemes: Some({
                 let mut s = HashMap::new();
-                s.insert("apiKey".to_string(), SecurityScheme {
-                    scheme_type: "apiKey".to_string(),
-                    description: Some("API key authentication".to_string()),
-                    name: Some("X-API-Key".to_string()),
-                    in_location: Some("header".to_string()),
-                    scheme: None,
-                    bearer_format: None,
-                    flows: None,
-                });
-                s.insert("bearerAuth".to_string(), SecurityScheme {
-                    scheme_type: "http".to_string(),
-                    description: Some("Bearer token authentication".to_string()),
-                    name: None,
-                    in_location: None,
-                    scheme: Some("bearer".to_string()),
-                    bearer_format: Some("JWT".to_string()),
-                    flows: None,
-                });
+                s.insert(
+                    "apiKey".to_string(),
+                    SecurityScheme {
+                        scheme_type: "apiKey".to_string(),
+                        description: Some("API key authentication".to_string()),
+                        name: Some("X-API-Key".to_string()),
+                        in_location: Some("header".to_string()),
+                        scheme: None,
+                        bearer_format: None,
+                        flows: None,
+                    },
+                );
+                s.insert(
+                    "bearerAuth".to_string(),
+                    SecurityScheme {
+                        scheme_type: "http".to_string(),
+                        description: Some("Bearer token authentication".to_string()),
+                        name: None,
+                        in_location: None,
+                        scheme: Some("bearer".to_string()),
+                        bearer_format: Some("JWT".to_string()),
+                        flows: None,
+                    },
+                );
                 s
             }),
             responses: None,
@@ -904,31 +1088,40 @@ impl OpenApiBuilder {
 
     fn responses_simple(code: &str, desc: &str) -> HashMap<String, Response> {
         let mut r = HashMap::new();
-        r.insert(code.to_string(), Response {
-            description: desc.to_string(),
-            content: None,
-            headers: None,
-        });
+        r.insert(
+            code.to_string(),
+            Response {
+                description: desc.to_string(),
+                content: None,
+                headers: None,
+            },
+        );
         r
     }
 
     fn responses_with(code: &str, desc: &str, schema_ref: &str) -> HashMap<String, Response> {
         let mut r = HashMap::new();
-        r.insert(code.to_string(), Response {
-            description: desc.to_string(),
-            content: Some(Self::json_content(schema_ref)),
-            headers: None,
-        });
+        r.insert(
+            code.to_string(),
+            Response {
+                description: desc.to_string(),
+                content: Some(Self::json_content(schema_ref)),
+                headers: None,
+            },
+        );
         r
     }
 
     fn json_content(schema_ref: &str) -> HashMap<String, MediaType> {
         let mut m = HashMap::new();
-        m.insert("application/json".to_string(), MediaType {
-            schema: Some(Self::schema_ref(schema_ref)),
-            example: None,
-            examples: None,
-        });
+        m.insert(
+            "application/json".to_string(),
+            MediaType {
+                schema: Some(Self::schema_ref(schema_ref)),
+                example: None,
+                examples: None,
+            },
+        );
         m
     }
 
@@ -973,7 +1166,8 @@ pub fn get_code_examples() -> Vec<CodeExample> {
     "timing": "normal",
     "enable_service_detection": true,
     "enable_vuln_check": true
-  }'"#.to_string(),
+  }'"#
+            .to_string(),
         },
         CodeExample {
             language: "python".to_string(),
@@ -990,7 +1184,8 @@ response = requests.post("http://localhost:8080/api/v1/scans", json={
 })
 
 scan = response.json()
-print(f"Scan ID: {scan['scan_id']}")"#.to_string(),
+print(f"Scan ID: {scan['scan_id']}")"#
+                .to_string(),
         },
         CodeExample {
             language: "javascript".to_string(),
@@ -1009,7 +1204,8 @@ print(f"Scan ID: {scan['scan_id']}")"#.to_string(),
 });
 
 const scan = await response.json();
-console.log(`Scan ID: ${scan.scan_id}`);"#.to_string(),
+console.log(`Scan ID: ${scan.scan_id}`);"#
+                .to_string(),
         },
         CodeExample {
             language: "javascript".to_string(),
@@ -1028,7 +1224,8 @@ ws.onmessage = (event) => {
   if (msg.type === "ScanUpdate") {
     console.log(`Progress: ${msg.payload.progress}%`);
   }
-};"#.to_string(),
+};"#
+            .to_string(),
         },
         CodeExample {
             language: "graphql".to_string(),
@@ -1043,7 +1240,8 @@ ws.onmessage = (event) => {
     }
     total
   }
-}"#.to_string(),
+}"#
+            .to_string(),
         },
     ]
 }
@@ -1082,7 +1280,10 @@ pub async fn code_examples_handler() -> actix_web::HttpResponse {
 
 pub fn docs_config(cfg: &mut actix_web::web::ServiceConfig) {
     cfg.route("/docs", actix_web::web::get().to(api_docs_handler))
-       .route("/docs/examples", actix_web::web::get().to(code_examples_handler));
+        .route(
+            "/docs/examples",
+            actix_web::web::get().to(code_examples_handler),
+        );
 }
 
 #[cfg(test)]
@@ -1241,7 +1442,10 @@ mod tests {
     #[test]
     fn test_schema_ref() {
         let schema = OpenApiBuilder::schema_ref("TestSchema");
-        assert_eq!(schema.reference, Some("#/components/schemas/TestSchema".to_string()));
+        assert_eq!(
+            schema.reference,
+            Some("#/components/schemas/TestSchema".to_string())
+        );
     }
 
     #[test]

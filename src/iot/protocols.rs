@@ -72,14 +72,18 @@ impl ProtocolSecurityFinding {
 
     pub fn description(&self) -> &str {
         match self {
-            ProtocolSecurityFinding::NoAuthentication => "Protocol accepts connections without authentication",
+            ProtocolSecurityFinding::NoAuthentication => {
+                "Protocol accepts connections without authentication"
+            }
             ProtocolSecurityFinding::AnonymousAccess => "Anonymous access is enabled on the broker",
             ProtocolSecurityFinding::NoEncryption => "Communication is not encrypted",
             ProtocolSecurityFinding::WeakCredentials => "Broker uses weak or default credentials",
             ProtocolSecurityFinding::ExposedTopics => "Topics are exposed without access control",
             ProtocolSecurityFinding::NoAccessControl => "No topic-level access control configured",
             ProtocolSecurityFinding::UnpatchedBroker => "Broker may be running an outdated version",
-            ProtocolSecurityFinding::ExcessivePermissions => "Clients have excessive publish/subscribe permissions",
+            ProtocolSecurityFinding::ExcessivePermissions => {
+                "Clients have excessive publish/subscribe permissions"
+            }
             ProtocolSecurityFinding::NoTlsCertificate => "TLS certificate is not configured",
             ProtocolSecurityFinding::DefaultConfig => "Broker is using default configuration",
         }
@@ -204,9 +208,7 @@ impl IoTProtocolScanner {
                 let _ = s.write_all(&amqp_header).await;
                 let mut buf = [0u8; 256];
                 match timeout(self.timeout_duration, s.read(&mut buf)).await {
-                    Ok(Ok(n)) if n >= 8 => {
-                        &buf[0..4] == b"AMQP"
-                    }
+                    Ok(Ok(n)) if n >= 8 => &buf[0..4] == b"AMQP",
                     _ => false,
                 }
             }
@@ -242,9 +244,7 @@ impl IoTProtocolScanner {
 
         let mut buf = [0u8; 1024];
         let is_detected = match timeout(self.timeout_duration, socket.recv_from(&mut buf)).await {
-            Ok(Ok((n, _))) => {
-                n >= 4 && &buf[0..4] == b"RTPS"
-            }
+            Ok(Ok((n, _))) => n >= 4 && &buf[0..4] == b"RTPS",
             _ => false,
         };
 
@@ -285,7 +285,12 @@ impl IoTProtocolScanner {
         results
     }
 
-    fn build_mqtt_connect(&self, client_id: &str, username: Option<&str>, password: Option<&str>) -> Vec<u8> {
+    fn build_mqtt_connect(
+        &self,
+        client_id: &str,
+        username: Option<&str>,
+        password: Option<&str>,
+    ) -> Vec<u8> {
         let protocol_name = b"MQTT";
         let protocol_level: u8 = 4; // MQTT 3.1.1
         let mut connect_flags: u8 = 0x02; // Clean session
@@ -322,7 +327,7 @@ impl IoTProtocolScanner {
 
         let mut packet = Vec::new();
         packet.push(0x10); // CONNECT packet type
-        // Remaining length (variable length encoding)
+                           // Remaining length (variable length encoding)
         let mut rl = remaining_length;
         while rl > 0x7F {
             packet.push((rl & 0x7F) as u8 | 0x80);
@@ -374,7 +379,7 @@ impl IoTProtocolScanner {
         packet.push(1); // Protocol version minor
         packet.push(0x01); // Vendor ID high
         packet.push(0x00); // Vendor ID low
-        // Pad with zeros for a minimal discovery message
+                           // Pad with zeros for a minimal discovery message
         packet.resize(20, 0);
         packet
     }
@@ -412,25 +417,22 @@ mod tests {
             ProtocolSecurityFinding::AnonymousAccess.severity(),
             "CRITICAL"
         );
-        assert_eq!(
-            ProtocolSecurityFinding::NoEncryption.severity(),
-            "HIGH"
-        );
-        assert_eq!(
-            ProtocolSecurityFinding::ExposedTopics.severity(),
-            "MEDIUM"
-        );
-        assert_eq!(
-            ProtocolSecurityFinding::DefaultConfig.severity(),
-            "MEDIUM"
-        );
+        assert_eq!(ProtocolSecurityFinding::NoEncryption.severity(), "HIGH");
+        assert_eq!(ProtocolSecurityFinding::ExposedTopics.severity(), "MEDIUM");
+        assert_eq!(ProtocolSecurityFinding::DefaultConfig.severity(), "MEDIUM");
     }
 
     #[test]
     fn test_finding_description() {
-        assert!(!ProtocolSecurityFinding::NoAuthentication.description().is_empty());
-        assert!(!ProtocolSecurityFinding::AnonymousAccess.description().is_empty());
-        assert!(!ProtocolSecurityFinding::NoEncryption.description().is_empty());
+        assert!(!ProtocolSecurityFinding::NoAuthentication
+            .description()
+            .is_empty());
+        assert!(!ProtocolSecurityFinding::AnonymousAccess
+            .description()
+            .is_empty());
+        assert!(!ProtocolSecurityFinding::NoEncryption
+            .description()
+            .is_empty());
     }
 
     #[test]

@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Nmap XML import module
 // Parses Nmap XML output and converts to Nemue format
 
@@ -5,7 +6,7 @@ use anyhow::{anyhow, Result};
 use serde::Deserialize;
 use std::path::Path;
 
-use crate::scanner::{ScanResult, ScanResults, PortState, Protocol};
+use crate::scanner::{PortState, Protocol, ScanResult, ScanResults};
 
 /// Nmap XML root element
 #[derive(Debug, Deserialize)]
@@ -109,8 +110,8 @@ pub fn import_nmap_xml<P: AsRef<Path>>(path: P) -> Result<ScanResults> {
 
 /// Import Nmap XML string and convert to Nemue format
 pub fn import_nmap_xml_str(xml: &str) -> Result<ScanResults> {
-    let nmap_run: NmapRun = quick_xml::de::from_str(xml)
-        .map_err(|e| anyhow!("Failed to parse Nmap XML: {}", e))?;
+    let nmap_run: NmapRun =
+        quick_xml::de::from_str(xml).map_err(|e| anyhow!("Failed to parse Nmap XML: {}", e))?;
 
     let mut results = Vec::new();
     let mut target_count = 0;
@@ -119,15 +120,16 @@ pub fn import_nmap_xml_str(xml: &str) -> Result<ScanResults> {
         target_count += 1;
 
         // Get host IP
-        let host_ip = host.addresses.first()
+        let host_ip = host
+            .addresses
+            .first()
             .map(|a| a.addr.clone())
             .unwrap_or_default();
 
         // Parse ports
         if let Some(ref ports) = host.ports {
             for port in &ports.ports {
-                let port_num: u16 = port.portid.parse()
-                    .unwrap_or(0);
+                let port_num: u16 = port.portid.parse().unwrap_or(0);
 
                 let state = match port.state.state.as_str() {
                     "open" => PortState::Open,
@@ -145,24 +147,24 @@ pub fn import_nmap_xml_str(xml: &str) -> Result<ScanResults> {
                 };
 
                 let service = port.service.as_ref().map(|s| s.name.clone());
-                let service_info = port.service.as_ref().map(|s| {
-                    crate::service::ServiceInfo {
-                        port: port_num,
-                        protocol: port.protocol.clone(),
-                        service: s.name.clone(),
-                        product: s.product.clone(),
-                        version: s.version.clone(),
-                        extra_info: s.extrainfo.clone(),
-                        banner: None,
-                        confidence: 80,
-                        service_family: None,
-                        os_hint: None,
-                        cpe: None,
-                    }
+                let service_info = port.service.as_ref().map(|s| crate::service::ServiceInfo {
+                    port: port_num,
+                    protocol: port.protocol.clone(),
+                    service: s.name.clone(),
+                    product: s.product.clone(),
+                    version: s.version.clone(),
+                    extra_info: s.extrainfo.clone(),
+                    banner: None,
+                    confidence: 80,
+                    service_family: None,
+                    os_hint: None,
+                    cpe: None,
                 });
 
                 results.push(ScanResult {
-                    target: host_ip.parse().unwrap_or(std::net::IpAddr::V4(std::net::Ipv4Addr::new(0, 0, 0, 0))),
+                    target: host_ip
+                        .parse()
+                        .unwrap_or(std::net::IpAddr::V4(std::net::Ipv4Addr::new(0, 0, 0, 0))),
                     port: port_num,
                     state,
                     protocol,

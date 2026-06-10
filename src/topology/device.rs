@@ -1,6 +1,6 @@
 // Device classification and fingerprinting
+use serde::{Deserialize, Serialize};
 use std::net::IpAddr;
-use serde::{Serialize, Deserialize};
 
 /// Device type classification
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -59,7 +59,7 @@ impl DeviceClassifier {
     pub async fn classify(&self, address: IpAddr) -> DeviceInfo {
         // In production: perform service detection, TTL analysis, etc.
         // For now, return basic classification based on IP
-        
+
         let device_type = if Self::is_private_ip(address) {
             // Could be gateway/router
             if Self::is_likely_gateway(address) {
@@ -135,7 +135,7 @@ mod tests {
     fn test_is_private_ip() {
         let private = IpAddr::from_str("192.168.1.1").unwrap();
         let public = IpAddr::from_str("8.8.8.8").unwrap();
-        
+
         assert!(DeviceClassifier::is_private_ip(private));
         assert!(!DeviceClassifier::is_private_ip(public));
     }
@@ -145,7 +145,7 @@ mod tests {
         let gateway1 = IpAddr::from_str("192.168.1.1").unwrap();
         let gateway2 = IpAddr::from_str("10.0.0.254").unwrap();
         let host = IpAddr::from_str("192.168.1.100").unwrap();
-        
+
         assert!(DeviceClassifier::is_likely_gateway(gateway1));
         assert!(DeviceClassifier::is_likely_gateway(gateway2));
         assert!(!DeviceClassifier::is_likely_gateway(host));
@@ -155,7 +155,7 @@ mod tests {
     async fn test_classify_device() {
         let classifier = DeviceClassifier::new();
         let router_ip = IpAddr::from_str("192.168.1.1").unwrap();
-        
+
         let info = classifier.classify(router_ip).await;
         assert_eq!(info.device_type, DeviceType::Router);
     }

@@ -3,7 +3,7 @@ use std::sync::Arc;
 use tokio::sync::{mpsc, Semaphore};
 use tokio::task::JoinHandle;
 
-pub type Task = Box<dyn FnOnce() -> () + Send + 'static>;
+pub type Task = Box<dyn FnOnce() + Send + 'static>;
 
 pub struct WorkerPool {
     workers: Vec<Worker>,
@@ -14,7 +14,7 @@ impl WorkerPool {
     pub fn new(size: usize) -> Self {
         let (sender, receiver) = mpsc::unbounded_channel::<Task>();
         let receiver = Arc::new(tokio::sync::Mutex::new(receiver));
-        
+
         let mut workers = Vec::with_capacity(size);
         for id in 0..size {
             workers.push(Worker::new(id, Arc::clone(&receiver)));
@@ -23,9 +23,9 @@ impl WorkerPool {
         Self { workers, sender }
     }
 
-    pub fn execute<F>(&self, f: F) 
+    pub fn execute<F>(&self, f: F)
     where
-        F: FnOnce() -> () + Send + 'static,
+        F: FnOnce() + Send + 'static,
     {
         let job = Box::new(f);
         if let Err(e) = self.sender.send(job) {
@@ -106,7 +106,7 @@ mod tests {
     async fn test_worker_pool_execute() {
         let pool = WorkerPool::new(2);
         let counter = Arc::new(AtomicUsize::new(0));
-        
+
         for _ in 0..10 {
             let counter_clone = Arc::clone(&counter);
             pool.execute(move || {
@@ -136,12 +136,12 @@ mod tests {
     #[tokio::test]
     async fn test_concurrency_limiter_release() {
         let limiter = ConcurrencyLimiter::new(2);
-        
+
         {
             let _permit = limiter.acquire().await.unwrap();
             assert_eq!(limiter.available_permits(), 1);
         }
-        
+
         // Permit should be released
         assert_eq!(limiter.available_permits(), 2);
     }

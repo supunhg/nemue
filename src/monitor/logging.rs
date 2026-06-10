@@ -318,11 +318,19 @@ impl StructuredLogger {
     }
 
     pub fn trace(&mut self, message: &str) {
-        self.log(LogEntry::new(LogLevel::Trace, message, &self.source.clone()));
+        self.log(LogEntry::new(
+            LogLevel::Trace,
+            message,
+            &self.source.clone(),
+        ));
     }
 
     pub fn debug(&mut self, message: &str) {
-        self.log(LogEntry::new(LogLevel::Debug, message, &self.source.clone()));
+        self.log(LogEntry::new(
+            LogLevel::Debug,
+            message,
+            &self.source.clone(),
+        ));
     }
 
     pub fn info(&mut self, message: &str) {
@@ -334,11 +342,19 @@ impl StructuredLogger {
     }
 
     pub fn error(&mut self, message: &str) {
-        self.log(LogEntry::new(LogLevel::Error, message, &self.source.clone()));
+        self.log(LogEntry::new(
+            LogLevel::Error,
+            message,
+            &self.source.clone(),
+        ));
     }
 
     pub fn fatal(&mut self, message: &str) {
-        self.log(LogEntry::new(LogLevel::Fatal, message, &self.source.clone()));
+        self.log(LogEntry::new(
+            LogLevel::Fatal,
+            message,
+            &self.source.clone(),
+        ));
     }
 
     pub fn entries(&self) -> &[LogEntry] {
@@ -363,7 +379,10 @@ impl StructuredLogger {
     }
 
     pub fn entries_since(&self, since: DateTime<Utc>) -> Vec<&LogEntry> {
-        self.entries.iter().filter(|e| e.timestamp >= since).collect()
+        self.entries
+            .iter()
+            .filter(|e| e.timestamp >= since)
+            .collect()
     }
 
     pub fn clear(&mut self) {
@@ -479,7 +498,7 @@ impl LogAggregator {
         for logger in self.loggers.values() {
             all.extend(logger.entries());
         }
-        all.sort_by(|a, b| a.timestamp.cmp(&b.timestamp));
+        all.sort_by_key(|a| a.timestamp);
         all
     }
 
@@ -596,8 +615,7 @@ mod tests {
 
     #[test]
     fn test_log_entry_to_text_with_trace() {
-        let entry = LogEntry::new(LogLevel::Info, "test", "svc")
-            .with_trace("tid", "sid");
+        let entry = LogEntry::new(LogLevel::Info, "test", "svc").with_trace("tid", "sid");
         let text = entry.to_text();
         assert!(text.contains("[tid:sid]"));
     }
@@ -649,7 +667,8 @@ mod tests {
 
     #[test]
     fn test_log_filter_with_sources() {
-        let filter = LogFilter::new(LogLevel::Info).with_sources(vec!["api".to_string(), "db".to_string()]);
+        let filter =
+            LogFilter::new(LogLevel::Info).with_sources(vec!["api".to_string(), "db".to_string()]);
 
         assert!(filter.matches(&LogEntry::new(LogLevel::Info, "test", "api")));
         assert!(filter.matches(&LogEntry::new(LogLevel::Info, "test", "db")));
@@ -660,7 +679,11 @@ mod tests {
     fn test_log_filter_with_message_pattern() {
         let filter = LogFilter::new(LogLevel::Info).with_message_pattern("connection");
 
-        assert!(filter.matches(&LogEntry::new(LogLevel::Info, "connection established", "net")));
+        assert!(filter.matches(&LogEntry::new(
+            LogLevel::Info,
+            "connection established",
+            "net"
+        )));
         assert!(!filter.matches(&LogEntry::new(LogLevel::Info, "server started", "net")));
     }
 
@@ -795,8 +818,7 @@ mod tests {
 
     #[test]
     fn test_structured_logger_rotation_config() {
-        let logger = StructuredLogger::new("test")
-            .with_rotation(RotationConfig::new(1024, 3));
+        let logger = StructuredLogger::new("test").with_rotation(RotationConfig::new(1024, 3));
         assert!(logger.rotation_config().is_some());
     }
 
@@ -837,7 +859,10 @@ mod tests {
     #[test]
     fn test_log_aggregator_get_mut() {
         let mut agg = LogAggregator::new();
-        agg.register_logger("svc", StructuredLogger::new("svc").with_min_level(LogLevel::Info));
+        agg.register_logger(
+            "svc",
+            StructuredLogger::new("svc").with_min_level(LogLevel::Info),
+        );
 
         let logger = agg.get_logger_mut("svc").unwrap();
         logger.info("hello");
@@ -868,7 +893,10 @@ mod tests {
     #[test]
     fn test_log_aggregator_all_entries_sorted() {
         let mut agg = LogAggregator::new();
-        agg.register_logger("a", StructuredLogger::new("a").with_min_level(LogLevel::Info));
+        agg.register_logger(
+            "a",
+            StructuredLogger::new("a").with_min_level(LogLevel::Info),
+        );
 
         agg.get_logger_mut("a").unwrap().info("from logger");
         agg.ingest(LogEntry::new(LogLevel::Info, "from aggregator", "ext"));
@@ -881,7 +909,10 @@ mod tests {
     #[test]
     fn test_log_aggregator_total_entry_count() {
         let mut agg = LogAggregator::new();
-        agg.register_logger("a", StructuredLogger::new("a").with_min_level(LogLevel::Info));
+        agg.register_logger(
+            "a",
+            StructuredLogger::new("a").with_min_level(LogLevel::Info),
+        );
         agg.get_logger_mut("a").unwrap().info("test");
         agg.ingest(LogEntry::new(LogLevel::Info, "test", "ext"));
 
@@ -902,7 +933,10 @@ mod tests {
     #[test]
     fn test_log_aggregator_clear_all() {
         let mut agg = LogAggregator::new();
-        agg.register_logger("a", StructuredLogger::new("a").with_min_level(LogLevel::Info));
+        agg.register_logger(
+            "a",
+            StructuredLogger::new("a").with_min_level(LogLevel::Info),
+        );
         agg.get_logger_mut("a").unwrap().info("test");
         agg.ingest(LogEntry::new(LogLevel::Info, "test", "ext"));
 

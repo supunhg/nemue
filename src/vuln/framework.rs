@@ -1,4 +1,4 @@
-use anyhow::{Result, Context};
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -148,9 +148,7 @@ impl VulnScript {
             category,
             ports: Vec::new(),
             services: Vec::new(),
-            execute: Arc::new(|_, _| {
-                Err(anyhow::anyhow!("Script execution not implemented"))
-            }),
+            execute: Arc::new(|_, _| Err(anyhow::anyhow!("Script execution not implemented"))),
         }
     }
 
@@ -288,16 +286,8 @@ impl ScriptEngine {
     }
 
     /// Execute a specific script by ID
-    pub async fn run_script(
-        &self,
-        script_id: &str,
-        target: &str,
-        port: u16,
-    ) -> Result<VulnResult> {
-        let script = self
-            .scripts
-            .get(script_id)
-            .context("Script not found")?;
+    pub async fn run_script(&self, script_id: &str, target: &str, port: u16) -> Result<VulnResult> {
+        let script = self.scripts.get(script_id).context("Script not found")?;
 
         self.execute_with_timeout(script, target, port).await
     }
@@ -320,17 +310,18 @@ impl ScriptEngine {
 
             let task = tokio::spawn(async move {
                 let _permit = sem.acquire().await.unwrap();
-                
+
                 let result = timeout(
                     timeout_duration,
-                    tokio::task::spawn_blocking(move || script.run(&target, port))
-                ).await;
+                    tokio::task::spawn_blocking(move || script.run(&target, port)),
+                )
+                .await;
 
                 match result {
                     Ok(Ok(Ok(vuln_result))) => Some(vuln_result),
                     Ok(Ok(Err(_))) => None, // Script error
-                    Ok(Err(_)) => None,      // Task join error
-                    Err(_) => None,          // Timeout
+                    Ok(Err(_)) => None,     // Task join error
+                    Err(_) => None,         // Timeout
                 }
             });
 
@@ -360,8 +351,9 @@ impl ScriptEngine {
 
         let result = timeout(
             timeout_duration,
-            tokio::task::spawn_blocking(move || script.run(&target, port))
-        ).await;
+            tokio::task::spawn_blocking(move || script.run(&target, port)),
+        )
+        .await;
 
         match result {
             Ok(Ok(vuln_result)) => vuln_result,
@@ -410,14 +402,14 @@ mod tests {
     #[test]
     fn test_engine_registration() {
         let mut engine = ScriptEngine::new();
-        
+
         let script = VulnScript::new(
             "test-1",
             "Test Script 1",
             "Testing",
             VulnCategory::Authentication,
         );
-        
+
         engine.register(script);
         assert!(engine.get("test-1").is_some());
         assert!(engine.get("nonexistent").is_none());
@@ -426,21 +418,21 @@ mod tests {
     #[test]
     fn test_list_by_category() {
         let mut engine = ScriptEngine::new();
-        
+
         engine.register(VulnScript::new(
             "auth-1",
             "Auth Test 1",
             "Testing",
             VulnCategory::Authentication,
         ));
-        
+
         engine.register(VulnScript::new(
             "auth-2",
             "Auth Test 2",
             "Testing",
             VulnCategory::Authentication,
         ));
-        
+
         engine.register(VulnScript::new(
             "rce-1",
             "RCE Test",

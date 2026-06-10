@@ -141,7 +141,7 @@ impl ScanType {
             ScanType::Fin => TcpFlags::new().with_fin(),
             ScanType::Xmas => TcpFlags::new().with_fin().with_psh().with_urg(),
             ScanType::Custom(flags) => *flags,
-            ScanType::Udp => TcpFlags::new(), // N/A for UDP
+            ScanType::Udp => TcpFlags::new(),      // N/A for UDP
             ScanType::SctpInit => TcpFlags::new(), // N/A for SCTP
             ScanType::SctpCookieEcho => TcpFlags::new(), // N/A for SCTP
             ScanType::IpProtocol => TcpFlags::new(), // N/A for IP Protocol scan
@@ -257,34 +257,65 @@ impl TcpFlags {
     /// Convert to byte representation
     pub fn to_u8(&self) -> u8 {
         let mut byte = 0u8;
-        if self.fin { byte |= 0x01; }
-        if self.syn { byte |= 0x02; }
-        if self.rst { byte |= 0x04; }
-        if self.psh { byte |= 0x08; }
-        if self.ack { byte |= 0x10; }
-        if self.urg { byte |= 0x20; }
-        if self.ece { byte |= 0x40; }
-        if self.cwr { byte |= 0x80; }
+        if self.fin {
+            byte |= 0x01;
+        }
+        if self.syn {
+            byte |= 0x02;
+        }
+        if self.rst {
+            byte |= 0x04;
+        }
+        if self.psh {
+            byte |= 0x08;
+        }
+        if self.ack {
+            byte |= 0x10;
+        }
+        if self.urg {
+            byte |= 0x20;
+        }
+        if self.ece {
+            byte |= 0x40;
+        }
+        if self.cwr {
+            byte |= 0x80;
+        }
         byte
     }
 
     /// Check if any flag is set
     pub fn any_set(&self) -> bool {
-        self.fin || self.syn || self.rst || self.psh || 
-        self.ack || self.urg || self.ece || self.cwr
+        self.fin || self.syn || self.rst || self.psh || self.ack || self.urg || self.ece || self.cwr
     }
 
     /// Get flag names as string (for display)
     pub fn to_string_list(&self) -> Vec<&str> {
         let mut flags = Vec::new();
-        if self.fin { flags.push("FIN"); }
-        if self.syn { flags.push("SYN"); }
-        if self.rst { flags.push("RST"); }
-        if self.psh { flags.push("PSH"); }
-        if self.ack { flags.push("ACK"); }
-        if self.urg { flags.push("URG"); }
-        if self.ece { flags.push("ECE"); }
-        if self.cwr { flags.push("CWR"); }
+        if self.fin {
+            flags.push("FIN");
+        }
+        if self.syn {
+            flags.push("SYN");
+        }
+        if self.rst {
+            flags.push("RST");
+        }
+        if self.psh {
+            flags.push("PSH");
+        }
+        if self.ack {
+            flags.push("ACK");
+        }
+        if self.urg {
+            flags.push("URG");
+        }
+        if self.ece {
+            flags.push("ECE");
+        }
+        if self.cwr {
+            flags.push("CWR");
+        }
         flags
     }
 }
@@ -460,13 +491,19 @@ impl AdvancedScanner {
             ScanType::Syn => self.syn_scan(target, port).await,
             ScanType::Custom(flags) => self.custom_scan(target, port, flags).await,
             ScanType::Udp => Err(anyhow!("UDP scanning not implemented in AdvancedScanner")),
-            ScanType::SctpInit | ScanType::SctpCookieEcho => Err(anyhow!("SCTP scanning requires SctpScanner")),
+            ScanType::SctpInit | ScanType::SctpCookieEcho => {
+                Err(anyhow!("SCTP scanning requires SctpScanner"))
+            }
             ScanType::IpProtocol => Err(anyhow!("IP Protocol scan requires IpProtocolScanner")),
         }
     }
 
     /// Perform ACK scan with firewall analysis
-    pub async fn ack_scan_with_analysis(&self, target: IpAddr, port: u16) -> Result<FirewallAnalysis> {
+    pub async fn ack_scan_with_analysis(
+        &self,
+        target: IpAddr,
+        port: u16,
+    ) -> Result<FirewallAnalysis> {
         let result = self.ack_scan(target, port).await?;
 
         let filtering_state = match result.state {
@@ -491,7 +528,11 @@ impl AdvancedScanner {
     }
 
     /// Perform Window scan with analysis
-    pub async fn window_scan_with_analysis(&self, target: IpAddr, port: u16) -> Result<WindowAnalysis> {
+    pub async fn window_scan_with_analysis(
+        &self,
+        target: IpAddr,
+        port: u16,
+    ) -> Result<WindowAnalysis> {
         let result = self.window_scan(target, port).await?;
         let window_size = result.window_size.unwrap_or(0);
 
@@ -504,7 +545,11 @@ impl AdvancedScanner {
     }
 
     /// Analyze multiple ports for firewall rules
-    pub async fn analyze_firewall(&self, target: IpAddr, ports: &[u16]) -> Result<Vec<FirewallAnalysis>> {
+    pub async fn analyze_firewall(
+        &self,
+        target: IpAddr,
+        ports: &[u16],
+    ) -> Result<Vec<FirewallAnalysis>> {
         let mut results = Vec::with_capacity(ports.len());
         for &port in ports {
             match self.ack_scan_with_analysis(target, port).await {
@@ -522,7 +567,11 @@ impl AdvancedScanner {
     }
 
     /// Analyze multiple ports with Window scan
-    pub async fn analyze_windows(&self, target: IpAddr, ports: &[u16]) -> Result<Vec<WindowAnalysis>> {
+    pub async fn analyze_windows(
+        &self,
+        target: IpAddr,
+        ports: &[u16],
+    ) -> Result<Vec<WindowAnalysis>> {
         let mut results = Vec::with_capacity(ports.len());
         for &port in ports {
             match self.window_scan_with_analysis(target, port).await {
@@ -541,35 +590,29 @@ impl AdvancedScanner {
     /// TCP Connect scan (full three-way handshake)
     async fn connect_scan(&self, target: IpAddr, port: u16) -> Result<ScanResult> {
         let addr = SocketAddr::new(target, port);
-        
+
         match timeout(self.timeout, TcpStream::connect(addr)).await {
-            Ok(Ok(_stream)) => {
-                Ok(ScanResult {
-                    port,
-                    state: PortState::Open,
-                    reason: PortStateReason::SynAck,
-                    ttl: None,
-                    window_size: None,
-                })
-            }
-            Ok(Err(_)) => {
-                Ok(ScanResult {
-                    port,
-                    state: PortState::Closed,
-                    reason: PortStateReason::Rst,
-                    ttl: None,
-                    window_size: None,
-                })
-            }
-            Err(_) => {
-                Ok(ScanResult {
-                    port,
-                    state: PortState::Filtered,
-                    reason: PortStateReason::NoResponse,
-                    ttl: None,
-                    window_size: None,
-                })
-            }
+            Ok(Ok(_stream)) => Ok(ScanResult {
+                port,
+                state: PortState::Open,
+                reason: PortStateReason::SynAck,
+                ttl: None,
+                window_size: None,
+            }),
+            Ok(Err(_)) => Ok(ScanResult {
+                port,
+                state: PortState::Closed,
+                reason: PortStateReason::Rst,
+                ttl: None,
+                window_size: None,
+            }),
+            Err(_) => Ok(ScanResult {
+                port,
+                state: PortState::Filtered,
+                reason: PortStateReason::NoResponse,
+                ttl: None,
+                window_size: None,
+            }),
         }
     }
 
@@ -652,15 +695,13 @@ impl AdvancedScanner {
                     })
                 }
             }
-            Err(_) => {
-                Ok(ScanResult {
-                    port,
-                    state: PortState::Filtered,
-                    reason: PortStateReason::NoResponse,
-                    ttl: None,
-                    window_size: None,
-                })
-            }
+            Err(_) => Ok(ScanResult {
+                port,
+                state: PortState::Filtered,
+                reason: PortStateReason::NoResponse,
+                ttl: None,
+                window_size: None,
+            }),
         }
     }
 
@@ -744,39 +785,38 @@ impl AdvancedScanner {
     }
 
     /// Helper for stealth scans (NULL, FIN, Xmas)
-    async fn stealth_scan(&self, target: IpAddr, port: u16, _scan_name: &str) -> Result<ScanResult> {
+    async fn stealth_scan(
+        &self,
+        target: IpAddr,
+        port: u16,
+        _scan_name: &str,
+    ) -> Result<ScanResult> {
         // Placeholder: These scans require raw sockets
         // Fallback to connect for now
-        
+
         let addr = SocketAddr::new(target, port);
         match timeout(self.timeout, TcpStream::connect(addr)).await {
-            Ok(Ok(_)) => {
-                Ok(ScanResult {
-                    port,
-                    state: PortState::OpenFiltered,
-                    reason: PortStateReason::NoResponse,
-                    ttl: None,
-                    window_size: None,
-                })
-            }
-            Ok(Err(_)) => {
-                Ok(ScanResult {
-                    port,
-                    state: PortState::Closed,
-                    reason: PortStateReason::Rst,
-                    ttl: None,
-                    window_size: None,
-                })
-            }
-            Err(_) => {
-                Ok(ScanResult {
-                    port,
-                    state: PortState::OpenFiltered,
-                    reason: PortStateReason::NoResponse,
-                    ttl: None,
-                    window_size: None,
-                })
-            }
+            Ok(Ok(_)) => Ok(ScanResult {
+                port,
+                state: PortState::OpenFiltered,
+                reason: PortStateReason::NoResponse,
+                ttl: None,
+                window_size: None,
+            }),
+            Ok(Err(_)) => Ok(ScanResult {
+                port,
+                state: PortState::Closed,
+                reason: PortStateReason::Rst,
+                ttl: None,
+                window_size: None,
+            }),
+            Err(_) => Ok(ScanResult {
+                port,
+                state: PortState::OpenFiltered,
+                reason: PortStateReason::NoResponse,
+                ttl: None,
+                window_size: None,
+            }),
         }
     }
 
@@ -886,11 +926,11 @@ mod tests {
     async fn test_connect_scan_localhost() {
         let scanner = AdvancedScanner::new(ScanType::Connect);
         let target: IpAddr = "127.0.0.1".parse().unwrap();
-        
+
         // Scan a port that's likely closed
         let result = scanner.scan_port(target, 12345).await;
         assert!(result.is_ok());
-        
+
         // State should be closed or filtered
         let scan_result = result.unwrap();
         assert!(matches!(
@@ -901,9 +941,8 @@ mod tests {
 
     #[test]
     fn test_advanced_scanner_creation() {
-        let scanner = AdvancedScanner::new(ScanType::Ack)
-            .with_timeout(Duration::from_secs(5));
-        
+        let scanner = AdvancedScanner::new(ScanType::Ack).with_timeout(Duration::from_secs(5));
+
         assert_eq!(scanner.scan_type(), ScanType::Ack);
         assert_eq!(scanner.timeout, Duration::from_secs(5));
     }
@@ -930,11 +969,20 @@ mod tests {
     #[test]
     fn test_scan_type_from_sctp_flags() {
         assert_eq!(ScanType::from_nmap_flag("-sY"), Some(ScanType::SctpInit));
-        assert_eq!(ScanType::from_nmap_flag("-sZ"), Some(ScanType::SctpCookieEcho));
+        assert_eq!(
+            ScanType::from_nmap_flag("-sZ"),
+            Some(ScanType::SctpCookieEcho)
+        );
         assert_eq!(ScanType::from_nmap_flag("-sO"), Some(ScanType::IpProtocol));
         assert_eq!(ScanType::from_nmap_flag("sctp"), Some(ScanType::SctpInit));
-        assert_eq!(ScanType::from_nmap_flag("sctp-cookie"), Some(ScanType::SctpCookieEcho));
-        assert_eq!(ScanType::from_nmap_flag("ip-protocol"), Some(ScanType::IpProtocol));
+        assert_eq!(
+            ScanType::from_nmap_flag("sctp-cookie"),
+            Some(ScanType::SctpCookieEcho)
+        );
+        assert_eq!(
+            ScanType::from_nmap_flag("ip-protocol"),
+            Some(ScanType::IpProtocol)
+        );
     }
 
     #[test]
@@ -984,8 +1032,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_ack_scan_localhost() {
-        let scanner = AdvancedScanner::new(ScanType::Ack)
-            .with_timeout(Duration::from_millis(500));
+        let scanner = AdvancedScanner::new(ScanType::Ack).with_timeout(Duration::from_millis(500));
         let target: IpAddr = "127.0.0.1".parse().unwrap();
         let result = scanner.scan_port(target, 12345).await;
         assert!(result.is_ok());
@@ -993,8 +1040,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_window_scan_localhost() {
-        let scanner = AdvancedScanner::new(ScanType::Window)
-            .with_timeout(Duration::from_millis(500));
+        let scanner =
+            AdvancedScanner::new(ScanType::Window).with_timeout(Duration::from_millis(500));
         let target: IpAddr = "127.0.0.1".parse().unwrap();
         let result = scanner.scan_port(target, 12345).await;
         assert!(result.is_ok());
@@ -1002,8 +1049,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_maimon_scan_localhost() {
-        let scanner = AdvancedScanner::new(ScanType::Maimon)
-            .with_timeout(Duration::from_millis(500));
+        let scanner =
+            AdvancedScanner::new(ScanType::Maimon).with_timeout(Duration::from_millis(500));
         let target: IpAddr = "127.0.0.1".parse().unwrap();
         let result = scanner.scan_port(target, 12345).await;
         assert!(result.is_ok());

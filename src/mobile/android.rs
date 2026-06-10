@@ -118,7 +118,8 @@ impl AndroidScanner {
                 description: "Android Debug Bridge is not installed or not in PATH.".to_string(),
                 severity: MobileSeverity::Info,
                 category: "tooling".to_string(),
-                recommendation: "Install Android SDK Platform Tools to enable ADB scanning.".to_string(),
+                recommendation: "Install Android SDK Platform Tools to enable ADB scanning."
+                    .to_string(),
             });
             return results;
         }
@@ -131,21 +132,28 @@ impl AndroidScanner {
                 description: "No connected Android devices detected via ADB.".to_string(),
                 severity: MobileSeverity::Info,
                 category: "connectivity".to_string(),
-                recommendation: "Ensure USB debugging is enabled and the device is connected.".to_string(),
+                recommendation: "Ensure USB debugging is enabled and the device is connected."
+                    .to_string(),
             });
             return results;
         }
 
         for device in &results.devices {
-            results.services.extend(self.discover_services(&device.serial));
+            results
+                .services
+                .extend(self.discover_services(&device.serial));
 
             if self.config.enumerate_packages {
-                results.packages.extend(self.enumerate_packages(&device.serial));
+                results
+                    .packages
+                    .extend(self.enumerate_packages(&device.serial));
             }
         }
 
         results.vulnerabilities = self.detect_vulnerabilities(&results);
-        results.security_findings.extend(self.assess_security(&results));
+        results
+            .security_findings
+            .extend(self.assess_security(&results));
 
         results
     }
@@ -394,9 +402,13 @@ impl AndroidScanner {
                     id: "ANDROID-ROOTED".to_string(),
                     title: "Device is rooted".to_string(),
                     severity: MobileSeverity::Critical,
-                    description: "Root access bypasses Android's application sandbox and security model.".to_string(),
+                    description:
+                        "Root access bypasses Android's application sandbox and security model."
+                            .to_string(),
                     affected_component: "OS".to_string(),
-                    remediation: "Unroot the device or use a non-rooted device for sensitive operations.".to_string(),
+                    remediation:
+                        "Unroot the device or use a non-rooted device for sensitive operations."
+                            .to_string(),
                 });
             }
         }
@@ -407,9 +419,12 @@ impl AndroidScanner {
                     id: "ANDROID-DEBUGGABLE".to_string(),
                     title: format!("Debuggable application: {}", pkg.name),
                     severity: MobileSeverity::High,
-                    description: "Debuggable apps expose internal state and allow arbitrary code execution.".to_string(),
+                    description:
+                        "Debuggable apps expose internal state and allow arbitrary code execution."
+                            .to_string(),
                     affected_component: pkg.name.clone(),
-                    remediation: "Remove android:debuggable=true from the application manifest.".to_string(),
+                    remediation: "Remove android:debuggable=true from the application manifest."
+                        .to_string(),
                 });
             }
 
@@ -418,9 +433,12 @@ impl AndroidScanner {
                     id: "ANDROID-BACKUP".to_string(),
                     title: format!("Backup enabled: {}", pkg.name),
                     severity: MobileSeverity::Medium,
-                    description: "Apps with allowBackup=true can have their data extracted via adb backup.".to_string(),
+                    description:
+                        "Apps with allowBackup=true can have their data extracted via adb backup."
+                            .to_string(),
                     affected_component: pkg.name.clone(),
-                    remediation: "Set android:allowBackup=false in the application manifest.".to_string(),
+                    remediation: "Set android:allowBackup=false in the application manifest."
+                        .to_string(),
                 });
             }
         }
@@ -435,20 +453,30 @@ impl AndroidScanner {
             if device.security_patch.is_empty() {
                 findings.push(AndroidSecurityFinding {
                     title: "Security patch level unknown".to_string(),
-                    description: format!("Device {} has no security patch information.", device.serial),
+                    description: format!(
+                        "Device {} has no security patch information.",
+                        device.serial
+                    ),
                     severity: MobileSeverity::Medium,
                     category: "patching".to_string(),
-                    recommendation: "Verify the device has the latest security patches installed.".to_string(),
+                    recommendation: "Verify the device has the latest security patches installed."
+                        .to_string(),
                 });
             }
 
-            if results.services.iter().any(|s| s.port == 5555 && s.state == "open") {
+            if results
+                .services
+                .iter()
+                .any(|s| s.port == 5555 && s.state == "open")
+            {
                 findings.push(AndroidSecurityFinding {
                     title: "ADB over TCP enabled".to_string(),
-                    description: "ADB debugging over network is enabled, allowing remote access.".to_string(),
+                    description: "ADB debugging over network is enabled, allowing remote access."
+                        .to_string(),
                     severity: MobileSeverity::High,
                     category: "network".to_string(),
-                    recommendation: "Disable ADB over TCP and use USB debugging only when needed.".to_string(),
+                    recommendation: "Disable ADB over TCP and use USB debugging only when needed."
+                        .to_string(),
                 });
             }
 
@@ -456,10 +484,13 @@ impl AndroidScanner {
             if debuggable_count > 0 {
                 findings.push(AndroidSecurityFinding {
                     title: format!("{} debuggable applications found", debuggable_count),
-                    description: "Debuggable applications can be inspected and modified at runtime.".to_string(),
+                    description:
+                        "Debuggable applications can be inspected and modified at runtime."
+                            .to_string(),
                     severity: MobileSeverity::High,
                     category: "application".to_string(),
-                    recommendation: "Ensure release builds have android:debuggable=false.".to_string(),
+                    recommendation: "Ensure release builds have android:debuggable=false."
+                        .to_string(),
                 });
             }
         }
@@ -529,7 +560,9 @@ mod tests {
         });
 
         let vulns = scanner.detect_vulnerabilities(&results);
-        assert!(vulns.iter().any(|v| v.id == "ANDROID-ROOTED" && v.severity == MobileSeverity::Critical));
+        assert!(vulns
+            .iter()
+            .any(|v| v.id == "ANDROID-ROOTED" && v.severity == MobileSeverity::Critical));
     }
 
     #[test]
@@ -545,7 +578,9 @@ mod tests {
         });
 
         let vulns = scanner.detect_vulnerabilities(&results);
-        assert!(vulns.iter().any(|v| v.id == "ANDROID-OLD-SDK" && v.severity == MobileSeverity::High));
+        assert!(vulns
+            .iter()
+            .any(|v| v.id == "ANDROID-OLD-SDK" && v.severity == MobileSeverity::High));
     }
 
     #[test]
@@ -595,7 +630,9 @@ mod tests {
         });
 
         let findings = scanner.assess_security(&results);
-        assert!(findings.iter().any(|f| f.title.contains("ADB over TCP") && f.severity == MobileSeverity::High));
+        assert!(findings
+            .iter()
+            .any(|f| f.title.contains("ADB over TCP") && f.severity == MobileSeverity::High));
     }
 
     #[test]

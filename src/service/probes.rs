@@ -1,8 +1,7 @@
 /// Comprehensive probe database for service detection
-/// 
+///
 /// This module contains 100+ service-specific probes for enhanced detection
 /// matching nmap's probe database functionality.
-
 use super::intensity::{ProbeProtocol, ProbeRarity, ServiceProbe};
 use std::collections::HashMap;
 
@@ -51,12 +50,9 @@ impl ProbeDatabase {
     pub fn add_probe(&mut self, probe: ServiceProbe, ports: &[u16]) {
         let name = probe.name.clone();
         self.probes.push(probe);
-        
+
         for &port in ports {
-            self.by_port
-                .entry(port)
-                .or_insert_with(Vec::new)
-                .push(name.clone());
+            self.by_port.entry(port).or_default().push(name.clone());
         }
     }
 
@@ -133,8 +129,8 @@ impl ProbeDatabase {
         self.add_probe(
             ServiceProbe::new("RPCCheck".to_string(), ProbeProtocol::Tcp)
                 .with_data(vec![
-                    0x80, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x02, 0x00, 0x01, 0x86, 0xa0,
+                    0x80, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00,
+                    0x01, 0x86, 0xa0,
                 ])
                 .with_rarity(ProbeRarity::Common),
             &[111, 32771],
@@ -179,8 +175,8 @@ impl ProbeDatabase {
         self.add_probe(
             ServiceProbe::new("SSLSessionReq".to_string(), ProbeProtocol::Tcp)
                 .with_data(vec![
-                    0x16, 0x03, 0x00, 0x00, 0x2f, 0x01, 0x00, 0x00,
-                    0x2b, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x16, 0x03, 0x00, 0x00, 0x2f, 0x01, 0x00, 0x00, 0x2b, 0x03, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00,
                 ])
                 .with_rarity(ProbeRarity::VeryCommon),
             &[443, 8443, 465, 993, 995, 636, 3269, 8883],
@@ -190,8 +186,8 @@ impl ProbeDatabase {
         self.add_probe(
             ServiceProbe::new("TLSSessionReq".to_string(), ProbeProtocol::Tcp)
                 .with_data(vec![
-                    0x16, 0x03, 0x03, 0x00, 0x6f, 0x01, 0x00, 0x00,
-                    0x6b, 0x03, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x16, 0x03, 0x03, 0x00, 0x6f, 0x01, 0x00, 0x00, 0x6b, 0x03, 0x03, 0x00, 0x00,
+                    0x00, 0x00, 0x00,
                 ])
                 .with_rarity(ProbeRarity::Common),
             &[443, 8443, 465, 993, 995, 636],
@@ -211,9 +207,7 @@ impl ProbeDatabase {
         // PostgreSQL startup
         self.add_probe(
             ServiceProbe::new("PostgreSQL".to_string(), ProbeProtocol::Tcp)
-                .with_data(vec![
-                    0x00, 0x00, 0x00, 0x08, 0x04, 0xd2, 0x16, 0x2f,
-                ])
+                .with_data(vec![0x00, 0x00, 0x00, 0x08, 0x04, 0xd2, 0x16, 0x2f])
                 .with_rarity(ProbeRarity::Common),
             &[5432],
         );
@@ -230,8 +224,8 @@ impl ProbeDatabase {
         self.add_probe(
             ServiceProbe::new("MongoDB".to_string(), ProbeProtocol::Tcp)
                 .with_data(vec![
-                    0x3a, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0xd4, 0x07, 0x00, 0x00,
+                    0x3a, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xd4,
+                    0x07, 0x00, 0x00,
                 ])
                 .with_rarity(ProbeRarity::Moderate),
             &[27017, 27018, 27019],
@@ -241,8 +235,8 @@ impl ProbeDatabase {
         self.add_probe(
             ServiceProbe::new("MSSQL".to_string(), ProbeProtocol::Tcp)
                 .with_data(vec![
-                    0x12, 0x01, 0x00, 0x34, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x15, 0x00, 0x06, 0x01, 0x00, 0x1b,
+                    0x12, 0x01, 0x00, 0x34, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0x00, 0x06,
+                    0x01, 0x00, 0x1b,
                 ])
                 .with_rarity(ProbeRarity::Common),
             &[1433, 1434],
@@ -252,8 +246,8 @@ impl ProbeDatabase {
         self.add_probe(
             ServiceProbe::new("OracleTNS".to_string(), ProbeProtocol::Tcp)
                 .with_data(vec![
-                    0x00, 0x1c, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
-                    0x01, 0x36, 0x01, 0x2c, 0x00, 0x00, 0x08, 0x00,
+                    0x00, 0x1c, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x36, 0x01, 0x2c, 0x00,
+                    0x00, 0x08, 0x00,
                 ])
                 .with_rarity(ProbeRarity::Uncommon),
             &[1521, 1522],
@@ -278,9 +272,7 @@ impl ProbeDatabase {
         // Cassandra CQL
         self.add_probe(
             ServiceProbe::new("Cassandra".to_string(), ProbeProtocol::Tcp)
-                .with_data(vec![
-                    0x04, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
-                ])
+                .with_data(vec![0x04, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00])
                 .with_rarity(ProbeRarity::Rare),
             &[7000, 7001, 9042],
         );
@@ -359,8 +351,8 @@ impl ProbeDatabase {
         self.add_probe(
             ServiceProbe::new("SMB".to_string(), ProbeProtocol::Tcp)
                 .with_data(vec![
-                    0x00, 0x00, 0x00, 0x85, 0xff, 0x53, 0x4d, 0x42,
-                    0x72, 0x00, 0x00, 0x00, 0x00, 0x18, 0x53, 0xc8,
+                    0x00, 0x00, 0x00, 0x85, 0xff, 0x53, 0x4d, 0x42, 0x72, 0x00, 0x00, 0x00, 0x00,
+                    0x18, 0x53, 0xc8,
                 ])
                 .with_rarity(ProbeRarity::Common),
             &[139, 445],
@@ -397,8 +389,8 @@ impl ProbeDatabase {
         self.add_probe(
             ServiceProbe::new("RDP".to_string(), ProbeProtocol::Tcp)
                 .with_data(vec![
-                    0x03, 0x00, 0x00, 0x13, 0x0e, 0xe0, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x01, 0x00, 0x08, 0x00, 0x03,
+                    0x03, 0x00, 0x00, 0x13, 0x0e, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00,
+                    0x08, 0x00, 0x03,
                 ])
                 .with_rarity(ProbeRarity::Common),
             &[3389],
@@ -451,8 +443,8 @@ impl ProbeDatabase {
         self.add_probe(
             ServiceProbe::new("MQTT".to_string(), ProbeProtocol::Tcp)
                 .with_data(vec![
-                    0x10, 0x0c, 0x00, 0x04, 0x4d, 0x51, 0x54, 0x54,
-                    0x04, 0x02, 0x00, 0x3c, 0x00, 0x00,
+                    0x10, 0x0c, 0x00, 0x04, 0x4d, 0x51, 0x54, 0x54, 0x04, 0x02, 0x00, 0x3c, 0x00,
+                    0x00,
                 ])
                 .with_rarity(ProbeRarity::Moderate),
             &[1883, 8883],
@@ -473,8 +465,8 @@ impl ProbeDatabase {
         self.add_probe(
             ServiceProbe::new("LDAP".to_string(), ProbeProtocol::Tcp)
                 .with_data(vec![
-                    0x30, 0x0c, 0x02, 0x01, 0x01, 0x60, 0x07, 0x02,
-                    0x01, 0x03, 0x04, 0x00, 0x80, 0x00,
+                    0x30, 0x0c, 0x02, 0x01, 0x01, 0x60, 0x07, 0x02, 0x01, 0x03, 0x04, 0x00, 0x80,
+                    0x00,
                 ])
                 .with_rarity(ProbeRarity::Common),
             &[389, 636, 3268, 3269],
@@ -495,8 +487,8 @@ impl ProbeDatabase {
         self.add_probe(
             ServiceProbe::new("SNMP".to_string(), ProbeProtocol::Udp)
                 .with_data(vec![
-                    0x30, 0x26, 0x02, 0x01, 0x01, 0x04, 0x06, 0x70,
-                    0x75, 0x62, 0x6c, 0x69, 0x63, 0xa0, 0x19, 0x02,
+                    0x30, 0x26, 0x02, 0x01, 0x01, 0x04, 0x06, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63,
+                    0xa0, 0x19, 0x02,
                 ])
                 .with_rarity(ProbeRarity::Common),
             &[161, 162],
@@ -595,8 +587,8 @@ impl ProbeDatabase {
         self.add_probe(
             ServiceProbe::new("Minecraft".to_string(), ProbeProtocol::Tcp)
                 .with_data(vec![
-                    0xfe, 0x01, 0xfa, 0x00, 0x0b, 0x00, 0x4d, 0x00,
-                    0x43, 0x00, 0x7c, 0x00, 0x50, 0x00, 0x69,
+                    0xfe, 0x01, 0xfa, 0x00, 0x0b, 0x00, 0x4d, 0x00, 0x43, 0x00, 0x7c, 0x00, 0x50,
+                    0x00, 0x69,
                 ])
                 .with_rarity(ProbeRarity::Rare),
             &[25565],
@@ -625,8 +617,7 @@ impl ProbeDatabase {
         self.add_probe(
             ServiceProbe::new("Modbus".to_string(), ProbeProtocol::Tcp)
                 .with_data(vec![
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x01, 0x03,
-                    0x00, 0x00, 0x00, 0x01,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x01, 0x03, 0x00, 0x00, 0x00, 0x01,
                 ])
                 .with_rarity(ProbeRarity::Rare),
             &[502],
@@ -656,7 +647,7 @@ mod tests {
         let db = ProbeDatabase::new();
         let probes = db.probes_for_port(80);
         assert!(!probes.is_empty());
-        
+
         // Should have HTTP-related probes
         let probe_names: Vec<&str> = probes.iter().map(|p| p.name.as_str()).collect();
         assert!(probe_names.contains(&"GetRequest") || probe_names.contains(&"HTTPHost"));
@@ -666,7 +657,7 @@ mod tests {
     fn test_probes_for_port_ssh() {
         let db = ProbeDatabase::new();
         let probes = db.probes_for_port(22);
-        
+
         let has_ssh = probes.iter().any(|p| p.name == "SSH");
         assert!(has_ssh);
     }
@@ -675,7 +666,7 @@ mod tests {
     fn test_probes_for_port_mysql() {
         let db = ProbeDatabase::new();
         let probes = db.probes_for_port(3306);
-        
+
         let has_mysql = probes.iter().any(|p| p.name == "MySQL");
         assert!(has_mysql);
     }
@@ -684,7 +675,7 @@ mod tests {
     fn test_generic_probes() {
         let db = ProbeDatabase::new();
         let generic = db.generic_probes();
-        
+
         assert!(!generic.is_empty());
         assert!(generic.iter().any(|p| p.name == "NULL"));
     }
@@ -692,25 +683,25 @@ mod tests {
     #[test]
     fn test_probe_database_comprehensive() {
         let db = ProbeDatabase::new();
-        
+
         // Check for key probe categories
         let all_probes = db.all_probes();
         let probe_names: Vec<String> = all_probes.iter().map(|p| p.name.clone()).collect();
-        
+
         // Web probes
         assert!(probe_names.contains(&"GetRequest".to_string()));
         assert!(probe_names.contains(&"HTTPHost".to_string()));
-        
+
         // Database probes
         assert!(probe_names.contains(&"MySQL".to_string()));
         assert!(probe_names.contains(&"PostgreSQL".to_string()));
         assert!(probe_names.contains(&"Redis".to_string()));
         assert!(probe_names.contains(&"MongoDB".to_string()));
-        
+
         // Remote access
         assert!(probe_names.contains(&"SSH".to_string()));
         assert!(probe_names.contains(&"RDP".to_string()));
-        
+
         // Messaging
         assert!(probe_names.contains(&"AMQP".to_string()));
         assert!(probe_names.contains(&"MQTT".to_string()));
@@ -719,15 +710,19 @@ mod tests {
     #[test]
     fn test_probes_have_correct_protocol() {
         let db = ProbeDatabase::new();
-        
+
         // TFTP should be UDP
-        let tftp_probe = db.all_probes().iter()
+        let tftp_probe = db
+            .all_probes()
+            .iter()
             .find(|p| p.name == "TFTP")
             .expect("TFTP probe should exist");
         assert_eq!(tftp_probe.protocol, ProbeProtocol::Udp);
-        
+
         // HTTP should be TCP
-        let http_probe = db.all_probes().iter()
+        let http_probe = db
+            .all_probes()
+            .iter()
             .find(|p| p.name == "GetRequest")
             .expect("GetRequest probe should exist");
         assert_eq!(http_probe.protocol, ProbeProtocol::Tcp);
@@ -736,7 +731,7 @@ mod tests {
     #[test]
     fn test_probes_have_rarity() {
         let db = ProbeDatabase::new();
-        
+
         // Check that common services have appropriate rarity
         for probe in db.all_probes() {
             match probe.name.as_str() {
@@ -754,7 +749,7 @@ mod tests {
     #[test]
     fn test_port_mapping() {
         let db = ProbeDatabase::new();
-        
+
         // Check that common ports have mappings
         assert!(db.by_port.contains_key(&80));
         assert!(db.by_port.contains_key(&443));
@@ -766,8 +761,12 @@ mod tests {
     fn test_all_probes_returns_complete_list() {
         let db = ProbeDatabase::new();
         let all = db.all_probes();
-        
+
         assert_eq!(all.len(), db.probes.len());
-        assert!(all.len() >= 50, "Should have at least 50 probes, got {}", all.len());
+        assert!(
+            all.len() >= 50,
+            "Should have at least 50 probes, got {}",
+            all.len()
+        );
     }
 }

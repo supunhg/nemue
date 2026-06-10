@@ -1,9 +1,9 @@
 // Adaptive rate limiting with burst mode for initial port discovery
+use governor::{clock::DefaultClock, state::InMemoryState, Quota, RateLimiter as GovernorLimiter};
 use std::num::NonZeroU32;
-use std::time::{Duration, Instant};
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 use tokio::sync::Mutex;
-use governor::{Quota, RateLimiter as GovernorLimiter, clock::DefaultClock, state::InMemoryState};
 
 type GovLimiter = GovernorLimiter<governor::state::direct::NotKeyed, InMemoryState, DefaultClock>;
 
@@ -67,7 +67,12 @@ impl AdaptiveRateLimiter {
     }
 
     /// Create with a burst mode that runs at higher rate for initial discovery
-    pub fn with_burst(initial_rate: u32, min_rate: u32, max_rate: u32, burst_duration: Duration) -> Self {
+    pub fn with_burst(
+        initial_rate: u32,
+        min_rate: u32,
+        max_rate: u32,
+        burst_duration: Duration,
+    ) -> Self {
         let burst_rate = max_rate.min(initial_rate * 3);
         let quota = Quota::per_second(NonZeroU32::new(burst_rate.max(1)).unwrap());
         let limiter = Arc::new(GovernorLimiter::direct(quota));
@@ -89,7 +94,9 @@ impl AdaptiveRateLimiter {
     pub async fn check(&self) -> Result<(), String> {
         self.maybe_end_burst().await;
         let limiter = self.limiter.lock().await;
-        limiter.check().map_err(|_| "Rate limit exceeded".to_string())
+        limiter
+            .check()
+            .map_err(|_| "Rate limit exceeded".to_string())
     }
 
     pub async fn get_current_rate(&self) -> u32 {
@@ -212,7 +219,9 @@ impl PerTargetRateLimiter {
             })
             .clone();
         drop(limiters);
-        limiter.check().map_err(|_| format!("Rate limit exceeded for target {}", target))
+        limiter
+            .check()
+            .map_err(|_| format!("Rate limit exceeded for target {}", target))
     }
 
     pub async fn set_target_rate(&self, target: &str, rate: u32) {

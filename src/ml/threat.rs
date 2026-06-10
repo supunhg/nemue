@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -117,124 +118,148 @@ impl MlThreatScorer {
         let mut service_risk_profiles = HashMap::new();
 
         // SSH risk profile
-        service_risk_profiles.insert("ssh".to_string(), ServiceRiskProfile {
-            base_risk: 30,
-            common_attacks: vec![
-                "Brute force".to_string(),
-                "Key-based authentication bypass".to_string(),
-                "Version-specific exploits".to_string(),
-            ],
-            recommendations: vec![
-                "Use key-based authentication".to_string(),
-                "Disable root login".to_string(),
-                "Use non-standard port".to_string(),
-            ],
-        });
+        service_risk_profiles.insert(
+            "ssh".to_string(),
+            ServiceRiskProfile {
+                base_risk: 30,
+                common_attacks: vec![
+                    "Brute force".to_string(),
+                    "Key-based authentication bypass".to_string(),
+                    "Version-specific exploits".to_string(),
+                ],
+                recommendations: vec![
+                    "Use key-based authentication".to_string(),
+                    "Disable root login".to_string(),
+                    "Use non-standard port".to_string(),
+                ],
+            },
+        );
 
         // HTTP/HTTPS risk profile
-        service_risk_profiles.insert("http".to_string(), ServiceRiskProfile {
-            base_risk: 50,
-            common_attacks: vec![
-                "SQL injection".to_string(),
-                "XSS".to_string(),
-                "CSRF".to_string(),
-                "Directory traversal".to_string(),
-            ],
-            recommendations: vec![
-                "Use HTTPS only".to_string(),
-                "Implement WAF".to_string(),
-                "Regular security audits".to_string(),
-            ],
-        });
+        service_risk_profiles.insert(
+            "http".to_string(),
+            ServiceRiskProfile {
+                base_risk: 50,
+                common_attacks: vec![
+                    "SQL injection".to_string(),
+                    "XSS".to_string(),
+                    "CSRF".to_string(),
+                    "Directory traversal".to_string(),
+                ],
+                recommendations: vec![
+                    "Use HTTPS only".to_string(),
+                    "Implement WAF".to_string(),
+                    "Regular security audits".to_string(),
+                ],
+            },
+        );
 
         // FTP risk profile
-        service_risk_profiles.insert("ftp".to_string(), ServiceRiskProfile {
-            base_risk: 70,
-            common_attacks: vec![
-                "Anonymous access".to_string(),
-                "Brute force".to_string(),
-                "Directory traversal".to_string(),
-            ],
-            recommendations: vec![
-                "Use SFTP instead".to_string(),
-                "Disable anonymous access".to_string(),
-                "Restrict access by IP".to_string(),
-            ],
-        });
+        service_risk_profiles.insert(
+            "ftp".to_string(),
+            ServiceRiskProfile {
+                base_risk: 70,
+                common_attacks: vec![
+                    "Anonymous access".to_string(),
+                    "Brute force".to_string(),
+                    "Directory traversal".to_string(),
+                ],
+                recommendations: vec![
+                    "Use SFTP instead".to_string(),
+                    "Disable anonymous access".to_string(),
+                    "Restrict access by IP".to_string(),
+                ],
+            },
+        );
 
         // Telnet risk profile
-        service_risk_profiles.insert("telnet".to_string(), ServiceRiskProfile {
-            base_risk: 90,
-            common_attacks: vec![
-                "Cleartext credentials".to_string(),
-                "Session hijacking".to_string(),
-                "Man-in-the-middle".to_string(),
-            ],
-            recommendations: vec![
-                "Replace with SSH immediately".to_string(),
-                "Disable Telnet service".to_string(),
-            ],
-        });
+        service_risk_profiles.insert(
+            "telnet".to_string(),
+            ServiceRiskProfile {
+                base_risk: 90,
+                common_attacks: vec![
+                    "Cleartext credentials".to_string(),
+                    "Session hijacking".to_string(),
+                    "Man-in-the-middle".to_string(),
+                ],
+                recommendations: vec![
+                    "Replace with SSH immediately".to_string(),
+                    "Disable Telnet service".to_string(),
+                ],
+            },
+        );
 
         // RDP risk profile
-        service_risk_profiles.insert("rdp".to_string(), ServiceRiskProfile {
-            base_risk: 65,
-            common_attacks: vec![
-                "BlueKeep (CVE-2019-0708)".to_string(),
-                "Brute force".to_string(),
-                "Session hijacking".to_string(),
-            ],
-            recommendations: vec![
-                "Use NLA (Network Level Authentication)".to_string(),
-                "Restrict access by IP".to_string(),
-                "Use VPN for remote access".to_string(),
-            ],
-        });
+        service_risk_profiles.insert(
+            "rdp".to_string(),
+            ServiceRiskProfile {
+                base_risk: 65,
+                common_attacks: vec![
+                    "BlueKeep (CVE-2019-0708)".to_string(),
+                    "Brute force".to_string(),
+                    "Session hijacking".to_string(),
+                ],
+                recommendations: vec![
+                    "Use NLA (Network Level Authentication)".to_string(),
+                    "Restrict access by IP".to_string(),
+                    "Use VPN for remote access".to_string(),
+                ],
+            },
+        );
 
         // SMB risk profile
-        service_risk_profiles.insert("smb".to_string(), ServiceRiskProfile {
-            base_risk: 75,
-            common_attacks: vec![
-                "EternalBlue".to_string(),
-                "Pass-the-hash".to_string(),
-                "SMB signing bypass".to_string(),
-            ],
-            recommendations: vec![
-                "Disable SMBv1".to_string(),
-                "Enable SMB signing".to_string(),
-                "Restrict access by firewall".to_string(),
-            ],
-        });
+        service_risk_profiles.insert(
+            "smb".to_string(),
+            ServiceRiskProfile {
+                base_risk: 75,
+                common_attacks: vec![
+                    "EternalBlue".to_string(),
+                    "Pass-the-hash".to_string(),
+                    "SMB signing bypass".to_string(),
+                ],
+                recommendations: vec![
+                    "Disable SMBv1".to_string(),
+                    "Enable SMB signing".to_string(),
+                    "Restrict access by firewall".to_string(),
+                ],
+            },
+        );
 
         // MySQL risk profile
-        service_risk_profiles.insert("mysql".to_string(), ServiceRiskProfile {
-            base_risk: 55,
-            common_attacks: vec![
-                "SQL injection".to_string(),
-                "Brute force".to_string(),
-                "UDF exploitation".to_string(),
-            ],
-            recommendations: vec![
-                "Restrict network access".to_string(),
-                "Use strong passwords".to_string(),
-                "Regular updates".to_string(),
-            ],
-        });
+        service_risk_profiles.insert(
+            "mysql".to_string(),
+            ServiceRiskProfile {
+                base_risk: 55,
+                common_attacks: vec![
+                    "SQL injection".to_string(),
+                    "Brute force".to_string(),
+                    "UDF exploitation".to_string(),
+                ],
+                recommendations: vec![
+                    "Restrict network access".to_string(),
+                    "Use strong passwords".to_string(),
+                    "Regular updates".to_string(),
+                ],
+            },
+        );
 
         // Redis risk profile
-        service_risk_profiles.insert("redis".to_string(), ServiceRiskProfile {
-            base_risk: 80,
-            common_attacks: vec![
-                "Unauthorized access".to_string(),
-                "RCE via EVAL".to_string(),
-                "Data exfiltration".to_string(),
-            ],
-            recommendations: vec![
-                "Enable authentication".to_string(),
-                "Bind to localhost only".to_string(),
-                "Disable dangerous commands".to_string(),
-            ],
-        });
+        service_risk_profiles.insert(
+            "redis".to_string(),
+            ServiceRiskProfile {
+                base_risk: 80,
+                common_attacks: vec![
+                    "Unauthorized access".to_string(),
+                    "RCE via EVAL".to_string(),
+                    "Data exfiltration".to_string(),
+                ],
+                recommendations: vec![
+                    "Enable authentication".to_string(),
+                    "Bind to localhost only".to_string(),
+                    "Disable dangerous commands".to_string(),
+                ],
+            },
+        );
 
         Self {
             ip_threat_db: HashMap::new(),
@@ -303,13 +328,21 @@ impl MlThreatScorer {
         let profile = self.service_risk_profiles.get(&service_lower);
 
         let (base_risk, attack_vectors, recommendations) = if let Some(p) = profile {
-            (p.base_risk, p.common_attacks.clone(), p.recommendations.clone())
+            (
+                p.base_risk,
+                p.common_attacks.clone(),
+                p.recommendations.clone(),
+            )
         } else {
             // Default risk for unknown services
-            (40, vec!["Unknown service - potential attack surface".to_string()], vec![
-                "Research service security".to_string(),
-                "Restrict network access".to_string(),
-            ])
+            (
+                40,
+                vec!["Unknown service - potential attack surface".to_string()],
+                vec![
+                    "Research service security".to_string(),
+                    "Restrict network access".to_string(),
+                ],
+            )
         };
 
         // Adjust risk based on version if provided
@@ -398,10 +431,11 @@ impl MlThreatScorer {
     /// Generate remediation advice
     fn generate_remediation(&self, vuln: &VulnInput) -> String {
         if vuln.actively_exploited {
-            "URGENT: Patch immediately. Vulnerability is being actively exploited in the wild.".to_string()
+            "URGENT: Patch immediately. Vulnerability is being actively exploited in the wild."
+                .to_string()
         } else if vuln.exploit_available {
             "HIGH: Patch as soon as possible. Public exploit is available.".to_string()
-        } else if vuln.cvss_score.map_or(false, |s| s >= 7.0) {
+        } else if vuln.cvss_score.is_some_and(|s| s >= 7.0) {
             "MEDIUM: Schedule patching within next maintenance window.".to_string()
         } else {
             "LOW: Include in regular patching cycle.".to_string()
@@ -414,7 +448,7 @@ impl MlThreatScorer {
             4 // Urgent - 4 hours
         } else if vuln.exploit_available {
             24 // High priority - 24 hours
-        } else if vuln.cvss_score.map_or(false, |s| s >= 7.0) {
+        } else if vuln.cvss_score.is_some_and(|s| s >= 7.0) {
             72 // Medium priority - 72 hours
         } else {
             168 // Low priority - 1 week
@@ -570,6 +604,8 @@ mod tests {
         };
 
         let priorities = scorer.prioritize_vulnerabilities(&[urgent, low]);
-        assert!(priorities[0].estimated_remediation_hours < priorities[1].estimated_remediation_hours);
+        assert!(
+            priorities[0].estimated_remediation_hours < priorities[1].estimated_remediation_hours
+        );
     }
 }

@@ -2,7 +2,6 @@
 ///
 /// This module contains parsers for SMB, RDP, database protocols, and other
 /// application-layer protocols to extract detailed version and configuration information.
-
 use anyhow::{anyhow, Result};
 use std::collections::HashMap;
 use std::net::{IpAddr, SocketAddr};
@@ -118,7 +117,7 @@ impl SmbParser {
             if data.len() > 43 {
                 let dialect_index = u16::from_le_bytes([data[37], data[38]]);
                 info.dialect = Some(format!("Dialect index: {}", dialect_index));
-                
+
                 // Check security mode
                 if data.len() > 39 {
                     let security_mode = data[39];
@@ -242,7 +241,8 @@ impl RdpParser {
                         info.nla_supported = (selected_protocols & 0x02) != 0;
 
                         if info.nla_supported {
-                            info.encryption_level = "NLA (Network Level Authentication)".to_string();
+                            info.encryption_level =
+                                "NLA (Network Level Authentication)".to_string();
                             info.encryption_methods.push("CredSSP".to_string());
                         } else if info.tls_supported {
                             info.encryption_level = "TLS".to_string();
@@ -328,13 +328,13 @@ impl Http2Parser {
             if frame_type == 0x04 {
                 // SETTINGS frame
                 info.supports_h2c = true;
-                
+
                 // Parse settings
                 let settings_data = &data[pos + 9..pos + 9 + length.min(data.len() - pos - 9)];
                 for chunk in settings_data.chunks_exact(6) {
                     let id = u16::from_be_bytes([chunk[0], chunk[1]]);
                     let value = u32::from_be_bytes([chunk[2], chunk[3], chunk[4], chunk[5]]);
-                    
+
                     let setting_name = match id {
                         1 => "HEADER_TABLE_SIZE",
                         2 => "ENABLE_PUSH",
@@ -344,7 +344,7 @@ impl Http2Parser {
                         6 => "MAX_HEADER_LIST_SIZE",
                         _ => "UNKNOWN",
                     };
-                    
+
                     info.settings.insert(setting_name.to_string(), value);
                 }
             }
@@ -400,7 +400,10 @@ impl DatabaseParser {
         // Skip packet length (3 bytes) and sequence (1 byte)
         let protocol_version = data[4];
         if protocol_version != 10 {
-            return Err(anyhow!("Unsupported MySQL protocol version: {}", protocol_version));
+            return Err(anyhow!(
+                "Unsupported MySQL protocol version: {}",
+                protocol_version
+            ));
         }
 
         // Parse version string (null-terminated)
@@ -422,7 +425,7 @@ impl DatabaseParser {
         // Parse capabilities (if enough data)
         if data.len() > version_end + 20 {
             let cap_flags = u16::from_le_bytes([data[version_end + 14], data[version_end + 15]]);
-            
+
             if (cap_flags & 0x0001) != 0 {
                 info.capabilities.push("LONG_PASSWORD".to_string());
             }
@@ -493,7 +496,8 @@ impl DatabaseParser {
             }
             'E' => {
                 // Error message - still indicates PostgreSQL
-                info.capabilities.push("Authentication required".to_string());
+                info.capabilities
+                    .push("Authentication required".to_string());
             }
             _ => {}
         }
@@ -518,7 +522,7 @@ impl DatabaseParser {
 
     fn parse_redis_info(&self, data: &[u8]) -> Result<DatabaseInfo> {
         let response = String::from_utf8_lossy(data);
-        
+
         let mut info = DatabaseInfo {
             database_type: "Redis".to_string(),
             version: None,
@@ -563,10 +567,10 @@ mod tests {
     fn test_smb_build_negotiate_request() {
         let parser = SmbParser::new(5000);
         let request = parser.build_negotiate_request();
-        
+
         // Check SMB signature
         assert_eq!(&request[4..8], b"\xffSMB");
-        
+
         // Check command (Negotiate Protocol)
         assert_eq!(request[8], 0x72);
     }
@@ -588,11 +592,11 @@ mod tests {
     fn test_rdp_build_connection_request() {
         let parser = RdpParser::new(5000);
         let request = parser.build_connection_request();
-        
+
         // Check TPKT header
         assert_eq!(request[0], 0x03);
         assert_eq!(request[1], 0x00);
-        
+
         // Check length
         assert_eq!(request[2], 0x00);
         assert_eq!(request[3], 0x13); // 19 bytes
@@ -620,7 +624,7 @@ mod tests {
     #[test]
     fn test_mysql_parse_greeting() {
         let parser = DatabaseParser::new(5000);
-        
+
         // Simulate MySQL greeting packet
         let mut greeting = vec![
             0x4a, 0x00, 0x00, 0x00, // Packet length + sequence
@@ -628,10 +632,10 @@ mod tests {
         ];
         greeting.extend_from_slice(b"8.0.28\x00"); // Version string
         greeting.extend_from_slice(&[0u8; 30]); // Padding
-        
+
         let result = parser.parse_mysql_greeting(&greeting);
         assert!(result.is_ok());
-        
+
         let info = result.unwrap();
         assert_eq!(info.database_type, "MySQL");
         assert_eq!(info.version, Some("8.0.28".to_string()));
@@ -640,12 +644,11 @@ mod tests {
     #[test]
     fn test_mysql_parse_invalid_protocol() {
         let parser = DatabaseParser::new(5000);
-        
+
         let greeting = vec![
-            0x0a, 0x00, 0x00, 0x00,
-            0x09, // Invalid protocol version
+            0x0a, 0x00, 0x00, 0x00, 0x09, // Invalid protocol version
         ];
-        
+
         let result = parser.parse_mysql_greeting(&greeting);
         assert!(result.is_err());
     }
@@ -653,30 +656,33 @@ mod tests {
     #[test]
     fn test_postgresql_parse_auth_ok() {
         let parser = DatabaseParser::new(5000);
-        
+
         let response = vec![
             b'R', // Authentication request
             0x00, 0x00, 0x00, 0x08, // Length
             0x00, 0x00, 0x00, 0x00, // Auth OK
         ];
-        
+
         let result = parser.parse_postgresql_response(&response);
         assert!(result.is_ok());
-        
+
         let info = result.unwrap();
         assert_eq!(info.database_type, "PostgreSQL");
-        assert!(info.auth_methods.contains(&"OK (no authentication)".to_string()));
+        assert!(info
+            .auth_methods
+            .contains(&"OK (no authentication)".to_string()));
     }
 
     #[test]
     fn test_redis_parse_info() {
         let parser = DatabaseParser::new(5000);
-        
-        let response = b"# Server\r\nredis_version:6.2.6\r\nredis_mode:standalone\r\nrole:master\r\n";
-        
+
+        let response =
+            b"# Server\r\nredis_version:6.2.6\r\nredis_mode:standalone\r\nrole:master\r\n";
+
         let result = parser.parse_redis_info(response);
         assert!(result.is_ok());
-        
+
         let info = result.unwrap();
         assert_eq!(info.database_type, "Redis");
         assert_eq!(info.version, Some("6.2.6".to_string()));

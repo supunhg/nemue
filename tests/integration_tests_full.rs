@@ -1,17 +1,16 @@
-use nemue::scanner::{
-    ScanResults, ScanResult, PortState, Protocol,
-    PortParser, TargetParser, TimingTemplate,
-    config::NemueConfig, validation::InputValidator,
-    cache::{ScanCache, CacheKey, CacheConfig},
-    dedup::ScanDeduplicator,
-    compression::{ScanCompressor, CompressionAlgorithm},
-};
-use nemue::reporting::{
-    ReportBuilder, ReportMetadata, ExecutiveSummary, VulnerabilitySummary,
-    ComplianceStatus, ComplianceFramework, Finding, Severity, Recommendation,
-    Priority, ScanReport,
-};
 use chrono::Utc;
+use nemue::reporting::{
+    ComplianceFramework, ComplianceStatus, ExecutiveSummary, Finding, Priority, Recommendation,
+    ReportBuilder, ReportMetadata, ScanReport, Severity, VulnerabilitySummary,
+};
+use nemue::scanner::{
+    cache::{CacheConfig, CacheKey, ScanCache},
+    compression::{CompressionAlgorithm, ScanCompressor},
+    config::NemueConfig,
+    dedup::ScanDeduplicator,
+    validation::InputValidator,
+    PortParser, PortState, Protocol, ScanResult, ScanResults, TargetParser, TimingTemplate,
+};
 use std::net::IpAddr;
 use std::time::Duration;
 
@@ -80,17 +79,15 @@ fn sample_executive_summary() -> ExecutiveSummary {
 
 fn sample_compliance_status() -> ComplianceStatus {
     ComplianceStatus {
-        frameworks: vec![
-            ComplianceFramework {
-                name: "PCI-DSS".to_string(),
-                version: "4.0".to_string(),
-                controls_total: 100,
-                controls_passing: 80,
-                controls_failing: 20,
-                score: 80.0,
-                findings: vec![],
-            },
-        ],
+        frameworks: vec![ComplianceFramework {
+            name: "PCI-DSS".to_string(),
+            version: "4.0".to_string(),
+            controls_total: 100,
+            controls_passing: 80,
+            controls_failing: 20,
+            score: 80.0,
+            findings: vec![],
+        }],
         overall_score: 80.0,
     }
 }
@@ -256,8 +253,12 @@ fn test_input_validator_security() {
     let validator = InputValidator::new();
 
     assert!(validator.validate_target("192.168.1.1; rm -rf /").is_err());
-    assert!(validator.validate_target("192.168.1.1 UNION SELECT").is_err());
-    assert!(validator.validate_target("<script>alert(1)</script>").is_err());
+    assert!(validator
+        .validate_target("192.168.1.1 UNION SELECT")
+        .is_err());
+    assert!(validator
+        .validate_target("<script>alert(1)</script>")
+        .is_err());
 }
 
 #[test]
@@ -484,5 +485,8 @@ fn test_report_json_roundtrip() {
 
     assert_eq!(report.metadata.scan_id, parsed.metadata.scan_id);
     assert_eq!(report.findings.len(), parsed.findings.len());
-    assert_eq!(report.executive_summary.total_hosts, parsed.executive_summary.total_hosts);
+    assert_eq!(
+        report.executive_summary.total_hosts,
+        parsed.executive_summary.total_hosts
+    );
 }

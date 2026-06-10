@@ -1,5 +1,5 @@
+use crate::scanner::{PortState, Protocol, ScanResults};
 use anyhow::Result;
-use crate::scanner::{ScanResults, PortState, Protocol};
 
 /// Format scan results as Nmap-compatible XML
 ///
@@ -27,22 +27,29 @@ pub fn format(results: &ScanResults) -> Result<String> {
         std::collections::HashMap::new();
 
     for result in &results.results {
-        targets.entry(result.target).or_insert_with(Vec::new).push(result);
+        targets.entry(result.target).or_default().push(result);
     }
 
     // Output each target
     for (target, target_results) in &targets {
-        xml.push_str(&format!("  <host starttime=\"{}\" endtime=\"{}\">\n",
+        xml.push_str(&format!(
+            "  <host starttime=\"{}\" endtime=\"{}\">\n",
             results.scan_start.timestamp(),
             results.scan_end.timestamp(),
         ));
-        xml.push_str(&format!("    <status state=\"up\" reason=\"syn-ack\" reason_ttl=\"0\" />\n"));
-        xml.push_str(&format!("    <address addr=\"{}\" addrtype=\"ipv4\" />\n", target));
+        xml.push_str("    <status state=\"up\" reason=\"syn-ack\" reason_ttl=\"0\" />\n");
+        xml.push_str(&format!(
+            "    <address addr=\"{}\" addrtype=\"ipv4\" />\n",
+            target
+        ));
 
         // Hostnames
         if let Some(hostname) = target_results.iter().find_map(|r| r.hostname.as_ref()) {
             xml.push_str("    <hostnames>\n");
-            xml.push_str(&format!("      <hostname name=\"{}\" type=\"PTR\" />\n", hostname));
+            xml.push_str(&format!(
+                "      <hostname name=\"{}\" type=\"PTR\" />\n",
+                hostname
+            ));
             xml.push_str("    </hostnames>\n");
         }
 
@@ -83,13 +90,19 @@ pub fn format(results: &ScanResults) -> Result<String> {
 
             // Service info
             if let Some(ref service) = result.service {
-                let product = result.service_info.as_ref()
+                let product = result
+                    .service_info
+                    .as_ref()
                     .and_then(|si| si.product.as_deref())
                     .unwrap_or("");
-                let version = result.service_info.as_ref()
+                let version = result
+                    .service_info
+                    .as_ref()
                     .and_then(|si| si.version.as_deref())
                     .unwrap_or("");
-                let extra_info = result.service_info.as_ref()
+                let extra_info = result
+                    .service_info
+                    .as_ref()
                     .and_then(|si| si.extra_info.as_deref())
                     .unwrap_or("");
 
@@ -107,8 +120,14 @@ pub fn format(results: &ScanResults) -> Result<String> {
         }
 
         // Closed ports summary
-        let closed_count = target_results.iter().filter(|r| r.state == PortState::Closed).count();
-        let filtered_count = target_results.iter().filter(|r| r.state == PortState::Filtered).count();
+        let closed_count = target_results
+            .iter()
+            .filter(|r| r.state == PortState::Closed)
+            .count();
+        let filtered_count = target_results
+            .iter()
+            .filter(|r| r.state == PortState::Filtered)
+            .count();
         xml.push_str(&format!(
             "      <extraports count=\"{}\" state=\"closed\">\n        <extrareasons reason=\"resets\" count=\"{}\" />\n      </extraports>\n",
             closed_count + filtered_count,
@@ -125,8 +144,7 @@ pub fn format(results: &ScanResults) -> Result<String> {
                     let family_str = format!("{:?}", family);
                     xml.push_str(&format!(
                         "      <osmatch name=\"{}\" accuracy=\"{}\" line=\"0\">\n",
-                        family_str,
-                        os_fp.confidence,
+                        family_str, os_fp.confidence,
                     ));
                     xml.push_str(&format!(
                         "        <osclass type=\"general purpose\" vendor=\"{}\" osfamily=\"{}\" osgen=\"{}\" accuracy=\"{}\" />\n",
@@ -145,7 +163,11 @@ pub fn format(results: &ScanResults) -> Result<String> {
     }
 
     // Run statistics
-    let _open_count = results.results.iter().filter(|r| r.state == PortState::Open).count();
+    let _open_count = results
+        .results
+        .iter()
+        .filter(|r| r.state == PortState::Open)
+        .count();
     let _total_count = results.results.len();
     xml.push_str(&format!(
         "  <runstats>\n    <finished time=\"{}\" timestr=\"{}\" elapsed=\"{}\" summary=\"Nemue done at {}; {} IP addresses ({} hosts) scanned in {} seconds\" exit=\"success\" />\n    <hosts up=\"{}\" down=\"0\" total=\"{}\" />\n  </runstats>\n",
@@ -175,7 +197,7 @@ fn xml_escape(s: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::scanner::{ScanResult, ScanResults, Protocol, PortState};
+    use crate::scanner::{PortState, Protocol, ScanResult, ScanResults};
     use chrono::Utc;
     use std::net::IpAddr;
 
@@ -254,22 +276,24 @@ mod tests {
     #[test]
     fn test_xml_with_os_detection() {
         let mut results = create_test_results();
-        results.os_fingerprints.push(crate::fingerprint::OsFingerprint {
-            target: "192.168.1.1".parse().unwrap(),
-            os_family: Some(crate::fingerprint::OsFamily::Linux),
-            os_version: Some("5.15".to_string()),
-            confidence: 85,
-            ttl: Some(64),
-            window_size: Some(65535),
-            tcp_options: Vec::new(),
-            tcp_timestamp: None,
-            ip_id_sequence: None,
-            window_scaling: None,
-            max_segment_size: None,
-            details: String::new(),
-            passive_indicators: Vec::new(),
-            os_generation: None,
-        });
+        results
+            .os_fingerprints
+            .push(crate::fingerprint::OsFingerprint {
+                target: "192.168.1.1".parse().unwrap(),
+                os_family: Some(crate::fingerprint::OsFamily::Linux),
+                os_version: Some("5.15".to_string()),
+                confidence: 85,
+                ttl: Some(64),
+                window_size: Some(65535),
+                tcp_options: Vec::new(),
+                tcp_timestamp: None,
+                ip_id_sequence: None,
+                window_scaling: None,
+                max_segment_size: None,
+                details: String::new(),
+                passive_indicators: Vec::new(),
+                os_generation: None,
+            });
 
         let xml = format(&results).unwrap();
         assert!(xml.contains("<os>"));

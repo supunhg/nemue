@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use std::net::{IpAddr, SocketAddr, UdpSocket};
 use std::time::Duration;
 
@@ -92,11 +92,19 @@ impl SnmpSecurityFinding {
 
     pub fn description(&self) -> &str {
         match self {
-            SnmpSecurityFinding::DefaultCommunityAccepted => "Default community string (public/private) accepted",
-            SnmpSecurityFinding::VersionDowngrade => "Agent supports SNMPv1/v2c which lack encryption",
-            SnmpSecurityFinding::NoAuthentication => "SNMPv1/v2c community strings sent in cleartext",
+            SnmpSecurityFinding::DefaultCommunityAccepted => {
+                "Default community string (public/private) accepted"
+            }
+            SnmpSecurityFinding::VersionDowngrade => {
+                "Agent supports SNMPv1/v2c which lack encryption"
+            }
+            SnmpSecurityFinding::NoAuthentication => {
+                "SNMPv1/v2c community strings sent in cleartext"
+            }
             SnmpSecurityFinding::WeakAuthentication => "SNMPv3 uses weak authentication protocol",
-            SnmpSecurityFinding::WriteAccessAvailable => "Write access confirmed with community string",
+            SnmpSecurityFinding::WriteAccessAvailable => {
+                "Write access confirmed with community string"
+            }
             SnmpSecurityFinding::VersionInfoExposed => "SNMP agent version information exposed",
             SnmpSecurityFinding::CommunityStringGuessable => "Common community string accepted",
         }
@@ -208,7 +216,10 @@ impl SnmpScanner {
     pub fn new(timeout_ms: u64) -> Self {
         Self {
             timeout_duration: Duration::from_millis(timeout_ms),
-            community_strings: Self::DEFAULT_COMMUNITIES.iter().map(|s| s.to_string()).collect(),
+            community_strings: Self::DEFAULT_COMMUNITIES
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
         }
     }
 
@@ -244,7 +255,10 @@ impl SnmpScanner {
         }
 
         let valid_communities = self.brute_force_communities(target, port).await;
-        let community = valid_communities.first().cloned().unwrap_or_else(|| "public".to_string());
+        let community = valid_communities
+            .first()
+            .cloned()
+            .unwrap_or_else(|| "public".to_string());
 
         let mib_entries = self.enumerate_mib(target, port, &community).await;
         let interface_entries = self.enumerate_interface_mib(target, port, &community).await;
@@ -272,7 +286,11 @@ impl SnmpScanner {
             Vec::new()
         };
 
-        let security_findings = self.assess_security(&valid_communities, &detected_version, &write_access_communities);
+        let security_findings = self.assess_security(
+            &valid_communities,
+            &detected_version,
+            &write_access_communities,
+        );
 
         Ok(SnmpScanResult {
             target,
@@ -312,7 +330,12 @@ impl SnmpScanner {
         }
     }
 
-    async fn detect_version(&self, target: IpAddr, port: u16, community: &str) -> Option<SnmpVersion> {
+    async fn detect_version(
+        &self,
+        target: IpAddr,
+        port: u16,
+        community: &str,
+    ) -> Option<SnmpVersion> {
         let addr = SocketAddr::new(target, port);
         let socket = match UdpSocket::bind("0.0.0.0:0") {
             Ok(s) => s,
@@ -448,10 +471,18 @@ impl SnmpScanner {
     }
 
     fn get_mib_value(&self, entries: &[OidEntry], name: &str) -> Option<String> {
-        entries.iter().find(|e| e.name == name).and_then(|e| e.value.clone())
+        entries
+            .iter()
+            .find(|e| e.name == name)
+            .and_then(|e| e.value.clone())
     }
 
-    pub async fn enumerate_interface_mib(&self, target: IpAddr, port: u16, community: &str) -> Vec<OidEntry> {
+    pub async fn enumerate_interface_mib(
+        &self,
+        target: IpAddr,
+        port: u16,
+        community: &str,
+    ) -> Vec<OidEntry> {
         let mut entries = Vec::new();
         let addr = SocketAddr::new(target, port);
 
@@ -488,7 +519,7 @@ impl SnmpScanner {
         let addr = SocketAddr::new(target, port);
 
         // SNMPv3 User-Based Security Model (USM) users OID
-        let usm_users_oid = "1.3.6.1.6.3.15.1.2.2.1";
+        let _usm_users_oid = "1.3.6.1.6.3.15.1.2.2.1";
 
         for user in Self::SNMP_V3_USERS {
             let socket = match UdpSocket::bind("0.0.0.0:0") {
@@ -826,16 +857,26 @@ mod tests {
 
     #[test]
     fn test_snmp_security_finding_severity() {
-        assert_eq!(SnmpSecurityFinding::DefaultCommunityAccepted.severity(), "CRITICAL");
+        assert_eq!(
+            SnmpSecurityFinding::DefaultCommunityAccepted.severity(),
+            "CRITICAL"
+        );
         assert_eq!(SnmpSecurityFinding::NoAuthentication.severity(), "HIGH");
-        assert_eq!(SnmpSecurityFinding::WriteAccessAvailable.severity(), "CRITICAL");
+        assert_eq!(
+            SnmpSecurityFinding::WriteAccessAvailable.severity(),
+            "CRITICAL"
+        );
         assert_eq!(SnmpSecurityFinding::VersionInfoExposed.severity(), "LOW");
     }
 
     #[test]
     fn test_snmp_security_finding_description() {
-        assert!(!SnmpSecurityFinding::DefaultCommunityAccepted.description().is_empty());
-        assert!(!SnmpSecurityFinding::VersionDowngrade.description().is_empty());
+        assert!(!SnmpSecurityFinding::DefaultCommunityAccepted
+            .description()
+            .is_empty());
+        assert!(!SnmpSecurityFinding::VersionDowngrade
+            .description()
+            .is_empty());
     }
 
     #[test]
@@ -889,7 +930,7 @@ mod tests {
         let scanner = SnmpScanner::new(1000);
         let encoded = scanner.encode_tlv(0x04, b"hello");
         assert_eq!(encoded[0], 0x04); // OCTET STRING tag
-        assert_eq!(encoded[1], 5);    // length
+        assert_eq!(encoded[1], 5); // length
         assert_eq!(&encoded[2..], b"hello");
     }
 
@@ -919,8 +960,12 @@ mod tests {
         let version = Some(SnmpVersion::V2c);
         let write_communities = vec![];
         let findings = scanner.assess_security(&communities, &version, &write_communities);
-        assert!(findings.iter().any(|f| matches!(f, SnmpSecurityFinding::DefaultCommunityAccepted)));
-        assert!(findings.iter().any(|f| matches!(f, SnmpSecurityFinding::NoAuthentication)));
+        assert!(findings
+            .iter()
+            .any(|f| matches!(f, SnmpSecurityFinding::DefaultCommunityAccepted)));
+        assert!(findings
+            .iter()
+            .any(|f| matches!(f, SnmpSecurityFinding::NoAuthentication)));
     }
 
     #[test]
@@ -930,7 +975,9 @@ mod tests {
         let version = Some(SnmpVersion::V2c);
         let write_communities = vec!["private".to_string()];
         let findings = scanner.assess_security(&communities, &version, &write_communities);
-        assert!(findings.iter().any(|f| matches!(f, SnmpSecurityFinding::WriteAccessAvailable)));
+        assert!(findings
+            .iter()
+            .any(|f| matches!(f, SnmpSecurityFinding::WriteAccessAvailable)));
     }
 
     #[test]
@@ -941,7 +988,9 @@ mod tests {
         let write_communities = vec![];
         let findings = scanner.assess_security(&communities, &version, &write_communities);
         // v3 should not have cleartext auth findings
-        assert!(!findings.iter().any(|f| matches!(f, SnmpSecurityFinding::NoAuthentication)));
+        assert!(!findings
+            .iter()
+            .any(|f| matches!(f, SnmpSecurityFinding::NoAuthentication)));
     }
 
     #[test]
@@ -951,7 +1000,9 @@ mod tests {
         let version = Some(SnmpVersion::V1);
         let write_communities = vec![];
         let findings = scanner.assess_security(&communities, &version, &write_communities);
-        assert!(findings.iter().any(|f| matches!(f, SnmpSecurityFinding::CommunityStringGuessable)));
+        assert!(findings
+            .iter()
+            .any(|f| matches!(f, SnmpSecurityFinding::CommunityStringGuessable)));
     }
 
     #[test]
@@ -1015,7 +1066,9 @@ mod tests {
         let version = Some(SnmpVersion::V2c);
         let write_communities = vec![];
         let findings = scanner.assess_security(&communities, &version, &write_communities);
-        assert!(findings.iter().any(|f| matches!(f, SnmpSecurityFinding::VersionInfoExposed)));
+        assert!(findings
+            .iter()
+            .any(|f| matches!(f, SnmpSecurityFinding::VersionInfoExposed)));
     }
 
     #[test]
@@ -1025,6 +1078,8 @@ mod tests {
         let version = None;
         let write_communities = vec![];
         let findings = scanner.assess_security(&communities, &version, &write_communities);
-        assert!(!findings.iter().any(|f| matches!(f, SnmpSecurityFinding::VersionInfoExposed)));
+        assert!(!findings
+            .iter()
+            .any(|f| matches!(f, SnmpSecurityFinding::VersionInfoExposed)));
     }
 }

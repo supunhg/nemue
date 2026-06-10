@@ -1,4 +1,4 @@
-use anyhow::{Result, Context};
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::Duration;
@@ -16,8 +16,16 @@ fn base64_encode(data: &[u8]) -> String {
         let triple = (b0 << 16) | (b1 << 8) | b2;
         result.push(CHARS[((triple >> 18) & 0x3F) as usize] as char);
         result.push(CHARS[((triple >> 12) & 0x3F) as usize] as char);
-        if chunk.len() > 1 { result.push(CHARS[((triple >> 6) & 0x3F) as usize] as char); } else { result.push('='); }
-        if chunk.len() > 2 { result.push(CHARS[(triple & 0x3F) as usize] as char); } else { result.push('='); }
+        if chunk.len() > 1 {
+            result.push(CHARS[((triple >> 6) & 0x3F) as usize] as char);
+        } else {
+            result.push('=');
+        }
+        if chunk.len() > 2 {
+            result.push(CHARS[(triple & 0x3F) as usize] as char);
+        } else {
+            result.push('=');
+        }
     }
     result
 }
@@ -60,7 +68,7 @@ impl JiraPriority {
 #[serde(rename_all = "lowercase")]
 pub enum JiraStatus {
     Open,
-   InProgress,
+    InProgress,
     Resolved,
     Closed,
     Reopened,
@@ -125,11 +133,18 @@ impl JiraClient {
             .timeout(Duration::from_secs(30))
             .build()
             .expect("Failed to create HTTP client");
-        Self { config, http_client }
+        Self {
+            config,
+            http_client,
+        }
     }
 
     fn api_url(&self, path: &str) -> String {
-        format!("{}/rest/api/3/{}", self.config.base_url.trim_end_matches('/'), path)
+        format!(
+            "{}/rest/api/3/{}",
+            self.config.base_url.trim_end_matches('/'),
+            path
+        )
     }
 
     fn auth_header(&self) -> String {
@@ -143,7 +158,10 @@ impl JiraClient {
         let priority = JiraPriority::from_severity(&finding.severity);
         let mut labels = self.config.default_labels.clone();
         labels.push("nemue-scan".to_string());
-        labels.push(format!("severity-{}", finding.severity.as_str().to_lowercase()));
+        labels.push(format!(
+            "severity-{}",
+            finding.severity.as_str().to_lowercase()
+        ));
 
         let mut description = format!(
             "*Vulnerability Details*\n\n\
@@ -151,7 +169,10 @@ impl JiraClient {
              *Port:* {}\n\
              *Severity:* {}\n\
              *Script ID:* {}\n",
-            finding.target, finding.port, finding.severity.as_str(), finding.script_id
+            finding.target,
+            finding.port,
+            finding.severity.as_str(),
+            finding.script_id
         );
 
         if !finding.cve_ids.is_empty() {
@@ -176,16 +197,15 @@ impl JiraClient {
         }
 
         if finding.exploit_available {
-            description.push_str("\n{color:red}*WARNING: Exploit available for this vulnerability*{color}\n");
+            description.push_str(
+                "\n{color:red}*WARNING: Exploit available for this vulnerability*{color}\n",
+            );
         }
 
         let mut custom_fields = HashMap::new();
         for (field_key, cve_field) in &self.config.custom_field_mappings {
             if cve_field == "cve_ids" && !finding.cve_ids.is_empty() {
-                custom_fields.insert(
-                    field_key.clone(),
-                    serde_json::json!(finding.cve_ids),
-                );
+                custom_fields.insert(field_key.clone(), serde_json::json!(finding.cve_ids));
             }
         }
 
@@ -246,9 +266,11 @@ impl JiraClient {
         }
 
         if !issue.labels.is_empty() {
-            update["labels"] = serde_json::json!(
-                issue.labels.iter().map(|l| serde_json::json!({ "add": l })).collect::<Vec<_>>()
-            );
+            update["labels"] = serde_json::json!(issue
+                .labels
+                .iter()
+                .map(|l| serde_json::json!({ "add": l }))
+                .collect::<Vec<_>>());
         }
 
         serde_json::json!({ "update": update })
@@ -276,23 +298,33 @@ impl JiraClient {
         let url = self.api_url("issue");
         let payload = self.build_create_payload(issue);
 
-        let resp = self.http_client.post(&url)
+        let resp = self
+            .http_client
+            .post(&url)
             .header("Authorization", self.auth_header())
             .header("Content-Type", "application/json")
             .json(&payload)
-            .send().await
+            .send()
+            .await
             .context("Failed to send create issue request to Jira")?;
 
         if !resp.status().is_success() {
             let status = resp.status();
             let body = resp.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("Jira API returned status {}: {}", status, body));
+            return Err(anyhow::anyhow!(
+                "Jira API returned status {}: {}",
+                status,
+                body
+            ));
         }
 
-        let result: serde_json::Value = resp.json().await
+        let result: serde_json::Value = resp
+            .json()
+            .await
             .context("Failed to parse Jira create issue response")?;
 
-        result.get("key")
+        result
+            .get("key")
             .and_then(|v| v.as_str())
             .map(|s| s.to_string())
             .ok_or_else(|| anyhow::anyhow!("No issue key in Jira response"))
@@ -303,17 +335,24 @@ impl JiraClient {
         let url = self.api_url(&format!("issue/{}", issue_key));
         let payload = self.build_update_payload(issue);
 
-        let resp = self.http_client.put(&url)
+        let resp = self
+            .http_client
+            .put(&url)
             .header("Authorization", self.auth_header())
             .header("Content-Type", "application/json")
             .json(&payload)
-            .send().await
+            .send()
+            .await
             .context("Failed to send update issue request to Jira")?;
 
         if !resp.status().is_success() {
             let status = resp.status();
             let body = resp.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("Jira API returned status {}: {}", status, body));
+            return Err(anyhow::anyhow!(
+                "Jira API returned status {}: {}",
+                status,
+                body
+            ));
         }
 
         Ok(())
@@ -324,17 +363,24 @@ impl JiraClient {
         let url = self.api_url(&format!("issue/{}/transitions", issue_key));
         let payload = self.build_transition_payload(transition_id);
 
-        let resp = self.http_client.post(&url)
+        let resp = self
+            .http_client
+            .post(&url)
             .header("Authorization", self.auth_header())
             .header("Content-Type", "application/json")
             .json(&payload)
-            .send().await
+            .send()
+            .await
             .context("Failed to send transition request to Jira")?;
 
         if !resp.status().is_success() {
             let status = resp.status();
             let body = resp.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("Jira transition API returned status {}: {}", status, body));
+            return Err(anyhow::anyhow!(
+                "Jira transition API returned status {}: {}",
+                status,
+                body
+            ));
         }
 
         Ok(())
@@ -344,29 +390,41 @@ impl JiraClient {
     pub async fn list_transitions(&self, issue_key: &str) -> Result<Vec<JiraTransition>> {
         let url = self.api_url(&format!("issue/{}/transitions", issue_key));
 
-        let resp = self.http_client.get(&url)
+        let resp = self
+            .http_client
+            .get(&url)
             .header("Authorization", self.auth_header())
-            .send().await
+            .send()
+            .await
             .context("Failed to list transitions from Jira")?;
 
         if !resp.status().is_success() {
             let status = resp.status();
             let body = resp.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("Jira transitions API returned status {}: {}", status, body));
+            return Err(anyhow::anyhow!(
+                "Jira transitions API returned status {}: {}",
+                status,
+                body
+            ));
         }
 
-        let result: serde_json::Value = resp.json().await
+        let result: serde_json::Value = resp
+            .json()
+            .await
             .context("Failed to parse Jira transitions response")?;
 
-        let transitions = result.get("transitions")
+        let transitions = result
+            .get("transitions")
             .and_then(|v| v.as_array())
             .map(|arr| {
-                arr.iter().filter_map(|t| {
-                    Some(JiraTransition {
-                        id: t.get("id")?.as_str()?.to_string(),
-                        name: t.get("name")?.as_str()?.to_string(),
+                arr.iter()
+                    .filter_map(|t| {
+                        Some(JiraTransition {
+                            id: t.get("id")?.as_str()?.to_string(),
+                            name: t.get("name")?.as_str()?.to_string(),
+                        })
                     })
-                }).collect()
+                    .collect()
             })
             .unwrap_or_default();
 
@@ -408,11 +466,26 @@ mod tests {
 
     #[test]
     fn test_priority_from_severity() {
-        assert_eq!(JiraPriority::from_severity(&VulnSeverity::Critical), JiraPriority::Highest);
-        assert_eq!(JiraPriority::from_severity(&VulnSeverity::High), JiraPriority::High);
-        assert_eq!(JiraPriority::from_severity(&VulnSeverity::Medium), JiraPriority::Medium);
-        assert_eq!(JiraPriority::from_severity(&VulnSeverity::Low), JiraPriority::Low);
-        assert_eq!(JiraPriority::from_severity(&VulnSeverity::Info), JiraPriority::Lowest);
+        assert_eq!(
+            JiraPriority::from_severity(&VulnSeverity::Critical),
+            JiraPriority::Highest
+        );
+        assert_eq!(
+            JiraPriority::from_severity(&VulnSeverity::High),
+            JiraPriority::High
+        );
+        assert_eq!(
+            JiraPriority::from_severity(&VulnSeverity::Medium),
+            JiraPriority::Medium
+        );
+        assert_eq!(
+            JiraPriority::from_severity(&VulnSeverity::Low),
+            JiraPriority::Low
+        );
+        assert_eq!(
+            JiraPriority::from_severity(&VulnSeverity::Info),
+            JiraPriority::Lowest
+        );
     }
 
     #[test]

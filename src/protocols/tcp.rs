@@ -1,13 +1,13 @@
 use anyhow::{anyhow, Result};
+use pnet::datalink::{self, Channel, NetworkInterface};
+use pnet::packet::ip::IpNextHeaderProtocols;
+use pnet::packet::ipv4::{Ipv4Packet, MutableIpv4Packet};
+use pnet::packet::tcp::{MutableTcpPacket, TcpFlags, TcpPacket};
+use rand::Rng;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::time::Duration;
 use tokio::net::TcpStream;
 use tokio::time::timeout;
-use pnet::datalink::{self, Channel, NetworkInterface};
-use pnet::packet::tcp::{MutableTcpPacket, TcpFlags, TcpPacket};
-use pnet::packet::ip::IpNextHeaderProtocols;
-use pnet::packet::ipv4::{MutableIpv4Packet, Ipv4Packet};
-use rand::Rng;
 
 use crate::scanner::{PortState, Protocol, ScanResult};
 
@@ -52,10 +52,10 @@ impl TcpScanner {
 
         // Find a suitable network interface
         let interface = Self::find_interface()?;
-        
+
         // Get our source IP
         let source_ip = Self::get_source_ip(&interface, target_ipv4)?;
-        
+
         // Create datalink channel
         let (mut tx, mut rx) = match datalink::channel(&interface, Default::default()) {
             Ok(Channel::Ethernet(tx, rx)) => (tx, rx),
@@ -66,9 +66,9 @@ impl TcpScanner {
         // Build and send SYN packet
         let src_port = rand::thread_rng().gen_range(1024..65535);
         let sequence = rand::thread_rng().gen::<u32>();
-        
+
         let packet_data = Self::build_syn_packet(source_ip, target_ipv4, src_port, port, sequence)?;
-        
+
         tx.send_to(&packet_data, None)
             .ok_or_else(|| anyhow!("Failed to send packet"))?
             .map_err(|e| anyhow!("Send error: {}", e))?;
@@ -79,42 +79,50 @@ impl TcpScanner {
                 match rx.next() {
                     Ok(packet) => {
                         // Skip Ethernet header (14 bytes) to get to IP packet
-                        if packet.len() < 14 { continue; }
+                        if packet.len() < 14 {
+                            continue;
+                        }
                         let ip_packet = &packet[14..];
-                        
+
                         if let Some(ipv4) = Ipv4Packet::new(ip_packet) {
                             // Check if it's from our target
-                            if ipv4.get_source() != target_ipv4 { continue; }
-                            
+                            if ipv4.get_source() != target_ipv4 {
+                                continue;
+                            }
+
                             // Check if it's TCP
-                            if ipv4.get_next_level_protocol() != IpNextHeaderProtocols::Tcp { continue; }
-                            
+                            if ipv4.get_next_level_protocol() != IpNextHeaderProtocols::Tcp {
+                                continue;
+                            }
+
                             // Parse TCP packet
                             let tcp_offset = (ipv4.get_header_length() as usize) * 4;
-                            if ip_packet.len() < tcp_offset { continue; }
-                            
+                            if ip_packet.len() < tcp_offset {
+                                continue;
+                            }
+
                             if let Some(tcp) = TcpPacket::new(&ip_packet[tcp_offset..]) {
                                 // Check if it's a response to our probe
                                 if tcp.get_source() != port || tcp.get_destination() != src_port {
                                     continue;
                                 }
-                                
+
                                 let flags = tcp.get_flags();
-                                
+
                                 // SYN-ACK = port is open
                                 if flags & TcpFlags::SYN != 0 && flags & TcpFlags::ACK != 0 {
                                     // Send RST to close connection cleanly
                                     let rst_packet = Self::build_rst_packet(
-                                        source_ip, 
-                                        target_ipv4, 
-                                        src_port, 
+                                        source_ip,
+                                        target_ipv4,
+                                        src_port,
                                         port,
-                                        tcp.get_acknowledgement()
+                                        tcp.get_acknowledgement(),
                                     )?;
                                     let _ = tx.send_to(&rst_packet, None);
                                     return Ok(PortState::Open);
                                 }
-                                
+
                                 // RST = port is closed
                                 if flags & TcpFlags::RST != 0 {
                                     return Ok(PortState::Closed);
@@ -129,7 +137,9 @@ impl TcpScanner {
                 }
             }
             Ok(PortState::Filtered)
-        }).await {
+        })
+        .await
+        {
             Ok(Ok(state)) => state,
             Ok(Err(e)) => return Err(e),
             Err(_) => PortState::Filtered, // Timeout
@@ -181,14 +191,14 @@ impl TcpScanner {
         const IP_HEADER_LEN: usize = 20;
         const TCP_HEADER_LEN: usize = 20;
         const TOTAL_LEN: usize = IP_HEADER_LEN + TCP_HEADER_LEN;
-        
+
         let mut buffer = vec![0u8; TOTAL_LEN];
-        
+
         // Build IP header
         {
             let mut ip_packet = MutableIpv4Packet::new(&mut buffer[..IP_HEADER_LEN])
                 .ok_or_else(|| anyhow!("Failed to create IP packet"))?;
-            
+
             ip_packet.set_version(4);
             ip_packet.set_header_length(5); // 5 * 4 = 20 bytes
             ip_packet.set_total_length(TOTAL_LEN as u16);
@@ -197,17 +207,17 @@ impl TcpScanner {
             ip_packet.set_next_level_protocol(IpNextHeaderProtocols::Tcp);
             ip_packet.set_source(source_ip);
             ip_packet.set_destination(dest_ip);
-            
+
             // Calculate IP checksum
             let checksum = pnet::packet::ipv4::checksum(&ip_packet.to_immutable());
             ip_packet.set_checksum(checksum);
         }
-        
+
         // Build TCP header
         {
             let mut tcp_packet = MutableTcpPacket::new(&mut buffer[IP_HEADER_LEN..])
                 .ok_or_else(|| anyhow!("Failed to create TCP packet"))?;
-            
+
             tcp_packet.set_source(source_port);
             tcp_packet.set_destination(dest_port);
             tcp_packet.set_sequence(sequence);
@@ -216,16 +226,13 @@ impl TcpScanner {
             tcp_packet.set_flags(TcpFlags::SYN);
             tcp_packet.set_window(64240);
             tcp_packet.set_urgent_ptr(0);
-            
+
             // Calculate TCP checksum
-            let checksum = pnet::packet::tcp::ipv4_checksum(
-                &tcp_packet.to_immutable(),
-                &source_ip,
-                &dest_ip
-            );
+            let checksum =
+                pnet::packet::tcp::ipv4_checksum(&tcp_packet.to_immutable(), &source_ip, &dest_ip);
             tcp_packet.set_checksum(checksum);
         }
-        
+
         Ok(buffer)
     }
 
@@ -240,14 +247,14 @@ impl TcpScanner {
         const IP_HEADER_LEN: usize = 20;
         const TCP_HEADER_LEN: usize = 20;
         const TOTAL_LEN: usize = IP_HEADER_LEN + TCP_HEADER_LEN;
-        
+
         let mut buffer = vec![0u8; TOTAL_LEN];
-        
+
         // Build IP header
         {
             let mut ip_packet = MutableIpv4Packet::new(&mut buffer[..IP_HEADER_LEN])
                 .ok_or_else(|| anyhow!("Failed to create IP packet"))?;
-            
+
             ip_packet.set_version(4);
             ip_packet.set_header_length(5);
             ip_packet.set_total_length(TOTAL_LEN as u16);
@@ -256,16 +263,16 @@ impl TcpScanner {
             ip_packet.set_next_level_protocol(IpNextHeaderProtocols::Tcp);
             ip_packet.set_source(source_ip);
             ip_packet.set_destination(dest_ip);
-            
+
             let checksum = pnet::packet::ipv4::checksum(&ip_packet.to_immutable());
             ip_packet.set_checksum(checksum);
         }
-        
+
         // Build TCP RST
         {
             let mut tcp_packet = MutableTcpPacket::new(&mut buffer[IP_HEADER_LEN..])
                 .ok_or_else(|| anyhow!("Failed to create TCP packet"))?;
-            
+
             tcp_packet.set_source(source_port);
             tcp_packet.set_destination(dest_port);
             tcp_packet.set_sequence(ack_num);
@@ -274,22 +281,19 @@ impl TcpScanner {
             tcp_packet.set_flags(TcpFlags::RST);
             tcp_packet.set_window(0);
             tcp_packet.set_urgent_ptr(0);
-            
-            let checksum = pnet::packet::tcp::ipv4_checksum(
-                &tcp_packet.to_immutable(),
-                &source_ip,
-                &dest_ip
-            );
+
+            let checksum =
+                pnet::packet::tcp::ipv4_checksum(&tcp_packet.to_immutable(), &source_ip, &dest_ip);
             tcp_packet.set_checksum(checksum);
         }
-        
+
         Ok(buffer)
     }
 
     /// Perform a TCP connect scan
     pub async fn connect_scan(&self, target: IpAddr, port: u16) -> Result<ScanResult> {
         let addr = SocketAddr::new(target, port);
-        
+
         let state = match timeout(self.timeout_duration, TcpStream::connect(addr)).await {
             Ok(Ok(_)) => PortState::Open,
             Ok(Err(_)) => PortState::Closed,

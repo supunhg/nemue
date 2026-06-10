@@ -10,7 +10,10 @@ pub enum ZigbeeSecurityLevel {
 
 impl ZigbeeSecurityLevel {
     pub fn is_secure(&self) -> bool {
-        matches!(self, ZigbeeSecurityLevel::Standard | ZigbeeSecurityLevel::High)
+        matches!(
+            self,
+            ZigbeeSecurityLevel::Standard | ZigbeeSecurityLevel::High
+        )
     }
 
     pub fn as_str(&self) -> &str {
@@ -59,23 +62,28 @@ impl ZigbeeNetwork {
         self.vulnerabilities.clear();
 
         if self.security_level == ZigbeeSecurityLevel::None {
-            self.vulnerabilities.push("Network has no security enabled".to_string());
+            self.vulnerabilities
+                .push("Network has no security enabled".to_string());
         }
 
         if self.security_level == ZigbeeSecurityLevel::Residential {
-            self.vulnerabilities.push("Residential security uses well-known default key".to_string());
+            self.vulnerabilities
+                .push("Residential security uses well-known default key".to_string());
         }
 
         if self.permit_joining {
-            self.vulnerabilities.push("Network permit-joining is enabled (allows new device joins)".to_string());
+            self.vulnerabilities
+                .push("Network permit-joining is enabled (allows new device joins)".to_string());
         }
 
         if self.network_key_known {
-            self.vulnerabilities.push("Network key is known/default - should be rotated".to_string());
+            self.vulnerabilities
+                .push("Network key is known/default - should be rotated".to_string());
         }
 
         if self.channel > 26 {
-            self.vulnerabilities.push("Invalid Zigbee channel detected".to_string());
+            self.vulnerabilities
+                .push("Invalid Zigbee channel detected".to_string());
         }
     }
 
@@ -84,11 +92,17 @@ impl ZigbeeNetwork {
     }
 
     pub fn router_count(&self) -> usize {
-        self.devices.iter().filter(|d| d.device_type == ZigbeeDeviceType::Router).count()
+        self.devices
+            .iter()
+            .filter(|d| d.device_type == ZigbeeDeviceType::Router)
+            .count()
     }
 
     pub fn end_device_count(&self) -> usize {
-        self.devices.iter().filter(|d| d.device_type == ZigbeeDeviceType::EndDevice).count()
+        self.devices
+            .iter()
+            .filter(|d| d.device_type == ZigbeeDeviceType::EndDevice)
+            .count()
     }
 }
 
@@ -258,7 +272,11 @@ impl ZigbeeScanner {
             security_level: network.security_level.as_str().to_string(),
             topology_type: Self::determine_topology(network),
             device_breakdown: DeviceBreakdown {
-                coordinators: network.devices.iter().filter(|d| d.device_type == ZigbeeDeviceType::Coordinator).count(),
+                coordinators: network
+                    .devices
+                    .iter()
+                    .filter(|d| d.device_type == ZigbeeDeviceType::Coordinator)
+                    .count(),
                 routers: network.router_count(),
                 end_devices: network.end_device_count(),
             },
@@ -267,21 +285,33 @@ impl ZigbeeScanner {
         };
 
         if network.security_level == ZigbeeSecurityLevel::None {
-            analysis.recommendations.push("Enable network security with at least Standard level".to_string());
+            analysis
+                .recommendations
+                .push("Enable network security with at least Standard level".to_string());
         }
         if network.permit_joining {
-            analysis.recommendations.push("Disable permit-joining when not adding new devices".to_string());
+            analysis
+                .recommendations
+                .push("Disable permit-joining when not adding new devices".to_string());
         }
         if network.router_count() < 2 && network.device_count() > 5 {
-            analysis.recommendations.push("Add more router devices to improve mesh reliability".to_string());
+            analysis
+                .recommendations
+                .push("Add more router devices to improve mesh reliability".to_string());
         }
 
         analysis
     }
 
     fn determine_topology(network: &ZigbeeNetwork) -> String {
-        let has_coordinator = network.devices.iter().any(|d| d.device_type == ZigbeeDeviceType::Coordinator);
-        let has_router = network.devices.iter().any(|d| d.device_type == ZigbeeDeviceType::Router);
+        let has_coordinator = network
+            .devices
+            .iter()
+            .any(|d| d.device_type == ZigbeeDeviceType::Coordinator);
+        let has_router = network
+            .devices
+            .iter()
+            .any(|d| d.device_type == ZigbeeDeviceType::Router);
 
         if has_coordinator && has_router {
             "Star/Mesh".to_string()
@@ -293,7 +323,8 @@ impl ZigbeeScanner {
     }
 
     fn summarize_clusters(network: &ZigbeeNetwork) -> Vec<ClusterSummary> {
-        let mut cluster_counts: std::collections::HashMap<u16, usize> = std::collections::HashMap::new();
+        let mut cluster_counts: std::collections::HashMap<u16, usize> =
+            std::collections::HashMap::new();
 
         for device in &network.devices {
             for endpoint in &device.endpoints {
@@ -364,21 +395,17 @@ mod tests {
                     model: Some("Coordinator".to_string()),
                     power_source: PowerSource::Mains,
                     rx_on_when_idle: true,
-                    endpoints: vec![
-                        ZigbeeEndpoint {
-                            endpoint_id: 1,
-                            profile_id: 0x0104,
-                            device_id: 0x0005,
-                            clusters: vec![
-                                ZigbeeCluster {
-                                    cluster_id: 0x0000,
-                                    name: "Basic".to_string(),
-                                    is_server: true,
-                                    attributes: vec![],
-                                },
-                            ],
-                        },
-                    ],
+                    endpoints: vec![ZigbeeEndpoint {
+                        endpoint_id: 1,
+                        profile_id: 0x0104,
+                        device_id: 0x0005,
+                        clusters: vec![ZigbeeCluster {
+                            cluster_id: 0x0000,
+                            name: "Basic".to_string(),
+                            is_server: true,
+                            attributes: vec![],
+                        }],
+                    }],
                     last_seen: None,
                     signal_strength: Some(-40),
                 },
@@ -390,21 +417,17 @@ mod tests {
                     model: Some("Bulb".to_string()),
                     power_source: PowerSource::Mains,
                     rx_on_when_idle: true,
-                    endpoints: vec![
-                        ZigbeeEndpoint {
-                            endpoint_id: 1,
-                            profile_id: 0x0104,
-                            device_id: 0x0100,
-                            clusters: vec![
-                                ZigbeeCluster {
-                                    cluster_id: 0x0006,
-                                    name: "On/Off".to_string(),
-                                    is_server: true,
-                                    attributes: vec![],
-                                },
-                            ],
-                        },
-                    ],
+                    endpoints: vec![ZigbeeEndpoint {
+                        endpoint_id: 1,
+                        profile_id: 0x0104,
+                        device_id: 0x0100,
+                        clusters: vec![ZigbeeCluster {
+                            cluster_id: 0x0006,
+                            name: "On/Off".to_string(),
+                            is_server: true,
+                            attributes: vec![],
+                        }],
+                    }],
                     last_seen: None,
                     signal_strength: Some(-55),
                 },
@@ -427,7 +450,10 @@ mod tests {
         let mut network = create_test_network(ZigbeeSecurityLevel::None);
         network.assess_security();
         assert!(!network.vulnerabilities.is_empty());
-        assert!(network.vulnerabilities.iter().any(|v| v.contains("no security")));
+        assert!(network
+            .vulnerabilities
+            .iter()
+            .any(|v| v.contains("no security")));
     }
 
     #[test]
@@ -435,14 +461,20 @@ mod tests {
         let mut network = create_test_network(ZigbeeSecurityLevel::Standard);
         network.permit_joining = true;
         network.assess_security();
-        assert!(network.vulnerabilities.iter().any(|v| v.contains("permit-joining")));
+        assert!(network
+            .vulnerabilities
+            .iter()
+            .any(|v| v.contains("permit-joining")));
     }
 
     #[test]
     fn test_residential_security_warning() {
         let mut network = create_test_network(ZigbeeSecurityLevel::Residential);
         network.assess_security();
-        assert!(network.vulnerabilities.iter().any(|v| v.contains("default key")));
+        assert!(network
+            .vulnerabilities
+            .iter()
+            .any(|v| v.contains("default key")));
     }
 
     #[test]

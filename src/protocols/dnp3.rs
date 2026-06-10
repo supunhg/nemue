@@ -176,9 +176,15 @@ impl Dnp3SecurityFinding {
             Dnp3SecurityFinding::ColdRestartSupported => "Device supports cold restart command",
             Dnp3SecurityFinding::WriteAccessAvailable => "Write operations are available",
             Dnp3SecurityFinding::DirectOperateSupported => "Direct operate commands are accepted",
-            Dnp3SecurityFinding::ConfigurationChangeAllowed => "Configuration can be modified remotely",
-            Dnp3SecurityFinding::DeviceIdentExposed => "Device identification information is exposed",
-            Dnp3SecurityFinding::DefaultAddresses => "Device uses default source/destination addresses",
+            Dnp3SecurityFinding::ConfigurationChangeAllowed => {
+                "Configuration can be modified remotely"
+            }
+            Dnp3SecurityFinding::DeviceIdentExposed => {
+                "Device identification information is exposed"
+            }
+            Dnp3SecurityFinding::DefaultAddresses => {
+                "Device uses default source/destination addresses"
+            }
         }
     }
 }
@@ -381,21 +387,20 @@ impl Dnp3Scanner {
 
         let mut response = [0u8; 512];
         match timeout(self.timeout_duration, reader.read(&mut response)).await {
-            Ok(Ok(n)) if n >= 10 => {
-                if response[0] == 0x05 && response[1] == 0x64 {
-                    // Valid DNP3 response - check for function code in application layer
-                    // The response function code should be 0x81 (response) or 0x82 (unsolicited)
-                    true
-                } else {
-                    false
-                }
+            Ok(Ok(n)) if n >= 10 && response[0] == 0x05 && response[1] == 0x64 => {
+                // Valid DNP3 response - check for function code in application layer
+                // The response function code should be 0x81 (response) or 0x82 (unsolicited)
+                true
             }
             _ => false,
         }
     }
 
     /// Assess security posture of the DNP3 device
-    pub fn assess_security(&self, device_info: Option<&Dnp3DeviceInfo>) -> Vec<Dnp3SecurityFinding> {
+    pub fn assess_security(
+        &self,
+        device_info: Option<&Dnp3DeviceInfo>,
+    ) -> Vec<Dnp3SecurityFinding> {
         let mut findings = Vec::new();
 
         // DNP3 over TCP is typically unencrypted unless TLS is used
@@ -417,15 +422,25 @@ impl Dnp3Scanner {
             }
 
             // Check dangerous functions
-            if info.supported_functions.contains(&Dnp3Function::ColdRestart) {
+            if info
+                .supported_functions
+                .contains(&Dnp3Function::ColdRestart)
+            {
                 findings.push(Dnp3SecurityFinding::ColdRestartSupported);
             }
 
-            if info.supported_functions.contains(&Dnp3Function::WarmRestart) {
+            if info
+                .supported_functions
+                .contains(&Dnp3Function::WarmRestart)
+            {
                 findings.push(Dnp3SecurityFinding::ColdRestartSupported);
             }
 
-            let write_functions = [Dnp3Function::Write, Dnp3Function::Select, Dnp3Function::Operate];
+            let write_functions = [
+                Dnp3Function::Write,
+                Dnp3Function::Select,
+                Dnp3Function::Operate,
+            ];
             for func in &write_functions {
                 if info.supported_functions.contains(func) {
                     findings.push(Dnp3SecurityFinding::WriteAccessAvailable);
@@ -433,7 +448,10 @@ impl Dnp3Scanner {
                 }
             }
 
-            if info.supported_functions.contains(&Dnp3Function::DirectOperate) {
+            if info
+                .supported_functions
+                .contains(&Dnp3Function::DirectOperate)
+            {
                 findings.push(Dnp3SecurityFinding::DirectOperateSupported);
             }
 
@@ -541,7 +559,10 @@ mod tests {
     fn test_dnp3_object_group() {
         assert_eq!(Dnp3ObjectGroup::from_u8(1), Dnp3ObjectGroup::BinaryInput);
         assert_eq!(Dnp3ObjectGroup::from_u8(30), Dnp3ObjectGroup::AnalogInput);
-        assert_eq!(Dnp3ObjectGroup::from_u8(99), Dnp3ObjectGroup::DeviceAttributes);
+        assert_eq!(
+            Dnp3ObjectGroup::from_u8(99),
+            Dnp3ObjectGroup::DeviceAttributes
+        );
     }
 
     #[test]
@@ -552,16 +573,26 @@ mod tests {
 
     #[test]
     fn test_dnp3_security_finding_severity() {
-        assert_eq!(Dnp3SecurityFinding::ColdRestartSupported.severity(), "CRITICAL");
+        assert_eq!(
+            Dnp3SecurityFinding::ColdRestartSupported.severity(),
+            "CRITICAL"
+        );
         assert_eq!(Dnp3SecurityFinding::NoAuthentication.severity(), "HIGH");
-        assert_eq!(Dnp3SecurityFinding::UnencryptedProtocol.severity(), "MEDIUM");
+        assert_eq!(
+            Dnp3SecurityFinding::UnencryptedProtocol.severity(),
+            "MEDIUM"
+        );
         assert_eq!(Dnp3SecurityFinding::DeviceIdentExposed.severity(), "LOW");
     }
 
     #[test]
     fn test_dnp3_security_finding_description() {
-        assert!(!Dnp3SecurityFinding::NoAuthentication.description().is_empty());
-        assert!(!Dnp3SecurityFinding::ColdRestartSupported.description().is_empty());
+        assert!(!Dnp3SecurityFinding::NoAuthentication
+            .description()
+            .is_empty());
+        assert!(!Dnp3SecurityFinding::ColdRestartSupported
+            .description()
+            .is_empty());
     }
 
     #[test]
@@ -605,7 +636,9 @@ mod tests {
     #[tokio::test]
     async fn test_detect_dnp3_on_closed_port() {
         let scanner = Dnp3Scanner::new(200);
-        let result = scanner.detect_dnp3(IpAddr::V4([127, 0, 0, 1].into()), 1).await;
+        let result = scanner
+            .detect_dnp3(IpAddr::V4([127, 0, 0, 1].into()), 1)
+            .await;
         assert!(result.is_ok());
         assert!(!result.unwrap());
     }
@@ -631,6 +664,8 @@ mod tests {
             supported_functions: Vec::new(),
         };
         let findings = scanner.assess_security(Some(&info));
-        assert!(findings.iter().any(|f| matches!(f, Dnp3SecurityFinding::DefaultAddresses)));
+        assert!(findings
+            .iter()
+            .any(|f| matches!(f, Dnp3SecurityFinding::DefaultAddresses)));
     }
 }

@@ -140,13 +140,15 @@ impl ParamFuzzer {
     /// Fuzz a single parameter value
     async fn fuzz_with_value(&self, value: &str) -> Result<FuzzResult> {
         let url = self.inject_value(&self.config.url_template, value);
-        let body = self.config.body_template.as_ref()
+        let body = self
+            .config
+            .body_template
+            .as_ref()
             .map(|t| self.inject_value(t, value));
 
         let start = Instant::now();
-        
-        let mut request = self.client
-            .request(self.config.method.clone(), &url);
+
+        let mut request = self.client.request(self.config.method.clone(), &url);
 
         // Add headers
         for (key, val) in &self.config.headers {
@@ -163,9 +165,10 @@ impl ParamFuzzer {
 
         let status_code = response.status().as_u16();
         let size = response.content_length().unwrap_or(0) as usize;
-        let is_redirect = status_code >= 300 && status_code < 400;
+        let is_redirect = (300..400).contains(&status_code);
         let redirect_location = if is_redirect {
-            response.headers()
+            response
+                .headers()
                 .get("Location")
                 .and_then(|v| v.to_str().ok())
                 .map(String::from)
@@ -196,7 +199,7 @@ impl ParamFuzzer {
             for word2 in &wordlists[1] {
                 let url = self.inject_multi_values(&self.config.url_template, &[word1, word2]);
                 let result = self.fuzz_url(&url, &format!("{}×{}", word1, word2)).await?;
-                
+
                 if let Some(filter) = &self.config.filter {
                     if self.matches_filter(&result, filter) {
                         results.push(result);
@@ -221,13 +224,11 @@ impl ParamFuzzer {
         let min_len = wordlists.iter().map(|w| w.len()).min().unwrap_or(0);
 
         for i in 0..min_len {
-            let values: Vec<&str> = wordlists.iter()
-                .map(|w| w[i].as_str())
-                .collect();
-            
+            let values: Vec<&str> = wordlists.iter().map(|w| w[i].as_str()).collect();
+
             let url = self.inject_multi_values(&self.config.url_template, &values);
             let result = self.fuzz_url(&url, &values.join(",")).await?;
-            
+
             if let Some(filter) = &self.config.filter {
                 if self.matches_filter(&result, filter) {
                     results.push(result);
@@ -243,17 +244,18 @@ impl ParamFuzzer {
     /// Fuzz a specific URL
     async fn fuzz_url(&self, url: &str, label: &str) -> Result<FuzzResult> {
         let start = Instant::now();
-        
-        let response = self.client
+
+        let response = self
+            .client
             .request(self.config.method.clone(), url)
             .send()
             .await?;
-        
+
         let elapsed = start.elapsed().as_millis() as u64;
 
         let status_code = response.status().as_u16();
         let size = response.content_length().unwrap_or(0) as usize;
-        let is_redirect = status_code >= 300 && status_code < 400;
+        let is_redirect = (300..400).contains(&status_code);
 
         Ok(FuzzResult {
             path: label.to_string(),
@@ -277,25 +279,24 @@ impl ParamFuzzer {
     /// Inject multiple values into template (replaces FUZZ1, FUZZ2, etc.)
     fn inject_multi_values(&self, template: &str, values: &[&str]) -> String {
         let mut result = template.to_string();
-        
+
         for (i, value) in values.iter().enumerate() {
             let keyword = format!("FUZZ{}", i + 1);
             result = result.replace(&keyword, value);
         }
-        
+
         // Also replace plain FUZZ with first value
         if !values.is_empty() {
             result = result.replace("FUZZ", values[0]);
         }
-        
+
         result
     }
 
     /// Check if result matches filter
     fn matches_filter(&self, result: &FuzzResult, filter: &ResponseFilter) -> bool {
         // Status code filter
-        if !filter.status_codes.is_empty() 
-            && !filter.status_codes.contains(&result.status_code) {
+        if !filter.status_codes.is_empty() && !filter.status_codes.contains(&result.status_code) {
             return false;
         }
 
@@ -313,7 +314,7 @@ impl ParamFuzzer {
         }
 
         // Response time filter would go here if needed
-        
+
         true
     }
 }
@@ -340,7 +341,7 @@ impl ParamDiscovery {
 
         for param in param_wordlist {
             let url = format!("{}?{}=test", self.base_url, param);
-            
+
             if let Ok(response) = self.client.get(&url).send().await {
                 if response.status().is_success() {
                     discovered.push(param);
@@ -357,13 +358,15 @@ impl ParamDiscovery {
 
         for param in param_wordlist {
             let body = format!("{}=test", param);
-            
-            if let Ok(response) = self.client
+
+            if let Ok(response) = self
+                .client
                 .post(&self.base_url)
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .body(body)
                 .send()
-                .await {
+                .await
+            {
                 if response.status().is_success() {
                     discovered.push(param);
                 }
@@ -379,13 +382,15 @@ impl ParamDiscovery {
 
         for param in param_wordlist {
             let json = format!("{{\"{}\": \"test\"}}", param);
-            
-            if let Ok(response) = self.client
+
+            if let Ok(response) = self
+                .client
                 .post(&self.base_url)
                 .header("Content-Type", "application/json")
                 .body(json)
                 .send()
-                .await {
+                .await
+            {
                 if response.status().is_success() {
                     discovered.push(param);
                 }
@@ -434,10 +439,8 @@ mod tests {
         };
 
         let fuzzer = ParamFuzzer::new(config).unwrap();
-        let result = fuzzer.inject_multi_values(
-            "https://example.com/FUZZ1/FUZZ2",
-            &["admin", "users"]
-        );
+        let result =
+            fuzzer.inject_multi_values("https://example.com/FUZZ1/FUZZ2", &["admin", "users"]);
         assert_eq!(result, "https://example.com/admin/users");
     }
 

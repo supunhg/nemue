@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -143,10 +144,7 @@ impl NlpEngine {
                 ],
                 category: "Remote Access".to_string(),
                 risk_level: "High".to_string(),
-                subcategories: vec![
-                    "Encrypted".to_string(),
-                    "Cleartext".to_string(),
-                ],
+                subcategories: vec!["Encrypted".to_string(), "Cleartext".to_string()],
             },
         );
 
@@ -163,11 +161,7 @@ impl NlpEngine {
                 ],
                 category: "Email".to_string(),
                 risk_level: "Medium".to_string(),
-                subcategories: vec![
-                    "SMTP".to_string(),
-                    "IMAP".to_string(),
-                    "POP3".to_string(),
-                ],
+                subcategories: vec!["SMTP".to_string(), "IMAP".to_string(), "POP3".to_string()],
             },
         );
 
@@ -185,11 +179,7 @@ impl NlpEngine {
                 ],
                 category: "File Transfer".to_string(),
                 risk_level: "Medium".to_string(),
-                subcategories: vec![
-                    "FTP".to_string(),
-                    "SMB".to_string(),
-                    "NFS".to_string(),
-                ],
+                subcategories: vec!["FTP".to_string(), "SMB".to_string(), "NFS".to_string()],
             },
         );
 
@@ -367,22 +357,10 @@ impl NlpEngine {
         findings: &[Finding],
     ) -> NlpReport {
         let total_findings = findings.len();
-        let critical_count = findings
-            .iter()
-            .filter(|f| f.severity == "Critical")
-            .count();
-        let high_count = findings
-            .iter()
-            .filter(|f| f.severity == "High")
-            .count();
-        let medium_count = findings
-            .iter()
-            .filter(|f| f.severity == "Medium")
-            .count();
-        let low_count = findings
-            .iter()
-            .filter(|f| f.severity == "Low")
-            .count();
+        let critical_count = findings.iter().filter(|f| f.severity == "Critical").count();
+        let high_count = findings.iter().filter(|f| f.severity == "High").count();
+        let medium_count = findings.iter().filter(|f| f.severity == "Medium").count();
+        let low_count = findings.iter().filter(|f| f.severity == "Low").count();
 
         let risk_level = if critical_count > 0 {
             "Critical"
@@ -420,11 +398,11 @@ impl NlpEngine {
 
         let mut recommendations = Vec::new();
         if critical_count > 0 {
-            recommendations
-                .push("Address critical vulnerabilities immediately.".to_string());
+            recommendations.push("Address critical vulnerabilities immediately.".to_string());
         }
         if high_count > 0 {
-            recommendations.push("Schedule urgent remediation for high-severity issues.".to_string());
+            recommendations
+                .push("Schedule urgent remediation for high-severity issues.".to_string());
         }
         recommendations.push("Implement regular security scanning schedule.".to_string());
         recommendations.push("Review and update security policies.".to_string());
@@ -459,7 +437,7 @@ impl NlpEngine {
     pub fn extract_service_from_banner(&self, banner: &str) -> Option<ServiceClassification> {
         let banner_lower = banner.to_lowercase();
 
-        for (_key, pattern) in &self.service_patterns {
+        for pattern in self.service_patterns.values() {
             for keyword in &pattern.keywords {
                 if banner_lower.contains(&keyword.to_lowercase()) {
                     return Some(ServiceClassification {
@@ -481,7 +459,7 @@ impl NlpEngine {
         let service_lower = service.to_lowercase();
 
         // Check known patterns
-        for (_, pattern) in &self.service_patterns {
+        for pattern in self.service_patterns.values() {
             for keyword in &pattern.keywords {
                 if service_lower.contains(&keyword.to_lowercase()) {
                     return ServiceClassification {
@@ -540,7 +518,9 @@ mod tests {
         let text = "Host 192.168.1.1 has port 80 open";
         let entities = engine.extract_entities(text);
 
-        assert!(entities.iter().any(|e| e.entity_type == "ip" && e.value == "192.168.1.1"));
+        assert!(entities
+            .iter()
+            .any(|e| e.entity_type == "ip" && e.value == "192.168.1.1"));
     }
 
     #[test]
@@ -549,7 +529,9 @@ mod tests {
         let text = "Found port 443 open on host";
         let entities = engine.extract_entities(text);
 
-        assert!(entities.iter().any(|e| e.entity_type == "port" && e.value == "443"));
+        assert!(entities
+            .iter()
+            .any(|e| e.entity_type == "port" && e.value == "443"));
     }
 
     #[test]
@@ -558,7 +540,9 @@ mod tests {
         let text = "Vulnerability CVE-2024-12345 found";
         let entities = engine.extract_entities(text);
 
-        assert!(entities.iter().any(|e| e.entity_type == "cve" && e.value == "CVE-2024-12345"));
+        assert!(entities
+            .iter()
+            .any(|e| e.entity_type == "cve" && e.value == "CVE-2024-12345"));
     }
 
     #[test]

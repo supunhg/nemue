@@ -1,20 +1,26 @@
 // Web Crawler Implementation
 // Recursive web spider for discovering pages, links, and resources
 
-use anyhow::{Result, Context};
-use std::collections::{HashSet, VecDeque, HashMap};
+use anyhow::{Context, Result};
+use reqwest::{header, Client};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex;
-use reqwest::{Client, header};
 
-use super::{CrawlerConfig, WebResource, FormInfo, FormInput, HttpMethod};
+use super::{CrawlerConfig, FormInfo, FormInput, HttpMethod, WebResource};
 
 /// Web crawler state
 pub struct CrawlerState {
     visited: HashSet<String>,
     queue: VecDeque<(String, usize)>, // (URL, depth)
     results: Vec<WebResource>,
+}
+
+impl Default for CrawlerState {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl CrawlerState {
@@ -104,14 +110,14 @@ impl Crawler {
             if let Ok(resource) = self.fetch_page(&url, depth).await {
                 let mut state = self.state.lock().await;
                 state.mark_visited(url.clone());
-                
+
                 // Extract and queue links for recursive crawling
                 for link in &resource.links {
                     if self.should_follow_link(&url, link) {
                         state.add_url(link.clone(), depth + 1);
                     }
                 }
-                
+
                 state.add_result(resource);
             }
         }
@@ -123,8 +129,9 @@ impl Crawler {
     /// Fetch a single page
     async fn fetch_page(&self, url: &str, depth: usize) -> Result<WebResource> {
         let start = std::time::Instant::now();
-        
-        let response = self.client
+
+        let response = self
+            .client
             .get(url)
             .send()
             .await
@@ -182,16 +189,17 @@ impl Crawler {
     /// Determine if a link should be followed
     fn should_follow_link(&self, current_url: &str, link: &str) -> bool {
         // Don't follow external links unless configured
-        if !self.config.follow_external {
-            if !link.starts_with(current_url) && link.starts_with("http") {
-                return false;
-            }
+        if !self.config.follow_external
+            && !link.starts_with(current_url)
+            && link.starts_with("http")
+        {
+            return false;
         }
 
         // Skip common non-HTML resources
         let skip_extensions = [
-            ".jpg", ".jpeg", ".png", ".gif", ".svg", ".webp",
-            ".css", ".js", ".woff", ".woff2", ".ttf", ".pdf", ".zip"
+            ".jpg", ".jpeg", ".png", ".gif", ".svg", ".webp", ".css", ".js", ".woff", ".woff2",
+            ".ttf", ".pdf", ".zip",
         ];
 
         for ext in &skip_extensions {
@@ -206,7 +214,7 @@ impl Crawler {
     /// Extract links from HTML content
     pub fn extract_links(html: &str, base_url: &str) -> Vec<String> {
         let mut links = Vec::new();
-        
+
         // Matches href="..." and href='...'
         let href_pattern = regex::Regex::new(r#"href\s*=\s*["']([^"']+)["']"#).unwrap();
         let src_pattern = regex::Regex::new(r#"src\s*=\s*["']([^"']+)["']"#).unwrap();
@@ -215,7 +223,7 @@ impl Crawler {
             for cap in pattern.captures_iter(html) {
                 if let Some(link_match) = cap.get(1) {
                     let mut link = link_match.as_str().to_string();
-                    
+
                     // Convert relative URLs to absolute
                     if link.starts_with('/') {
                         if let Ok(base) = url::Url::parse(base_url) {
@@ -231,9 +239,12 @@ impl Crawler {
                             }
                         }
                     }
-                    
+
                     // Skip anchors, javascript, and mailto
-                    if !link.starts_with('#') && !link.starts_with("javascript:") && !link.starts_with("mailto:") {
+                    if !link.starts_with('#')
+                        && !link.starts_with("javascript:")
+                        && !link.starts_with("mailto:")
+                    {
                         links.push(link);
                     }
                 }
@@ -249,11 +260,11 @@ impl Crawler {
     pub fn extract_forms(html: &str) -> Vec<FormInfo> {
         let mut forms = Vec::new();
         let form_re = regex::Regex::new(r#"(?is)<form[^>]*>(.*?)</form>"#).unwrap();
-        
+
         for form_cap in form_re.captures_iter(html) {
             if let Some(form_content) = form_cap.get(0) {
                 let form_html = form_content.as_str();
-                
+
                 let action = regex::Regex::new(r#"action\s*=\s*["']([^"']*)["']"#)
                     .unwrap()
                     .captures(form_html)
@@ -270,10 +281,10 @@ impl Crawler {
 
                 let mut inputs = Vec::new();
                 let input_re = regex::Regex::new(r#"(?is)<input[^>]*>"#).unwrap();
-                
+
                 for input_match in input_re.find_iter(form_html) {
                     let input_html = input_match.as_str();
-                    
+
                     let name = regex::Regex::new(r#"name\s*=\s*["']([^"']*)["']"#)
                         .unwrap()
                         .captures(input_html)
@@ -336,7 +347,7 @@ mod tests {
         let mut state = CrawlerState::new();
         state.add_url("http://example.com".to_string(), 0);
         assert!(state.has_pending());
-        
+
         let (url, depth) = state.pop_url().unwrap();
         assert_eq!(url, "http://example.com");
         assert_eq!(depth, 0);
@@ -369,7 +380,7 @@ mod tests {
                 <a href="javascript:void(0)">JS</a>
             </html>
         "##;
-        
+
         let links = Crawler::extract_links(html, "https://example.com");
         assert!(links.contains(&"https://example.com/page1".to_string()));
         assert!(links.contains(&"https://example.com/page2".to_string()));
@@ -389,16 +400,22 @@ mod tests {
                 <input name="q" type="text">
             </form>
         "##;
-        
+
         let forms = Crawler::extract_forms(html);
         assert_eq!(forms.len(), 2);
-        
+
         let login_form = &forms[0];
         assert_eq!(login_form.action, "/login");
         assert_eq!(login_form.method, "POST");
         assert_eq!(login_form.inputs.len(), 2); // Only named inputs (username, password)
-        assert!(login_form.inputs.iter().any(|i| i.name == "username" && i.required));
-        assert!(login_form.inputs.iter().any(|i| i.name == "password" && i.required));
+        assert!(login_form
+            .inputs
+            .iter()
+            .any(|i| i.name == "username" && i.required));
+        assert!(login_form
+            .inputs
+            .iter()
+            .any(|i| i.name == "password" && i.required));
     }
 
     #[test]
@@ -409,7 +426,7 @@ mod tests {
                 <body>Content</body>
             </html>
         "##;
-        
+
         let title = Crawler::extract_title(html);
         assert_eq!(title, Some("Test Page Title".to_string()));
     }
@@ -421,9 +438,11 @@ mod tests {
             <a href="/contact">Contact</a>
             <a href="https://external.com">External</a>
         "##;
-        
+
         let links = Crawler::extract_links(html, "https://example.com/blog/");
-        assert!(links.iter().any(|l| l.contains("example.com/blog/about.html")));
+        assert!(links
+            .iter()
+            .any(|l| l.contains("example.com/blog/about.html")));
         assert!(links.contains(&"https://example.com/contact".to_string()));
         assert!(links.contains(&"https://external.com".to_string()));
     }
@@ -435,7 +454,7 @@ mod tests {
                 <input name="q" type="search">
             </form>
         "##;
-        
+
         let forms = Crawler::extract_forms(html);
         assert_eq!(forms.len(), 1);
         assert_eq!(forms[0].method, "GET"); // Default method

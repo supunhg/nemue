@@ -142,12 +142,18 @@ impl ModbusSecurityFinding {
 
     pub fn description(&self) -> &str {
         match self {
-            ModbusSecurityFinding::NoAuthentication => "Modbus protocol has no authentication mechanism",
-            ModbusSecurityFinding::WriteAccessAvailable => "Write operations are available without authentication",
+            ModbusSecurityFinding::NoAuthentication => {
+                "Modbus protocol has no authentication mechanism"
+            }
+            ModbusSecurityFinding::WriteAccessAvailable => {
+                "Write operations are available without authentication"
+            }
             ModbusSecurityFinding::DefaultCredentials => "Device uses default unit ID (0 or 1)",
             ModbusSecurityFinding::UnencryptedProtocol => "Modbus TCP traffic is unencrypted",
             ModbusSecurityFinding::ExcessiveAccess => "Device responds to arbitrary function codes",
-            ModbusSecurityFinding::DeviceIdentExposed => "Device identification information is exposed",
+            ModbusSecurityFinding::DeviceIdentExposed => {
+                "Device identification information is exposed"
+            }
         }
     }
 }
@@ -204,7 +210,9 @@ impl ModbusScanner {
 
         let device_info = self.identify_device(target, port).await.ok();
         let register_data = self.read_holding_registers(target, port, 0, 10).await.ok();
-        let security_findings = self.assess_security(target, port, device_info.as_ref()).await;
+        let security_findings = self
+            .assess_security(target, port, device_info.as_ref())
+            .await;
 
         Ok(ModbusScanResult {
             target,
@@ -319,7 +327,8 @@ impl ModbusScanner {
                     break;
                 }
 
-                let value = String::from_utf8_lossy(&response[offset..offset + object_len]).to_string();
+                let value =
+                    String::from_utf8_lossy(&response[offset..offset + object_len]).to_string();
                 match object_id {
                     0x00 => info.vendor_name = Some(value),
                     0x01 => info.product_code = Some(value),
@@ -375,9 +384,7 @@ impl ModbusScanner {
             ModbusFunction::ReadExceptionStatus => {
                 self.build_mbp_request(self.unit_id, function as u8, &[])
             }
-            _ => {
-                self.build_mbp_request(self.unit_id, function as u8, &[0x00, 0x00, 0x00, 0x01])
-            }
+            _ => self.build_mbp_request(self.unit_id, function as u8, &[0x00, 0x00, 0x00, 0x01]),
         };
 
         if writer.write_all(&request).await.is_err() {
@@ -416,9 +423,16 @@ impl ModbusScanner {
         data.extend_from_slice(&start_address.to_be_bytes());
         data.extend_from_slice(&quantity.to_be_bytes());
 
-        let request = self.build_mbp_request(self.unit_id, ModbusFunction::ReadHoldingRegisters as u8, &data);
+        let request = self.build_mbp_request(
+            self.unit_id,
+            ModbusFunction::ReadHoldingRegisters as u8,
+            &data,
+        );
 
-        writer.write_all(&request).await.map_err(|e| anyhow!("Write failed: {}", e))?;
+        writer
+            .write_all(&request)
+            .await
+            .map_err(|e| anyhow!("Write failed: {}", e))?;
 
         let mut response = [0u8; 512];
         let n = timeout(self.timeout_duration, reader.read(&mut response))
@@ -527,9 +541,18 @@ mod tests {
 
     #[test]
     fn test_modbus_function_from_u8() {
-        assert_eq!(ModbusFunction::from_u8(0x01), Some(ModbusFunction::ReadCoils));
-        assert_eq!(ModbusFunction::from_u8(0x03), Some(ModbusFunction::ReadHoldingRegisters));
-        assert_eq!(ModbusFunction::from_u8(0x11), Some(ModbusFunction::ReportServerId));
+        assert_eq!(
+            ModbusFunction::from_u8(0x01),
+            Some(ModbusFunction::ReadCoils)
+        );
+        assert_eq!(
+            ModbusFunction::from_u8(0x03),
+            Some(ModbusFunction::ReadHoldingRegisters)
+        );
+        assert_eq!(
+            ModbusFunction::from_u8(0x11),
+            Some(ModbusFunction::ReportServerId)
+        );
         assert_eq!(ModbusFunction::from_u8(0xFF), None);
     }
 
@@ -558,7 +581,10 @@ mod tests {
     #[test]
     fn test_modbus_exception_severity() {
         assert_eq!(ModbusSecurityFinding::NoAuthentication.severity(), "HIGH");
-        assert_eq!(ModbusSecurityFinding::WriteAccessAvailable.severity(), "CRITICAL");
+        assert_eq!(
+            ModbusSecurityFinding::WriteAccessAvailable.severity(),
+            "CRITICAL"
+        );
     }
 
     #[test]
@@ -602,7 +628,9 @@ mod tests {
     #[tokio::test]
     async fn test_detect_modbus_on_closed_port() {
         let scanner = ModbusScanner::new(200);
-        let result = scanner.detect_modbus(IpAddr::V4([127, 0, 0, 1].into()), 1).await;
+        let result = scanner
+            .detect_modbus(IpAddr::V4([127, 0, 0, 1].into()), 1)
+            .await;
         assert!(result.is_ok());
         assert!(!result.unwrap());
     }

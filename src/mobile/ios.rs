@@ -123,10 +123,12 @@ impl IosScanner {
         if !results.tools_available {
             results.security_findings.push(IosSecurityFinding {
                 title: "iOS tools not available".to_string(),
-                description: "libimobiledevice tools (ideviceinfo, idevice_id) are not installed.".to_string(),
+                description: "libimobiledevice tools (ideviceinfo, idevice_id) are not installed."
+                    .to_string(),
                 severity: MobileSeverity::Info,
                 category: "tooling".to_string(),
-                recommendation: "Install libimobiledevice to enable iOS device scanning.".to_string(),
+                recommendation: "Install libimobiledevice to enable iOS device scanning."
+                    .to_string(),
             });
             return results;
         }
@@ -147,7 +149,9 @@ impl IosScanner {
         results.services = self.discover_services();
         results.configuration = self.analyze_configuration();
         results.vulnerabilities = self.detect_vulnerabilities(&results);
-        results.security_findings.extend(self.assess_security(&results));
+        results
+            .security_findings
+            .extend(self.assess_security(&results));
 
         results
     }
@@ -260,7 +264,10 @@ impl IosScanner {
                         id: "IOS-OLD-VERSION".to_string(),
                         title: "Outdated iOS version".to_string(),
                         severity: MobileSeverity::High,
-                        description: format!("Device running iOS {}. Older versions lack security patches.", device.ios_version),
+                        description: format!(
+                            "Device running iOS {}. Older versions lack security patches.",
+                            device.ios_version
+                        ),
                         affected_component: "OS".to_string(),
                         remediation: "Update to the latest iOS version.".to_string(),
                     });
@@ -272,9 +279,11 @@ impl IosScanner {
                     id: "IOS-NO-PASSCODE".to_string(),
                     title: "No passcode set".to_string(),
                     severity: MobileSeverity::Critical,
-                    description: "Device has no passcode, allowing unrestricted physical access.".to_string(),
+                    description: "Device has no passcode, allowing unrestricted physical access."
+                        .to_string(),
                     affected_component: "Security".to_string(),
-                    remediation: "Enable a passcode (minimum 6 digits, preferably alphanumeric).".to_string(),
+                    remediation: "Enable a passcode (minimum 6 digits, preferably alphanumeric)."
+                        .to_string(),
                 });
             }
 
@@ -283,9 +292,12 @@ impl IosScanner {
                     id: "IOS-NOT-SUPERVISED".to_string(),
                     title: "Device not supervised".to_string(),
                     severity: MobileSeverity::Low,
-                    description: "Unsupervised devices have fewer management capabilities.".to_string(),
+                    description: "Unsupervised devices have fewer management capabilities."
+                        .to_string(),
                     affected_component: "MDM".to_string(),
-                    remediation: "Enroll device in MDM with supervision for enhanced security controls.".to_string(),
+                    remediation:
+                        "Enroll device in MDM with supervision for enhanced security controls."
+                            .to_string(),
                 });
             }
         }
@@ -307,9 +319,12 @@ impl IosScanner {
                     id: "IOS-USB-RESTRICTED".to_string(),
                     title: "USB Restricted Mode disabled".to_string(),
                     severity: MobileSeverity::High,
-                    description: "Without USB Restricted Mode, USB accessories can connect even when locked.".to_string(),
+                    description:
+                        "Without USB Restricted Mode, USB accessories can connect even when locked."
+                            .to_string(),
                     affected_component: "USB".to_string(),
-                    remediation: "Enable USB Restricted Mode in Settings > Face ID & Passcode.".to_string(),
+                    remediation: "Enable USB Restricted Mode in Settings > Face ID & Passcode."
+                        .to_string(),
                 });
             }
         }
@@ -334,7 +349,9 @@ impl IosScanner {
             if !config.find_my_enabled {
                 findings.push(IosSecurityFinding {
                     title: "Find My not enabled".to_string(),
-                    description: "Find My iPhone is not enabled, preventing remote wipe and location.".to_string(),
+                    description:
+                        "Find My iPhone is not enabled, preventing remote wipe and location."
+                            .to_string(),
                     severity: MobileSeverity::Medium,
                     category: "theft".to_string(),
                     recommendation: "Enable Find My in Settings > Apple ID > Find My.".to_string(),
@@ -347,7 +364,8 @@ impl IosScanner {
                     description: "Device is not managed by an MDM solution.".to_string(),
                     severity: MobileSeverity::Low,
                     category: "management".to_string(),
-                    recommendation: "Consider enrolling in MDM for enterprise security policies.".to_string(),
+                    recommendation: "Consider enrolling in MDM for enterprise security policies."
+                        .to_string(),
                 });
             }
         }
@@ -405,7 +423,9 @@ mod tests {
         });
 
         let vulns = scanner.detect_vulnerabilities(&results);
-        assert!(vulns.iter().any(|v| v.id == "IOS-OLD-VERSION" && v.severity == MobileSeverity::High));
+        assert!(vulns
+            .iter()
+            .any(|v| v.id == "IOS-OLD-VERSION" && v.severity == MobileSeverity::High));
     }
 
     #[test]
@@ -420,7 +440,9 @@ mod tests {
         });
 
         let vulns = scanner.detect_vulnerabilities(&results);
-        assert!(vulns.iter().any(|v| v.id == "IOS-NO-PASSCODE" && v.severity == MobileSeverity::Critical));
+        assert!(vulns
+            .iter()
+            .any(|v| v.id == "IOS-NO-PASSCODE" && v.severity == MobileSeverity::Critical));
     }
 
     #[test]
@@ -458,7 +480,9 @@ mod tests {
         });
 
         let vulns = scanner.detect_vulnerabilities(&results);
-        assert!(vulns.iter().any(|v| v.id == "IOS-USB-RESTRICTED" && v.severity == MobileSeverity::High));
+        assert!(vulns
+            .iter()
+            .any(|v| v.id == "IOS-USB-RESTRICTED" && v.severity == MobileSeverity::High));
     }
 
     #[test]
@@ -471,7 +495,9 @@ mod tests {
         });
 
         let findings = scanner.assess_security(&results);
-        assert!(findings.iter().any(|f| f.severity == MobileSeverity::Critical && f.title.contains("Passcode")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == MobileSeverity::Critical && f.title.contains("Passcode")));
     }
 
     #[test]
@@ -484,7 +510,9 @@ mod tests {
         });
 
         let findings = scanner.assess_security(&results);
-        assert!(findings.iter().any(|f| f.severity == MobileSeverity::Medium && f.title.contains("Find My")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == MobileSeverity::Medium && f.title.contains("Find My")));
     }
 
     #[test]

@@ -1,13 +1,13 @@
 use anyhow::{anyhow, Result};
+use pnet::datalink::{self, Channel, NetworkInterface};
+use pnet::packet::ip::IpNextHeaderProtocols;
+use pnet::packet::ipv6::{Ipv6Packet, MutableIpv6Packet};
+use pnet::packet::tcp::{MutableTcpPacket, TcpFlags, TcpPacket};
+use rand::Rng;
 use std::net::{IpAddr, Ipv6Addr};
 use std::time::Duration;
 use tokio::net::TcpStream;
 use tokio::time::timeout;
-use pnet::datalink::{self, Channel, NetworkInterface};
-use pnet::packet::tcp::{MutableTcpPacket, TcpFlags, TcpPacket};
-use pnet::packet::ip::IpNextHeaderProtocols;
-use pnet::packet::ipv6::{MutableIpv6Packet, Ipv6Packet};
-use rand::Rng;
 
 use crate::scanner::{PortState, Protocol, ScanResult};
 
@@ -84,7 +84,7 @@ impl Ipv6Scanner {
     /// TCP connect scan for IPv6
     pub async fn connect_scan(&self, target: Ipv6Addr, port: u16) -> Result<ScanResult> {
         let addr = std::net::SocketAddr::new(IpAddr::V6(target), port);
-        
+
         let state = match timeout(self.timeout_duration, TcpStream::connect(addr)).await {
             Ok(Ok(_)) => PortState::Open,
             Ok(Err(_)) => PortState::Closed,
@@ -108,7 +108,7 @@ impl Ipv6Scanner {
     async fn raw_syn_scan(&self, target: Ipv6Addr, port: u16) -> Result<ScanResult> {
         let interface = Self::find_interface()?;
         let source_ip = Self::get_source_ipv6(&interface, target)?;
-        
+
         let (mut tx, mut rx) = match datalink::channel(&interface, Default::default()) {
             Ok(Channel::Ethernet(tx, rx)) => (tx, rx),
             Ok(_) => return Err(anyhow!("Unsupported channel type")),
@@ -117,9 +117,9 @@ impl Ipv6Scanner {
 
         let src_port = rand::thread_rng().gen_range(1024..65535);
         let sequence = rand::thread_rng().gen::<u32>();
-        
+
         let packet_data = Self::build_syn_packet(source_ip, target, src_port, port, sequence)?;
-        
+
         tx.send_to(&packet_data, None)
             .ok_or_else(|| anyhow!("Failed to send packet"))?
             .map_err(|e| anyhow!("Send error: {}", e))?;
@@ -128,35 +128,43 @@ impl Ipv6Scanner {
             loop {
                 match rx.next() {
                     Ok(packet) => {
-                        if packet.len() < 14 { continue; }
+                        if packet.len() < 14 {
+                            continue;
+                        }
                         let ip_packet = &packet[14..];
-                        
+
                         if let Some(ipv6) = Ipv6Packet::new(ip_packet) {
-                            if ipv6.get_source() != target { continue; }
-                            if ipv6.get_next_header() != IpNextHeaderProtocols::Tcp { continue; }
-                            
+                            if ipv6.get_source() != target {
+                                continue;
+                            }
+                            if ipv6.get_next_header() != IpNextHeaderProtocols::Tcp {
+                                continue;
+                            }
+
                             // IPv6 header is always 40 bytes
-                            if ip_packet.len() < 40 { continue; }
-                            
+                            if ip_packet.len() < 40 {
+                                continue;
+                            }
+
                             if let Some(tcp) = TcpPacket::new(&ip_packet[40..]) {
                                 if tcp.get_source() != port || tcp.get_destination() != src_port {
                                     continue;
                                 }
-                                
+
                                 let flags = tcp.get_flags();
-                                
+
                                 if flags & TcpFlags::SYN != 0 && flags & TcpFlags::ACK != 0 {
                                     let rst_packet = Self::build_rst_packet(
                                         source_ip,
                                         target,
                                         src_port,
                                         port,
-                                        tcp.get_acknowledgement()
+                                        tcp.get_acknowledgement(),
                                     )?;
                                     let _ = tx.send_to(&rst_packet, None);
                                     return Ok(PortState::Open);
                                 }
-                                
+
                                 if flags & TcpFlags::RST != 0 {
                                     return Ok(PortState::Closed);
                                 }
@@ -167,7 +175,9 @@ impl Ipv6Scanner {
                 }
             }
             Ok(PortState::Filtered)
-        }).await {
+        })
+        .await
+        {
             Ok(Ok(state)) => state,
             Ok(Err(e)) => return Err(e),
             Err(_) => PortState::Filtered,
@@ -190,7 +200,7 @@ impl Ipv6Scanner {
     async fn raw_ack_scan(&self, target: Ipv6Addr, port: u16) -> Result<ScanResult> {
         let interface = Self::find_interface()?;
         let source_ip = Self::get_source_ipv6(&interface, target)?;
-        
+
         let (mut tx, mut rx) = match datalink::channel(&interface, Default::default()) {
             Ok(Channel::Ethernet(tx, rx)) => (tx, rx),
             Ok(_) => return Err(anyhow!("Unsupported channel type")),
@@ -199,9 +209,9 @@ impl Ipv6Scanner {
 
         let src_port = rand::thread_rng().gen_range(1024..65535);
         let sequence = rand::thread_rng().gen::<u32>();
-        
+
         let packet_data = Self::build_ack_packet(source_ip, target, src_port, port, sequence)?;
-        
+
         tx.send_to(&packet_data, None)
             .ok_or_else(|| anyhow!("Failed to send packet"))?
             .map_err(|e| anyhow!("Send error: {}", e))?;
@@ -210,20 +220,28 @@ impl Ipv6Scanner {
             loop {
                 match rx.next() {
                     Ok(packet) => {
-                        if packet.len() < 14 { continue; }
+                        if packet.len() < 14 {
+                            continue;
+                        }
                         let ip_packet = &packet[14..];
-                        
+
                         if let Some(ipv6) = Ipv6Packet::new(ip_packet) {
-                            if ipv6.get_source() != target { continue; }
-                            if ipv6.get_next_header() != IpNextHeaderProtocols::Tcp { continue; }
-                            
-                            if ip_packet.len() < 40 { continue; }
-                            
+                            if ipv6.get_source() != target {
+                                continue;
+                            }
+                            if ipv6.get_next_header() != IpNextHeaderProtocols::Tcp {
+                                continue;
+                            }
+
+                            if ip_packet.len() < 40 {
+                                continue;
+                            }
+
                             if let Some(tcp) = TcpPacket::new(&ip_packet[40..]) {
                                 if tcp.get_source() != port || tcp.get_destination() != src_port {
                                     continue;
                                 }
-                                
+
                                 // RST response = port unfiltered
                                 if tcp.get_flags() & TcpFlags::RST != 0 {
                                     return Ok(PortState::Unfiltered);
@@ -236,7 +254,9 @@ impl Ipv6Scanner {
             }
             // No response = filtered
             Ok(PortState::Filtered)
-        }).await {
+        })
+        .await
+        {
             Ok(Ok(state)) => state,
             Ok(Err(e)) => return Err(e),
             Err(_) => PortState::Filtered,
@@ -259,7 +279,7 @@ impl Ipv6Scanner {
     async fn raw_window_scan(&self, target: Ipv6Addr, port: u16) -> Result<ScanResult> {
         let interface = Self::find_interface()?;
         let source_ip = Self::get_source_ipv6(&interface, target)?;
-        
+
         let (mut tx, mut rx) = match datalink::channel(&interface, Default::default()) {
             Ok(Channel::Ethernet(tx, rx)) => (tx, rx),
             Ok(_) => return Err(anyhow!("Unsupported channel type")),
@@ -268,9 +288,9 @@ impl Ipv6Scanner {
 
         let src_port = rand::thread_rng().gen_range(1024..65535);
         let sequence = rand::thread_rng().gen::<u32>();
-        
+
         let packet_data = Self::build_ack_packet(source_ip, target, src_port, port, sequence)?;
-        
+
         tx.send_to(&packet_data, None)
             .ok_or_else(|| anyhow!("Failed to send packet"))?
             .map_err(|e| anyhow!("Send error: {}", e))?;
@@ -279,20 +299,28 @@ impl Ipv6Scanner {
             loop {
                 match rx.next() {
                     Ok(packet) => {
-                        if packet.len() < 14 { continue; }
+                        if packet.len() < 14 {
+                            continue;
+                        }
                         let ip_packet = &packet[14..];
-                        
+
                         if let Some(ipv6) = Ipv6Packet::new(ip_packet) {
-                            if ipv6.get_source() != target { continue; }
-                            if ipv6.get_next_header() != IpNextHeaderProtocols::Tcp { continue; }
-                            
-                            if ip_packet.len() < 40 { continue; }
-                            
+                            if ipv6.get_source() != target {
+                                continue;
+                            }
+                            if ipv6.get_next_header() != IpNextHeaderProtocols::Tcp {
+                                continue;
+                            }
+
+                            if ip_packet.len() < 40 {
+                                continue;
+                            }
+
                             if let Some(tcp) = TcpPacket::new(&ip_packet[40..]) {
                                 if tcp.get_source() != port || tcp.get_destination() != src_port {
                                     continue;
                                 }
-                                
+
                                 if tcp.get_flags() & TcpFlags::RST != 0 {
                                     // Window size > 0 = open, window size = 0 = closed
                                     return Ok(if tcp.get_window() > 0 {
@@ -308,7 +336,9 @@ impl Ipv6Scanner {
                 }
             }
             Ok(PortState::Filtered)
-        }).await {
+        })
+        .await
+        {
             Ok(Ok(state)) => state,
             Ok(Err(e)) => return Err(e),
             Err(_) => PortState::Filtered,
@@ -339,14 +369,15 @@ impl Ipv6Scanner {
 
     /// Raw Xmas scan for IPv6 (FIN, PSH, URG)
     async fn raw_xmas_scan(&self, target: Ipv6Addr, port: u16) -> Result<ScanResult> {
-        self.raw_stealth_scan(target, port, TcpFlags::FIN | TcpFlags::PSH | TcpFlags::URG).await
+        self.raw_stealth_scan(target, port, TcpFlags::FIN | TcpFlags::PSH | TcpFlags::URG)
+            .await
     }
 
     /// Generic stealth scan implementation for NULL, FIN, Xmas
     async fn raw_stealth_scan(&self, target: Ipv6Addr, port: u16, flags: u8) -> Result<ScanResult> {
         let interface = Self::find_interface()?;
         let source_ip = Self::get_source_ipv6(&interface, target)?;
-        
+
         let (mut tx, mut rx) = match datalink::channel(&interface, Default::default()) {
             Ok(Channel::Ethernet(tx, rx)) => (tx, rx),
             Ok(_) => return Err(anyhow!("Unsupported channel type")),
@@ -355,11 +386,11 @@ impl Ipv6Scanner {
 
         let src_port = rand::thread_rng().gen_range(1024..65535);
         let sequence = rand::thread_rng().gen::<u32>();
-        
+
         let packet_data = Self::build_tcp_packet_with_flags(
-            source_ip, target, src_port, port, sequence, 0, flags
+            source_ip, target, src_port, port, sequence, 0, flags,
         )?;
-        
+
         tx.send_to(&packet_data, None)
             .ok_or_else(|| anyhow!("Failed to send packet"))?
             .map_err(|e| anyhow!("Send error: {}", e))?;
@@ -368,20 +399,28 @@ impl Ipv6Scanner {
             loop {
                 match rx.next() {
                     Ok(packet) => {
-                        if packet.len() < 14 { continue; }
+                        if packet.len() < 14 {
+                            continue;
+                        }
                         let ip_packet = &packet[14..];
-                        
+
                         if let Some(ipv6) = Ipv6Packet::new(ip_packet) {
-                            if ipv6.get_source() != target { continue; }
-                            if ipv6.get_next_header() != IpNextHeaderProtocols::Tcp { continue; }
-                            
-                            if ip_packet.len() < 40 { continue; }
-                            
+                            if ipv6.get_source() != target {
+                                continue;
+                            }
+                            if ipv6.get_next_header() != IpNextHeaderProtocols::Tcp {
+                                continue;
+                            }
+
+                            if ip_packet.len() < 40 {
+                                continue;
+                            }
+
                             if let Some(tcp) = TcpPacket::new(&ip_packet[40..]) {
                                 if tcp.get_source() != port || tcp.get_destination() != src_port {
                                     continue;
                                 }
-                                
+
                                 // RST response = port closed
                                 if tcp.get_flags() & TcpFlags::RST != 0 {
                                     return Ok(PortState::Closed);
@@ -394,7 +433,9 @@ impl Ipv6Scanner {
             }
             // No response = open|filtered (can't distinguish)
             Ok(PortState::OpenFiltered)
-        }).await {
+        })
+        .await
+        {
             Ok(Ok(state)) => state,
             Ok(Err(e)) => return Err(e),
             Err(_) => PortState::OpenFiltered,
@@ -441,7 +482,13 @@ impl Ipv6Scanner {
         sequence: u32,
     ) -> Result<Vec<u8>> {
         Self::build_tcp_packet_with_flags(
-            source_ip, dest_ip, source_port, dest_port, sequence, 0, TcpFlags::SYN
+            source_ip,
+            dest_ip,
+            source_port,
+            dest_port,
+            sequence,
+            0,
+            TcpFlags::SYN,
         )
     }
 
@@ -453,7 +500,13 @@ impl Ipv6Scanner {
         sequence: u32,
     ) -> Result<Vec<u8>> {
         Self::build_tcp_packet_with_flags(
-            source_ip, dest_ip, source_port, dest_port, sequence, sequence, TcpFlags::ACK
+            source_ip,
+            dest_ip,
+            source_port,
+            dest_port,
+            sequence,
+            sequence,
+            TcpFlags::ACK,
         )
     }
 
@@ -469,14 +522,14 @@ impl Ipv6Scanner {
         const IPV6_HEADER_LEN: usize = 40;
         const TCP_HEADER_LEN: usize = 20;
         const TOTAL_LEN: usize = IPV6_HEADER_LEN + TCP_HEADER_LEN;
-        
+
         let mut buffer = vec![0u8; TOTAL_LEN];
-        
+
         // Build IPv6 header
         {
             let mut ipv6_packet = MutableIpv6Packet::new(&mut buffer[..IPV6_HEADER_LEN])
                 .ok_or_else(|| anyhow!("Failed to create IPv6 packet"))?;
-            
+
             ipv6_packet.set_version(6);
             ipv6_packet.set_traffic_class(0);
             ipv6_packet.set_flow_label(0);
@@ -486,12 +539,12 @@ impl Ipv6Scanner {
             ipv6_packet.set_source(source_ip);
             ipv6_packet.set_destination(dest_ip);
         }
-        
+
         // Build TCP header
         {
             let mut tcp_packet = MutableTcpPacket::new(&mut buffer[IPV6_HEADER_LEN..])
                 .ok_or_else(|| anyhow!("Failed to create TCP packet"))?;
-            
+
             tcp_packet.set_source(source_port);
             tcp_packet.set_destination(dest_port);
             tcp_packet.set_sequence(sequence);
@@ -500,15 +553,12 @@ impl Ipv6Scanner {
             tcp_packet.set_flags(flags);
             tcp_packet.set_window(64240);
             tcp_packet.set_urgent_ptr(0);
-            
-            let checksum = pnet::packet::tcp::ipv6_checksum(
-                &tcp_packet.to_immutable(),
-                &source_ip,
-                &dest_ip
-            );
+
+            let checksum =
+                pnet::packet::tcp::ipv6_checksum(&tcp_packet.to_immutable(), &source_ip, &dest_ip);
             tcp_packet.set_checksum(checksum);
         }
-        
+
         Ok(buffer)
     }
 
@@ -520,7 +570,13 @@ impl Ipv6Scanner {
         ack_num: u32,
     ) -> Result<Vec<u8>> {
         Self::build_tcp_packet_with_flags(
-            source_ip, dest_ip, source_port, dest_port, ack_num, 0, TcpFlags::RST
+            source_ip,
+            dest_ip,
+            source_port,
+            dest_port,
+            ack_num,
+            0,
+            TcpFlags::RST,
         )
     }
 }
@@ -549,7 +605,10 @@ mod tests {
         let result = scanner.connect_scan("::1".parse().unwrap(), 9999).await;
         assert!(result.is_ok());
         let scan_result = result.unwrap();
-        assert!(matches!(scan_result.state, PortState::Closed | PortState::Filtered));
+        assert!(matches!(
+            scan_result.state,
+            PortState::Closed | PortState::Filtered
+        ));
     }
 
     #[test]
@@ -586,9 +645,8 @@ mod tests {
     fn test_build_tcp_packet_fin_flags() {
         let src = "2001:db8::1".parse().unwrap();
         let dst = "2001:db8::2".parse().unwrap();
-        let result = Ipv6Scanner::build_tcp_packet_with_flags(
-            src, dst, 12345, 80, 1000, 0, TcpFlags::FIN
-        );
+        let result =
+            Ipv6Scanner::build_tcp_packet_with_flags(src, dst, 12345, 80, 1000, 0, TcpFlags::FIN);
         assert!(result.is_ok());
         let packet = result.unwrap();
         assert_eq!(packet.len(), 60);
@@ -599,7 +657,13 @@ mod tests {
         let src = "2001:db8::1".parse().unwrap();
         let dst = "2001:db8::2".parse().unwrap();
         let result = Ipv6Scanner::build_tcp_packet_with_flags(
-            src, dst, 12345, 80, 1000, 0, TcpFlags::FIN | TcpFlags::PSH | TcpFlags::URG
+            src,
+            dst,
+            12345,
+            80,
+            1000,
+            0,
+            TcpFlags::FIN | TcpFlags::PSH | TcpFlags::URG,
         );
         assert!(result.is_ok());
         let packet = result.unwrap();

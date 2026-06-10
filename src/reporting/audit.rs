@@ -1,6 +1,6 @@
 // Audit trail and evidence collection
-use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -113,7 +113,13 @@ impl AuditTrail {
         self.entries.push(entry);
     }
 
-    pub fn log_scan_event(&mut self, event_type: EventType, description: String, actor: String, target: Option<String>) {
+    pub fn log_scan_event(
+        &mut self,
+        event_type: EventType,
+        description: String,
+        actor: String,
+        target: Option<String>,
+    ) {
         self.add_entry(AuditEntry {
             timestamp: Utc::now(),
             event_type,
@@ -128,7 +134,15 @@ impl AuditTrail {
         });
     }
 
-    pub fn log_api_access(&mut self, method: &str, path: &str, status: u16, actor: String, source_ip: Option<String>, request_id: Option<String>) {
+    pub fn log_api_access(
+        &mut self,
+        method: &str,
+        path: &str,
+        status: u16,
+        actor: String,
+        source_ip: Option<String>,
+        request_id: Option<String>,
+    ) {
         let severity = if status >= 500 {
             AuditSeverity::Error
         } else if status >= 400 {
@@ -157,11 +171,25 @@ impl AuditTrail {
         });
     }
 
-    pub fn log_auth_event(&mut self, success: bool, actor: String, source_ip: Option<String>, method: &str) {
+    pub fn log_auth_event(
+        &mut self,
+        success: bool,
+        actor: String,
+        source_ip: Option<String>,
+        method: &str,
+    ) {
         self.add_entry(AuditEntry {
             timestamp: Utc::now(),
-            event_type: if success { EventType::AuthenticationSuccess } else { EventType::AuthenticationFailure },
-            description: format!("Authentication {} via {}", if success { "succeeded" } else { "failed" }, method),
+            event_type: if success {
+                EventType::AuthenticationSuccess
+            } else {
+                EventType::AuthenticationFailure
+            },
+            description: format!(
+                "Authentication {} via {}",
+                if success { "succeeded" } else { "failed" },
+                method
+            ),
             actor,
             target: None,
             evidence: Vec::new(),
@@ -171,13 +199,24 @@ impl AuditTrail {
                 m.insert("success".to_string(), success.to_string());
                 m
             },
-            severity: if success { AuditSeverity::Info } else { AuditSeverity::Warning },
+            severity: if success {
+                AuditSeverity::Info
+            } else {
+                AuditSeverity::Warning
+            },
             source_ip,
             request_id: None,
         });
     }
 
-    pub fn log_config_change(&mut self, description: String, actor: String, key: &str, old_value: &str, new_value: &str) {
+    pub fn log_config_change(
+        &mut self,
+        description: String,
+        actor: String,
+        key: &str,
+        old_value: &str,
+        new_value: &str,
+    ) {
         self.add_entry(AuditEntry {
             timestamp: Utc::now(),
             event_type: EventType::ConfigurationChange,
@@ -198,7 +237,12 @@ impl AuditTrail {
         });
     }
 
-    pub fn log_rate_limit_exceeded(&mut self, actor: String, source_ip: Option<String>, limit: u32) {
+    pub fn log_rate_limit_exceeded(
+        &mut self,
+        actor: String,
+        source_ip: Option<String>,
+        limit: u32,
+    ) {
         self.add_entry(AuditEntry {
             timestamp: Utc::now(),
             event_type: EventType::RateLimitExceeded,
@@ -273,10 +317,7 @@ impl AuditTrail {
     }
 
     pub fn entries_for_actor(&self, actor: &str) -> Vec<&AuditEntry> {
-        self.entries
-            .iter()
-            .filter(|e| e.actor == actor)
-            .collect()
+        self.entries.iter().filter(|e| e.actor == actor).collect()
     }
 
     pub fn to_json(&self) -> Result<String, serde_json::Error> {
@@ -335,7 +376,8 @@ impl AuditTrail {
 
         report.push_str("=== EVENT LOG ===\n");
         for (i, entry) in self.entries.iter().enumerate() {
-            report.push_str(&format!("\n[{}] {} - {:?} ({:?})\n",
+            report.push_str(&format!(
+                "\n[{}] {} - {:?} ({:?})\n",
                 i + 1,
                 entry.timestamp.format("%Y-%m-%d %H:%M:%S UTC"),
                 entry.event_type,
@@ -352,7 +394,8 @@ impl AuditTrail {
             if !entry.evidence.is_empty() {
                 report.push_str(&format!("  Evidence Items: {}\n", entry.evidence.len()));
                 for evidence in &entry.evidence {
-                    report.push_str(&format!("    - {} (Hash: {})\n",
+                    report.push_str(&format!(
+                        "    - {} (Hash: {})\n",
                         evidence.evidence_id,
                         &evidence.hash[..8]
                     ));
@@ -369,8 +412,12 @@ impl AuditTrail {
         let mut by_actor: HashMap<String, usize> = HashMap::new();
 
         for entry in &self.entries {
-            *by_type.entry(format!("{:?}", entry.event_type)).or_insert(0) += 1;
-            *by_severity.entry(format!("{:?}", entry.severity)).or_insert(0) += 1;
+            *by_type
+                .entry(format!("{:?}", entry.event_type))
+                .or_insert(0) += 1;
+            *by_severity
+                .entry(format!("{:?}", entry.severity))
+                .or_insert(0) += 1;
             *by_actor.entry(entry.actor.clone()).or_insert(0) += 1;
         }
 
@@ -608,8 +655,18 @@ mod tests {
             "Test".to_string(),
         );
 
-        trail.log_scan_event(EventType::ScanStarted, "Start".to_string(), "admin".to_string(), None);
-        trail.log_scan_event(EventType::ScanStarted, "Start".to_string(), "user2".to_string(), None);
+        trail.log_scan_event(
+            EventType::ScanStarted,
+            "Start".to_string(),
+            "admin".to_string(),
+            None,
+        );
+        trail.log_scan_event(
+            EventType::ScanStarted,
+            "Start".to_string(),
+            "user2".to_string(),
+            None,
+        );
 
         assert_eq!(trail.entries_for_actor("admin").len(), 1);
     }
@@ -622,7 +679,14 @@ mod tests {
             "Test".to_string(),
         );
 
-        trail.log_api_access("GET", "/api/v1/scans", 200, "user1".to_string(), Some("127.0.0.1".to_string()), Some("req-123".to_string()));
+        trail.log_api_access(
+            "GET",
+            "/api/v1/scans",
+            200,
+            "user1".to_string(),
+            Some("127.0.0.1".to_string()),
+            Some("req-123".to_string()),
+        );
 
         assert_eq!(trail.entries.len(), 1);
         assert_eq!(trail.entries[0].event_type, EventType::ApiAccess);
@@ -636,12 +700,28 @@ mod tests {
             "Test".to_string(),
         );
 
-        trail.log_auth_event(true, "user1".to_string(), Some("127.0.0.1".to_string()), "jwt");
-        trail.log_auth_event(false, "user2".to_string(), Some("10.0.0.1".to_string()), "api_key");
+        trail.log_auth_event(
+            true,
+            "user1".to_string(),
+            Some("127.0.0.1".to_string()),
+            "jwt",
+        );
+        trail.log_auth_event(
+            false,
+            "user2".to_string(),
+            Some("10.0.0.1".to_string()),
+            "api_key",
+        );
 
         assert_eq!(trail.entries.len(), 2);
-        assert_eq!(trail.entries[0].event_type, EventType::AuthenticationSuccess);
-        assert_eq!(trail.entries[1].event_type, EventType::AuthenticationFailure);
+        assert_eq!(
+            trail.entries[0].event_type,
+            EventType::AuthenticationSuccess
+        );
+        assert_eq!(
+            trail.entries[1].event_type,
+            EventType::AuthenticationFailure
+        );
     }
 
     #[test]
@@ -781,7 +861,12 @@ mod tests {
             "Test".to_string(),
         );
 
-        trail.log_scan_event(EventType::ScanStarted, "Start".to_string(), "admin".to_string(), None);
+        trail.log_scan_event(
+            EventType::ScanStarted,
+            "Start".to_string(),
+            "admin".to_string(),
+            None,
+        );
 
         let export = trail.export();
         assert_eq!(export.version, "1.0");
@@ -797,7 +882,12 @@ mod tests {
             "Test".to_string(),
         );
 
-        trail.log_scan_event(EventType::ScanStarted, "Start".to_string(), "admin".to_string(), None);
+        trail.log_scan_event(
+            EventType::ScanStarted,
+            "Start".to_string(),
+            "admin".to_string(),
+            None,
+        );
 
         let csv = trail.export_csv();
         assert!(csv.contains("timestamp,event_type"));
@@ -812,8 +902,18 @@ mod tests {
             "Test".to_string(),
         );
 
-        trail.log_scan_event(EventType::ScanStarted, "Start".to_string(), "admin".to_string(), None);
-        trail.log_scan_event(EventType::ScanCompleted, "Done".to_string(), "admin".to_string(), None);
+        trail.log_scan_event(
+            EventType::ScanStarted,
+            "Start".to_string(),
+            "admin".to_string(),
+            None,
+        );
+        trail.log_scan_event(
+            EventType::ScanCompleted,
+            "Done".to_string(),
+            "admin".to_string(),
+            None,
+        );
         trail.log_auth_event(false, "user2".to_string(), None, "api_key");
 
         let summary = trail.summary();

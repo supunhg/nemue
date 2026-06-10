@@ -170,7 +170,10 @@ impl SecurityHeadersConfig {
                 CorpPolicy::SameOrigin => "same-origin",
                 CorpPolicy::CrossOrigin => "cross-origin",
             };
-            headers.push(("Cross-Origin-Resource-Policy".to_string(), value.to_string()));
+            headers.push((
+                "Cross-Origin-Resource-Policy".to_string(),
+                value.to_string(),
+            ));
         }
 
         if let Some(coep) = &self.cross_origin_embedder_policy {
@@ -178,7 +181,10 @@ impl SecurityHeadersConfig {
                 CoepPolicy::UnsafeNone => "unsafe-none",
                 CoepPolicy::RequireCorp => "require-corp",
             };
-            headers.push(("Cross-Origin-Embedder-Policy".to_string(), value.to_string()));
+            headers.push((
+                "Cross-Origin-Embedder-Policy".to_string(),
+                value.to_string(),
+            ));
         }
 
         headers
@@ -303,11 +309,27 @@ pub fn validate_csp(csp: &str) -> Result<(), String> {
     }
 
     let valid_directives = [
-        "default-src", "script-src", "style-src", "img-src", "connect-src",
-        "font-src", "object-src", "media-src", "frame-src", "sandbox",
-        "report-uri", "child-src", "form-action", "frame-ancestors",
-        "plugin-types", "base-uri", "report-to", "worker-src",
-        "manifest-src", "prefetch-src", "navigate-to",
+        "default-src",
+        "script-src",
+        "style-src",
+        "img-src",
+        "connect-src",
+        "font-src",
+        "object-src",
+        "media-src",
+        "frame-src",
+        "sandbox",
+        "report-uri",
+        "child-src",
+        "form-action",
+        "frame-ancestors",
+        "plugin-types",
+        "base-uri",
+        "report-to",
+        "worker-src",
+        "manifest-src",
+        "prefetch-src",
+        "navigate-to",
     ];
 
     for directive in csp.split(';') {
@@ -336,7 +358,9 @@ mod tests {
 
         assert!(headers.iter().any(|(k, _)| k == "X-Content-Type-Options"));
         assert!(headers.iter().any(|(k, _)| k == "X-Frame-Options"));
-        assert!(headers.iter().any(|(k, _)| k == "Strict-Transport-Security"));
+        assert!(headers
+            .iter()
+            .any(|(k, _)| k == "Strict-Transport-Security"));
         assert!(headers.iter().any(|(k, _)| k == "Content-Security-Policy"));
         assert!(headers.iter().any(|(k, _)| k == "Referrer-Policy"));
         assert!(headers.iter().any(|(k, _)| k == "Permissions-Policy"));
@@ -347,7 +371,10 @@ mod tests {
         let config = SecurityHeadersConfig::default();
         let headers = config.to_header_pairs();
 
-        let hsts = headers.iter().find(|(k, _)| k == "Strict-Transport-Security").unwrap();
+        let hsts = headers
+            .iter()
+            .find(|(k, _)| k == "Strict-Transport-Security")
+            .unwrap();
         assert!(hsts.1.contains("max-age="));
         assert!(hsts.1.contains("includeSubDomains"));
         assert!(hsts.1.contains("preload"));
@@ -358,7 +385,10 @@ mod tests {
         let config = SecurityHeadersConfig::default();
         let headers = config.to_header_pairs();
 
-        let csp = headers.iter().find(|(k, _)| k == "Content-Security-Policy").unwrap();
+        let csp = headers
+            .iter()
+            .find(|(k, _)| k == "Content-Security-Policy")
+            .unwrap();
         assert!(csp.1.contains("default-src 'self'"));
         assert!(csp.1.contains("frame-ancestors 'none'"));
     }
@@ -368,7 +398,9 @@ mod tests {
         let config = SecurityHeadersConfig::development();
         let headers = config.to_header_pairs();
 
-        assert!(!headers.iter().any(|(k, _)| k == "Strict-Transport-Security"));
+        assert!(!headers
+            .iter()
+            .any(|(k, _)| k == "Strict-Transport-Security"));
         assert!(!headers.iter().any(|(k, _)| k == "Content-Security-Policy"));
     }
 
@@ -378,14 +410,19 @@ mod tests {
         let headers = config.to_header_pairs();
 
         assert!(headers.iter().any(|(k, _)| k == "X-Content-Type-Options"));
-        assert!(!headers.iter().any(|(k, _)| k == "Strict-Transport-Security"));
+        assert!(!headers
+            .iter()
+            .any(|(k, _)| k == "Strict-Transport-Security"));
     }
 
     #[test]
     fn test_x_frame_options_deny() {
         let config = SecurityHeadersConfig::default();
         let headers = config.to_header_pairs();
-        let xfo = headers.iter().find(|(k, _)| k == "X-Frame-Options").unwrap();
+        let xfo = headers
+            .iter()
+            .find(|(k, _)| k == "X-Frame-Options")
+            .unwrap();
         assert_eq!(xfo.1, "DENY");
     }
 
@@ -423,7 +460,10 @@ mod tests {
     fn test_coop_header() {
         let config = SecurityHeadersConfig::default();
         let headers = config.to_header_pairs();
-        let coop = headers.iter().find(|(k, _)| k == "Cross-Origin-Opener-Policy").unwrap();
+        let coop = headers
+            .iter()
+            .find(|(k, _)| k == "Cross-Origin-Opener-Policy")
+            .unwrap();
         assert_eq!(coop.1, "same-origin");
     }
 
@@ -431,7 +471,10 @@ mod tests {
     fn test_corp_header() {
         let config = SecurityHeadersConfig::default();
         let headers = config.to_header_pairs();
-        let corp = headers.iter().find(|(k, _)| k == "Cross-Origin-Resource-Policy").unwrap();
+        let corp = headers
+            .iter()
+            .find(|(k, _)| k == "Cross-Origin-Resource-Policy")
+            .unwrap();
         assert_eq!(corp.1, "same-origin");
     }
 
@@ -439,7 +482,10 @@ mod tests {
     fn test_coep_header() {
         let config = SecurityHeadersConfig::default();
         let headers = config.to_header_pairs();
-        let coep = headers.iter().find(|(k, _)| k == "Cross-Origin-Embedder-Policy").unwrap();
+        let coep = headers
+            .iter()
+            .find(|(k, _)| k == "Cross-Origin-Embedder-Policy")
+            .unwrap();
         assert_eq!(coep.1, "require-corp");
     }
 

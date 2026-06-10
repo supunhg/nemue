@@ -36,7 +36,9 @@ impl PdfReportGenerator {
             report.metadata.target_count
         );
         let content_bytes = content.as_bytes();
-        pdf.extend_from_slice(format!("4 0 obj\n<< /Length {} >>\nstream\n", content_bytes.len()).as_bytes());
+        pdf.extend_from_slice(
+            format!("4 0 obj\n<< /Length {} >>\nstream\n", content_bytes.len()).as_bytes(),
+        );
         pdf.extend_from_slice(content_bytes);
         pdf.extend_from_slice(b"\nendstream\nendobj\n");
     }
@@ -51,7 +53,9 @@ impl PdfReportGenerator {
             s.vulnerabilities.medium, s.vulnerabilities.low, s.vulnerabilities.info
         );
         let content_bytes = content.as_bytes();
-        pdf.extend_from_slice(format!("5 0 obj\n<< /Length {} >>\nstream\n", content_bytes.len()).as_bytes());
+        pdf.extend_from_slice(
+            format!("5 0 obj\n<< /Length {} >>\nstream\n", content_bytes.len()).as_bytes(),
+        );
         pdf.extend_from_slice(content_bytes);
         pdf.extend_from_slice(b"\nendstream\nendobj\n");
     }
@@ -64,7 +68,13 @@ impl PdfReportGenerator {
         let mut y = -25;
         for finding in &report.findings {
             let severity_label = format_severity(&finding.severity);
-            content.push_str(&format!("0 {} Td\n([{}] {} - {} hosts) Tj\n", y, severity_label, finding.title, finding.affected_hosts.len()));
+            content.push_str(&format!(
+                "0 {} Td\n([{}] {} - {} hosts) Tj\n",
+                y,
+                severity_label,
+                finding.title,
+                finding.affected_hosts.len()
+            ));
             y -= 15;
             if y < 50 {
                 break;
@@ -72,13 +82,14 @@ impl PdfReportGenerator {
         }
         content.push_str("ET\n");
         let content_bytes = content.as_bytes();
-        pdf.extend_from_slice(format!("6 0 obj\n<< /Length {} >>\nstream\n", content_bytes.len()).as_bytes());
+        pdf.extend_from_slice(
+            format!("6 0 obj\n<< /Length {} >>\nstream\n", content_bytes.len()).as_bytes(),
+        );
         pdf.extend_from_slice(content_bytes);
         pdf.extend_from_slice(b"\nendstream\nendobj\n");
     }
 
-    fn write_vulnerabilities(_pdf: &mut Vec<u8>, _report: &ScanReport) {
-    }
+    fn write_vulnerabilities(_pdf: &mut Vec<u8>, _report: &ScanReport) {}
 
     fn write_compliance(pdf: &mut Vec<u8>, report: &ScanReport) {
         let mut content = format!(
@@ -87,13 +98,17 @@ impl PdfReportGenerator {
         );
         let mut y = -20;
         for fw in &report.compliance.frameworks {
-            content.push_str(&format!("0 {} Td\n({} v{}: {:.1}% - {}/{} passing) Tj\n",
-                y, fw.name, fw.version, fw.score, fw.controls_passing, fw.controls_total));
+            content.push_str(&format!(
+                "0 {} Td\n({} v{}: {:.1}% - {}/{} passing) Tj\n",
+                y, fw.name, fw.version, fw.score, fw.controls_passing, fw.controls_total
+            ));
             y -= 15;
         }
         content.push_str("ET\n");
         let content_bytes = content.as_bytes();
-        pdf.extend_from_slice(format!("7 0 obj\n<< /Length {} >>\nstream\n", content_bytes.len()).as_bytes());
+        pdf.extend_from_slice(
+            format!("7 0 obj\n<< /Length {} >>\nstream\n", content_bytes.len()).as_bytes(),
+        );
         pdf.extend_from_slice(content_bytes);
         pdf.extend_from_slice(b"\nendstream\nendobj\n");
     }
@@ -102,10 +117,14 @@ impl PdfReportGenerator {
         if report.recommendations.is_empty() {
             return;
         }
-        let mut content = String::from("BT\n/F1 18 Tf\n50 100 Td\n(Recommendations) Tj\n/F1 10 Tf\n");
+        let mut content =
+            String::from("BT\n/F1 18 Tf\n50 100 Td\n(Recommendations) Tj\n/F1 10 Tf\n");
         let mut y = -20;
         for rec in &report.recommendations {
-            content.push_str(&format!("0 {} Td\n([{:?}] {}: {}) Tj\n", y, rec.priority, rec.title, rec.impact));
+            content.push_str(&format!(
+                "0 {} Td\n([{:?}] {}: {}) Tj\n",
+                y, rec.priority, rec.title, rec.impact
+            ));
             y -= 15;
             if y < 30 {
                 break;
@@ -113,7 +132,9 @@ impl PdfReportGenerator {
         }
         content.push_str("ET\n");
         let content_bytes = content.as_bytes();
-        pdf.extend_from_slice(format!("8 0 obj\n<< /Length {} >>\nstream\n", content_bytes.len()).as_bytes());
+        pdf.extend_from_slice(
+            format!("8 0 obj\n<< /Length {} >>\nstream\n", content_bytes.len()).as_bytes(),
+        );
         pdf.extend_from_slice(content_bytes);
         pdf.extend_from_slice(b"\nendstream\nendobj\n");
     }
@@ -279,11 +300,24 @@ mod tests {
                 version: "0.1.0".to_string(),
             })
             .summary(ExecutiveSummary {
-                total_hosts: 0, hosts_up: 0, total_ports: 0, open_ports: 0,
-                vulnerabilities: VulnerabilitySummary { critical: 0, high: 0, medium: 0, low: 0, info: 0 },
-                risk_score: 0.0, compliance_score: 0.0,
+                total_hosts: 0,
+                hosts_up: 0,
+                total_ports: 0,
+                open_ports: 0,
+                vulnerabilities: VulnerabilitySummary {
+                    critical: 0,
+                    high: 0,
+                    medium: 0,
+                    low: 0,
+                    info: 0,
+                },
+                risk_score: 0.0,
+                compliance_score: 0.0,
             })
-            .compliance(ComplianceStatus { frameworks: vec![], overall_score: 0.0 })
+            .compliance(ComplianceStatus {
+                frameworks: vec![],
+                overall_score: 0.0,
+            })
             .build()
             .unwrap();
         let pdf = PdfReportGenerator::generate(&report);

@@ -1,5 +1,6 @@
+#![allow(dead_code)]
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
-use anyhow::{Result, Context};
 use std::time::Duration;
 
 /// Supported webhook providers
@@ -27,9 +28,15 @@ pub struct WebhookConfig {
     pub timeout_secs: u64,
 }
 
-fn default_max_retries() -> u32 { 3 }
-fn default_retry_delay_ms() -> u64 { 1000 }
-fn default_timeout_secs() -> u64 { 30 }
+fn default_max_retries() -> u32 {
+    3
+}
+fn default_retry_delay_ms() -> u64 {
+    1000
+}
+fn default_timeout_secs() -> u64 {
+    30
+}
 
 /// Webhook delivery status
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -102,10 +109,13 @@ impl WebhookClient {
         let mut response_code = None;
 
         for attempt in 1..=config.max_retries.max(1) {
-            match self.deliver(&config.url, &payload, config.timeout_secs).await {
+            match self
+                .deliver(&config.url, &payload, config.timeout_secs)
+                .await
+            {
                 Ok(code) => {
                     response_code = Some(code);
-                    if code >= 200 && code < 300 {
+                    if (200..300).contains(&code) {
                         return WebhookDelivery {
                             webhook_id: uuid::Uuid::new_v4().to_string(),
                             url: config.url.clone(),
@@ -125,7 +135,10 @@ impl WebhookClient {
             }
 
             if attempt < config.max_retries {
-                tokio::time::sleep(Duration::from_millis(config.retry_delay_ms * attempt as u64)).await;
+                tokio::time::sleep(Duration::from_millis(
+                    config.retry_delay_ms * attempt as u64,
+                ))
+                .await;
             }
         }
 
@@ -141,12 +154,18 @@ impl WebhookClient {
         }
     }
 
-    async fn deliver(&self, url: &str, payload: &serde_json::Value, timeout_secs: u64) -> Result<u16> {
+    async fn deliver(
+        &self,
+        url: &str,
+        payload: &serde_json::Value,
+        timeout_secs: u64,
+    ) -> Result<u16> {
         let client = reqwest::Client::builder()
             .timeout(Duration::from_secs(timeout_secs))
             .build()?;
 
-        let resp = client.post(url)
+        let resp = client
+            .post(url)
             .header("Content-Type", "application/json")
             .json(payload)
             .send()
@@ -157,9 +176,13 @@ impl WebhookClient {
     }
 
     fn build_slack_payload(&self, event: &ScanEvent) -> serde_json::Value {
-        let color = if event.total_vulnerabilities > 0 { "#ff0000" }
-                    else if event.risk_score > 50 { "#ff9900" }
-                    else { "#36a64f" };
+        let color = if event.total_vulnerabilities > 0 {
+            "#ff0000"
+        } else if event.risk_score > 50 {
+            "#ff9900"
+        } else {
+            "#36a64f"
+        };
 
         let fields = vec![
             serde_json::json!({"title": "Status", "value": event.status, "short": true}),
@@ -181,9 +204,13 @@ impl WebhookClient {
     }
 
     fn build_discord_payload(&self, event: &ScanEvent) -> serde_json::Value {
-        let color = if event.total_vulnerabilities > 0 { 0xff0000 }
-                    else if event.risk_score > 50 { 0xff9900 }
-                    else { 0x36a64f };
+        let color = if event.total_vulnerabilities > 0 {
+            0xff0000
+        } else if event.risk_score > 50 {
+            0xff9900
+        } else {
+            0x36a64f
+        };
 
         serde_json::json!({
             "embeds": [{
@@ -205,9 +232,13 @@ impl WebhookClient {
     }
 
     fn build_teams_payload(&self, event: &ScanEvent) -> serde_json::Value {
-        let theme_color = if event.total_vulnerabilities > 0 { "ff0000" }
-                          else if event.risk_score > 50 { "ff9900" }
-                          else { "36a64f" };
+        let theme_color = if event.total_vulnerabilities > 0 {
+            "ff0000"
+        } else if event.risk_score > 50 {
+            "ff9900"
+        } else {
+            "36a64f"
+        };
 
         let facts = vec![
             serde_json::json!({"name": "Status", "value": event.status}),
@@ -235,7 +266,10 @@ impl WebhookClient {
         if let Some(ref _secret) = config.secret {
             let mut payload = serde_json::to_value(event).unwrap_or_default();
             if let Some(obj) = payload.as_object_mut() {
-                obj.insert("webhook_secret".to_string(), serde_json::Value::String(_secret.clone()));
+                obj.insert(
+                    "webhook_secret".to_string(),
+                    serde_json::Value::String(_secret.clone()),
+                );
             }
             payload
         } else {
@@ -363,10 +397,22 @@ mod tests {
 
     #[test]
     fn test_webhook_provider_serialization() {
-        assert_eq!(serde_json::to_string(&WebhookProvider::Slack).unwrap(), "\"slack\"");
-        assert_eq!(serde_json::to_string(&WebhookProvider::Discord).unwrap(), "\"discord\"");
-        assert_eq!(serde_json::to_string(&WebhookProvider::Teams).unwrap(), "\"teams\"");
-        assert_eq!(serde_json::to_string(&WebhookProvider::Custom).unwrap(), "\"custom\"");
+        assert_eq!(
+            serde_json::to_string(&WebhookProvider::Slack).unwrap(),
+            "\"slack\""
+        );
+        assert_eq!(
+            serde_json::to_string(&WebhookProvider::Discord).unwrap(),
+            "\"discord\""
+        );
+        assert_eq!(
+            serde_json::to_string(&WebhookProvider::Teams).unwrap(),
+            "\"teams\""
+        );
+        assert_eq!(
+            serde_json::to_string(&WebhookProvider::Custom).unwrap(),
+            "\"custom\""
+        );
     }
 
     #[test]

@@ -75,10 +75,12 @@ impl IoTComplianceChecker {
                 standard: ComplianceStandard::OWASPIoT,
                 category: "Authentication".to_string(),
                 title: "Weak, guessable, or hardcoded passwords".to_string(),
-                description: "IoT devices should not use default or hardcoded credentials".to_string(),
+                description: "IoT devices should not use default or hardcoded credentials"
+                    .to_string(),
                 status: ComplianceStatus::Unknown,
                 severity: "CRITICAL".to_string(),
-                recommendation: "Enforce strong, unique passwords and disable default credentials".to_string(),
+                recommendation: "Enforce strong, unique passwords and disable default credentials"
+                    .to_string(),
             },
             ComplianceCheck {
                 id: "OWASP-I2".to_string(),
@@ -88,7 +90,8 @@ impl IoTComplianceChecker {
                 description: "Devices should minimize exposed network services".to_string(),
                 status: ComplianceStatus::Unknown,
                 severity: "HIGH".to_string(),
-                recommendation: "Disable unnecessary services and use firewalls to restrict access".to_string(),
+                recommendation: "Disable unnecessary services and use firewalls to restrict access"
+                    .to_string(),
             },
             ComplianceCheck {
                 id: "OWASP-I3".to_string(),
@@ -98,7 +101,9 @@ impl IoTComplianceChecker {
                 description: "Web, mobile, and cloud interfaces should be secured".to_string(),
                 status: ComplianceStatus::Unknown,
                 severity: "HIGH".to_string(),
-                recommendation: "Implement proper authentication and input validation on all interfaces".to_string(),
+                recommendation:
+                    "Implement proper authentication and input validation on all interfaces"
+                        .to_string(),
             },
             ComplianceCheck {
                 id: "OWASP-I4".to_string(),
@@ -108,7 +113,8 @@ impl IoTComplianceChecker {
                 description: "Devices should support secure firmware updates".to_string(),
                 status: ComplianceStatus::Unknown,
                 severity: "HIGH".to_string(),
-                recommendation: "Implement signed firmware updates with rollback protection".to_string(),
+                recommendation: "Implement signed firmware updates with rollback protection"
+                    .to_string(),
             },
             ComplianceCheck {
                 id: "OWASP-I5".to_string(),
@@ -118,7 +124,8 @@ impl IoTComplianceChecker {
                 description: "Devices should use up-to-date and secure libraries".to_string(),
                 status: ComplianceStatus::Unknown,
                 severity: "MEDIUM".to_string(),
-                recommendation: "Regularly update all software components and dependencies".to_string(),
+                recommendation: "Regularly update all software components and dependencies"
+                    .to_string(),
             },
             ComplianceCheck {
                 id: "OWASP-I6".to_string(),
@@ -128,7 +135,8 @@ impl IoTComplianceChecker {
                 description: "User data should be properly protected".to_string(),
                 status: ComplianceStatus::Unknown,
                 severity: "HIGH".to_string(),
-                recommendation: "Implement data encryption and minimize data collection".to_string(),
+                recommendation: "Implement data encryption and minimize data collection"
+                    .to_string(),
             },
             ComplianceCheck {
                 id: "OWASP-I7".to_string(),
@@ -138,7 +146,8 @@ impl IoTComplianceChecker {
                 description: "Data should be encrypted in transit and at rest".to_string(),
                 status: ComplianceStatus::Unknown,
                 severity: "HIGH".to_string(),
-                recommendation: "Use TLS for data in transit and encryption for data at rest".to_string(),
+                recommendation: "Use TLS for data in transit and encryption for data at rest"
+                    .to_string(),
             },
             ComplianceCheck {
                 id: "OWASP-I8".to_string(),
@@ -158,7 +167,9 @@ impl IoTComplianceChecker {
                 description: "Devices should ship with secure default configurations".to_string(),
                 status: ComplianceStatus::Unknown,
                 severity: "MEDIUM".to_string(),
-                recommendation: "Disable unnecessary features by default and enforce secure defaults".to_string(),
+                recommendation:
+                    "Disable unnecessary features by default and enforce secure defaults"
+                        .to_string(),
             },
             ComplianceCheck {
                 id: "OWASP-I10".to_string(),
@@ -168,7 +179,8 @@ impl IoTComplianceChecker {
                 description: "Devices should be physically tamper-resistant".to_string(),
                 status: ComplianceStatus::Unknown,
                 severity: "LOW".to_string(),
-                recommendation: "Implement tamper detection and secure debug interfaces".to_string(),
+                recommendation: "Implement tamper detection and secure debug interfaces"
+                    .to_string(),
             },
         ];
 
@@ -182,30 +194,36 @@ impl IoTComplianceChecker {
                 standard: ComplianceStandard::NISTIoT,
                 category: "Device Security".to_string(),
                 title: "Device identification and management".to_string(),
-                description: "Each device should be uniquely identifiable and manageable".to_string(),
+                description: "Each device should be uniquely identifiable and manageable"
+                    .to_string(),
                 status: ComplianceStatus::Unknown,
                 severity: "HIGH".to_string(),
-                recommendation: "Implement unique device identifiers and centralized management".to_string(),
+                recommendation: "Implement unique device identifiers and centralized management"
+                    .to_string(),
             },
             ComplianceCheck {
                 id: "NIST-IoT-2".to_string(),
                 standard: ComplianceStandard::NISTIoT,
                 category: "Device Security".to_string(),
                 title: "Device configuration protection".to_string(),
-                description: "Device configuration should be secured against unauthorized changes".to_string(),
+                description: "Device configuration should be secured against unauthorized changes"
+                    .to_string(),
                 status: ComplianceStatus::Unknown,
                 severity: "HIGH".to_string(),
-                recommendation: "Implement configuration change auditing and access controls".to_string(),
+                recommendation: "Implement configuration change auditing and access controls"
+                    .to_string(),
             },
             ComplianceCheck {
                 id: "NIST-IoT-3".to_string(),
                 standard: ComplianceStandard::NISTIoT,
                 category: "Data Protection".to_string(),
                 title: "Data protection at rest and in transit".to_string(),
-                description: "Sensitive data should be encrypted at rest and in transit".to_string(),
+                description: "Sensitive data should be encrypted at rest and in transit"
+                    .to_string(),
                 status: ComplianceStatus::Unknown,
                 severity: "HIGH".to_string(),
-                recommendation: "Use industry-standard encryption algorithms for data protection".to_string(),
+                recommendation: "Use industry-standard encryption algorithms for data protection"
+                    .to_string(),
             },
             ComplianceCheck {
                 id: "NIST-IoT-4".to_string(),
@@ -215,7 +233,8 @@ impl IoTComplianceChecker {
                 description: "Access to device interfaces should be controlled".to_string(),
                 status: ComplianceStatus::Unknown,
                 severity: "CRITICAL".to_string(),
-                recommendation: "Implement role-based access control and strong authentication".to_string(),
+                recommendation: "Implement role-based access control and strong authentication"
+                    .to_string(),
             },
             ComplianceCheck {
                 id: "NIST-IoT-5".to_string(),
@@ -225,7 +244,8 @@ impl IoTComplianceChecker {
                 description: "Devices should support secure software updates".to_string(),
                 status: ComplianceStatus::Unknown,
                 severity: "HIGH".to_string(),
-                recommendation: "Implement automatic and secure firmware update mechanisms".to_string(),
+                recommendation: "Implement automatic and secure firmware update mechanisms"
+                    .to_string(),
             },
             ComplianceCheck {
                 id: "NIST-IoT-6".to_string(),
@@ -235,7 +255,8 @@ impl IoTComplianceChecker {
                 description: "Devices should minimize network attack surface".to_string(),
                 status: ComplianceStatus::Unknown,
                 severity: "HIGH".to_string(),
-                recommendation: "Disable unnecessary network services and use firewalls".to_string(),
+                recommendation: "Disable unnecessary network services and use firewalls"
+                    .to_string(),
             },
         ];
 
@@ -249,7 +270,8 @@ impl IoTComplianceChecker {
                 standard: ComplianceStandard::BestPractices,
                 category: "Authentication".to_string(),
                 title: "Change default passwords".to_string(),
-                description: "All default passwords should be changed before deployment".to_string(),
+                description: "All default passwords should be changed before deployment"
+                    .to_string(),
                 status: ComplianceStatus::Unknown,
                 severity: "CRITICAL".to_string(),
                 recommendation: "Enforce password change on first use".to_string(),
@@ -282,7 +304,8 @@ impl IoTComplianceChecker {
                 description: "Device firmware should be kept up to date".to_string(),
                 status: ComplianceStatus::Unknown,
                 severity: "HIGH".to_string(),
-                recommendation: "Enable automatic updates or schedule regular update checks".to_string(),
+                recommendation: "Enable automatic updates or schedule regular update checks"
+                    .to_string(),
             },
             ComplianceCheck {
                 id: "BP-5".to_string(),
@@ -292,7 +315,9 @@ impl IoTComplianceChecker {
                 description: "Security events should be logged for audit purposes".to_string(),
                 status: ComplianceStatus::Unknown,
                 severity: "MEDIUM".to_string(),
-                recommendation: "Configure logging for authentication, configuration changes, and access".to_string(),
+                recommendation:
+                    "Configure logging for authentication, configuration changes, and access"
+                        .to_string(),
             },
         ];
 
@@ -307,11 +332,23 @@ impl IoTComplianceChecker {
         ]
     }
 
-    fn build_report(standard: ComplianceStandard, checks: Vec<ComplianceCheck>) -> ComplianceReport {
+    fn build_report(
+        standard: ComplianceStandard,
+        checks: Vec<ComplianceCheck>,
+    ) -> ComplianceReport {
         let total_checks = checks.len();
-        let compliant_count = checks.iter().filter(|c| c.status == ComplianceStatus::Compliant).count();
-        let non_compliant_count = checks.iter().filter(|c| c.status == ComplianceStatus::NonCompliant).count();
-        let partial_count = checks.iter().filter(|c| c.status == ComplianceStatus::PartiallyCompliant).count();
+        let compliant_count = checks
+            .iter()
+            .filter(|c| c.status == ComplianceStatus::Compliant)
+            .count();
+        let non_compliant_count = checks
+            .iter()
+            .filter(|c| c.status == ComplianceStatus::NonCompliant)
+            .count();
+        let partial_count = checks
+            .iter()
+            .filter(|c| c.status == ComplianceStatus::PartiallyCompliant)
+            .count();
 
         let compliance_score = if total_checks > 0 {
             (compliant_count as f64 + partial_count as f64 * 0.5) / total_checks as f64 * 100.0
@@ -340,14 +377,20 @@ mod tests {
         assert_eq!(ComplianceStandard::OWASPIoT.as_str(), "OWASP IoT Top 10");
         assert_eq!(ComplianceStandard::NISTIoT.as_str(), "NIST IoT Guidelines");
         assert_eq!(ComplianceStandard::ETSIEN303645.as_str(), "ETSI EN 303 645");
-        assert_eq!(ComplianceStandard::BestPractices.as_str(), "IoT Security Best Practices");
+        assert_eq!(
+            ComplianceStandard::BestPractices.as_str(),
+            "IoT Security Best Practices"
+        );
     }
 
     #[test]
     fn test_compliance_status_as_str() {
         assert_eq!(ComplianceStatus::Compliant.as_str(), "Compliant");
         assert_eq!(ComplianceStatus::NonCompliant.as_str(), "Non-Compliant");
-        assert_eq!(ComplianceStatus::PartiallyCompliant.as_str(), "Partially Compliant");
+        assert_eq!(
+            ComplianceStatus::PartiallyCompliant.as_str(),
+            "Partially Compliant"
+        );
         assert_eq!(ComplianceStatus::NotApplicable.as_str(), "Not Applicable");
     }
 
@@ -394,8 +437,16 @@ mod tests {
         report.checks[2].status = ComplianceStatus::NonCompliant;
 
         // Recalculate
-        let compliant = report.checks.iter().filter(|c| c.status == ComplianceStatus::Compliant).count();
-        let partial = report.checks.iter().filter(|c| c.status == ComplianceStatus::PartiallyCompliant).count();
+        let compliant = report
+            .checks
+            .iter()
+            .filter(|c| c.status == ComplianceStatus::Compliant)
+            .count();
+        let partial = report
+            .checks
+            .iter()
+            .filter(|c| c.status == ComplianceStatus::PartiallyCompliant)
+            .count();
         let score = (compliant as f64 + partial as f64 * 0.5) / report.total_checks as f64 * 100.0;
         assert!((score - 30.0).abs() < 0.01); // (1 + 0.5) / 5 * 100 = 30
     }

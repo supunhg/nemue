@@ -1,9 +1,9 @@
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::IpAddr;
-use std::time::Duration;
-use serde::{Deserialize, Serialize};
-use tokio::sync::RwLock;
 use std::sync::Arc;
+use std::time::Duration;
+use tokio::sync::RwLock;
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq, Serialize, Deserialize)]
 pub struct CacheKey {
@@ -47,7 +47,7 @@ impl<T: Clone + Send + Sync> ScanCache<T> {
 
     pub async fn get(&self, key: &CacheKey) -> Option<T> {
         let mut data = self.data.write().await;
-        
+
         if let Some(entry) = data.get(key) {
             let elapsed = Duration::from_secs(entry.timestamp);
             if elapsed < Duration::from_secs(entry.ttl_seconds) {
@@ -57,25 +57,25 @@ impl<T: Clone + Send + Sync> ScanCache<T> {
                 data.remove(key);
             }
         }
-        
+
         self.stats.write().await.misses += 1;
         None
     }
 
     pub async fn insert(&self, key: CacheKey, value: T, ttl: Option<Duration>) {
         let mut data = self.data.write().await;
-        
+
         if data.len() >= self.max_entries {
             self.evict_oldest(&mut data).await;
         }
-        
+
         let entry = CachedResult {
             data: value,
             timestamp: 0,
             ttl_seconds: ttl.unwrap_or(self.default_ttl).as_secs(),
             hit_count: 0,
         };
-        
+
         data.insert(key, entry);
         self.stats.write().await.inserts += 1;
     }
@@ -128,7 +128,11 @@ impl ScanResultCache {
         }
     }
 
-    pub async fn get_service(&self, target: IpAddr, port: u16) -> Option<crate::service::ServiceInfo> {
+    pub async fn get_service(
+        &self,
+        target: IpAddr,
+        port: u16,
+    ) -> Option<crate::service::ServiceInfo> {
         let key = CacheKey {
             target,
             port,
@@ -137,7 +141,12 @@ impl ScanResultCache {
         self.service_cache.get(&key).await
     }
 
-    pub async fn cache_service(&self, target: IpAddr, port: u16, info: crate::service::ServiceInfo) {
+    pub async fn cache_service(
+        &self,
+        target: IpAddr,
+        port: u16,
+        info: crate::service::ServiceInfo,
+    ) {
         let key = CacheKey {
             target,
             port,
@@ -208,7 +217,7 @@ mod tests {
             port: 80,
             scan_type: "test".to_string(),
         };
-        
+
         cache.insert(key.clone(), "value".to_string(), None).await;
         let result = cache.get(&key).await;
         assert_eq!(result, Some("value".to_string()));
@@ -222,7 +231,7 @@ mod tests {
             port: 80,
             scan_type: "test".to_string(),
         };
-        
+
         let result = cache.get(&key).await;
         assert_eq!(result, None);
     }
@@ -235,11 +244,11 @@ mod tests {
             port: 80,
             scan_type: "test".to_string(),
         };
-        
+
         cache.insert(key.clone(), "value".to_string(), None).await;
         let removed = cache.remove(&key).await;
         assert_eq!(removed, Some("value".to_string()));
-        
+
         let result = cache.get(&key).await;
         assert_eq!(result, None);
     }
@@ -257,11 +266,11 @@ mod tests {
             port: 443,
             scan_type: "test".to_string(),
         };
-        
+
         cache.insert(key1, "value1".to_string(), None).await;
         cache.insert(key2, "value2".to_string(), None).await;
         assert_eq!(cache.len().await, 2);
-        
+
         cache.clear().await;
         assert_eq!(cache.len().await, 0);
     }
@@ -270,12 +279,12 @@ mod tests {
     async fn test_scan_result_cache() {
         let cache = ScanResultCache::new();
         let target: IpAddr = "127.0.0.1".parse().unwrap();
-        
+
         assert_eq!(cache.is_port_open(target, 80).await, None);
-        
+
         cache.cache_port_state(target, 80, true).await;
         assert_eq!(cache.is_port_open(target, 80).await, Some(true));
-        
+
         assert_eq!(cache.is_host_up(target).await, None);
         cache.cache_host_state(target, true).await;
         assert_eq!(cache.is_host_up(target).await, Some(true));
@@ -289,11 +298,11 @@ mod tests {
             port: 80,
             scan_type: "test".to_string(),
         };
-        
+
         cache.insert(key.clone(), "value".to_string(), None).await;
         cache.get(&key).await;
         cache.get(&key).await;
-        
+
         let stats = cache.stats().await;
         assert_eq!(stats.hits, 2);
         assert_eq!(stats.inserts, 1);

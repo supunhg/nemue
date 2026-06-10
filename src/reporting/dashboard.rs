@@ -1,6 +1,6 @@
 // Dashboard with real-time scan monitoring, live statistics, interactive charts, and drill-down
-use serde::{Serialize, Deserialize};
-use chrono::{DateTime, Utc, Duration};
+use chrono::{DateTime, Duration, Utc};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Dashboard {
@@ -268,6 +268,12 @@ pub struct DashboardBuilder {
     drill_downs: Vec<DrillDown>,
 }
 
+impl Default for DashboardBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DashboardBuilder {
     pub fn new() -> Self {
         Self {
@@ -276,7 +282,14 @@ impl DashboardBuilder {
         }
     }
 
-    pub fn add_metric(mut self, id: &str, title: &str, value: f64, unit: &str, color: &str) -> Self {
+    pub fn add_metric(
+        mut self,
+        id: &str,
+        title: &str,
+        value: f64,
+        unit: &str,
+        color: &str,
+    ) -> Self {
         self.widgets.push(Widget {
             id: id.to_string(),
             widget_type: WidgetType::Metric,
@@ -291,7 +304,14 @@ impl DashboardBuilder {
         self
     }
 
-    pub fn add_chart(mut self, id: &str, title: &str, chart_type: &str, labels: Vec<String>, datasets: Vec<Dataset>) -> Self {
+    pub fn add_chart(
+        mut self,
+        id: &str,
+        title: &str,
+        chart_type: &str,
+        labels: Vec<String>,
+        datasets: Vec<Dataset>,
+    ) -> Self {
         self.widgets.push(Widget {
             id: id.to_string(),
             widget_type: WidgetType::Chart,
@@ -305,7 +325,14 @@ impl DashboardBuilder {
         self
     }
 
-    pub fn add_alert(mut self, id: &str, title: &str, level: AlertLevel, message: &str, count: usize) -> Self {
+    pub fn add_alert(
+        mut self,
+        id: &str,
+        title: &str,
+        level: AlertLevel,
+        message: &str,
+        count: usize,
+    ) -> Self {
         self.widgets.push(Widget {
             id: id.to_string(),
             widget_type: WidgetType::Alert,
@@ -371,7 +398,10 @@ impl Dashboard {
     }
 
     pub fn get_drill_downs_for_widget(&self, widget_id: &str) -> Vec<&DrillDown> {
-        self.drill_downs.iter().filter(|d| d.parent_widget_id == widget_id).collect()
+        self.drill_downs
+            .iter()
+            .filter(|d| d.parent_widget_id == widget_id)
+            .collect()
     }
 }
 
@@ -389,7 +419,11 @@ impl RealTimeMonitor {
     }
 
     pub fn add_scan_progress(&mut self, progress: ScanProgress) {
-        if let Some(existing) = self.scan_progress.iter_mut().find(|p| p.scan_id == progress.scan_id) {
+        if let Some(existing) = self
+            .scan_progress
+            .iter_mut()
+            .find(|p| p.scan_id == progress.scan_id)
+        {
             *existing = progress;
         } else {
             self.scan_progress.push(progress);
@@ -509,13 +543,19 @@ impl DataSeries {
     }
 
     pub fn add_point(mut self, x: f64, y: f64) -> Self {
-        self.points.push(DataPoint { x, y, label: None, metadata: None });
+        self.points.push(DataPoint {
+            x,
+            y,
+            label: None,
+            metadata: None,
+        });
         self
     }
 
     pub fn add_labeled_point(mut self, x: f64, y: f64, label: &str) -> Self {
         self.points.push(DataPoint {
-            x, y,
+            x,
+            y,
             label: Some(label.to_string()),
             metadata: None,
         });
@@ -561,7 +601,11 @@ mod tests {
                 "vuln-chart",
                 "Vulnerability Trend",
                 "line",
-                vec!["Day 1".to_string(), "Day 2".to_string(), "Day 3".to_string()],
+                vec![
+                    "Day 1".to_string(),
+                    "Day 2".to_string(),
+                    "Day 3".to_string(),
+                ],
                 vec![dataset],
             )
             .build();
@@ -573,7 +617,13 @@ mod tests {
     #[test]
     fn test_add_alert() {
         let dashboard = DashboardBuilder::new()
-            .add_alert("critical-alert", "Critical Issues", AlertLevel::Critical, "5 critical vulnerabilities found", 5)
+            .add_alert(
+                "critical-alert",
+                "Critical Issues",
+                AlertLevel::Critical,
+                "5 critical vulnerabilities found",
+                5,
+            )
             .build();
 
         assert_eq!(dashboard.widgets.len(), 1);
@@ -689,7 +739,10 @@ mod tests {
         });
 
         assert_eq!(monitor.scan_progress.len(), 1);
-        assert_eq!(monitor.get_progress("scan-1").unwrap().progress_percent, 50.0);
+        assert_eq!(
+            monitor.get_progress("scan-1").unwrap().progress_percent,
+            50.0
+        );
     }
 
     #[test]
@@ -778,8 +831,8 @@ mod tests {
     #[test]
     fn test_chart_toggle_series() {
         let series = DataSeries::new("Critical", "red").add_point(1.0, 5.0);
-        let mut chart = InteractiveChart::new("chart-1", "Trend", ChartKind::Line)
-            .add_series(series);
+        let mut chart =
+            InteractiveChart::new("chart-1", "Trend", ChartKind::Line).add_series(series);
 
         assert_eq!(chart.visible_series().len(), 1);
         assert!(chart.toggle_series("Critical"));
@@ -849,13 +902,11 @@ mod tests {
             }],
             data: DrillDownData {
                 title: "Critical Vulnerabilities".to_string(),
-                entries: vec![
-                    DrillEntry {
-                        key: "CVE-2024-1234".to_string(),
-                        value: "Remote Code Execution".to_string(),
-                        severity: Some("Critical".to_string()),
-                    },
-                ],
+                entries: vec![DrillEntry {
+                    key: "CVE-2024-1234".to_string(),
+                    value: "Remote Code Execution".to_string(),
+                    severity: Some("Critical".to_string()),
+                }],
             },
         };
 
@@ -878,8 +929,14 @@ mod tests {
 
     #[test]
     fn test_monitor_event_types() {
-        assert_ne!(MonitorEventType::ScanStarted, MonitorEventType::ScanCompleted);
-        assert_ne!(MonitorEventType::VulnerabilityFound, MonitorEventType::HostDiscovered);
+        assert_ne!(
+            MonitorEventType::ScanStarted,
+            MonitorEventType::ScanCompleted
+        );
+        assert_ne!(
+            MonitorEventType::VulnerabilityFound,
+            MonitorEventType::HostDiscovered
+        );
     }
 
     #[test]

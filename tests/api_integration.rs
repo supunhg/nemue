@@ -1,7 +1,7 @@
 use actix_web::{test, web, App};
+use nemue::api::{handlers, models::*, state::AppState};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use nemue::api::{handlers, models::*, state::AppState};
 
 fn create_test_app_state() -> Arc<RwLock<AppState>> {
     Arc::new(RwLock::new(AppState::new()))
@@ -97,7 +97,9 @@ async fn test_list_scans_returns_paginated() {
     )
     .await;
 
-    let req = test::TestRequest::get().uri("/scans?page=1&per_page=3").to_request();
+    let req = test::TestRequest::get()
+        .uri("/scans?page=1&per_page=3")
+        .to_request();
     let resp = test::call_service(&app, req).await;
     assert!(resp.status().is_success());
 }

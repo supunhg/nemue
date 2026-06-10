@@ -27,11 +27,12 @@ impl Default for FingerprintConfig {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum DeviceType {
     Android,
     Ios,
     WindowsPhone,
+    #[default]
     Unknown,
 }
 
@@ -43,12 +44,6 @@ impl DeviceType {
             DeviceType::WindowsPhone => "Windows Phone",
             DeviceType::Unknown => "Unknown",
         }
-    }
-}
-
-impl Default for DeviceType {
-    fn default() -> Self {
-        DeviceType::Unknown
     }
 }
 
@@ -129,7 +124,10 @@ impl MobileFingerprinter {
         let ua_lower = user_agent.to_lowercase();
         let device_type = if ua_lower.contains("android") {
             DeviceType::Android
-        } else if ua_lower.contains("iphone") || ua_lower.contains("ipad") || ua_lower.contains("ipod") {
+        } else if ua_lower.contains("iphone")
+            || ua_lower.contains("ipad")
+            || ua_lower.contains("ipod")
+        {
             DeviceType::Ios
         } else if ua_lower.contains("windows phone") {
             DeviceType::WindowsPhone
@@ -161,7 +159,9 @@ impl MobileFingerprinter {
                 if let Some(start) = ua_lower.find("android ") {
                     let version_start = start + 8;
                     if let Some(end) = ua_lower[version_start..].find(';') {
-                        return ua_lower[version_start..version_start + end].trim().to_string();
+                        return ua_lower[version_start..version_start + end]
+                            .trim()
+                            .to_string();
                     }
                 }
                 String::new()
@@ -207,8 +207,8 @@ impl MobileFingerprinter {
         match device_type {
             DeviceType::Android => {
                 let known_manufacturers = [
-                    "Samsung", "Google", "OnePlus", "Xiaomi", "Huawei", "LG",
-                    "Motorola", "Sony", "HTC", "Nokia", "Oppo", "Vivo", "Realme",
+                    "Samsung", "Google", "OnePlus", "Xiaomi", "Huawei", "LG", "Motorola", "Sony",
+                    "HTC", "Nokia", "Oppo", "Vivo", "Realme",
                 ];
                 for mfr in &known_manufacturers {
                     if user_agent.to_lowercase().contains(&mfr.to_lowercase()) {
@@ -223,9 +223,7 @@ impl MobileFingerprinter {
     }
 
     pub fn fingerprint_from_adb(&self) -> Vec<DeviceFingerprint> {
-        let output = Command::new("adb")
-            .arg("devices")
-            .output();
+        let output = Command::new("adb").arg("devices").output();
 
         let output = match output {
             Ok(o) if o.status.success() => o,
@@ -318,7 +316,10 @@ impl MobileFingerprinter {
             .and_then(|o| String::from_utf8(o.stdout).ok())
             .unwrap_or_default();
 
-        !su.trim().is_empty() || self.get_adb_prop(serial, "ro.build.tags").contains("test-keys")
+        !su.trim().is_empty()
+            || self
+                .get_adb_prop(serial, "ro.build.tags")
+                .contains("test-keys")
     }
 
     fn enumerate_apps_adb(&self, serial: &str) -> Vec<String> {
@@ -345,7 +346,15 @@ impl MobileFingerprinter {
 
         if device.os_info.is_rooted || device.os_info.is_jailbroken {
             findings.push(FingerprintSecurityFinding {
-                title: format!("Device {} is {}", device.model, if device.os_info.is_rooted { "rooted" } else { "jailbroken" }),
+                title: format!(
+                    "Device {} is {}",
+                    device.model,
+                    if device.os_info.is_rooted {
+                        "rooted"
+                    } else {
+                        "jailbroken"
+                    }
+                ),
                 description: "Compromised devices bypass security sandboxing.".to_string(),
                 severity: MobileSeverity::Critical,
                 category: "integrity".to_string(),
@@ -376,17 +385,20 @@ impl MobileFingerprinter {
         if device.security_features.unknown_sources {
             findings.push(FingerprintSecurityFinding {
                 title: "Unknown sources allowed".to_string(),
-                description: "Installing apps from unknown sources increases malware risk.".to_string(),
+                description: "Installing apps from unknown sources increases malware risk."
+                    .to_string(),
                 severity: MobileSeverity::High,
                 category: "installation".to_string(),
                 recommendation: "Disable installation from unknown sources.".to_string(),
             });
         }
 
-        if !device.security_features.encryption_enabled && device.device_type == DeviceType::Android {
+        if !device.security_features.encryption_enabled && device.device_type == DeviceType::Android
+        {
             findings.push(FingerprintSecurityFinding {
                 title: "Device encryption not enabled".to_string(),
-                description: "Unencrypted devices expose data if physically compromised.".to_string(),
+                description: "Unencrypted devices expose data if physically compromised."
+                    .to_string(),
                 severity: MobileSeverity::High,
                 category: "encryption".to_string(),
                 recommendation: "Enable device encryption in Security settings.".to_string(),
@@ -419,7 +431,8 @@ mod tests {
     #[test]
     fn test_fingerprint_android_user_agent() {
         let fp = MobileFingerprinter::with_default();
-        let ua = "Mozilla/5.0 (Linux; Android 13; Pixel 7 Build/TQ3A.230901.001) AppleWebKit/537.36";
+        let ua =
+            "Mozilla/5.0 (Linux; Android 13; Pixel 7 Build/TQ3A.230901.001) AppleWebKit/537.36";
         let device = fp.fingerprint_from_user_agent(ua);
 
         assert_eq!(device.device_type, DeviceType::Android);
@@ -445,7 +458,8 @@ mod tests {
     fn test_fingerprint_samsung_user_agent() {
         let fp = MobileFingerprinter::with_default();
         // Samsung user agents typically include "Samsung" in the string
-        let ua = "Mozilla/5.0 (Linux; Android 13; SM-S918B Build/TQ3A.230901.001) AppleWebKit/537.36";
+        let ua =
+            "Mozilla/5.0 (Linux; Android 13; SM-S918B Build/TQ3A.230901.001) AppleWebKit/537.36";
         let device = fp.fingerprint_from_user_agent(ua);
 
         assert_eq!(device.device_type, DeviceType::Android);
@@ -485,7 +499,9 @@ mod tests {
         };
 
         let findings = fp.assess_security(&device);
-        assert!(findings.iter().any(|f| f.severity == MobileSeverity::Critical && f.title.contains("rooted")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == MobileSeverity::Critical && f.title.contains("rooted")));
     }
 
     #[test]
@@ -501,7 +517,9 @@ mod tests {
         };
 
         let findings = fp.assess_security(&device);
-        assert!(findings.iter().any(|f| f.severity == MobileSeverity::High && f.title.contains("USB debugging")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == MobileSeverity::High && f.title.contains("USB debugging")));
     }
 
     #[test]
@@ -516,7 +534,9 @@ mod tests {
         };
 
         let findings = fp.assess_security(&device);
-        assert!(findings.iter().any(|f| f.severity == MobileSeverity::Medium && f.title.contains("Developer")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == MobileSeverity::Medium && f.title.contains("Developer")));
     }
 
     #[test]
@@ -531,7 +551,9 @@ mod tests {
         };
 
         let findings = fp.assess_security(&device);
-        assert!(findings.iter().any(|f| f.severity == MobileSeverity::High && f.title.contains("Unknown sources")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == MobileSeverity::High && f.title.contains("Unknown sources")));
     }
 
     #[test]
@@ -547,7 +569,9 @@ mod tests {
         };
 
         let findings = fp.assess_security(&device);
-        assert!(findings.iter().any(|f| f.severity == MobileSeverity::High && f.title.contains("encryption")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == MobileSeverity::High && f.title.contains("encryption")));
     }
 
     #[test]

@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 //! Mobile Compliance Scanning Module
 //!
 //! OWASP Mobile Top 10 compliance checks, mobile security best practices,
@@ -5,9 +6,9 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::mobile::MobileSeverity;
 use crate::mobile::android::AndroidResults;
 use crate::mobile::ios::IosResults;
+use crate::mobile::MobileSeverity;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MobileBenchmarkType {
@@ -120,10 +121,22 @@ impl MobileComplianceScanner {
 
     fn build_report(&self, checks: Vec<MobileComplianceCheck>) -> MobileComplianceReport {
         let total_checks = checks.len();
-        let passed = checks.iter().filter(|c| c.result == MobileComplianceResult::Pass).count();
-        let failed = checks.iter().filter(|c| c.result == MobileComplianceResult::Fail).count();
-        let warnings = checks.iter().filter(|c| c.result == MobileComplianceResult::Warn).count();
-        let na = checks.iter().filter(|c| c.result == MobileComplianceResult::NotApplicable).count();
+        let passed = checks
+            .iter()
+            .filter(|c| c.result == MobileComplianceResult::Pass)
+            .count();
+        let failed = checks
+            .iter()
+            .filter(|c| c.result == MobileComplianceResult::Fail)
+            .count();
+        let warnings = checks
+            .iter()
+            .filter(|c| c.result == MobileComplianceResult::Warn)
+            .count();
+        let na = checks
+            .iter()
+            .filter(|c| c.result == MobileComplianceResult::NotApplicable)
+            .count();
 
         let applicable = total_checks - na;
         let compliance_score = if applicable > 0 {
@@ -256,23 +269,39 @@ impl MobileComplianceScanner {
             id: "ANDROID-001".to_string(),
             benchmark: MobileBenchmarkType::AndroidSpecific,
             title: "No debuggable applications in production".to_string(),
-            description: "Debuggable applications expose internal state and allow code injection.".to_string(),
+            description: "Debuggable applications expose internal state and allow code injection."
+                .to_string(),
             severity: MobileSeverity::High,
-            result: if debuggable_apps == 0 { MobileComplianceResult::Pass } else { MobileComplianceResult::Fail },
+            result: if debuggable_apps == 0 {
+                MobileComplianceResult::Pass
+            } else {
+                MobileComplianceResult::Fail
+            },
             evidence: format!("{} debuggable applications found", debuggable_apps),
-            remediation: "Set android:debuggable=false in all production application manifests.".to_string(),
+            remediation: "Set android:debuggable=false in all production application manifests."
+                .to_string(),
         });
 
-        let backup_apps = results.packages.iter().filter(|p| p.allow_backup && !p.is_system).count();
+        let backup_apps = results
+            .packages
+            .iter()
+            .filter(|p| p.allow_backup && !p.is_system)
+            .count();
         checks.push(MobileComplianceCheck {
             id: "ANDROID-002".to_string(),
             benchmark: MobileBenchmarkType::AndroidSpecific,
             title: "Disable application backup for sensitive apps".to_string(),
-            description: "Applications with allowBackup=true can have data extracted via adb.".to_string(),
+            description: "Applications with allowBackup=true can have data extracted via adb."
+                .to_string(),
             severity: MobileSeverity::Medium,
-            result: if backup_apps == 0 { MobileComplianceResult::Pass } else { MobileComplianceResult::Fail },
+            result: if backup_apps == 0 {
+                MobileComplianceResult::Pass
+            } else {
+                MobileComplianceResult::Fail
+            },
             evidence: format!("{} non-system apps with backup enabled", backup_apps),
-            remediation: "Set android:allowBackup=false for applications handling sensitive data.".to_string(),
+            remediation: "Set android:allowBackup=false for applications handling sensitive data."
+                .to_string(),
         });
 
         let rooted = results.devices.iter().any(|d| d.is_rooted);
@@ -282,20 +311,41 @@ impl MobileComplianceScanner {
             title: "Device integrity verification".to_string(),
             description: "Rooted devices bypass Android's security sandbox.".to_string(),
             severity: MobileSeverity::Critical,
-            result: if rooted { MobileComplianceResult::Fail } else { MobileComplianceResult::Pass },
-            evidence: if rooted { "Device is rooted".to_string() } else { "Device appears non-rooted".to_string() },
-            remediation: "Use non-rooted devices. Implement root detection in sensitive applications.".to_string(),
+            result: if rooted {
+                MobileComplianceResult::Fail
+            } else {
+                MobileComplianceResult::Pass
+            },
+            evidence: if rooted {
+                "Device is rooted".to_string()
+            } else {
+                "Device appears non-rooted".to_string()
+            },
+            remediation:
+                "Use non-rooted devices. Implement root detection in sensitive applications."
+                    .to_string(),
         });
 
-        let adb_tcp = results.services.iter().any(|s| s.port == 5555 && s.state == "open");
+        let adb_tcp = results
+            .services
+            .iter()
+            .any(|s| s.port == 5555 && s.state == "open");
         checks.push(MobileComplianceCheck {
             id: "ANDROID-004".to_string(),
             benchmark: MobileBenchmarkType::AndroidSpecific,
             title: "Disable ADB over network".to_string(),
             description: "ADB over TCP allows remote debugging access to the device.".to_string(),
             severity: MobileSeverity::High,
-            result: if adb_tcp { MobileComplianceResult::Fail } else { MobileComplianceResult::Pass },
-            evidence: if adb_tcp { "ADB over TCP is enabled on port 5555".to_string() } else { "ADB over TCP is not detected".to_string() },
+            result: if adb_tcp {
+                MobileComplianceResult::Fail
+            } else {
+                MobileComplianceResult::Pass
+            },
+            evidence: if adb_tcp {
+                "ADB over TCP is enabled on port 5555".to_string()
+            } else {
+                "ADB over TCP is not detected".to_string()
+            },
             remediation: "Disable ADB over TCP. Use USB debugging only when necessary.".to_string(),
         });
 
@@ -310,11 +360,22 @@ impl MobileComplianceScanner {
             id: "IOS-001".to_string(),
             benchmark: MobileBenchmarkType::IosSpecific,
             title: "Device passcode enabled".to_string(),
-            description: "Devices without passcodes allow unrestricted physical access.".to_string(),
+            description: "Devices without passcodes allow unrestricted physical access."
+                .to_string(),
             severity: MobileSeverity::Critical,
-            result: if passcode_set { MobileComplianceResult::Pass } else { MobileComplianceResult::Fail },
-            evidence: if passcode_set { "All devices have passcodes set".to_string() } else { "One or more devices without passcode".to_string() },
-            remediation: "Enable passcode on all devices. Use alphanumeric passcodes for maximum security.".to_string(),
+            result: if passcode_set {
+                MobileComplianceResult::Pass
+            } else {
+                MobileComplianceResult::Fail
+            },
+            evidence: if passcode_set {
+                "All devices have passcodes set".to_string()
+            } else {
+                "One or more devices without passcode".to_string()
+            },
+            remediation:
+                "Enable passcode on all devices. Use alphanumeric passcodes for maximum security."
+                    .to_string(),
         });
 
         if let Some(ref config) = results.configuration {
@@ -322,21 +383,46 @@ impl MobileComplianceScanner {
                 id: "IOS-002".to_string(),
                 benchmark: MobileBenchmarkType::IosSpecific,
                 title: "USB Restricted Mode enabled".to_string(),
-                description: "USB Restricted Mode prevents unauthorized USB access when locked.".to_string(),
+                description: "USB Restricted Mode prevents unauthorized USB access when locked."
+                    .to_string(),
                 severity: MobileSeverity::High,
-                result: if config.usb_restricted_mode { MobileComplianceResult::Pass } else { MobileComplianceResult::Fail },
-                evidence: format!("USB Restricted Mode: {}", if config.usb_restricted_mode { "enabled" } else { "disabled" }),
-                remediation: "Enable USB Restricted Mode in Settings > Face ID & Passcode.".to_string(),
+                result: if config.usb_restricted_mode {
+                    MobileComplianceResult::Pass
+                } else {
+                    MobileComplianceResult::Fail
+                },
+                evidence: format!(
+                    "USB Restricted Mode: {}",
+                    if config.usb_restricted_mode {
+                        "enabled"
+                    } else {
+                        "disabled"
+                    }
+                ),
+                remediation: "Enable USB Restricted Mode in Settings > Face ID & Passcode."
+                    .to_string(),
             });
 
             checks.push(MobileComplianceCheck {
                 id: "IOS-003".to_string(),
                 benchmark: MobileBenchmarkType::IosSpecific,
                 title: "Find My enabled".to_string(),
-                description: "Find My enables remote wipe and device location for lost devices.".to_string(),
+                description: "Find My enables remote wipe and device location for lost devices."
+                    .to_string(),
                 severity: MobileSeverity::Medium,
-                result: if config.find_my_enabled { MobileComplianceResult::Pass } else { MobileComplianceResult::Fail },
-                evidence: format!("Find My: {}", if config.find_my_enabled { "enabled" } else { "disabled" }),
+                result: if config.find_my_enabled {
+                    MobileComplianceResult::Pass
+                } else {
+                    MobileComplianceResult::Fail
+                },
+                evidence: format!(
+                    "Find My: {}",
+                    if config.find_my_enabled {
+                        "enabled"
+                    } else {
+                        "disabled"
+                    }
+                ),
                 remediation: "Enable Find My in Settings > Apple ID > Find My.".to_string(),
             });
 
@@ -346,9 +432,21 @@ impl MobileComplianceScanner {
                 title: "Siri disabled on lock screen".to_string(),
                 description: "Siri on lock screen can expose sensitive information.".to_string(),
                 severity: MobileSeverity::Medium,
-                result: if config.siri_on_lock_screen { MobileComplianceResult::Fail } else { MobileComplianceResult::Pass },
-                evidence: format!("Siri on lock screen: {}", if config.siri_on_lock_screen { "enabled" } else { "disabled" }),
-                remediation: "Disable Siri on lock screen in Settings > Face ID & Passcode.".to_string(),
+                result: if config.siri_on_lock_screen {
+                    MobileComplianceResult::Fail
+                } else {
+                    MobileComplianceResult::Pass
+                },
+                evidence: format!(
+                    "Siri on lock screen: {}",
+                    if config.siri_on_lock_screen {
+                        "enabled"
+                    } else {
+                        "disabled"
+                    }
+                ),
+                remediation: "Disable Siri on lock screen in Settings > Face ID & Passcode."
+                    .to_string(),
             });
         }
 
@@ -414,7 +512,7 @@ impl MobileComplianceScanner {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::mobile::android::{AndroidResults, InstalledPackage, AdbDevice, AndroidService};
+    use crate::mobile::android::{AdbDevice, AndroidResults, AndroidService, InstalledPackage};
 
     #[test]
     fn test_compliance_config_default() {
@@ -495,7 +593,10 @@ mod tests {
         });
 
         let report = scanner.scan_android(&android_results);
-        assert!(report.checks.iter().any(|c| c.id == "ANDROID-001" && c.result == MobileComplianceResult::Fail));
+        assert!(report
+            .checks
+            .iter()
+            .any(|c| c.id == "ANDROID-001" && c.result == MobileComplianceResult::Fail));
     }
 
     #[test]
@@ -509,7 +610,10 @@ mod tests {
         });
 
         let report = scanner.scan_android(&android_results);
-        assert!(report.checks.iter().any(|c| c.id == "ANDROID-003" && c.result == MobileComplianceResult::Fail));
+        assert!(report
+            .checks
+            .iter()
+            .any(|c| c.id == "ANDROID-003" && c.result == MobileComplianceResult::Fail));
     }
 
     #[test]
@@ -524,7 +628,10 @@ mod tests {
         });
 
         let report = scanner.scan_android(&android_results);
-        assert!(report.checks.iter().any(|c| c.id == "ANDROID-004" && c.result == MobileComplianceResult::Fail));
+        assert!(report
+            .checks
+            .iter()
+            .any(|c| c.id == "ANDROID-004" && c.result == MobileComplianceResult::Fail));
     }
 
     #[test]
@@ -533,8 +640,14 @@ mod tests {
         let android_results = AndroidResults::default();
 
         let report = scanner.scan_android(&android_results);
-        assert!(report.checks.iter().any(|c| c.id == "ANDROID-001" && c.result == MobileComplianceResult::Pass));
-        assert!(report.checks.iter().any(|c| c.id == "ANDROID-003" && c.result == MobileComplianceResult::Pass));
+        assert!(report
+            .checks
+            .iter()
+            .any(|c| c.id == "ANDROID-001" && c.result == MobileComplianceResult::Pass));
+        assert!(report
+            .checks
+            .iter()
+            .any(|c| c.id == "ANDROID-003" && c.result == MobileComplianceResult::Pass));
     }
 
     #[test]
@@ -548,7 +661,10 @@ mod tests {
         });
 
         let report = scanner.scan_ios(&ios_results);
-        assert!(report.checks.iter().any(|c| c.id == "IOS-001" && c.result == MobileComplianceResult::Fail));
+        assert!(report
+            .checks
+            .iter()
+            .any(|c| c.id == "IOS-001" && c.result == MobileComplianceResult::Fail));
     }
 
     #[test]

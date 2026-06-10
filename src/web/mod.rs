@@ -1,25 +1,25 @@
 // Web Application Scanning Module
 // Provides comprehensive web application security testing capabilities
 
+mod api;
 mod crawler;
 mod fingerprint;
 mod forms;
-mod api;
 mod headers;
 
-pub use crawler::{Crawler, CrawlerState};
-pub use fingerprint::{TechnologyFingerprinter, Technology, TechnologyCategory};
-pub use forms::{FormAnalyzer, InputField, FormSecurityIssue};
 pub use api::{APIDiscovery, APIEndpoint, APIType, APIVulnerability};
+pub use crawler::{Crawler, CrawlerState};
+pub use fingerprint::{Technology, TechnologyCategory, TechnologyFingerprinter};
+pub use forms::{FormAnalyzer, FormSecurityIssue, InputField};
 pub use headers::{SecurityHeaderAnalyzer, SecurityHeaderResult, Severity as HeaderSeverity};
 
 use anyhow::Result;
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tokio::sync::Semaphore;
 use std::sync::Arc;
 use std::time::Duration;
-use reqwest::Client;
+use tokio::sync::Semaphore;
 
 /// HTTP method types
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -103,7 +103,7 @@ pub struct WebSpider {
 impl WebSpider {
     pub fn new(config: CrawlerConfig) -> Self {
         let max_concurrent = config.rate_limit.min(50);
-        
+
         let client = Client::builder()
             .user_agent(&config.user_agent)
             .timeout(Duration::from_secs(config.timeout_seconds))
@@ -123,12 +123,12 @@ impl WebSpider {
     pub async fn crawl(&self, base_url: &str) -> Result<HashMap<String, WebResource>> {
         let crawler = Crawler::new(self.config.clone());
         let results = crawler.crawl(base_url).await?;
-        
+
         let mut map = HashMap::new();
         for resource in results {
             map.insert(resource.url.clone(), resource);
         }
-        
+
         Ok(map)
     }
 }
@@ -153,7 +153,7 @@ impl TechnologyDetector {
     pub fn detect(_headers: &HashMap<String, String>, _body: &str) -> TechnologyStack {
         // Technology detection pending
         // Analyze headers, HTML comments, script tags, meta tags, etc.
-        
+
         TechnologyStack {
             web_server: Some("nginx/1.18.0".to_string()),
             framework: Some("Laravel".to_string()),
@@ -174,15 +174,13 @@ impl ApiDiscovery {
     pub async fn discover(_base_url: &str) -> Result<Vec<ApiEndpoint>> {
         // API discovery pending
         // Check common paths: /api, /api/v1, /api/v2, /graphql, /rest, etc.
-        
-        Ok(vec![
-            ApiEndpoint {
-                path: "/api/v1/users".to_string(),
-                method: HttpMethod::GET,
-                authenticated: true,
-                parameters: vec!["page".to_string(), "limit".to_string()],
-            }
-        ])
+
+        Ok(vec![ApiEndpoint {
+            path: "/api/v1/users".to_string(),
+            method: HttpMethod::GET,
+            authenticated: true,
+            parameters: vec!["page".to_string(), "limit".to_string()],
+        }])
     }
 }
 

@@ -322,9 +322,7 @@ impl MacroRecorder {
     }
 
     pub fn record_set_variable(&mut self, key: &str, value: &str) {
-        self.record_action(
-            MacroAction::new("set_variable", key).with_parameter("value", value),
-        );
+        self.record_action(MacroAction::new("set_variable", key).with_parameter("value", value));
     }
 
     pub fn finish(&mut self) -> ScanMacro {
@@ -440,17 +438,17 @@ impl MacroLibrary {
                 .with_author("nemue")
                 .with_tag("web")
                 .with_tag("audit")
-                .with_parameter(
-                    MacroParameter::new("target", "Target host", ParameterType::Target),
-                )
+                .with_parameter(MacroParameter::new(
+                    "target",
+                    "Target host",
+                    ParameterType::Target,
+                ))
                 .with_action(
                     MacroAction::new("scan", "connect")
                         .with_argument("{{target}}")
                         .with_argument("80,443,8080,8443"),
                 )
-                .with_action(
-                    MacroAction::new("wait", "delay").with_delay(1000),
-                )
+                .with_action(MacroAction::new("wait", "delay").with_delay(1000))
                 .with_action(
                     MacroAction::new("scan", "connect")
                         .with_argument("{{target}}")
@@ -463,9 +461,11 @@ impl MacroLibrary {
                 .with_author("nemue")
                 .with_tag("stealth")
                 .with_tag("recon")
-                .with_parameter(
-                    MacroParameter::new("target", "Target", ParameterType::Target),
-                )
+                .with_parameter(MacroParameter::new(
+                    "target",
+                    "Target",
+                    ParameterType::Target,
+                ))
                 .with_action(
                     MacroAction::new("scan", "syn")
                         .with_argument("{{target}}")
@@ -514,7 +514,9 @@ impl MacroBuilder {
     }
 
     pub fn variable(mut self, key: &str, value: &str) -> Self {
-        self.macro_.variables.insert(key.to_string(), value.to_string());
+        self.macro_
+            .variables
+            .insert(key.to_string(), value.to_string());
         self
     }
 
@@ -576,8 +578,8 @@ mod tests {
         assert_eq!(param.default_value.as_deref(), Some("192.168.1.1"));
         assert!(param.required);
 
-        let optional_param = MacroParameter::new("verbose", "Verbose output", ParameterType::Boolean)
-            .optional();
+        let optional_param =
+            MacroParameter::new("verbose", "Verbose output", ParameterType::Boolean).optional();
         assert!(!optional_param.required);
     }
 
@@ -587,7 +589,11 @@ mod tests {
             .with_author("tester")
             .with_version("2.0.0")
             .with_action(MacroAction::new("scan", "connect").with_argument("10.0.0.1"))
-            .with_parameter(MacroParameter::new("target", "Target", ParameterType::Target))
+            .with_parameter(MacroParameter::new(
+                "target",
+                "Target",
+                ParameterType::Target,
+            ))
             .with_variable("env", "test")
             .with_tag("network")
             .with_tag("test");
@@ -662,9 +668,7 @@ mod tests {
                 MacroParameter::new("target", "Target", ParameterType::Target)
                     .with_default("10.0.0.1"),
             )
-            .with_parameter(
-                MacroParameter::new("ports", "Ports", ParameterType::Port),
-            )
+            .with_parameter(MacroParameter::new("ports", "Ports", ParameterType::Port))
             .with_variable("env", "production");
 
         // All provided
@@ -691,9 +695,11 @@ mod tests {
     #[test]
     fn test_scan_macro_execute_with_params() {
         let mut macro_ = ScanMacro::new("test", "desc")
-            .with_parameter(
-                MacroParameter::new("target", "Target", ParameterType::Target),
-            )
+            .with_parameter(MacroParameter::new(
+                "target",
+                "Target",
+                ParameterType::Target,
+            ))
             .with_action(
                 MacroAction::new("scan", "connect")
                     .with_argument("{{target}}")
@@ -759,7 +765,11 @@ mod tests {
         let mut lib = MacroLibrary::new();
         lib.register(ScanMacro::new("m1", "desc").with_tag("network"));
         lib.register(ScanMacro::new("m2", "desc").with_tag("web"));
-        lib.register(ScanMacro::new("m3", "desc").with_tag("network").with_tag("quick"));
+        lib.register(
+            ScanMacro::new("m3", "desc")
+                .with_tag("network")
+                .with_tag("quick"),
+        );
 
         let network = lib.search_by_tag("network");
         assert_eq!(network.len(), 2);
@@ -829,7 +839,11 @@ mod tests {
             .version("2.0.0")
             .action(MacroAction::new("scan", "connect").with_argument("10.0.0.1"))
             .action(MacroAction::new("wait", "delay").with_delay(500))
-            .parameter(MacroParameter::new("target", "Target", ParameterType::Target))
+            .parameter(MacroParameter::new(
+                "target",
+                "Target",
+                ParameterType::Target,
+            ))
             .variable("env", "test")
             .tag("custom")
             .build();
@@ -848,7 +862,11 @@ mod tests {
         let macro_ = MacroBuilder::new("serde-test", "Serialization test")
             .author("tester")
             .action(MacroAction::new("scan", "connect").with_argument("10.0.0.1"))
-            .parameter(MacroParameter::new("target", "Target", ParameterType::Target))
+            .parameter(MacroParameter::new(
+                "target",
+                "Target",
+                ParameterType::Target,
+            ))
             .tag("test")
             .build();
 

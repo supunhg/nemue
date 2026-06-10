@@ -1,9 +1,9 @@
+use nemue::api::models::*;
+use nemue::api::state::AppState;
+use nemue::scanner::{PortParser, TargetParser};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
-use nemue::scanner::{PortParser, TargetParser};
-use nemue::api::state::AppState;
-use nemue::api::models::*;
 
 #[tokio::test]
 async fn test_concurrent_scan_creation_load() {
@@ -39,7 +39,11 @@ async fn test_concurrent_scan_creation_load() {
     let stats = state.get_stats();
 
     assert_eq!(stats.total_scans, 50);
-    assert!(elapsed < Duration::from_secs(5), "Creating 50 scans took {:?}", elapsed);
+    assert!(
+        elapsed < Duration::from_secs(5),
+        "Creating 50 scans took {:?}",
+        elapsed
+    );
 }
 
 #[tokio::test]
@@ -80,7 +84,11 @@ async fn test_concurrent_scan_list_load() {
     }
 
     let elapsed = start.elapsed();
-    assert!(elapsed < Duration::from_secs(2), "20 concurrent list operations took {:?}", elapsed);
+    assert!(
+        elapsed < Duration::from_secs(2),
+        "20 concurrent list operations took {:?}",
+        elapsed
+    );
 }
 
 #[test]
@@ -95,7 +103,11 @@ fn test_port_parser_throughput() {
     let elapsed = start.elapsed();
     let ops_per_sec = iterations as f64 / elapsed.as_secs_f64();
 
-    assert!(ops_per_sec > 1000.0, "Port parsing throughput: {:.0} ops/sec", ops_per_sec);
+    assert!(
+        ops_per_sec > 1000.0,
+        "Port parsing throughput: {:.0} ops/sec",
+        ops_per_sec
+    );
 }
 
 #[test]
@@ -110,7 +122,11 @@ fn test_target_parser_throughput() {
     let elapsed = start.elapsed();
     let ops_per_sec = iterations as f64 / elapsed.as_secs_f64();
 
-    assert!(ops_per_sec > 1000.0, "Target parsing throughput: {:.0} ops/sec", ops_per_sec);
+    assert!(
+        ops_per_sec > 1000.0,
+        "Target parsing throughput: {:.0} ops/sec",
+        ops_per_sec
+    );
 }
 
 #[test]
@@ -125,12 +141,16 @@ fn test_cidr_parsing_throughput() {
     let elapsed = start.elapsed();
     let ops_per_sec = iterations as f64 / elapsed.as_secs_f64();
 
-    assert!(ops_per_sec > 100.0, "CIDR parsing throughput: {:.0} ops/sec", ops_per_sec);
+    assert!(
+        ops_per_sec > 100.0,
+        "CIDR parsing throughput: {:.0} ops/sec",
+        ops_per_sec
+    );
 }
 
 #[tokio::test]
 async fn test_concurrent_cache_operations() {
-    use nemue::scanner::cache::{ScanCache, CacheKey};
+    use nemue::scanner::cache::{CacheKey, ScanCache};
 
     let cache = Arc::new(ScanCache::with_defaults());
     let mut handles = Vec::new();
@@ -150,5 +170,9 @@ async fn test_concurrent_cache_operations() {
     }
 
     let elapsed = start.elapsed();
-    assert!(elapsed < Duration::from_secs(2), "20 concurrent cache ops took {:?}", elapsed);
+    assert!(
+        elapsed < Duration::from_secs(2),
+        "20 concurrent cache ops took {:?}",
+        elapsed
+    );
 }

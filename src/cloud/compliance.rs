@@ -102,11 +102,17 @@ pub struct CloudPostureReport {
 
 impl CloudPostureReport {
     pub fn critical_findings(&self) -> Vec<&PostureFinding> {
-        self.posture_findings.iter().filter(|f| f.severity == PostureSeverity::Critical).collect()
+        self.posture_findings
+            .iter()
+            .filter(|f| f.severity == PostureSeverity::Critical)
+            .collect()
     }
 
     pub fn high_findings(&self) -> Vec<&PostureFinding> {
-        self.posture_findings.iter().filter(|f| f.severity == PostureSeverity::High).collect()
+        self.posture_findings
+            .iter()
+            .filter(|f| f.severity == PostureSeverity::High)
+            .collect()
     }
 }
 
@@ -148,7 +154,8 @@ impl CloudComplianceEngine {
         result.add_control(CisControl {
             id: "1.1".to_string(),
             title: "Maintain current contact details".to_string(),
-            description: "Ensure contact email and telephone details for AWS accounts are current".to_string(),
+            description: "Ensure contact email and telephone details for AWS accounts are current"
+                .to_string(),
             status: CisControlStatus::Pass,
             severity: "LOW".to_string(),
             finding_details: None,
@@ -198,7 +205,9 @@ impl CloudComplianceEngine {
         result.add_control(CisControl {
             id: "3.1".to_string(),
             title: "Ensure CloudTrail is enabled in all regions".to_string(),
-            description: "AWS CloudTrail provides a record of actions taken by a user, role, or AWS service".to_string(),
+            description:
+                "AWS CloudTrail provides a record of actions taken by a user, role, or AWS service"
+                    .to_string(),
             status: CisControlStatus::Pass,
             severity: "HIGH".to_string(),
             finding_details: None,
@@ -227,7 +236,8 @@ impl CloudComplianceEngine {
 
         result.add_control(CisControl {
             id: "5.2".to_string(),
-            title: "Ensure no security groups allow ingress from 0.0.0.0/0 to port 3389".to_string(),
+            title: "Ensure no security groups allow ingress from 0.0.0.0/0 to port 3389"
+                .to_string(),
             description: "Security groups should not allow unrestricted access to RDP".to_string(),
             status: CisControlStatus::Pass,
             severity: "CRITICAL".to_string(),
@@ -243,7 +253,8 @@ impl CloudComplianceEngine {
 
         result.add_control(CisControl {
             id: "1.1".to_string(),
-            title: "Ensure multifactor authentication is enabled for all privileged users".to_string(),
+            title: "Ensure multifactor authentication is enabled for all privileged users"
+                .to_string(),
             description: "Enable MFA for all privileged accounts".to_string(),
             status: CisControlStatus::Fail,
             severity: "CRITICAL".to_string(),
@@ -273,7 +284,9 @@ impl CloudComplianceEngine {
 
         result.add_control(CisControl {
             id: "4.1".to_string(),
-            title: "Ensure that 'Secure transfer required' is set to 'Enabled' for storage accounts".to_string(),
+            title:
+                "Ensure that 'Secure transfer required' is set to 'Enabled' for storage accounts"
+                    .to_string(),
             description: "Storage accounts should require secure transfer".to_string(),
             status: CisControlStatus::Pass,
             severity: "HIGH".to_string(),
@@ -333,7 +346,9 @@ impl CloudComplianceEngine {
             description: "Firewall rules should not allow unrestricted SSH".to_string(),
             status: CisControlStatus::Fail,
             severity: "CRITICAL".to_string(),
-            finding_details: Some("Firewall rule 'allow-ssh' permits SSH from 0.0.0.0/0".to_string()),
+            finding_details: Some(
+                "Firewall rule 'allow-ssh' permits SSH from 0.0.0.0/0".to_string(),
+            ),
             remediation: "Restrict SSH firewall rules to known IP ranges".to_string(),
         });
 
@@ -349,7 +364,8 @@ impl CloudComplianceEngine {
 
         result.add_control(CisControl {
             id: "5.1".to_string(),
-            title: "Ensure that Cloud Storage bucket is not anonymously or publicly accessible".to_string(),
+            title: "Ensure that Cloud Storage bucket is not anonymously or publicly accessible"
+                .to_string(),
             description: "GCS buckets should not be publicly accessible".to_string(),
             status: CisControlStatus::Fail,
             severity: "CRITICAL".to_string(),
@@ -360,7 +376,10 @@ impl CloudComplianceEngine {
         result
     }
 
-    pub fn generate_posture_report(provider: CloudProvider, benchmark: CisBenchmarkResult) -> CloudPostureReport {
+    pub fn generate_posture_report(
+        provider: CloudProvider,
+        benchmark: CisBenchmarkResult,
+    ) -> CloudPostureReport {
         let mut findings = Vec::new();
 
         for control in &benchmark.controls {
@@ -436,14 +455,22 @@ mod tests {
     fn test_cis_benchmark_score_calculation() {
         let mut result = CisBenchmarkResult::new(CloudProvider::Aws, "1.0");
         result.add_control(CisControl {
-            id: "1".into(), title: "".into(), description: "".into(),
-            status: CisControlStatus::Pass, severity: "HIGH".into(),
-            finding_details: None, remediation: "".into(),
+            id: "1".into(),
+            title: "".into(),
+            description: "".into(),
+            status: CisControlStatus::Pass,
+            severity: "HIGH".into(),
+            finding_details: None,
+            remediation: "".into(),
         });
         result.add_control(CisControl {
-            id: "2".into(), title: "".into(), description: "".into(),
-            status: CisControlStatus::Fail, severity: "HIGH".into(),
-            finding_details: None, remediation: "".into(),
+            id: "2".into(),
+            title: "".into(),
+            description: "".into(),
+            status: CisControlStatus::Fail,
+            severity: "HIGH".into(),
+            finding_details: None,
+            remediation: "".into(),
         });
         assert_eq!(result.score, 50.0);
     }
@@ -452,14 +479,22 @@ mod tests {
     fn test_cis_benchmark_na_handling() {
         let mut result = CisBenchmarkResult::new(CloudProvider::Aws, "1.0");
         result.add_control(CisControl {
-            id: "1".into(), title: "".into(), description: "".into(),
-            status: CisControlStatus::Pass, severity: "HIGH".into(),
-            finding_details: None, remediation: "".into(),
+            id: "1".into(),
+            title: "".into(),
+            description: "".into(),
+            status: CisControlStatus::Pass,
+            severity: "HIGH".into(),
+            finding_details: None,
+            remediation: "".into(),
         });
         result.add_control(CisControl {
-            id: "2".into(), title: "".into(), description: "".into(),
-            status: CisControlStatus::NotApplicable, severity: "LOW".into(),
-            finding_details: None, remediation: "".into(),
+            id: "2".into(),
+            title: "".into(),
+            description: "".into(),
+            status: CisControlStatus::NotApplicable,
+            severity: "LOW".into(),
+            finding_details: None,
+            remediation: "".into(),
         });
         assert_eq!(result.score, 100.0);
         assert_eq!(result.not_applicable, 1);
@@ -477,9 +512,13 @@ mod tests {
     fn test_posture_report_no_findings_when_all_pass() {
         let mut benchmark = CisBenchmarkResult::new(CloudProvider::Aws, "1.0");
         benchmark.add_control(CisControl {
-            id: "1".into(), title: "".into(), description: "".into(),
-            status: CisControlStatus::Pass, severity: "HIGH".into(),
-            finding_details: None, remediation: "".into(),
+            id: "1".into(),
+            title: "".into(),
+            description: "".into(),
+            status: CisControlStatus::Pass,
+            severity: "HIGH".into(),
+            finding_details: None,
+            remediation: "".into(),
         });
         let report = CloudComplianceEngine::generate_posture_report(CloudProvider::Aws, benchmark);
         assert_eq!(report.posture_findings.len(), 0);

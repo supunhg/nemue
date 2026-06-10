@@ -1,7 +1,7 @@
 // Batch processing for system calls
 use std::time::Duration;
-use tokio::time::interval;
 use tokio::sync::mpsc;
+use tokio::time::interval;
 
 pub struct BatchProcessor<T> {
     batch_size: usize,

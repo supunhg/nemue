@@ -1,9 +1,9 @@
 // Streaming results to disk for large scans
+use anyhow::{Context, Result};
+use serde::Serialize;
 use std::path::PathBuf;
 use tokio::fs::{File, OpenOptions};
 use tokio::io::{AsyncWriteExt, BufWriter};
-use serde::Serialize;
-use anyhow::{Result, Context};
 
 pub struct StreamWriter {
     file: BufWriter<File>,
@@ -73,13 +73,14 @@ impl StreamWriter {
                 let json_value: serde_json::Value = serde_json::to_value(item)?;
                 if let Some(obj) = json_value.as_object() {
                     let keys: Vec<&String> = obj.keys().collect();
-                    let line: Vec<String> = keys.iter().map(|k| {
-                        match obj.get(*k) {
+                    let line: Vec<String> = keys
+                        .iter()
+                        .map(|k| match obj.get(*k) {
                             Some(serde_json::Value::String(s)) => s.clone(),
                             Some(v) => v.to_string(),
                             None => String::new(),
-                        }
-                    }).collect();
+                        })
+                        .collect();
                     self.file.write_all(line.join(delimiter).as_bytes()).await?;
                     self.file.write_all(b"\n").await?;
                 } else {
@@ -93,7 +94,7 @@ impl StreamWriter {
         self.items_written += 1;
 
         // Flush periodically
-        if self.items_written % 100 == 0 {
+        if self.items_written.is_multiple_of(100) {
             self.file.flush().await?;
         }
 
@@ -122,8 +123,8 @@ impl StreamWriter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::tempdir;
     use serde::Deserialize;
+    use tempfile::tempdir;
 
     #[derive(Serialize, Deserialize, Debug, PartialEq)]
     struct TestRecord {

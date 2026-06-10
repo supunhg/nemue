@@ -2,7 +2,6 @@
 ///
 /// This module combines the probe database with protocol parsers for comprehensive
 /// service detection and version identification.
-
 use super::detection::{ServiceDetector, ServiceInfo};
 use super::intensity::{DetectionConfig, MatchPattern};
 use super::parsers::{DatabaseParser, Http2Parser, RdpParser, SmbParser};
@@ -31,7 +30,7 @@ pub struct EnhancedServiceDetector {
 impl EnhancedServiceDetector {
     pub fn new(config: DetectionConfig) -> Self {
         let timeout_ms = config.probe_timeout_ms;
-        
+
         Self {
             basic_detector: ServiceDetector::new(timeout_ms),
             probe_db: ProbeDatabase::new(),
@@ -81,7 +80,10 @@ impl EnhancedServiceDetector {
                     service_info.service = "microsoft-ds".to_string();
                     service_info.product = Some(format!(
                         "Windows SMB ({})",
-                        smb_info.dialect.clone().unwrap_or_else(|| "unknown".to_string())
+                        smb_info
+                            .dialect
+                            .clone()
+                            .unwrap_or_else(|| "unknown".to_string())
                     ));
                     let version = smb_info.version.clone();
                     service_info.version = Some(version.clone());
@@ -126,8 +128,7 @@ impl EnhancedServiceDetector {
                     let version = db_info.version.clone();
                     service_info.version = version.clone();
                     if !db_info.capabilities.is_empty() {
-                        service_info.extra_info =
-                            Some(db_info.capabilities.join(", "));
+                        service_info.extra_info = Some(db_info.capabilities.join(", "));
                     }
                     service_info.confidence = 95;
                     info!("MySQL detected: {:?}", version);
@@ -140,10 +141,8 @@ impl EnhancedServiceDetector {
                     service_info.service = "postgresql".to_string();
                     service_info.product = Some("PostgreSQL".to_string());
                     if !db_info.auth_methods.is_empty() {
-                        service_info.extra_info = Some(format!(
-                            "Auth: {}",
-                            db_info.auth_methods.join(", ")
-                        ));
+                        service_info.extra_info =
+                            Some(format!("Auth: {}", db_info.auth_methods.join(", ")));
                     }
                     service_info.confidence = 90;
                     info!("PostgreSQL detected");
@@ -158,8 +157,7 @@ impl EnhancedServiceDetector {
                     let version = db_info.version.clone();
                     service_info.version = version.clone();
                     if !db_info.capabilities.is_empty() {
-                        service_info.extra_info =
-                            Some(db_info.capabilities.join(", "));
+                        service_info.extra_info = Some(db_info.capabilities.join(", "));
                     }
                     service_info.confidence = 95;
                     info!("Redis detected: {:?}", version);
@@ -195,7 +193,7 @@ impl EnhancedServiceDetector {
     ) -> ServiceInfo {
         // Get applicable probes for this port
         let probes = self.probe_db.probes_for_port(port);
-        
+
         if self.config.trace {
             debug!(
                 "Running {} probes for port {} at intensity {}",
@@ -244,10 +242,15 @@ impl EnhancedServiceDetector {
     }
 
     /// Send a probe to a target port and capture the response
-    async fn send_probe(&self, target: IpAddr, port: u16, probe: &super::intensity::ServiceProbe) -> Result<Vec<u8>> {
+    async fn send_probe(
+        &self,
+        target: IpAddr,
+        port: u16,
+        probe: &super::intensity::ServiceProbe,
+    ) -> Result<Vec<u8>> {
         let addr = SocketAddr::new(target, port);
         let connect_timeout = Duration::from_millis(self.config.probe_timeout_ms);
-        
+
         let mut stream = match timeout(connect_timeout, TcpStream::connect(addr)).await {
             Ok(Ok(s)) => s,
             _ => return Ok(Vec::new()),
@@ -258,7 +261,8 @@ impl EnhancedServiceDetector {
             let _ = timeout(
                 Duration::from_millis(1000),
                 stream.write_all(&probe.probe_data),
-            ).await;
+            )
+            .await;
         }
 
         // Read response
@@ -274,7 +278,12 @@ impl EnhancedServiceDetector {
     }
 
     /// Match a response against signatures
-    fn match_response(&self, data: &[u8], signatures: &[MatchPattern], port: u16) -> Option<ServiceInfo> {
+    fn match_response(
+        &self,
+        data: &[u8],
+        signatures: &[MatchPattern],
+        port: u16,
+    ) -> Option<ServiceInfo> {
         let mut best_match: Option<ServiceInfo> = None;
 
         for sig in signatures {
@@ -374,7 +383,7 @@ mod tests {
     fn test_enhanced_detector_creation() {
         let detector = EnhancedServiceDetector::new(DetectionConfig::default());
         let stats = detector.probe_statistics();
-        
+
         assert!(stats.total_probes > 0);
         assert!(stats.applicable_probes > 0);
         assert_eq!(stats.intensity, 7); // default
@@ -384,7 +393,7 @@ mod tests {
     fn test_enhanced_detector_light_mode() {
         let detector = EnhancedServiceDetector::new(DetectionConfig::light());
         let stats = detector.probe_statistics();
-        
+
         assert_eq!(stats.intensity, 2);
         assert!(stats.applicable_probes < stats.total_probes);
     }
@@ -393,7 +402,7 @@ mod tests {
     fn test_enhanced_detector_all_mode() {
         let detector = EnhancedServiceDetector::new(DetectionConfig::all());
         let stats = detector.probe_statistics();
-        
+
         assert_eq!(stats.intensity, 9);
         assert_eq!(stats.applicable_probes, stats.total_probes);
     }

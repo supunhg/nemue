@@ -113,7 +113,10 @@ pub enum BluetoothSecurityLevel {
 
 impl BluetoothSecurityLevel {
     pub fn is_secure(&self) -> bool {
-        matches!(self, BluetoothSecurityLevel::SecureConnections | BluetoothSecurityLevel::OutOfBand)
+        matches!(
+            self,
+            BluetoothSecurityLevel::SecureConnections | BluetoothSecurityLevel::OutOfBand
+        )
     }
 
     pub fn as_str(&self) -> &str {
@@ -160,25 +163,34 @@ impl BluetoothDevice {
         self.vulnerabilities.clear();
 
         if !self.security_level.is_secure() && self.security_level != BluetoothSecurityLevel::None {
-            self.vulnerabilities.push("Uses legacy pairing which is vulnerable to eavesdropping".to_string());
+            self.vulnerabilities
+                .push("Uses legacy pairing which is vulnerable to eavesdropping".to_string());
         }
 
         if self.is_paired && !self.is_bonded {
-            self.vulnerabilities.push("Device is paired but not bonded (no key storage)".to_string());
+            self.vulnerabilities
+                .push("Device is paired but not bonded (no key storage)".to_string());
         }
 
-        let has_file_transfer = self.services.iter().any(|s| matches!(s.uuid, ServiceUuid::FileTransfer | ServiceUuid::ObjectPush));
+        let has_file_transfer = self
+            .services
+            .iter()
+            .any(|s| matches!(s.uuid, ServiceUuid::FileTransfer | ServiceUuid::ObjectPush));
         if has_file_transfer {
-            self.vulnerabilities.push("File transfer service exposed - potential data exfiltration risk".to_string());
+            self.vulnerabilities.push(
+                "File transfer service exposed - potential data exfiltration risk".to_string(),
+            );
         }
 
         let has_insecure_services = self.services.iter().any(|s| !s.security_required);
         if has_insecure_services && self.is_connectable {
-            self.vulnerabilities.push("Device exposes services that do not require authentication".to_string());
+            self.vulnerabilities
+                .push("Device exposes services that do not require authentication".to_string());
         }
 
         if self.is_ble && self.security_level == BluetoothSecurityLevel::None {
-            self.vulnerabilities.push("BLE device has no security - susceptible to sniffing".to_string());
+            self.vulnerabilities
+                .push("BLE device has no security - susceptible to sniffing".to_string());
         }
     }
 
@@ -408,10 +420,19 @@ mod tests {
 
     #[test]
     fn test_device_class_from_code() {
-        assert_eq!(DeviceClass::from_class_code(0x020104), DeviceClass::Computer);
+        assert_eq!(
+            DeviceClass::from_class_code(0x020104),
+            DeviceClass::Computer
+        );
         assert_eq!(DeviceClass::from_class_code(0x020204), DeviceClass::Phone);
-        assert_eq!(DeviceClass::from_class_code(0x040404), DeviceClass::AudioVideo);
-        assert_eq!(DeviceClass::from_class_code(0x000000), DeviceClass::Uncategorized);
+        assert_eq!(
+            DeviceClass::from_class_code(0x040404),
+            DeviceClass::AudioVideo
+        );
+        assert_eq!(
+            DeviceClass::from_class_code(0x000000),
+            DeviceClass::Uncategorized
+        );
     }
 
     #[test]
@@ -451,7 +472,8 @@ mod tests {
 
     #[test]
     fn test_secure_device_assessment() {
-        let mut device = create_test_device("SecurePhone", BluetoothSecurityLevel::SecureConnections);
+        let mut device =
+            create_test_device("SecurePhone", BluetoothSecurityLevel::SecureConnections);
         device.assess_security();
         assert!(device.vulnerabilities.is_empty());
     }

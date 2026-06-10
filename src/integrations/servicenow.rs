@@ -1,4 +1,4 @@
-use anyhow::{Result, Context};
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::Duration;
@@ -158,7 +158,10 @@ impl ServiceNowClient {
             .timeout(Duration::from_secs(30))
             .build()
             .expect("Failed to create HTTP client");
-        Self { config, http_client }
+        Self {
+            config,
+            http_client,
+        }
     }
 
     fn api_url(&self, table: &str) -> String {
@@ -188,23 +191,38 @@ impl ServiceNowClient {
             finding.severity.as_str(),
             finding.script_id,
             finding.description,
-            if finding.cve_ids.is_empty() { "None".to_string() } else { finding.cve_ids.join(", ") },
-            if finding.exploit_available { "YES" } else { "No" }
+            if finding.cve_ids.is_empty() {
+                "None".to_string()
+            } else {
+                finding.cve_ids.join(", ")
+            },
+            if finding.exploit_available {
+                "YES"
+            } else {
+                "No"
+            }
         );
 
-        let work_notes = if let Some(ref remediation) = finding.remediation {
-            Some(format!("Remediation: {}", remediation))
-        } else {
-            None
-        };
+        let work_notes = finding
+            .remediation
+            .as_ref()
+            .map(|remediation| format!("Remediation: {}", remediation));
 
         let mut custom_fields = HashMap::new();
         for (snow_field, nemue_field) in &self.config.custom_fields {
             match nemue_field.as_str() {
-                "target" => { custom_fields.insert(snow_field.clone(), serde_json::json!(finding.target)); }
-                "port" => { custom_fields.insert(snow_field.clone(), serde_json::json!(finding.port)); }
-                "cve_ids" => { custom_fields.insert(snow_field.clone(), serde_json::json!(finding.cve_ids)); }
-                "script_id" => { custom_fields.insert(snow_field.clone(), serde_json::json!(finding.script_id)); }
+                "target" => {
+                    custom_fields.insert(snow_field.clone(), serde_json::json!(finding.target));
+                }
+                "port" => {
+                    custom_fields.insert(snow_field.clone(), serde_json::json!(finding.port));
+                }
+                "cve_ids" => {
+                    custom_fields.insert(snow_field.clone(), serde_json::json!(finding.cve_ids));
+                }
+                "script_id" => {
+                    custom_fields.insert(snow_field.clone(), serde_json::json!(finding.script_id));
+                }
                 _ => {}
             }
         }
@@ -214,7 +232,10 @@ impl ServiceNowClient {
             number: None,
             short_description: format!(
                 "[{}] Security Vulnerability: {} on {}:{}",
-                finding.severity.as_str(), finding.script_id, finding.target, finding.port
+                finding.severity.as_str(),
+                finding.script_id,
+                finding.target,
+                finding.port
             ),
             description,
             priority: priority.clone(),
@@ -242,12 +263,24 @@ impl ServiceNowClient {
             "category": incident.category,
         });
 
-        if let Some(ref sub) = incident.subcategory { payload["subcategory"] = serde_json::json!(sub); }
-        if let Some(ref group) = incident.assignment_group { payload["assignment_group"] = serde_json::json!(group); }
-        if let Some(ref user) = incident.assigned_to { payload["assigned_to"] = serde_json::json!(user); }
-        if let Some(ref ci) = incident.cmdb_ci { payload["cmdb_ci"] = serde_json::json!(ci); }
-        if let Some(ref caller) = incident.caller_id { payload["caller_id"] = serde_json::json!(caller); }
-        if let Some(ref notes) = incident.work_notes { payload["work_notes"] = serde_json::json!(notes); }
+        if let Some(ref sub) = incident.subcategory {
+            payload["subcategory"] = serde_json::json!(sub);
+        }
+        if let Some(ref group) = incident.assignment_group {
+            payload["assignment_group"] = serde_json::json!(group);
+        }
+        if let Some(ref user) = incident.assigned_to {
+            payload["assigned_to"] = serde_json::json!(user);
+        }
+        if let Some(ref ci) = incident.cmdb_ci {
+            payload["cmdb_ci"] = serde_json::json!(ci);
+        }
+        if let Some(ref caller) = incident.caller_id {
+            payload["caller_id"] = serde_json::json!(caller);
+        }
+        if let Some(ref notes) = incident.work_notes {
+            payload["work_notes"] = serde_json::json!(notes);
+        }
 
         for (key, value) in &incident.custom_fields {
             payload[key] = value.clone();
@@ -276,9 +309,14 @@ impl ServiceNowClient {
                 "Change request to remediate vulnerability.\n\n\
                  Target: {}\nPort: {}\nSeverity: {}\n\n\
                  {}\n\nRemediation: {}",
-                finding.target, finding.port, finding.severity.as_str(),
+                finding.target,
+                finding.port,
+                finding.severity.as_str(),
                 finding.description,
-                finding.remediation.as_deref().unwrap_or("See security team")
+                finding
+                    .remediation
+                    .as_deref()
+                    .unwrap_or("See security team")
             ),
             priority,
             risk: match finding.severity {
@@ -291,8 +329,13 @@ impl ServiceNowClient {
             assignment_group: self.config.assignment_group.clone(),
             assigned_to: None,
             cmdb_ci: self.config.default_cmdb_ci.clone(),
-            justification: Some(format!("Automated change request from Nemue scan. CVE: {}",
-                if finding.cve_ids.is_empty() { "N/A".to_string() } else { finding.cve_ids.join(", ") }
+            justification: Some(format!(
+                "Automated change request from Nemue scan. CVE: {}",
+                if finding.cve_ids.is_empty() {
+                    "N/A".to_string()
+                } else {
+                    finding.cve_ids.join(", ")
+                }
             )),
         }
     }
@@ -308,10 +351,18 @@ impl ServiceNowClient {
             "type": change.type_,
         });
 
-        if let Some(ref group) = change.assignment_group { payload["assignment_group"] = serde_json::json!(group); }
-        if let Some(ref user) = change.assigned_to { payload["assigned_to"] = serde_json::json!(user); }
-        if let Some(ref ci) = change.cmdb_ci { payload["cmdb_ci"] = serde_json::json!(ci); }
-        if let Some(ref justification) = change.justification { payload["justification"] = serde_json::json!(justification); }
+        if let Some(ref group) = change.assignment_group {
+            payload["assignment_group"] = serde_json::json!(group);
+        }
+        if let Some(ref user) = change.assigned_to {
+            payload["assigned_to"] = serde_json::json!(user);
+        }
+        if let Some(ref ci) = change.cmdb_ci {
+            payload["cmdb_ci"] = serde_json::json!(ci);
+        }
+        if let Some(ref justification) = change.justification {
+            payload["justification"] = serde_json::json!(justification);
+        }
 
         payload
     }
@@ -322,24 +373,34 @@ impl ServiceNowClient {
         let url = self.api_url(table);
         let payload = self.build_incident_payload(incident);
 
-        let resp = self.http_client.post(&url)
+        let resp = self
+            .http_client
+            .post(&url)
             .basic_auth(&self.config.username, Some(&self.config.password))
             .header("Content-Type", "application/json")
             .header("Accept", "application/json")
             .json(&payload)
-            .send().await
+            .send()
+            .await
             .context("Failed to send create incident request to ServiceNow")?;
 
         if !resp.status().is_success() {
             let status = resp.status();
             let body = resp.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("ServiceNow returned status {}: {}", status, body));
+            return Err(anyhow::anyhow!(
+                "ServiceNow returned status {}: {}",
+                status,
+                body
+            ));
         }
 
-        let result: serde_json::Value = resp.json().await
+        let result: serde_json::Value = resp
+            .json()
+            .await
             .context("Failed to parse ServiceNow response")?;
 
-        result.get("result")
+        result
+            .get("result")
             .and_then(|r| r.get("number"))
             .and_then(|v| v.as_str())
             .map(|s| s.to_string())
@@ -351,24 +412,34 @@ impl ServiceNowClient {
         let url = self.api_url("change_request");
         let payload = self.build_change_payload(change);
 
-        let resp = self.http_client.post(&url)
+        let resp = self
+            .http_client
+            .post(&url)
             .basic_auth(&self.config.username, Some(&self.config.password))
             .header("Content-Type", "application/json")
             .header("Accept", "application/json")
             .json(&payload)
-            .send().await
+            .send()
+            .await
             .context("Failed to send create change request to ServiceNow")?;
 
         if !resp.status().is_success() {
             let status = resp.status();
             let body = resp.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("ServiceNow change request returned status {}: {}", status, body));
+            return Err(anyhow::anyhow!(
+                "ServiceNow change request returned status {}: {}",
+                status,
+                body
+            ));
         }
 
-        let result: serde_json::Value = resp.json().await
+        let result: serde_json::Value = resp
+            .json()
+            .await
             .context("Failed to parse ServiceNow change request response")?;
 
-        result.get("result")
+        result
+            .get("result")
             .and_then(|r| r.get("number"))
             .and_then(|v| v.as_str())
             .map(|s| s.to_string())
@@ -412,11 +483,26 @@ mod tests {
 
     #[test]
     fn test_priority_from_severity() {
-        assert_eq!(ServiceNowPriority::from_severity(&VulnSeverity::Critical), ServiceNowPriority::Critical);
-        assert_eq!(ServiceNowPriority::from_severity(&VulnSeverity::High), ServiceNowPriority::High);
-        assert_eq!(ServiceNowPriority::from_severity(&VulnSeverity::Medium), ServiceNowPriority::Moderate);
-        assert_eq!(ServiceNowPriority::from_severity(&VulnSeverity::Low), ServiceNowPriority::Low);
-        assert_eq!(ServiceNowPriority::from_severity(&VulnSeverity::Info), ServiceNowPriority::Planning);
+        assert_eq!(
+            ServiceNowPriority::from_severity(&VulnSeverity::Critical),
+            ServiceNowPriority::Critical
+        );
+        assert_eq!(
+            ServiceNowPriority::from_severity(&VulnSeverity::High),
+            ServiceNowPriority::High
+        );
+        assert_eq!(
+            ServiceNowPriority::from_severity(&VulnSeverity::Medium),
+            ServiceNowPriority::Moderate
+        );
+        assert_eq!(
+            ServiceNowPriority::from_severity(&VulnSeverity::Low),
+            ServiceNowPriority::Low
+        );
+        assert_eq!(
+            ServiceNowPriority::from_severity(&VulnSeverity::Info),
+            ServiceNowPriority::Planning
+        );
     }
 
     #[test]
@@ -459,7 +545,11 @@ mod tests {
         assert!(incident.description.contains("CVE-2014-0160"));
         assert!(incident.description.contains("Heartbleed"));
         assert!(incident.description.contains("YES")); // exploit available
-        assert!(incident.work_notes.as_ref().unwrap().contains("Update OpenSSL"));
+        assert!(incident
+            .work_notes
+            .as_ref()
+            .unwrap()
+            .contains("Update OpenSSL"));
     }
 
     #[test]
@@ -491,7 +581,11 @@ mod tests {
         assert_eq!(change.risk, "high");
         assert_eq!(change.impact, ServiceNowImpact::High);
         assert_eq!(change.type_, "standard");
-        assert!(change.justification.as_ref().unwrap().contains("CVE-2014-0160"));
+        assert!(change
+            .justification
+            .as_ref()
+            .unwrap()
+            .contains("CVE-2014-0160"));
     }
 
     #[test]
@@ -504,7 +598,10 @@ mod tests {
 
         assert_eq!(payload["type"], "standard");
         assert_eq!(payload["risk"], "high");
-        assert!(payload["justification"].as_str().unwrap().contains("CVE-2014-0160"));
+        assert!(payload["justification"]
+            .as_str()
+            .unwrap()
+            .contains("CVE-2014-0160"));
     }
 
     #[test]
@@ -516,7 +613,10 @@ mod tests {
         let incident = client.create_incident_from_finding(&finding);
         let _payload = client.build_incident_payload(&incident);
         // Custom table is used in create_incident URL construction
-        assert_eq!(client.config.custom_table, Some("u_security_incident".to_string()));
+        assert_eq!(
+            client.config.custom_table,
+            Some("u_security_incident".to_string())
+        );
     }
 
     #[test]
@@ -533,7 +633,10 @@ mod tests {
 
         assert!(incident.custom_fields.contains_key("u_cve_list"));
         assert!(incident.custom_fields.contains_key("u_target_ip"));
-        assert_eq!(incident.custom_fields["u_target_ip"], serde_json::json!("10.0.0.5"));
+        assert_eq!(
+            incident.custom_fields["u_target_ip"],
+            serde_json::json!("10.0.0.5")
+        );
     }
 
     #[test]
@@ -542,22 +645,40 @@ mod tests {
         let client = ServiceNowClient::new(config);
 
         let critical = VulnResult {
-            script_id: "test".to_string(), target: "1.1.1.1".to_string(), port: 80,
-            vulnerable: true, severity: VulnSeverity::Critical, cve_ids: vec![],
-            description: "".to_string(), evidence: None, remediation: None,
-            references: vec![], exploit_available: false,
+            script_id: "test".to_string(),
+            target: "1.1.1.1".to_string(),
+            port: 80,
+            vulnerable: true,
+            severity: VulnSeverity::Critical,
+            cve_ids: vec![],
+            description: "".to_string(),
+            evidence: None,
+            remediation: None,
+            references: vec![],
+            exploit_available: false,
         };
-        assert_eq!(client.create_incident_from_finding(&critical).impact, ServiceNowImpact::High);
+        assert_eq!(
+            client.create_incident_from_finding(&critical).impact,
+            ServiceNowImpact::High
+        );
 
         let medium = VulnResult {
-            severity: VulnSeverity::Medium, ..critical.clone()
+            severity: VulnSeverity::Medium,
+            ..critical.clone()
         };
-        assert_eq!(client.create_incident_from_finding(&medium).impact, ServiceNowImpact::Medium);
+        assert_eq!(
+            client.create_incident_from_finding(&medium).impact,
+            ServiceNowImpact::Medium
+        );
 
         let info = VulnResult {
-            severity: VulnSeverity::Info, ..critical
+            severity: VulnSeverity::Info,
+            ..critical
         };
-        assert_eq!(client.create_incident_from_finding(&info).impact, ServiceNowImpact::Low);
+        assert_eq!(
+            client.create_incident_from_finding(&info).impact,
+            ServiceNowImpact::Low
+        );
     }
 
     #[test]

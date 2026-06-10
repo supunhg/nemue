@@ -79,10 +79,10 @@ impl SslScanner {
     /// Perform complete SSL/TLS scan
     pub async fn scan(&self) -> Result<SslScanResult> {
         let target_addr = SocketAddr::new(self.config.target, self.config.port);
-        
+
         // 1. Detect supported TLS versions
         let supported_versions = self.detect_tls_versions(target_addr).await?;
-        
+
         // 2. Enumerate cipher suites for each version
         let mut supported_ciphers = Vec::new();
         for version in &supported_versions {
@@ -90,14 +90,14 @@ impl SslScanner {
                 supported_ciphers.push(ciphers);
             }
         }
-        
+
         // 3. Get certificate information (if supported)
         let certificate_info = if self.config.validate_certificates {
             self.get_certificate_info(target_addr).await.ok()
         } else {
             None
         };
-        
+
         // 4. Check for vulnerabilities
         let vulnerabilities = if self.config.check_vulnerabilities {
             let vuln_scanner = vulnerabilities::VulnerabilityScanner::new(self.config.timeout);
@@ -105,7 +105,7 @@ impl SslScanner {
         } else {
             Vec::new()
         };
-        
+
         // 5. Calculate security grade
         let security_grade = self.calculate_security_grade(
             &supported_versions,
@@ -113,7 +113,7 @@ impl SslScanner {
             &certificate_info,
             &vulnerabilities,
         );
-        
+
         // 6. Generate recommendations
         let recommendations = self.generate_recommendations(
             &supported_versions,
@@ -121,7 +121,7 @@ impl SslScanner {
             &certificate_info,
             &vulnerabilities,
         );
-        
+
         Ok(SslScanResult {
             target: self.config.target,
             port: self.config.port,
@@ -137,7 +137,7 @@ impl SslScanner {
     /// Detect supported TLS versions
     async fn detect_tls_versions(&self, target: SocketAddr) -> Result<Vec<TlsVersion>> {
         let mut supported = Vec::new();
-        
+
         let versions_to_test = vec![
             TlsVersion::Tls13,
             TlsVersion::Tls12,
@@ -146,26 +146,26 @@ impl SslScanner {
             TlsVersion::SslV3,
             TlsVersion::SslV2,
         ];
-        
+
         for version in versions_to_test {
             if self.test_tls_version(target, version).await {
                 supported.push(version);
             }
         }
-        
+
         Ok(supported)
     }
 
     /// Test if a specific TLS version is supported
     async fn test_tls_version(&self, target: SocketAddr, version: TlsVersion) -> bool {
         let hello = self.build_client_hello(version);
-        
+
         match timeout(self.config.timeout, TcpStream::connect(target)).await {
             Ok(Ok(mut stream)) => {
                 if stream.write_all(&hello).await.is_err() {
                     return false;
                 }
-                
+
                 let mut response = vec![0u8; 4096];
                 match timeout(Duration::from_secs(2), stream.read(&mut response)).await {
                     Ok(Ok(n)) if n > 0 => {
@@ -180,28 +180,32 @@ impl SslScanner {
     }
 
     /// Enumerate supported cipher suites for a TLS version
-    async fn enumerate_ciphers(&self, target: SocketAddr, version: TlsVersion) -> Result<SupportedCiphers> {
+    async fn enumerate_ciphers(
+        &self,
+        target: SocketAddr,
+        version: TlsVersion,
+    ) -> Result<SupportedCiphers> {
         // Test common cipher suites
         let cipher_ids = self.get_common_cipher_ids();
         let mut supported = Vec::new();
-        
+
         for id in cipher_ids {
             if let Some(cipher) = cipher::CipherDatabase::get_cipher(id) {
-                if cipher.tls_versions.contains(&version) {
-                    if self.test_cipher(target, version, id).await {
-                        supported.push(cipher);
-                    }
+                if cipher.tls_versions.contains(&version)
+                    && self.test_cipher(target, version, id).await
+                {
+                    supported.push(cipher);
                 }
             }
         }
-        
+
         // Determine preferred cipher
         let preferred_cipher = if !supported.is_empty() {
             Some(supported[0].clone())
         } else {
             None
         };
-        
+
         Ok(SupportedCiphers {
             tls_version: version,
             ciphers: supported,
@@ -212,18 +216,16 @@ impl SslScanner {
     /// Test if a specific cipher suite is supported
     async fn test_cipher(&self, target: SocketAddr, version: TlsVersion, cipher_id: u16) -> bool {
         let hello = self.build_client_hello_with_cipher(version, cipher_id);
-        
+
         match timeout(self.config.timeout, TcpStream::connect(target)).await {
             Ok(Ok(mut stream)) => {
                 if stream.write_all(&hello).await.is_err() {
                     return false;
                 }
-                
+
                 let mut response = vec![0u8; 4096];
                 match timeout(Duration::from_secs(2), stream.read(&mut response)).await {
-                    Ok(Ok(n)) if n > 0 => {
-                        self.check_cipher_acceptance(&response[..n], cipher_id)
-                    }
+                    Ok(Ok(n)) if n > 0 => self.check_cipher_acceptance(&response[..n], cipher_id),
                     _ => false,
                 }
             }
@@ -235,7 +237,7 @@ impl SslScanner {
     async fn get_certificate_info(&self, _target: SocketAddr) -> Result<CertificateInfo> {
         // Placeholder - in production, use rustls or native-tls
         // to properly parse X.509 certificates
-        
+
         // For now, return a mock certificate chain
         let mock_cert = certificate::Certificate {
             subject: "CN=example.com".to_string(),
@@ -250,7 +252,7 @@ impl SslScanner {
             self_signed: false,
             fingerprint: "".to_string(),
         };
-        
+
         let chain = certificate::CertificateChain {
             leaf: mock_cert,
             intermediates: Vec::new(),
@@ -258,7 +260,7 @@ impl SslScanner {
             is_valid: true,
             validation_errors: Vec::new(),
         };
-        
+
         Ok(CertificateInfo {
             chain,
             is_trusted: true,
@@ -277,15 +279,16 @@ impl SslScanner {
         vulnerabilities: &[vulnerabilities::VulnerabilityScanResult],
     ) -> SecurityGrade {
         let mut score = 100;
-        
+
         // Check for critical vulnerabilities
         let has_critical_vuln = vulnerabilities.iter().any(|v| {
-            v.vulnerable && v.vulnerability.severity() == vulnerabilities::VulnerabilitySeverity::Critical
+            v.vulnerable
+                && v.vulnerability.severity() == vulnerabilities::VulnerabilitySeverity::Critical
         });
         if has_critical_vuln {
             return SecurityGrade::F;
         }
-        
+
         // Check for deprecated protocols
         if versions.contains(&TlsVersion::SslV2) || versions.contains(&TlsVersion::SslV3) {
             score -= 30;
@@ -296,7 +299,7 @@ impl SslScanner {
         if versions.contains(&TlsVersion::Tls11) {
             score -= 5;
         }
-        
+
         // Check cipher strength
         for cipher_set in ciphers {
             if cipher_set.has_weak_ciphers() {
@@ -307,7 +310,7 @@ impl SslScanner {
                 score -= 20;
             }
         }
-        
+
         // Check certificate issues
         if let Some(cert) = cert_info {
             if !cert.is_trusted {
@@ -320,13 +323,17 @@ impl SslScanner {
                 score -= cert.issues.len() as i32 * 5;
             }
         }
-        
+
         // Check for high severity vulnerabilities
-        let high_vuln_count = vulnerabilities.iter().filter(|v| {
-            v.vulnerable && v.vulnerability.severity() == vulnerabilities::VulnerabilitySeverity::High
-        }).count();
+        let high_vuln_count = vulnerabilities
+            .iter()
+            .filter(|v| {
+                v.vulnerable
+                    && v.vulnerability.severity() == vulnerabilities::VulnerabilitySeverity::High
+            })
+            .count();
         score -= high_vuln_count as i32 * 10;
-        
+
         // Map score to grade
         match score {
             95.. => SecurityGrade::APlus,
@@ -351,7 +358,7 @@ impl SslScanner {
         vulnerabilities: &[vulnerabilities::VulnerabilityScanResult],
     ) -> Vec<String> {
         let mut recommendations = Vec::new();
-        
+
         // Protocol recommendations
         if versions.contains(&TlsVersion::SslV2) {
             recommendations.push("Disable SSLv2 immediately (CRITICAL)".to_string());
@@ -365,7 +372,7 @@ impl SslScanner {
         if !versions.contains(&TlsVersion::Tls13) {
             recommendations.push("Enable TLS 1.3 for best security and performance".to_string());
         }
-        
+
         // Cipher recommendations
         for cipher_set in ciphers {
             if cipher_set.has_weak_ciphers() {
@@ -374,7 +381,7 @@ impl SslScanner {
                     cipher_set.tls_version
                 ));
             }
-            
+
             let no_pfs = cipher_set.ciphers.iter().filter(|c| !c.pfs).count();
             if no_pfs > 0 {
                 recommendations.push(format!(
@@ -383,13 +390,13 @@ impl SslScanner {
                 ));
             }
         }
-        
+
         // Certificate recommendations
         if let Some(cert) = cert_info {
             for issue in &cert.issues {
                 recommendations.push(format!("Certificate: {}", issue.description));
             }
-            
+
             if cert.chain.leaf.days_until_expiry() < 30 {
                 recommendations.push(format!(
                     "Certificate expires in {} days - renew soon",
@@ -397,7 +404,7 @@ impl SslScanner {
                 ));
             }
         }
-        
+
         // Vulnerability recommendations
         for vuln_result in vulnerabilities {
             if vuln_result.vulnerable {
@@ -410,48 +417,124 @@ impl SslScanner {
                 ));
             }
         }
-        
+
         recommendations
     }
 
     // Helper methods for building TLS handshake messages
-    
+
     fn build_client_hello(&self, version: TlsVersion) -> Vec<u8> {
         let version_bytes = version.protocol_version_bytes();
         vec![
-            0x16, version_bytes[0], version_bytes[1], // Handshake
-            0x00, 0x35, // Length
-            0x01, 0x00, 0x00, 0x31, // ClientHello
-            version_bytes[0], version_bytes[1], // Version
+            0x16,
+            version_bytes[0],
+            version_bytes[1], // Handshake
+            0x00,
+            0x35, // Length
+            0x01,
+            0x00,
+            0x00,
+            0x31, // ClientHello
+            version_bytes[0],
+            version_bytes[1], // Version
             // Random (32 bytes - simplified)
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
             0x00, // Session ID length
-            0x00, 0x02, // Cipher suites length
-            0x00, 0x2f, // TLS_RSA_WITH_AES_128_CBC_SHA
-            0x01, 0x00, // Compression: null
+            0x00,
+            0x02, // Cipher suites length
+            0x00,
+            0x2f, // TLS_RSA_WITH_AES_128_CBC_SHA
+            0x01,
+            0x00, // Compression: null
         ]
     }
 
     fn build_client_hello_with_cipher(&self, version: TlsVersion, cipher_id: u16) -> Vec<u8> {
         let version_bytes = version.protocol_version_bytes();
         let cipher_bytes = cipher_id.to_be_bytes();
-        
+
         vec![
-            0x16, version_bytes[0], version_bytes[1],
-            0x00, 0x35,
-            0x01, 0x00, 0x00, 0x31,
-            version_bytes[0], version_bytes[1],
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x16,
+            version_bytes[0],
+            version_bytes[1],
             0x00,
-            0x00, 0x02, // Cipher suites length
-            cipher_bytes[0], cipher_bytes[1], // Requested cipher
-            0x01, 0x00,
+            0x35,
+            0x01,
+            0x00,
+            0x00,
+            0x31,
+            version_bytes[0],
+            version_bytes[1],
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x02, // Cipher suites length
+            cipher_bytes[0],
+            cipher_bytes[1], // Requested cipher
+            0x01,
+            0x00,
         ]
     }
 
@@ -471,12 +554,9 @@ impl SslScanner {
     fn get_common_cipher_ids(&self) -> Vec<u16> {
         vec![
             // TLS 1.3
-            0x1301, 0x1302, 0x1303,
-            // TLS 1.2 strong
-            0xc02f, 0xc030, 0xcca8,
-            // TLS 1.2 medium
-            0xc013, 0xc014,
-            // Weak (for detection)
+            0x1301, 0x1302, 0x1303, // TLS 1.2 strong
+            0xc02f, 0xc030, 0xcca8, // TLS 1.2 medium
+            0xc013, 0xc014, // Weak (for detection)
             0x0005, 0x000a,
         ]
     }
@@ -504,7 +584,7 @@ mod tests {
     fn test_client_hello_format() {
         let config = SslConfig::default();
         let scanner = SslScanner::new(config);
-        
+
         let hello = scanner.build_client_hello(TlsVersion::Tls12);
         assert_eq!(hello[0], 0x16); // Handshake
         assert_eq!(hello[1], 0x03); // TLS 1.x
@@ -516,7 +596,7 @@ mod tests {
         let config = SslConfig::default();
         let scanner = SslScanner::new(config);
         let ids = scanner.get_common_cipher_ids();
-        
+
         assert!(!ids.is_empty());
         assert!(ids.contains(&0x1301)); // TLS 1.3 cipher
         assert!(ids.contains(&0xc02f)); // TLS 1.2 strong cipher

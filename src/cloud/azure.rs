@@ -1,25 +1,14 @@
+#![allow(dead_code)]
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct AzureConfig {
     pub subscription_id: String,
     pub tenant_id: Option<String>,
     pub client_id: Option<String>,
     pub client_secret: Option<String>,
     pub resource_group: Option<String>,
-}
-
-impl Default for AzureConfig {
-    fn default() -> Self {
-        Self {
-            subscription_id: String::new(),
-            tenant_id: None,
-            client_id: None,
-            client_secret: None,
-            resource_group: None,
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -177,9 +166,20 @@ impl AzureScanReport {
     }
 
     pub fn critical_count(&self) -> usize {
-        self.ad_findings.iter().filter(|f| f.severity == "CRITICAL").count()
-            + self.nsg_findings.iter().filter(|f| f.severity == "CRITICAL").count()
-            + self.activity_log_findings.iter().filter(|f| f.severity == "CRITICAL").count()
+        self.ad_findings
+            .iter()
+            .filter(|f| f.severity == "CRITICAL")
+            .count()
+            + self
+                .nsg_findings
+                .iter()
+                .filter(|f| f.severity == "CRITICAL")
+                .count()
+            + self
+                .activity_log_findings
+                .iter()
+                .filter(|f| f.severity == "CRITICAL")
+                .count()
     }
 }
 
@@ -206,7 +206,11 @@ impl AzureScanner {
                 1 => BlobPublicAccess::Blob,
                 _ => BlobPublicAccess::None,
             },
-            encryption: if encrypted { BlobEncryptionStatus::MicrosoftManaged } else { BlobEncryptionStatus::None },
+            encryption: if encrypted {
+                BlobEncryptionStatus::MicrosoftManaged
+            } else {
+                BlobEncryptionStatus::None
+            },
             lease_status: "unlocked".to_string(),
             last_modified: None,
             tags: HashMap::new(),
@@ -216,14 +220,17 @@ impl AzureScanner {
     pub fn check_azure_ad(users: &[(&str, bool, bool, u64, bool, bool)]) -> Vec<AzureAdFinding> {
         let mut findings = Vec::new();
 
-        for &(user, has_mfa, is_guest, days_inactive, is_global_admin, has_conditional_access) in users {
+        for &(user, has_mfa, is_guest, days_inactive, is_global_admin, has_conditional_access) in
+            users
+        {
             if !has_mfa {
                 findings.push(AzureAdFinding {
                     finding_type: AzureAdFindingType::NoMfa,
                     resource: user.to_string(),
                     severity: "HIGH".to_string(),
                     description: format!("User '{}' does not have MFA enabled", user),
-                    recommendation: "Enable MFA for all users using Azure AD Conditional Access".to_string(),
+                    recommendation: "Enable MFA for all users using Azure AD Conditional Access"
+                        .to_string(),
                 });
             }
 
@@ -233,7 +240,8 @@ impl AzureScanner {
                     resource: user.to_string(),
                     severity: "MEDIUM".to_string(),
                     description: format!("User '{}' is a guest account", user),
-                    recommendation: "Review guest user access and remove unnecessary guests".to_string(),
+                    recommendation: "Review guest user access and remove unnecessary guests"
+                        .to_string(),
                 });
             }
 
@@ -242,7 +250,10 @@ impl AzureScanner {
                     finding_type: AzureAdFindingType::StaleAccounts,
                     resource: user.to_string(),
                     severity: "MEDIUM".to_string(),
-                    description: format!("User '{}' has been inactive for {} days", user, days_inactive),
+                    description: format!(
+                        "User '{}' has been inactive for {} days",
+                        user, days_inactive
+                    ),
                     recommendation: "Disable or remove stale user accounts".to_string(),
                 });
             }
@@ -253,7 +264,9 @@ impl AzureScanner {
                     resource: user.to_string(),
                     severity: "HIGH".to_string(),
                     description: format!("User '{}' has Global Administrator role", user),
-                    recommendation: "Limit Global Administrator role; use PIM for just-in-time access".to_string(),
+                    recommendation:
+                        "Limit Global Administrator role; use PIM for just-in-time access"
+                            .to_string(),
                 });
             }
 
@@ -262,8 +275,13 @@ impl AzureScanner {
                     finding_type: AzureAdFindingType::NoConditionalAccess,
                     resource: user.to_string(),
                     severity: "MEDIUM".to_string(),
-                    description: format!("User '{}' has no conditional access policies applied", user),
-                    recommendation: "Apply Conditional Access policies for risk-based authentication".to_string(),
+                    description: format!(
+                        "User '{}' has no conditional access policies applied",
+                        user
+                    ),
+                    recommendation:
+                        "Apply Conditional Access policies for risk-based authentication"
+                            .to_string(),
                 });
             }
         }
@@ -316,7 +334,11 @@ impl AzureScanner {
         findings
     }
 
-    pub fn analyze_activity_logs(has_diagnostic: bool, retention_days: u32, has_alerts: bool) -> Vec<ActivityLogFinding> {
+    pub fn analyze_activity_logs(
+        has_diagnostic: bool,
+        retention_days: u32,
+        has_alerts: bool,
+    ) -> Vec<ActivityLogFinding> {
         let mut findings = Vec::new();
 
         if !has_diagnostic {
@@ -332,7 +354,10 @@ impl AzureScanner {
             findings.push(ActivityLogFinding {
                 finding_type: ActivityLogFindingType::NoRetentionPolicy,
                 severity: "MEDIUM".to_string(),
-                description: format!("Activity log retention is {} days, should be at least 365", retention_days),
+                description: format!(
+                    "Activity log retention is {} days, should be at least 365",
+                    retention_days
+                ),
                 recommendation: "Set activity log retention to at least 365 days".to_string(),
             });
         }
@@ -342,7 +367,9 @@ impl AzureScanner {
                 finding_type: ActivityLogFindingType::NoAlertRules,
                 severity: "MEDIUM".to_string(),
                 description: "No alert rules configured for activity log events".to_string(),
-                recommendation: "Create alert rules for critical operations (e.g., security policy changes)".to_string(),
+                recommendation:
+                    "Create alert rules for critical operations (e.g., security policy changes)"
+                        .to_string(),
             });
         }
 
@@ -376,46 +403,54 @@ mod tests {
 
     #[test]
     fn test_azure_ad_no_mfa() {
-        let users = vec![
-            ("user1", false, false, 10, false, true),
-        ];
+        let users = vec![("user1", false, false, 10, false, true)];
         let findings = AzureScanner::check_azure_ad(&users);
-        assert!(findings.iter().any(|f| f.finding_type == AzureAdFindingType::NoMfa));
+        assert!(findings
+            .iter()
+            .any(|f| f.finding_type == AzureAdFindingType::NoMfa));
     }
 
     #[test]
     fn test_azure_ad_stale_account() {
-        let users = vec![
-            ("user2", true, false, 150, false, true),
-        ];
+        let users = vec![("user2", true, false, 150, false, true)];
         let findings = AzureScanner::check_azure_ad(&users);
-        assert!(findings.iter().any(|f| f.finding_type == AzureAdFindingType::StaleAccounts));
+        assert!(findings
+            .iter()
+            .any(|f| f.finding_type == AzureAdFindingType::StaleAccounts));
     }
 
     #[test]
     fn test_azure_ad_global_admin() {
-        let users = vec![
-            ("admin", true, false, 5, true, true),
-        ];
+        let users = vec![("admin", true, false, 5, true, true)];
         let findings = AzureScanner::check_azure_ad(&users);
-        assert!(findings.iter().any(|f| f.finding_type == AzureAdFindingType::OverPrivilegedRoles));
+        assert!(findings
+            .iter()
+            .any(|f| f.finding_type == AzureAdFindingType::OverPrivilegedRoles));
     }
 
     #[test]
     fn test_azure_ad_guest_user() {
-        let users = vec![
-            ("external@partner.com", true, true, 5, false, false),
-        ];
+        let users = vec![("external@partner.com", true, true, 5, false, false)];
         let findings = AzureScanner::check_azure_ad(&users);
-        assert!(findings.iter().any(|f| f.finding_type == AzureAdFindingType::GuestUsers));
-        assert!(findings.iter().any(|f| f.finding_type == AzureAdFindingType::NoConditionalAccess));
+        assert!(findings
+            .iter()
+            .any(|f| f.finding_type == AzureAdFindingType::GuestUsers));
+        assert!(findings
+            .iter()
+            .any(|f| f.finding_type == AzureAdFindingType::NoConditionalAccess));
     }
 
     #[test]
     fn test_nsg_ssh_open() {
-        let rules = vec![
-            ("nsg-web", "rg-prod", "Inbound", "*", "22", "tcp", "allow-ssh"),
-        ];
+        let rules = vec![(
+            "nsg-web",
+            "rg-prod",
+            "Inbound",
+            "*",
+            "22",
+            "tcp",
+            "allow-ssh",
+        )];
         let findings = AzureScanner::analyze_nsg(&rules);
         assert_eq!(findings.len(), 1);
         assert_eq!(findings[0].finding_type, NsgFindingType::UnrestrictedSsh);
@@ -424,27 +459,45 @@ mod tests {
 
     #[test]
     fn test_nsg_rdp_open() {
-        let rules = vec![
-            ("nsg-win", "rg-prod", "Inbound", "0.0.0.0/0", "3389", "tcp", "allow-rdp"),
-        ];
+        let rules = vec![(
+            "nsg-win",
+            "rg-prod",
+            "Inbound",
+            "0.0.0.0/0",
+            "3389",
+            "tcp",
+            "allow-rdp",
+        )];
         let findings = AzureScanner::analyze_nsg(&rules);
         assert_eq!(findings[0].finding_type, NsgFindingType::UnrestrictedRdp);
     }
 
     #[test]
     fn test_nsg_outbound_ignored() {
-        let rules = vec![
-            ("nsg-web", "rg-prod", "Outbound", "*", "443", "tcp", "allow-https"),
-        ];
+        let rules = vec![(
+            "nsg-web",
+            "rg-prod",
+            "Outbound",
+            "*",
+            "443",
+            "tcp",
+            "allow-https",
+        )];
         let findings = AzureScanner::analyze_nsg(&rules);
         assert_eq!(findings.len(), 0);
     }
 
     #[test]
     fn test_nsg_private_source() {
-        let rules = vec![
-            ("nsg-internal", "rg-prod", "Inbound", "10.0.0.0/8", "22", "tcp", "allow-ssh-internal"),
-        ];
+        let rules = vec![(
+            "nsg-internal",
+            "rg-prod",
+            "Inbound",
+            "10.0.0.0/8",
+            "22",
+            "tcp",
+            "allow-ssh-internal",
+        )];
         let findings = AzureScanner::analyze_nsg(&rules);
         assert_eq!(findings.len(), 0);
     }
@@ -453,9 +506,15 @@ mod tests {
     fn test_activity_log_no_diagnostic() {
         let findings = AzureScanner::analyze_activity_logs(false, 90, false);
         assert_eq!(findings.len(), 3);
-        assert!(findings.iter().any(|f| f.finding_type == ActivityLogFindingType::DiagnosticSettingsMissing));
-        assert!(findings.iter().any(|f| f.finding_type == ActivityLogFindingType::NoRetentionPolicy));
-        assert!(findings.iter().any(|f| f.finding_type == ActivityLogFindingType::NoAlertRules));
+        assert!(findings
+            .iter()
+            .any(|f| f.finding_type == ActivityLogFindingType::DiagnosticSettingsMissing));
+        assert!(findings
+            .iter()
+            .any(|f| f.finding_type == ActivityLogFindingType::NoRetentionPolicy));
+        assert!(findings
+            .iter()
+            .any(|f| f.finding_type == ActivityLogFindingType::NoAlertRules));
     }
 
     #[test]
@@ -469,12 +528,25 @@ mod tests {
         let report = AzureScanReport {
             config: AzureConfig::default(),
             blob_containers: vec![],
-            ad_findings: vec![
-                AzureAdFinding { finding_type: AzureAdFindingType::NoMfa, resource: "u1".into(), severity: "CRITICAL".into(), description: "".into(), recommendation: "".into() },
-            ],
-            nsg_findings: vec![
-                NsgFinding { nsg_name: "n1".into(), resource_group: "rg".into(), finding_type: NsgFindingType::UnrestrictedSsh, rule_name: "".into(), direction: "".into(), priority: 0, source_address: "".into(), destination_port: "".into(), protocol: "".into(), severity: "HIGH".into() },
-            ],
+            ad_findings: vec![AzureAdFinding {
+                finding_type: AzureAdFindingType::NoMfa,
+                resource: "u1".into(),
+                severity: "CRITICAL".into(),
+                description: "".into(),
+                recommendation: "".into(),
+            }],
+            nsg_findings: vec![NsgFinding {
+                nsg_name: "n1".into(),
+                resource_group: "rg".into(),
+                finding_type: NsgFindingType::UnrestrictedSsh,
+                rule_name: "".into(),
+                direction: "".into(),
+                priority: 0,
+                source_address: "".into(),
+                destination_port: "".into(),
+                protocol: "".into(),
+                severity: "HIGH".into(),
+            }],
             activity_log_findings: vec![],
             scan_timestamp: "2024-01-01T00:00:00Z".into(),
         };

@@ -1,10 +1,10 @@
 // Packet trace module
 // Provides detailed logging of all packets sent and received during scanning
 
+use chrono::{DateTime, Utc};
 use std::fmt;
 use std::net::IpAddr;
 use std::sync::Mutex;
-use chrono::{DateTime, Utc};
 use tracing::info;
 
 /// Packet direction
@@ -39,14 +39,30 @@ pub struct TcpFlags {
 impl fmt::Display for TcpFlags {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut flags = Vec::new();
-        if self.syn { flags.push("SYN"); }
-        if self.ack { flags.push("ACK"); }
-        if self.fin { flags.push("FIN"); }
-        if self.rst { flags.push("RST"); }
-        if self.psh { flags.push("PSH"); }
-        if self.urg { flags.push("URG"); }
-        if self.ece { flags.push("ECE"); }
-        if self.cwr { flags.push("CWR"); }
+        if self.syn {
+            flags.push("SYN");
+        }
+        if self.ack {
+            flags.push("ACK");
+        }
+        if self.fin {
+            flags.push("FIN");
+        }
+        if self.rst {
+            flags.push("RST");
+        }
+        if self.psh {
+            flags.push("PSH");
+        }
+        if self.urg {
+            flags.push("URG");
+        }
+        if self.ece {
+            flags.push("ECE");
+        }
+        if self.cwr {
+            flags.push("CWR");
+        }
         if flags.is_empty() {
             write!(f, "NONE")
         } else {
@@ -83,7 +99,10 @@ impl fmt::Display for PacketEvent {
             self.source_port,
             self.dest_ip,
             self.dest_port,
-            self.flags.as_ref().map(|f| f.to_string()).unwrap_or_default(),
+            self.flags
+                .as_ref()
+                .map(|f| f.to_string())
+                .unwrap_or_default(),
             self.length,
         )
     }
@@ -253,7 +272,16 @@ mod tests {
             IpAddr::V4(Ipv4Addr::new(192, 168, 1, 1)),
             80,
             "TCP",
-            Some(TcpFlags { syn: true, ack: false, fin: false, rst: false, psh: false, urg: false, ece: false, cwr: false }),
+            Some(TcpFlags {
+                syn: true,
+                ack: false,
+                fin: false,
+                rst: false,
+                psh: false,
+                urg: false,
+                ece: false,
+                cwr: false,
+            }),
             60,
             Some(64),
         );
@@ -269,7 +297,16 @@ mod tests {
             IpAddr::V4(Ipv4Addr::new(192, 168, 1, 1)),
             80,
             "TCP",
-            Some(TcpFlags { syn: true, ack: false, fin: false, rst: false, psh: false, urg: false, ece: false, cwr: false }),
+            Some(TcpFlags {
+                syn: true,
+                ack: false,
+                fin: false,
+                rst: false,
+                psh: false,
+                urg: false,
+                ece: false,
+                cwr: false,
+            }),
             60,
             Some(64),
         );
@@ -309,7 +346,16 @@ mod tests {
             IpAddr::V4(Ipv4Addr::new(192, 168, 1, 1)),
             80,
             "TCP",
-            Some(TcpFlags { syn: true, ack: false, fin: false, rst: false, psh: false, urg: false, ece: false, cwr: false }),
+            Some(TcpFlags {
+                syn: true,
+                ack: false,
+                fin: false,
+                rst: false,
+                psh: false,
+                urg: false,
+                ece: false,
+                cwr: false,
+            }),
             60,
             Some(64),
         );

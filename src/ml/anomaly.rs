@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 
@@ -62,12 +63,17 @@ impl AnomalyDetector {
     pub fn new(threshold: f64) -> Self {
         let mut high_risk_ports = HashSet::new();
         // Common high-risk ports
-        for port in [21, 23, 25, 110, 135, 139, 445, 1433, 1521, 3306, 3389, 5432, 5900, 6379, 8080, 8443, 27017] {
+        for port in [
+            21, 23, 25, 110, 135, 139, 445, 1433, 1521, 3306, 3389, 5432, 5900, 6379, 8080, 8443,
+            27017,
+        ] {
             high_risk_ports.insert(port);
         }
 
         let mut suspicious_services = HashSet::new();
-        for svc in ["telnet", "ftp", "rsh", "rlogin", "rexec", "vnc", "x11", "rdp", "smb"] {
+        for svc in [
+            "telnet", "ftp", "rsh", "rlogin", "rexec", "vnc", "x11", "rdp", "smb",
+        ] {
             suspicious_services.insert(svc.to_string());
         }
 
@@ -121,15 +127,21 @@ impl AnomalyDetector {
         self.baseline.avg_open_ports = total_ports as f64 / total as f64;
 
         for (port, count) in port_counts {
-            self.baseline.common_ports.insert(port, count as f64 / total as f64);
+            self.baseline
+                .common_ports
+                .insert(port, count as f64 / total as f64);
         }
 
         for (svc, count) in service_counts {
-            self.baseline.common_services.insert(svc, count as f64 / total as f64);
+            self.baseline
+                .common_services
+                .insert(svc, count as f64 / total as f64);
         }
 
         for (os, count) in os_counts {
-            self.baseline.common_os_fingerprints.insert(os, count as f64 / total as f64);
+            self.baseline
+                .common_os_fingerprints
+                .insert(os, count as f64 / total as f64);
         }
     }
 
@@ -187,7 +199,7 @@ impl AnomalyDetector {
                     is_anomaly = true;
                     description = format!("High-risk port {} is open", port);
                 } else {
-                    description.push_str(&format!(" and is a high-risk port"));
+                    description.push_str(" and is a high-risk port");
                 }
             }
 
@@ -224,7 +236,9 @@ impl AnomalyDetector {
             }
 
             // Check if service is not in baseline
-            if !self.baseline.common_services.contains_key(service) && self.baseline.total_hosts > 10 {
+            if !self.baseline.common_services.contains_key(service)
+                && self.baseline.total_hosts > 10
+            {
                 anomalies.push(AnomalyResult {
                     anomaly_type: AnomalyType::UnusualService,
                     severity: 0.5,
@@ -262,7 +276,9 @@ impl AnomalyDetector {
 
         if let Some(ref os) = host.os_fingerprint {
             // OS not in baseline
-            if !self.baseline.common_os_fingerprints.contains_key(os) && self.baseline.total_hosts > 10 {
+            if !self.baseline.common_os_fingerprints.contains_key(os)
+                && self.baseline.total_hosts > 10
+            {
                 anomalies.push(AnomalyResult {
                     anomaly_type: AnomalyType::UnusualOsFingerprint,
                     severity: 0.6,
@@ -320,7 +336,7 @@ impl AnomalyDetector {
         let mut consecutive_count = 1;
         let mut range_start = 0;
         for i in 1..sorted_ports.len() {
-            if sorted_ports[i] == sorted_ports[i-1] + 1 {
+            if sorted_ports[i] == sorted_ports[i - 1] + 1 {
                 consecutive_count += 1;
                 if consecutive_count >= 10 {
                     anomalies.push(AnomalyResult {
@@ -328,9 +344,7 @@ impl AnomalyDetector {
                         severity: 0.8,
                         description: format!(
                             "Consecutive port range detected: {}-{} ({} ports)",
-                            sorted_ports[range_start],
-                            sorted_ports[i],
-                            consecutive_count
+                            sorted_ports[range_start], sorted_ports[i], consecutive_count
                         ),
                         port: None,
                         service: None,
@@ -423,7 +437,9 @@ mod tests {
         host.open_ports.push(31337); // Unusual port
 
         let anomalies = detector.detect(&host);
-        assert!(anomalies.iter().any(|a| a.anomaly_type == AnomalyType::UnusualPort && a.port == Some(31337)));
+        assert!(anomalies
+            .iter()
+            .any(|a| a.anomaly_type == AnomalyType::UnusualPort && a.port == Some(31337)));
     }
 
     #[test]
@@ -434,7 +450,9 @@ mod tests {
         host.open_ports.push(3389); // RDP - high risk
 
         let anomalies = detector.detect(&host);
-        assert!(anomalies.iter().any(|a| a.anomaly_type == AnomalyType::UnusualPort && a.port == Some(3389)));
+        assert!(anomalies
+            .iter()
+            .any(|a| a.anomaly_type == AnomalyType::UnusualPort && a.port == Some(3389)));
     }
 
     #[test]
@@ -445,7 +463,9 @@ mod tests {
         host.service = Some("telnet".to_string());
 
         let anomalies = detector.detect(&host);
-        assert!(anomalies.iter().any(|a| a.anomaly_type == AnomalyType::UnusualService));
+        assert!(anomalies
+            .iter()
+            .any(|a| a.anomaly_type == AnomalyType::UnusualService));
     }
 
     #[test]
@@ -456,7 +476,9 @@ mod tests {
         host.os_fingerprint = Some("FreeBSD".to_string());
 
         let anomalies = detector.detect(&host);
-        assert!(anomalies.iter().any(|a| a.anomaly_type == AnomalyType::UnusualOsFingerprint));
+        assert!(anomalies
+            .iter()
+            .any(|a| a.anomaly_type == AnomalyType::UnusualOsFingerprint));
     }
 
     #[test]
@@ -467,7 +489,9 @@ mod tests {
         host.open_ports = (1..=20).collect(); // 20 ports, baseline avg is 5
 
         let anomalies = detector.detect(&host);
-        assert!(anomalies.iter().any(|a| a.anomaly_type == AnomalyType::ScanAnomaly));
+        assert!(anomalies
+            .iter()
+            .any(|a| a.anomaly_type == AnomalyType::ScanAnomaly));
     }
 
     #[test]
@@ -478,7 +502,10 @@ mod tests {
         host.open_ports = (1000..1020).collect(); // 20 consecutive ports
 
         let anomalies = detector.detect(&host);
-        assert!(anomalies.iter().any(|a| a.anomaly_type == AnomalyType::ScanAnomaly && a.description.contains("Consecutive")));
+        assert!(anomalies
+            .iter()
+            .any(|a| a.anomaly_type == AnomalyType::ScanAnomaly
+                && a.description.contains("Consecutive")));
     }
 
     #[test]

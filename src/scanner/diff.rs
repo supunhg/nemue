@@ -7,7 +7,7 @@ use std::collections::{HashMap, HashSet};
 use std::net::IpAddr;
 use std::path::Path;
 
-use crate::scanner::{ScanResult, ScanResults, PortState};
+use crate::scanner::{PortState, ScanResult, ScanResults};
 
 /// Changes between two scan results
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -155,8 +155,11 @@ pub fn compare_scans(scan_a: &ScanResults, scan_b: &ScanResults) -> ScanDiff {
     closed_ports.sort_by(|a, b| a.host.cmp(&b.host).then(a.port.cmp(&b.port)));
     changed_services.sort_by(|a, b| a.host.cmp(&b.host).then(a.port.cmp(&b.port)));
 
-    let total_changes = new_ports.len() + closed_ports.len() + changed_services.len()
-        + new_hosts.len() + removed_hosts.len();
+    let total_changes = new_ports.len()
+        + closed_ports.len()
+        + changed_services.len()
+        + new_hosts.len()
+        + removed_hosts.len();
 
     ScanDiff {
         summary: DiffSummary {
@@ -184,15 +187,33 @@ pub fn format_diff_text(diff: &ScanDiff) -> String {
     output.push_str("=== Scan Comparison Results ===\n\n");
     output.push_str(&format!("Scan A: {}\n", diff.summary.scan_a_time));
     output.push_str(&format!("Scan B: {}\n", diff.summary.scan_b_time));
-    output.push_str(&format!("Total changes: {}\n\n", diff.summary.total_changes));
+    output.push_str(&format!(
+        "Total changes: {}\n\n",
+        diff.summary.total_changes
+    ));
 
     // Summary
     output.push_str("--- Summary ---\n");
-    output.push_str(&format!("  New open ports:    {}\n", diff.summary.new_ports));
-    output.push_str(&format!("  Closed ports:      {}\n", diff.summary.closed_ports));
-    output.push_str(&format!("  Service changes:   {}\n", diff.summary.service_changes));
-    output.push_str(&format!("  New hosts:         {}\n", diff.summary.new_hosts));
-    output.push_str(&format!("  Removed hosts:     {}\n", diff.summary.removed_hosts));
+    output.push_str(&format!(
+        "  New open ports:    {}\n",
+        diff.summary.new_ports
+    ));
+    output.push_str(&format!(
+        "  Closed ports:      {}\n",
+        diff.summary.closed_ports
+    ));
+    output.push_str(&format!(
+        "  Service changes:   {}\n",
+        diff.summary.service_changes
+    ));
+    output.push_str(&format!(
+        "  New hosts:         {}\n",
+        diff.summary.new_hosts
+    ));
+    output.push_str(&format!(
+        "  Removed hosts:     {}\n",
+        diff.summary.removed_hosts
+    ));
 
     // New ports
     if !diff.new_ports.is_empty() {
@@ -271,7 +292,10 @@ fn index_results(results: &[ScanResult]) -> HashMap<(IpAddr, u16, String), &Scan
 }
 
 fn get_version(result: &ScanResult) -> Option<String> {
-    result.service_info.as_ref().and_then(|si| si.version.clone())
+    result
+        .service_info
+        .as_ref()
+        .and_then(|si| si.version.clone())
 }
 
 fn format_service(service: &Option<String>, version: &Option<String>) -> String {

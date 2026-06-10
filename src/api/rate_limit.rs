@@ -197,8 +197,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_custom_endpoint_limit() {
-        let limiter = RateLimiter::new(RateLimitConfig::per_minute(100))
-            .with_endpoint_limit("/api/v1/scans", RateLimitConfig::new(1, Duration::from_secs(60)));
+        let limiter = RateLimiter::new(RateLimitConfig::per_minute(100)).with_endpoint_limit(
+            "/api/v1/scans",
+            RateLimitConfig::new(1, Duration::from_secs(60)),
+        );
 
         assert!(limiter.check("c1", "/api/v1/scans").await.is_ok());
         assert!(limiter.check("c1", "/api/v1/scans").await.is_err());

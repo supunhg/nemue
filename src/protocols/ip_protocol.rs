@@ -1,9 +1,9 @@
 use anyhow::{anyhow, Result};
+use pnet::packet::ipv4::{Ipv4Packet, MutableIpv4Packet};
+use rand::Rng;
 use std::net::{IpAddr, Ipv4Addr};
 use std::time::Duration;
 use tokio::time::timeout;
-use pnet::packet::ipv4::{Ipv4Packet, MutableIpv4Packet};
-use rand::Rng;
 
 use crate::scanner::ScanResult;
 
@@ -156,7 +156,11 @@ impl IpProtocolScanner {
     }
 
     /// Probe a single IP protocol on the target
-    pub async fn probe_protocol(&self, target: IpAddr, protocol: IpProtocol) -> Result<ProtocolProbeResult> {
+    pub async fn probe_protocol(
+        &self,
+        target: IpAddr,
+        protocol: IpProtocol,
+    ) -> Result<ProtocolProbeResult> {
         if self.use_raw_sockets {
             self.raw_probe(target, protocol).await
         } else {
@@ -184,7 +188,11 @@ impl IpProtocolScanner {
     }
 
     /// Probe specific IP protocols
-    pub async fn scan_protocols(&self, target: IpAddr, protocols: &[IpProtocol]) -> Result<Vec<ProtocolProbeResult>> {
+    pub async fn scan_protocols(
+        &self,
+        target: IpAddr,
+        protocols: &[IpProtocol],
+    ) -> Result<Vec<ProtocolProbeResult>> {
         let mut results = Vec::with_capacity(protocols.len());
 
         for &protocol in protocols {
@@ -227,10 +235,14 @@ impl IpProtocolScanner {
             loop {
                 match rx.next() {
                     Ok(frame) => {
-                        if frame.len() < 14 { continue; }
+                        if frame.len() < 14 {
+                            continue;
+                        }
                         let ip_data = &frame[14..];
                         if let Some(ipv4) = Ipv4Packet::new(ip_data) {
-                            if ipv4.get_source() != target_ipv4 { continue; }
+                            if ipv4.get_source() != target_ipv4 {
+                                continue;
+                            }
 
                             let proto_num = ipv4.get_next_level_protocol().0;
 
@@ -259,7 +271,9 @@ impl IpProtocolScanner {
                 }
             }
             Ok(ProtocolState::Filtered) as Result<ProtocolState>
-        }).await {
+        })
+        .await
+        {
             Ok(Ok(state)) => state,
             Ok(Err(e)) => return Err(e),
             Err(_) => ProtocolState::Filtered,
@@ -321,7 +335,11 @@ impl IpProtocolScanner {
     }
 
     /// Fallback probe when raw sockets are not available
-    async fn fallback_probe(&self, target: IpAddr, protocol: IpProtocol) -> Result<ProtocolProbeResult> {
+    async fn fallback_probe(
+        &self,
+        target: IpAddr,
+        protocol: IpProtocol,
+    ) -> Result<ProtocolProbeResult> {
         // Without raw sockets, we can only test TCP and UDP
         let state = match protocol {
             IpProtocol::Tcp => {
@@ -351,7 +369,9 @@ impl IpProtocolScanner {
         Ok(ProtocolProbeResult {
             protocol,
             state,
-            response_info: if !self.use_raw_sockets && !matches!(protocol, IpProtocol::Tcp | IpProtocol::Udp) {
+            response_info: if !self.use_raw_sockets
+                && !matches!(protocol, IpProtocol::Tcp | IpProtocol::Udp)
+            {
                 Some("Requires raw sockets (-eR)".to_string())
             } else {
                 None

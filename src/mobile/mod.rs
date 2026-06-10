@@ -7,14 +7,25 @@
 //! - Mobile device fingerprinting and identification
 
 pub mod android;
-pub mod ios;
 pub mod compliance;
 pub mod fingerprint;
+pub mod ios;
 
-pub use android::{AndroidScanner, AndroidConfig, AndroidResults, AdbDevice, AndroidService, AndroidVulnerability, AndroidSecurityFinding};
-pub use ios::{IosScanner, IosConfig, IosResults, IosDevice, IosService, IosVulnerability, IosConfiguration};
-pub use compliance::{MobileComplianceScanner, MobileComplianceConfig, MobileComplianceReport, MobileComplianceCheck, MobileComplianceResult, MobileBenchmarkType};
-pub use fingerprint::{MobileFingerprinter, FingerprintConfig, FingerprintResults, DeviceFingerprint, DeviceType, OsInfo};
+pub use android::{
+    AdbDevice, AndroidConfig, AndroidResults, AndroidScanner, AndroidSecurityFinding,
+    AndroidService, AndroidVulnerability,
+};
+pub use compliance::{
+    MobileBenchmarkType, MobileComplianceCheck, MobileComplianceConfig, MobileComplianceReport,
+    MobileComplianceResult, MobileComplianceScanner,
+};
+pub use fingerprint::{
+    DeviceFingerprint, DeviceType, FingerprintConfig, FingerprintResults, MobileFingerprinter,
+    OsInfo,
+};
+pub use ios::{
+    IosConfig, IosConfiguration, IosDevice, IosResults, IosScanner, IosService, IosVulnerability,
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -110,10 +121,22 @@ impl MobileSecurityAssessment {
             for finding in &android.security_findings {
                 self.total_findings += 1;
                 match finding.severity {
-                    MobileSeverity::Critical => { deductions = deductions.saturating_add(15); self.critical_count += 1; }
-                    MobileSeverity::High => { deductions = deductions.saturating_add(10); self.high_count += 1; }
-                    MobileSeverity::Medium => { deductions = deductions.saturating_add(5); self.medium_count += 1; }
-                    MobileSeverity::Low => { deductions = deductions.saturating_add(2); self.low_count += 1; }
+                    MobileSeverity::Critical => {
+                        deductions = deductions.saturating_add(15);
+                        self.critical_count += 1;
+                    }
+                    MobileSeverity::High => {
+                        deductions = deductions.saturating_add(10);
+                        self.high_count += 1;
+                    }
+                    MobileSeverity::Medium => {
+                        deductions = deductions.saturating_add(5);
+                        self.medium_count += 1;
+                    }
+                    MobileSeverity::Low => {
+                        deductions = deductions.saturating_add(2);
+                        self.low_count += 1;
+                    }
                     MobileSeverity::Info => {}
                 }
             }
@@ -123,10 +146,22 @@ impl MobileSecurityAssessment {
             for finding in &ios.security_findings {
                 self.total_findings += 1;
                 match finding.severity {
-                    MobileSeverity::Critical => { deductions = deductions.saturating_add(15); self.critical_count += 1; }
-                    MobileSeverity::High => { deductions = deductions.saturating_add(10); self.high_count += 1; }
-                    MobileSeverity::Medium => { deductions = deductions.saturating_add(5); self.medium_count += 1; }
-                    MobileSeverity::Low => { deductions = deductions.saturating_add(2); self.low_count += 1; }
+                    MobileSeverity::Critical => {
+                        deductions = deductions.saturating_add(15);
+                        self.critical_count += 1;
+                    }
+                    MobileSeverity::High => {
+                        deductions = deductions.saturating_add(10);
+                        self.high_count += 1;
+                    }
+                    MobileSeverity::Medium => {
+                        deductions = deductions.saturating_add(5);
+                        self.medium_count += 1;
+                    }
+                    MobileSeverity::Low => {
+                        deductions = deductions.saturating_add(2);
+                        self.low_count += 1;
+                    }
                     MobileSeverity::Info => {}
                 }
             }
@@ -174,13 +209,15 @@ mod tests {
     fn test_assessment_score_calculation() {
         let mut assessment = MobileSecurityAssessment::new();
         let mut android_results = AndroidResults::default();
-        android_results.security_findings.push(AndroidSecurityFinding {
-            title: "Test".to_string(),
-            description: "Test".to_string(),
-            severity: MobileSeverity::Critical,
-            category: "test".to_string(),
-            recommendation: "Fix it".to_string(),
-        });
+        android_results
+            .security_findings
+            .push(AndroidSecurityFinding {
+                title: "Test".to_string(),
+                description: "Test".to_string(),
+                severity: MobileSeverity::Critical,
+                category: "test".to_string(),
+                recommendation: "Fix it".to_string(),
+            });
         assessment.android_results = Some(android_results);
         assessment.calculate_score();
 

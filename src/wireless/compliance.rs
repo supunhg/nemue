@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use super::bluetooth::{BluetoothDevice, BluetoothScanResult, BluetoothSecurityLevel};
 use super::wifi::{AccessPoint, EncryptionType, WifiScanResult};
-use super::bluetooth::{BluetoothDevice, BluetoothSecurityLevel, BluetoothScanResult};
 use super::zigbee::{ZigbeeNetwork, ZigbeeScanResult, ZigbeeSecurityLevel};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -143,7 +143,11 @@ impl WirelessComplianceChecker {
         }
 
         if !scan_result.access_points.is_empty() {
-            let open_count = scan_result.access_points.iter().filter(|ap| ap.security.encryption == EncryptionType::Open).count();
+            let open_count = scan_result
+                .access_points
+                .iter()
+                .filter(|ap| ap.security.encryption == EncryptionType::Open)
+                .count();
             if open_count > 0 {
                 findings.push(WirelessFinding {
                     standard: WirelessStandard::Nist80097,
@@ -162,7 +166,11 @@ impl WirelessComplianceChecker {
                 });
             }
 
-            let wps_count = scan_result.access_points.iter().filter(|ap| ap.wps_enabled).count();
+            let wps_count = scan_result
+                .access_points
+                .iter()
+                .filter(|ap| ap.wps_enabled)
+                .count();
             if wps_count > 0 {
                 findings.push(WirelessFinding {
                     standard: WirelessStandard::CisWireless,
@@ -182,7 +190,10 @@ impl WirelessComplianceChecker {
             }
 
             let weak_encryption = scan_result.access_points.iter().any(|ap| {
-                matches!(ap.security.encryption, EncryptionType::Wep | EncryptionType::Wpa)
+                matches!(
+                    ap.security.encryption,
+                    EncryptionType::Wep | EncryptionType::Wpa
+                )
             });
             if weak_encryption {
                 findings.push(WirelessFinding {
@@ -213,7 +224,11 @@ impl WirelessComplianceChecker {
             findings.extend(self.check_bt_device_security(device));
         }
 
-        let insecure_count = scan_result.devices.iter().filter(|d| d.security_level == BluetoothSecurityLevel::None).count();
+        let insecure_count = scan_result
+            .devices
+            .iter()
+            .filter(|d| d.security_level == BluetoothSecurityLevel::None)
+            .count();
         if insecure_count > 0 {
             findings.push(WirelessFinding {
                 standard: WirelessStandard::OwaspWireless,
@@ -232,7 +247,11 @@ impl WirelessComplianceChecker {
             });
         }
 
-        let legacy_count = scan_result.devices.iter().filter(|d| d.security_level == BluetoothSecurityLevel::LegacyPairing).count();
+        let legacy_count = scan_result
+            .devices
+            .iter()
+            .filter(|d| d.security_level == BluetoothSecurityLevel::LegacyPairing)
+            .count();
         if legacy_count > 0 {
             findings.push(WirelessFinding {
                 standard: WirelessStandard::Nist80097,
@@ -261,7 +280,11 @@ impl WirelessComplianceChecker {
             findings.extend(self.check_zigbee_network(network));
         }
 
-        let open_count = scan_result.networks.iter().filter(|n| n.security_level == ZigbeeSecurityLevel::None).count();
+        let open_count = scan_result
+            .networks
+            .iter()
+            .filter(|n| n.security_level == ZigbeeSecurityLevel::None)
+            .count();
         if open_count > 0 {
             findings.push(WirelessFinding {
                 standard: WirelessStandard::OwaspWireless,
@@ -290,22 +313,40 @@ impl WirelessComplianceChecker {
         zigbee: Option<&ZigbeeScanResult>,
     ) -> WirelessComplianceReport {
         let wifi_findings = wifi.map(|w| self.check_wifi(w)).unwrap_or_default();
-        let bt_findings = bluetooth.map(|b| self.check_bluetooth(b)).unwrap_or_default();
+        let bt_findings = bluetooth
+            .map(|b| self.check_bluetooth(b))
+            .unwrap_or_default();
         let zb_findings = zigbee.map(|z| self.check_zigbee(z)).unwrap_or_default();
 
-        let all_findings: Vec<&WirelessFinding> = wifi_findings.iter()
+        let all_findings: Vec<&WirelessFinding> = wifi_findings
+            .iter()
             .chain(bt_findings.iter())
             .chain(zb_findings.iter())
             .collect();
 
         let total = all_findings.len();
-        let critical = all_findings.iter().filter(|f| f.severity == WirelessSeverity::Critical).count();
-        let high = all_findings.iter().filter(|f| f.severity == WirelessSeverity::High).count();
-        let medium = all_findings.iter().filter(|f| f.severity == WirelessSeverity::Medium).count();
-        let low = all_findings.iter().filter(|f| f.severity == WirelessSeverity::Low).count();
+        let critical = all_findings
+            .iter()
+            .filter(|f| f.severity == WirelessSeverity::Critical)
+            .count();
+        let high = all_findings
+            .iter()
+            .filter(|f| f.severity == WirelessSeverity::High)
+            .count();
+        let medium = all_findings
+            .iter()
+            .filter(|f| f.severity == WirelessSeverity::Medium)
+            .count();
+        let low = all_findings
+            .iter()
+            .filter(|f| f.severity == WirelessSeverity::Low)
+            .count();
 
         let compliance_score = if total > 0 {
-            let compliant = all_findings.iter().filter(|f| f.compliance_status == ComplianceStatus::Compliant).count();
+            let compliant = all_findings
+                .iter()
+                .filter(|f| f.compliance_status == ComplianceStatus::Compliant)
+                .count();
             (compliant as f64 / total as f64) * 100.0
         } else {
             100.0
@@ -340,7 +381,8 @@ impl WirelessComplianceChecker {
                     affected_resource: format!("AP: {}", ap.ssid),
                     recommendation: WirelessRecommendation {
                         title: "Enable Encryption".to_string(),
-                        description: "Enable WPA3-SAE or minimum WPA2-PSK with strong passphrase".to_string(),
+                        description: "Enable WPA3-SAE or minimum WPA2-PSK with strong passphrase"
+                            .to_string(),
                         priority: 1,
                         effort: EffortLevel::Low,
                     },
@@ -352,12 +394,17 @@ impl WirelessComplianceChecker {
                     standard: WirelessStandard::PciDssWireless,
                     control_id: "PCI-WLAN-01".to_string(),
                     title: "WEP Encryption on AP".to_string(),
-                    description: format!("AP '{}' uses WEP encryption which can be cracked in minutes", ap.ssid),
+                    description: format!(
+                        "AP '{}' uses WEP encryption which can be cracked in minutes",
+                        ap.ssid
+                    ),
                     severity: WirelessSeverity::Critical,
                     affected_resource: format!("AP: {}", ap.ssid),
                     recommendation: WirelessRecommendation {
                         title: "Replace WEP Immediately".to_string(),
-                        description: "WEP is fundamentally broken. Upgrade to WPA3 or WPA2-AES immediately.".to_string(),
+                        description:
+                            "WEP is fundamentally broken. Upgrade to WPA3 or WPA2-AES immediately."
+                                .to_string(),
                         priority: 1,
                         effort: EffortLevel::Low,
                     },
@@ -374,7 +421,9 @@ impl WirelessComplianceChecker {
                     affected_resource: format!("AP: {}", ap.ssid),
                     recommendation: WirelessRecommendation {
                         title: "Upgrade to WPA2/WPA3".to_string(),
-                        description: "WPA-TKIP has known vulnerabilities. Migrate to WPA3 or WPA2-CCMP.".to_string(),
+                        description:
+                            "WPA-TKIP has known vulnerabilities. Migrate to WPA3 or WPA2-CCMP."
+                                .to_string(),
                         priority: 1,
                         effort: EffortLevel::Low,
                     },
@@ -408,7 +457,9 @@ impl WirelessComplianceChecker {
                     affected_resource: format!("AP: {}", ap.ssid),
                     recommendation: WirelessRecommendation {
                         title: "Maintain Current Configuration".to_string(),
-                        description: "WPA3 meets current security standards. Monitor for firmware updates.".to_string(),
+                        description:
+                            "WPA3 meets current security standards. Monitor for firmware updates."
+                                .to_string(),
                         priority: 5,
                         effort: EffortLevel::Low,
                     },
@@ -446,29 +497,40 @@ impl WirelessComplianceChecker {
                     standard: WirelessStandard::Nist80097,
                     control_id: "NIST-BT-01".to_string(),
                     title: "Legacy Bluetooth Pairing".to_string(),
-                    description: format!("Device '{}' uses legacy pairing vulnerable to eavesdropping", device.name.as_deref().unwrap_or("Unknown")),
+                    description: format!(
+                        "Device '{}' uses legacy pairing vulnerable to eavesdropping",
+                        device.name.as_deref().unwrap_or("Unknown")
+                    ),
                     severity: WirelessSeverity::Medium,
                     affected_resource: format!("BT: {}", device.address),
                     recommendation: WirelessRecommendation {
                         title: "Upgrade Pairing Method".to_string(),
-                        description: "Use Secure Simple Pairing (SSP) or Secure Connections mode.".to_string(),
+                        description: "Use Secure Simple Pairing (SSP) or Secure Connections mode."
+                            .to_string(),
                         priority: 2,
                         effort: EffortLevel::Low,
                     },
                     compliance_status: ComplianceStatus::PartiallyCompliant,
                 });
             }
-            BluetoothSecurityLevel::SecureSimplePairing | BluetoothSecurityLevel::SecureConnections | BluetoothSecurityLevel::OutOfBand => {
+            BluetoothSecurityLevel::SecureSimplePairing
+            | BluetoothSecurityLevel::SecureConnections
+            | BluetoothSecurityLevel::OutOfBand => {
                 findings.push(WirelessFinding {
                     standard: WirelessStandard::CisWireless,
                     control_id: "CIS-BT-01".to_string(),
                     title: "Secure Bluetooth Pairing".to_string(),
-                    description: format!("Device '{}' uses secure pairing", device.name.as_deref().unwrap_or("Unknown")),
+                    description: format!(
+                        "Device '{}' uses secure pairing",
+                        device.name.as_deref().unwrap_or("Unknown")
+                    ),
                     severity: WirelessSeverity::Info,
                     affected_resource: format!("BT: {}", device.address),
                     recommendation: WirelessRecommendation {
                         title: "Maintain Secure Configuration".to_string(),
-                        description: "Device uses acceptable security. Monitor for firmware updates.".to_string(),
+                        description:
+                            "Device uses acceptable security. Monitor for firmware updates."
+                                .to_string(),
                         priority: 5,
                         effort: EffortLevel::Low,
                     },
@@ -489,12 +551,17 @@ impl WirelessComplianceChecker {
                     standard: WirelessStandard::OwaspWireless,
                     control_id: "OWASP-ZB-01".to_string(),
                     title: "Unsecured Zigbee Network".to_string(),
-                    description: format!("Zigbee PAN 0x{:04X} has no security enabled", network.pan_id),
+                    description: format!(
+                        "Zigbee PAN 0x{:04X} has no security enabled",
+                        network.pan_id
+                    ),
                     severity: WirelessSeverity::Critical,
                     affected_resource: format!("Zigbee PAN: 0x{:04X}", network.pan_id),
                     recommendation: WirelessRecommendation {
                         title: "Enable Zigbee Network Security".to_string(),
-                        description: "Enable AES-CCM* encryption with Standard or High security level.".to_string(),
+                        description:
+                            "Enable AES-CCM* encryption with Standard or High security level."
+                                .to_string(),
                         priority: 1,
                         effort: EffortLevel::Low,
                     },
@@ -506,12 +573,16 @@ impl WirelessComplianceChecker {
                     standard: WirelessStandard::Nist80097,
                     control_id: "NIST-ZB-01".to_string(),
                     title: "Zigbee Residential Security".to_string(),
-                    description: format!("Zigbee PAN 0x{:04X} uses Residential security with default keys", network.pan_id),
+                    description: format!(
+                        "Zigbee PAN 0x{:04X} uses Residential security with default keys",
+                        network.pan_id
+                    ),
                     severity: WirelessSeverity::Medium,
                     affected_resource: format!("Zigbee PAN: 0x{:04X}", network.pan_id),
                     recommendation: WirelessRecommendation {
                         title: "Upgrade Security Level".to_string(),
-                        description: "Upgrade to Standard security level with unique network keys.".to_string(),
+                        description: "Upgrade to Standard security level with unique network keys."
+                            .to_string(),
                         priority: 2,
                         effort: EffortLevel::Low,
                     },
@@ -568,8 +639,13 @@ impl Default for WirelessComplianceChecker {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::wireless::wifi::{AccessPoint, WifiSecurity, WifiBand, AuthenticationMode, WifiClient, ChannelInfo, InterferenceLevel};
-    use crate::wireless::bluetooth::{BluetoothDevice, DeviceClass, BluetoothService, ServiceUuid, BleDevice};
+    use crate::wireless::bluetooth::{
+        BleDevice, BluetoothDevice, BluetoothService, DeviceClass, ServiceUuid,
+    };
+    use crate::wireless::wifi::{
+        AccessPoint, AuthenticationMode, ChannelInfo, InterferenceLevel, WifiBand, WifiClient,
+        WifiSecurity,
+    };
 
     fn create_test_ap(ssid: &str, encryption: EncryptionType) -> AccessPoint {
         AccessPoint {
@@ -608,7 +684,9 @@ mod tests {
         }
     }
 
-    fn create_test_zigbee_network(security: ZigbeeSecurityLevel) -> super::super::zigbee::ZigbeeNetwork {
+    fn create_test_zigbee_network(
+        security: ZigbeeSecurityLevel,
+    ) -> super::super::zigbee::ZigbeeNetwork {
         super::super::zigbee::ZigbeeNetwork {
             pan_id: 0x1234,
             extended_pan_id: 0x0011223344556677,
@@ -646,7 +724,9 @@ mod tests {
 
         let findings = checker.check_wifi(&scan);
         assert!(!findings.is_empty());
-        assert!(findings.iter().any(|f| f.severity == WirelessSeverity::High));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == WirelessSeverity::High));
     }
 
     #[test]
@@ -665,7 +745,9 @@ mod tests {
         };
 
         let findings = checker.check_wifi(&scan);
-        assert!(findings.iter().any(|f| f.severity == WirelessSeverity::Critical));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == WirelessSeverity::Critical));
     }
 
     #[test]
@@ -684,7 +766,9 @@ mod tests {
         };
 
         let findings = checker.check_wifi(&scan);
-        assert!(findings.iter().any(|f| f.compliance_status == ComplianceStatus::Compliant));
+        assert!(findings
+            .iter()
+            .any(|f| f.compliance_status == ComplianceStatus::Compliant));
     }
 
     #[test]
@@ -701,7 +785,9 @@ mod tests {
         };
 
         let findings = checker.check_bluetooth(&scan);
-        assert!(findings.iter().any(|f| f.severity == WirelessSeverity::High));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == WirelessSeverity::High));
     }
 
     #[test]
@@ -717,7 +803,9 @@ mod tests {
         };
 
         let findings = checker.check_zigbee(&scan);
-        assert!(findings.iter().any(|f| f.severity == WirelessSeverity::Critical));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == WirelessSeverity::Critical));
     }
 
     #[test]
@@ -775,6 +863,9 @@ mod tests {
     #[test]
     fn test_compliance_status_values() {
         assert_ne!(ComplianceStatus::Compliant, ComplianceStatus::NonCompliant);
-        assert_ne!(ComplianceStatus::PartiallyCompliant, ComplianceStatus::NotApplicable);
+        assert_ne!(
+            ComplianceStatus::PartiallyCompliant,
+            ComplianceStatus::NotApplicable
+        );
     }
 }

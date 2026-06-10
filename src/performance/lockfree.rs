@@ -1,12 +1,18 @@
 // Lock-free data structures for high-performance concurrent access
+use crossbeam::queue::{ArrayQueue, SegQueue};
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
-use crossbeam::queue::{ArrayQueue, SegQueue};
 
 /// Lock-free queue for packet processing
 pub struct LockFreeQueue<T> {
     queue: Arc<SegQueue<T>>,
     size: Arc<AtomicUsize>,
+}
+
+impl<T> Default for LockFreeQueue<T> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<T> LockFreeQueue<T> {
@@ -63,9 +69,8 @@ impl<T> BoundedQueue<T> {
     }
 
     pub fn push(&self, item: T) -> Result<(), T> {
-        self.queue.push(item).map_err(|item| {
+        self.queue.push(item).inspect_err(|_item| {
             self.dropped.fetch_add(1, Ordering::Relaxed);
-            item
         })
     }
 
@@ -119,7 +124,8 @@ impl AtomicFlag {
     }
 
     pub fn compare_exchange(&self, current: bool, new: bool) -> Result<bool, bool> {
-        self.flag.compare_exchange(current, new, Ordering::AcqRel, Ordering::Acquire)
+        self.flag
+            .compare_exchange(current, new, Ordering::AcqRel, Ordering::Acquire)
     }
 }
 
@@ -184,7 +190,7 @@ mod tests {
     #[test]
     fn test_atomic_flag_compare_exchange() {
         let flag = AtomicFlag::new(false);
-        
+
         // Should succeed
         assert!(flag.compare_exchange(false, true).is_ok());
         assert!(flag.get());

@@ -1,6 +1,6 @@
+use nemue::performance::{BoundedQueue, BufferPool, LockFreeQueue, MetricsCollector};
+use nemue::scanner::cache::{CacheConfig, CacheKey, ScanCache};
 use std::sync::Arc;
-use nemue::performance::{LockFreeQueue, BoundedQueue, BufferPool, MetricsCollector};
-use nemue::scanner::cache::{ScanCache, CacheConfig, CacheKey};
 use std::time::Duration;
 
 #[tokio::test]
@@ -19,7 +19,10 @@ async fn test_buffer_pool_reuse() {
 
     let pool_guard = pool.lock().await;
     let stats = pool_guard.stats();
-    assert!(stats.available_buffers > 0, "Buffers should be returned to pool");
+    assert!(
+        stats.available_buffers > 0,
+        "Buffers should be returned to pool"
+    );
 }
 
 #[test]

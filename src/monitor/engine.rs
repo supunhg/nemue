@@ -87,7 +87,7 @@ impl MonitorEngine {
     pub fn create_session(&mut self, config: MonitorConfig) -> String {
         let session_id = uuid::Uuid::new_v4().to_string();
         let now = Utc::now();
-        
+
         let session = MonitorSession {
             id: session_id.clone(),
             config: config.clone(),
@@ -119,7 +119,9 @@ impl MonitorEngine {
         }
 
         let interval_seconds = {
-            let session = self.sessions.get(session_id)
+            let session = self
+                .sessions
+                .get(session_id)
                 .ok_or_else(|| anyhow::anyhow!("Session not found"))?;
             session.config.interval_seconds
         };
@@ -148,9 +150,10 @@ impl MonitorEngine {
 
             // Check for changes
             let changes = self.detect_changes(session_id)?;
-            
+
             let alert_on_changes = {
-                self.sessions.get(session_id)
+                self.sessions
+                    .get(session_id)
                     .map(|s| s.config.alert_on_changes)
                     .unwrap_or(false)
             };
@@ -162,7 +165,8 @@ impl MonitorEngine {
             // Update session
             if let Some(session) = self.sessions.get_mut(session_id) {
                 session.last_scan_at = Some(Utc::now());
-                session.next_scan_at = Some(Utc::now() + chrono::Duration::seconds(interval_seconds as i64));
+                session.next_scan_at =
+                    Some(Utc::now() + chrono::Duration::seconds(interval_seconds as i64));
                 session.scan_count += 1;
             }
         }
@@ -176,7 +180,7 @@ impl MonitorEngine {
         // 1. Call the actual scanner with the configured targets/ports
         // 2. Collect results
         // 3. Store snapshot in history
-        
+
         // For now, simulate with a snapshot
         let snapshot = ScanSnapshot {
             timestamp: Utc::now(),
@@ -223,7 +227,7 @@ impl MonitorEngine {
         // Compare open ports
         for (ip, current_ports) in &current.open_ports {
             let previous_ports = previous.open_ports.get(ip);
-            
+
             if let Some(prev_ports) = previous_ports {
                 // Detect new ports
                 for port in current_ports {
@@ -260,7 +264,7 @@ impl MonitorEngine {
         }
 
         // Detect hosts that went offline
-        for (ip, _) in &previous.open_ports {
+        for ip in previous.open_ports.keys() {
             if !current.open_ports.contains_key(ip) {
                 changes.push(ChangeDetection {
                     timestamp: current.timestamp,
@@ -275,12 +279,16 @@ impl MonitorEngine {
     }
 
     /// Handle detected changes (alerting, logging, etc.)
-    async fn handle_changes(&mut self, session_id: &str, changes: Vec<ChangeDetection>) -> Result<()> {
+    async fn handle_changes(
+        &mut self,
+        session_id: &str,
+        changes: Vec<ChangeDetection>,
+    ) -> Result<()> {
         // In production, this would:
         // - Send alerts via email/Slack/webhook
         // - Log to database
         // - Trigger automated responses
-        
+
         if let Some(session) = self.sessions.get_mut(session_id) {
             session.changes_detected += changes.len();
         }
@@ -389,7 +397,7 @@ mod tests {
 
         let session_id = engine.create_session(config);
         assert!(engine.get_session(&session_id).is_some());
-        
+
         let session = engine.get_session(&session_id).unwrap();
         assert_eq!(session.status, MonitorStatus::Running);
         assert_eq!(session.scan_count, 0);
@@ -409,12 +417,18 @@ mod tests {
         };
 
         let session_id = engine.create_session(config);
-        
+
         engine.pause_session(&session_id).unwrap();
-        assert_eq!(engine.get_session(&session_id).unwrap().status, MonitorStatus::Paused);
+        assert_eq!(
+            engine.get_session(&session_id).unwrap().status,
+            MonitorStatus::Paused
+        );
 
         engine.resume_session(&session_id).unwrap();
-        assert_eq!(engine.get_session(&session_id).unwrap().status, MonitorStatus::Running);
+        assert_eq!(
+            engine.get_session(&session_id).unwrap().status,
+            MonitorStatus::Running
+        );
     }
 
     #[test]
@@ -432,7 +446,10 @@ mod tests {
 
         let session_id = engine.create_session(config);
         engine.stop_session(&session_id).unwrap();
-        assert_eq!(engine.get_session(&session_id).unwrap().status, MonitorStatus::Stopped);
+        assert_eq!(
+            engine.get_session(&session_id).unwrap().status,
+            MonitorStatus::Stopped
+        );
     }
 
     #[test]

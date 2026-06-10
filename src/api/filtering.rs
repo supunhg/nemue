@@ -31,7 +31,12 @@ impl ParsedFilter {
         let fields = query
             .fields
             .as_ref()
-            .map(|f| f.split(',').map(|s| s.trim().to_string()).filter(|s| !s.is_empty()).collect())
+            .map(|f| {
+                f.split(',')
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect()
+            })
             .unwrap_or_default();
 
         let sort_fields = query
@@ -81,10 +86,7 @@ impl ParsedFilter {
 
 /// Apply field selection to a JSON value, keeping only the requested fields.
 /// If no fields were requested the value is returned unchanged.
-pub fn apply_field_selection(
-    value: &serde_json::Value,
-    fields: &[String],
-) -> serde_json::Value {
+pub fn apply_field_selection(value: &serde_json::Value, fields: &[String]) -> serde_json::Value {
     if fields.is_empty() {
         return value.clone();
     }
@@ -147,12 +149,11 @@ fn compare_json_values(
         (None, Some(_)) => std::cmp::Ordering::Greater,
         (Some(_), None) => std::cmp::Ordering::Less,
         (Some(a), Some(b)) => match (a, b) {
-            (serde_json::Value::Number(na), serde_json::Value::Number(nb)) => {
-                na.as_f64()
-                    .unwrap_or(0.0)
-                    .partial_cmp(&nb.as_f64().unwrap_or(0.0))
-                    .unwrap_or(std::cmp::Ordering::Equal)
-            }
+            (serde_json::Value::Number(na), serde_json::Value::Number(nb)) => na
+                .as_f64()
+                .unwrap_or(0.0)
+                .partial_cmp(&nb.as_f64().unwrap_or(0.0))
+                .unwrap_or(std::cmp::Ordering::Equal),
             (serde_json::Value::String(sa), serde_json::Value::String(sb)) => sa.cmp(sb),
             (serde_json::Value::Bool(ba), serde_json::Value::Bool(bb)) => ba.cmp(bb),
             _ => std::cmp::Ordering::Equal,
@@ -164,7 +165,10 @@ fn compare_json_values(
 pub fn validate_sort_fields(sort_fields: &[SortField], allowed: &[&str]) -> Result<(), String> {
     for sf in sort_fields {
         if !allowed.contains(&sf.field.as_str()) {
-            return Err(format!("Cannot sort by field '{}'. Allowed: {:?}", sf.field, allowed));
+            return Err(format!(
+                "Cannot sort by field '{}'. Allowed: {:?}",
+                sf.field, allowed
+            ));
         }
     }
     Ok(())
@@ -183,7 +187,9 @@ pub fn validate_fields(fields: &[String], allowed: &[&str]) -> Result<(), String
 /// Extract extra key=value filter parameters from a query string map
 /// (all params that are not `fields`, `sort`, `search`, `cursor`, `limit`, `page`, `per_page`)
 pub fn extract_extra_filters(params: &HashMap<String, String>) -> HashMap<String, String> {
-    let reserved = ["fields", "sort", "search", "cursor", "limit", "page", "per_page"];
+    let reserved = [
+        "fields", "sort", "search", "cursor", "limit", "page", "per_page",
+    ];
     params
         .iter()
         .filter(|(k, _)| !reserved.contains(&k.as_str()))
@@ -250,7 +256,11 @@ mod tests {
 
     #[test]
     fn test_wants_field_empty_means_all() {
-        let q = FilterQuery { fields: None, sort: None, search: None };
+        let q = FilterQuery {
+            fields: None,
+            sort: None,
+            search: None,
+        };
         let f = ParsedFilter::parse(&q);
         assert!(f.wants_field("anything"));
     }
@@ -269,7 +279,11 @@ mod tests {
 
     #[test]
     fn test_matches_search_empty() {
-        let q = FilterQuery { fields: None, sort: None, search: None };
+        let q = FilterQuery {
+            fields: None,
+            sort: None,
+            search: None,
+        };
         let f = ParsedFilter::parse(&q);
         assert!(f.matches_search("anything"));
     }
@@ -297,7 +311,10 @@ mod tests {
         ];
         sort_json_values(
             &mut items,
-            &[SortField { field: "name".to_string(), ascending: true }],
+            &[SortField {
+                field: "name".to_string(),
+                ascending: true,
+            }],
         );
         assert_eq!(items[0]["name"], "a");
         assert_eq!(items[1]["name"], "b");
@@ -313,7 +330,10 @@ mod tests {
         ];
         sort_json_values(
             &mut items,
-            &[SortField { field: "port".to_string(), ascending: false }],
+            &[SortField {
+                field: "port".to_string(),
+                ascending: false,
+            }],
         );
         assert_eq!(items[0]["port"], 443);
         assert_eq!(items[1]["port"], 80);
@@ -322,10 +342,16 @@ mod tests {
 
     #[test]
     fn test_validate_sort_fields() {
-        let fields = vec![SortField { field: "name".to_string(), ascending: true }];
+        let fields = vec![SortField {
+            field: "name".to_string(),
+            ascending: true,
+        }];
         assert!(validate_sort_fields(&fields, &["name", "status"]).is_ok());
 
-        let bad = vec![SortField { field: "secret".to_string(), ascending: true }];
+        let bad = vec![SortField {
+            field: "secret".to_string(),
+            ascending: true,
+        }];
         assert!(validate_sort_fields(&bad, &["name", "status"]).is_err());
     }
 
@@ -349,10 +375,7 @@ mod tests {
 
     #[test]
     fn test_apply_field_selection_to_array() {
-        let items = vec![
-            json!({"name": "a", "x": 1}),
-            json!({"name": "b", "x": 2}),
-        ];
+        let items = vec![json!({"name": "a", "x": 1}), json!({"name": "b", "x": 2})];
         let result = apply_field_selection_to_array(&items, &["name".into()]);
         assert_eq!(result.len(), 2);
         assert_eq!(result[0], json!({"name": "a"}));

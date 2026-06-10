@@ -66,11 +66,11 @@ impl DecoyConfig {
             let count: usize = count_str
                 .parse()
                 .map_err(|_| anyhow!("Invalid random decoy count: {}", count_str))?;
-            
+
             if count == 0 || count > 1000 {
                 return Err(anyhow!("Random decoy count must be 1-1000"));
             }
-            
+
             return Ok(Self::with_random_decoys(count));
         }
 
@@ -112,19 +112,14 @@ impl DecoyConfig {
     /// Generate random decoy IP addresses
     fn generate_random_decoys(count: usize) -> Vec<IpAddr> {
         let mut decoys = Vec::with_capacity(count);
-        
+
         for _ in 0..count {
             // Generate random private IP to avoid issues
             // Using 192.168.x.x range
-            let octets = [
-                192,
-                168,
-                rand::random::<u8>(),
-                rand::random::<u8>(),
-            ];
+            let octets = [192, 168, rand::random::<u8>(), rand::random::<u8>()];
             decoys.push(IpAddr::V4(Ipv4Addr::from(octets)));
         }
-        
+
         decoys
     }
 
@@ -170,7 +165,7 @@ impl DecoyScanner {
     /// Get ordered list of source IPs for scanning (including real source)
     pub fn get_scan_sources(&self) -> Vec<IpAddr> {
         let mut sources = self.config.decoys.clone();
-        
+
         // Determine where to insert real source
         let real_index = if self.config.randomize {
             rand::random::<usize>() % (sources.len() + 1)
@@ -327,7 +322,7 @@ mod tests {
     fn test_decoy_config_new() {
         let decoys = vec![test_ip(1, 2, 3, 4), test_ip(5, 6, 7, 8)];
         let config = DecoyConfig::new(decoys.clone());
-        
+
         assert_eq!(config.decoys.len(), 2);
         assert_eq!(config.real_position, RealSourcePosition::Random);
         assert!(config.randomize);
@@ -342,7 +337,7 @@ mod tests {
     #[test]
     fn test_decoy_config_parse_list() {
         let config = DecoyConfig::parse("192.168.1.1,192.168.1.2,ME,192.168.1.3").unwrap();
-        
+
         assert_eq!(config.decoys.len(), 3);
         assert_eq!(config.real_position, RealSourcePosition::Index(2));
         assert!(!config.randomize); // Explicit order
@@ -376,7 +371,7 @@ mod tests {
         let decoys = vec![test_ip(1, 2, 3, 4)];
         let config = DecoyConfig::new(decoys);
         let scanner = DecoyScanner::new(config, test_ip(10, 0, 0, 1));
-        
+
         assert_eq!(scanner.real_source(), test_ip(10, 0, 0, 1));
         assert_eq!(scanner.decoy_count(), 1);
         assert_eq!(scanner.total_sources(), 2);
@@ -384,11 +379,9 @@ mod tests {
 
     #[test]
     fn test_decoy_scanner_from_spec() {
-        let scanner = DecoyScanner::from_spec(
-            "192.168.1.1,ME,192.168.1.2",
-            test_ip(10, 0, 0, 1),
-        ).unwrap();
-        
+        let scanner =
+            DecoyScanner::from_spec("192.168.1.1,ME,192.168.1.2", test_ip(10, 0, 0, 1)).unwrap();
+
         assert_eq!(scanner.decoy_count(), 2);
         assert_eq!(scanner.total_sources(), 3);
     }
@@ -398,10 +391,10 @@ mod tests {
         let decoys = vec![test_ip(1, 1, 1, 1), test_ip(2, 2, 2, 2)];
         let config = DecoyConfig::new(decoys).with_randomize(false);
         let scanner = DecoyScanner::new(config, test_ip(10, 0, 0, 1));
-        
+
         let sources = scanner.get_scan_sources();
         assert_eq!(sources.len(), 3);
-        
+
         // Should contain all IPs
         assert!(sources.contains(&test_ip(1, 1, 1, 1)));
         assert!(sources.contains(&test_ip(2, 2, 2, 2)));
@@ -413,10 +406,10 @@ mod tests {
         let decoys = vec![test_ip(1, 1, 1, 1), test_ip(2, 2, 2, 2)];
         let config = DecoyConfig::new(decoys);
         let scanner = DecoyScanner::new(config, test_ip(10, 0, 0, 1));
-        
+
         let probe_sources = scanner.plan_probe_sources(6);
         assert_eq!(probe_sources.len(), 6);
-        
+
         // Should round-robin through 3 sources
         assert_eq!(probe_sources[0], probe_sources[3]);
     }
@@ -428,7 +421,7 @@ mod tests {
             .with_real_position(RealSourcePosition::First)
             .with_randomize(false);
         let scanner = DecoyScanner::new(config, test_ip(10, 0, 0, 1));
-        
+
         let sources = scanner.get_scan_sources();
         assert_eq!(sources[0], test_ip(10, 0, 0, 1));
     }
@@ -440,7 +433,7 @@ mod tests {
             .with_real_position(RealSourcePosition::Last)
             .with_randomize(false);
         let scanner = DecoyScanner::new(config, test_ip(10, 0, 0, 1));
-        
+
         let sources = scanner.get_scan_sources();
         assert_eq!(sources[2], test_ip(10, 0, 0, 1)); // Last position
     }
@@ -452,7 +445,7 @@ mod tests {
             .with_real_position(RealSourcePosition::Index(1))
             .with_randomize(false);
         let scanner = DecoyScanner::new(config, test_ip(10, 0, 0, 1));
-        
+
         let sources = scanner.get_scan_sources();
         assert_eq!(sources[1], test_ip(10, 0, 0, 1)); // Middle position
     }
@@ -465,7 +458,7 @@ mod tests {
             .real_at(RealSourcePosition::First)
             .ordered()
             .build();
-        
+
         assert_eq!(config.decoys.len(), 2);
         assert_eq!(config.real_position, RealSourcePosition::First);
         assert!(!config.randomize);
@@ -473,11 +466,8 @@ mod tests {
 
     #[test]
     fn test_decoy_list_builder_with_random() {
-        let config = DecoyListBuilder::new()
-            .add_random(5)
-            .randomized()
-            .build();
-        
+        let config = DecoyListBuilder::new().add_random(5).randomized().build();
+
         assert_eq!(config.decoys.len(), 5);
         assert!(config.randomize);
     }

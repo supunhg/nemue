@@ -187,10 +187,15 @@ impl IoTDeviceScanner {
         let mut results = Vec::new();
         for target in targets {
             let ports = Self::CAMERA_PORTS.to_vec();
-            let scanner = IoTDeviceScanner::with_ports(self.timeout_duration.as_millis() as u64, ports);
+            let scanner =
+                IoTDeviceScanner::with_ports(self.timeout_duration.as_millis() as u64, ports);
             if let Ok(result) = scanner.scan_device(*target).await {
                 if result.device.device_type == DeviceType::Camera
-                    || result.device.services.iter().any(|s| s.contains("RTSP") || s.contains("ONVIF"))
+                    || result
+                        .device
+                        .services
+                        .iter()
+                        .any(|s| s.contains("RTSP") || s.contains("ONVIF"))
                 {
                     results.push(result);
                 }
@@ -203,10 +208,15 @@ impl IoTDeviceScanner {
         let mut results = Vec::new();
         for target in targets {
             let ports = Self::ROUTER_PORTS.to_vec();
-            let scanner = IoTDeviceScanner::with_ports(self.timeout_duration.as_millis() as u64, ports);
+            let scanner =
+                IoTDeviceScanner::with_ports(self.timeout_duration.as_millis() as u64, ports);
             if let Ok(result) = scanner.scan_device(*target).await {
                 if result.device.device_type == DeviceType::Router
-                    || result.device.services.iter().any(|s| s.contains("HTTP") || s.contains("SSH"))
+                    || result
+                        .device
+                        .services
+                        .iter()
+                        .any(|s| s.contains("HTTP") || s.contains("SSH"))
                 {
                     results.push(result);
                 }
@@ -219,10 +229,15 @@ impl IoTDeviceScanner {
         let mut results = Vec::new();
         for target in targets {
             let ports = Self::SMART_HOME_PORTS.to_vec();
-            let scanner = IoTDeviceScanner::with_ports(self.timeout_duration.as_millis() as u64, ports);
+            let scanner =
+                IoTDeviceScanner::with_ports(self.timeout_duration.as_millis() as u64, ports);
             if let Ok(result) = scanner.scan_device(*target).await {
                 if result.device.device_type == DeviceType::SmartHome
-                    || result.device.services.iter().any(|s| s.contains("MQTT") || s.contains("CoAP"))
+                    || result
+                        .device
+                        .services
+                        .iter()
+                        .any(|s| s.contains("MQTT") || s.contains("CoAP"))
                 {
                     results.push(result);
                 }
@@ -235,10 +250,15 @@ impl IoTDeviceScanner {
         let mut results = Vec::new();
         for target in targets {
             let ports = Self::INDUSTRIAL_PORTS.to_vec();
-            let scanner = IoTDeviceScanner::with_ports(self.timeout_duration.as_millis() as u64, ports);
+            let scanner =
+                IoTDeviceScanner::with_ports(self.timeout_duration.as_millis() as u64, ports);
             if let Ok(result) = scanner.scan_device(*target).await {
                 if result.device.device_type == DeviceType::Industrial
-                    || result.device.services.iter().any(|s| s.contains("Modbus") || s.contains("BACnet"))
+                    || result
+                        .device
+                        .services
+                        .iter()
+                        .any(|s| s.contains("Modbus") || s.contains("BACnet"))
                 {
                     results.push(result);
                 }
@@ -358,7 +378,8 @@ impl IoTDeviceScanner {
 
         match device.device_type {
             DeviceType::Camera => {
-                if device.vendor == DeviceVendor::Hikvision || device.vendor == DeviceVendor::Dahua {
+                if device.vendor == DeviceVendor::Hikvision || device.vendor == DeviceVendor::Dahua
+                {
                     risks.push(SecurityRisk::DefaultCredentials);
                 }
                 if device.firmware_version.is_none() {
@@ -429,7 +450,10 @@ mod tests {
         assert_eq!(DeviceVendor::Hikvision.as_str(), "Hikvision");
         assert_eq!(DeviceVendor::Dahua.as_str(), "Dahua");
         assert_eq!(DeviceVendor::TPLink.as_str(), "TP-Link");
-        assert_eq!(DeviceVendor::Unknown("Custom".to_string()).as_str(), "Custom");
+        assert_eq!(
+            DeviceVendor::Unknown("Custom".to_string()).as_str(),
+            "Custom"
+        );
     }
 
     #[test]

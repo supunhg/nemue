@@ -225,7 +225,11 @@ impl NotificationManager {
         records
     }
 
-    fn send(&self, config: &NotificationConfig, message: &NotificationMessage) -> NotificationRecord {
+    fn send(
+        &self,
+        config: &NotificationConfig,
+        message: &NotificationMessage,
+    ) -> NotificationRecord {
         match &config.channel {
             NotificationChannel::Email => self.send_email(config, message),
             NotificationChannel::Slack => self.send_slack(config, message),
@@ -373,7 +377,9 @@ impl NotificationMessageBuilder {
     }
 
     pub fn metadata(mut self, key: &str, value: &str) -> Self {
-        self.message.metadata.insert(key.to_string(), value.to_string());
+        self.message
+            .metadata
+            .insert(key.to_string(), value.to_string());
         self
     }
 
@@ -400,9 +406,15 @@ mod tests {
     #[test]
     fn test_notification_event_display() {
         assert_eq!(NotificationEvent::ScanStarted.to_string(), "scan_started");
-        assert_eq!(NotificationEvent::ScanCompleted.to_string(), "scan_completed");
+        assert_eq!(
+            NotificationEvent::ScanCompleted.to_string(),
+            "scan_completed"
+        );
         assert_eq!(NotificationEvent::ScanFailed.to_string(), "scan_failed");
-        assert_eq!(NotificationEvent::HighRiskFound.to_string(), "high_risk_found");
+        assert_eq!(
+            NotificationEvent::HighRiskFound.to_string(),
+            "high_risk_found"
+        );
         assert_eq!(
             NotificationEvent::Custom("custom_event".to_string()).to_string(),
             "custom_event"
@@ -426,17 +438,14 @@ mod tests {
 
     #[test]
     fn test_notification_config_with_events() {
-        let config = NotificationConfig::new(
-            "slack-alerts",
-            NotificationChannel::Slack,
-            "#security",
-        )
-        .with_event(NotificationEvent::ScanCompleted)
-        .with_event(NotificationEvent::HighRiskFound)
-        .with_events(vec![
-            NotificationEvent::ScanFailed,
-            NotificationEvent::ScanCompleted, // duplicate
-        ]);
+        let config =
+            NotificationConfig::new("slack-alerts", NotificationChannel::Slack, "#security")
+                .with_event(NotificationEvent::ScanCompleted)
+                .with_event(NotificationEvent::HighRiskFound)
+                .with_events(vec![
+                    NotificationEvent::ScanFailed,
+                    NotificationEvent::ScanCompleted, // duplicate
+                ]);
 
         assert_eq!(config.events.len(), 3);
         assert!(config.subscribed_to(&NotificationEvent::ScanCompleted));
@@ -447,15 +456,15 @@ mod tests {
 
     #[test]
     fn test_notification_config_with_metadata() {
-        let config = NotificationConfig::new(
-            "email",
-            NotificationChannel::Email,
-            "admin@example.com",
-        )
-        .with_metadata("smtp_server", "smtp.example.com")
-        .with_metadata("smtp_port", "587");
+        let config =
+            NotificationConfig::new("email", NotificationChannel::Email, "admin@example.com")
+                .with_metadata("smtp_server", "smtp.example.com")
+                .with_metadata("smtp_port", "587");
 
-        assert_eq!(config.metadata.get("smtp_server").unwrap(), "smtp.example.com");
+        assert_eq!(
+            config.metadata.get("smtp_server").unwrap(),
+            "smtp.example.com"
+        );
         assert_eq!(config.metadata.get("smtp_port").unwrap(), "587");
     }
 
@@ -499,11 +508,8 @@ mod tests {
         let mut mgr = NotificationManager::new();
         assert_eq!(mgr.config_count(), 0);
 
-        let config = NotificationConfig::new(
-            "email",
-            NotificationChannel::Email,
-            "admin@example.com",
-        );
+        let config =
+            NotificationConfig::new("email", NotificationChannel::Email, "admin@example.com");
 
         mgr.add_config(config);
         assert_eq!(mgr.config_count(), 1);
@@ -513,11 +519,8 @@ mod tests {
     #[test]
     fn test_notification_manager_remove() {
         let mut mgr = NotificationManager::new();
-        let config = NotificationConfig::new(
-            "test",
-            NotificationChannel::Email,
-            "test@example.com",
-        );
+        let config =
+            NotificationConfig::new("test", NotificationChannel::Email, "test@example.com");
         let id = config.id.clone();
 
         mgr.add_config(config);
@@ -530,18 +533,11 @@ mod tests {
     fn test_notification_manager_enabled() {
         let mut mgr = NotificationManager::new();
 
-        let mut c1 = NotificationConfig::new(
-            "enabled",
-            NotificationChannel::Email,
-            "a@example.com",
-        );
+        let mut c1 =
+            NotificationConfig::new("enabled", NotificationChannel::Email, "a@example.com");
         c1.enabled = true;
 
-        let mut c2 = NotificationConfig::new(
-            "disabled",
-            NotificationChannel::Slack,
-            "#channel",
-        );
+        let mut c2 = NotificationConfig::new("disabled", NotificationChannel::Slack, "#channel");
         c2.enabled = false;
 
         mgr.add_config(c1);
@@ -561,13 +557,9 @@ mod tests {
         )
         .with_event(NotificationEvent::ScanCompleted);
 
-        let c2 = NotificationConfig::new(
-            "slack-all",
-            NotificationChannel::Slack,
-            "#alerts",
-        )
-        .with_event(NotificationEvent::ScanCompleted)
-        .with_event(NotificationEvent::ScanFailed);
+        let c2 = NotificationConfig::new("slack-all", NotificationChannel::Slack, "#alerts")
+            .with_event(NotificationEvent::ScanCompleted)
+            .with_event(NotificationEvent::ScanFailed);
 
         let c3 = NotificationConfig::new(
             "webhook-start",
@@ -596,12 +588,8 @@ mod tests {
 
         // In test mode, send functions succeed regardless of config
         mgr.add_config(
-            NotificationConfig::new(
-                "email",
-                NotificationChannel::Email,
-                "admin@example.com",
-            )
-            .with_event(NotificationEvent::ScanCompleted),
+            NotificationConfig::new("email", NotificationChannel::Email, "admin@example.com")
+                .with_event(NotificationEvent::ScanCompleted),
         );
 
         mgr.add_config(
@@ -631,12 +619,8 @@ mod tests {
     fn test_notification_dispatch_no_matching_configs() {
         let mut mgr = NotificationManager::new();
         mgr.add_config(
-            NotificationConfig::new(
-                "email",
-                NotificationChannel::Email,
-                "admin@example.com",
-            )
-            .with_event(NotificationEvent::ScanCompleted),
+            NotificationConfig::new("email", NotificationChannel::Email, "admin@example.com")
+                .with_event(NotificationEvent::ScanCompleted),
         );
 
         let msg = NotificationMessage::new(
@@ -653,20 +637,13 @@ mod tests {
     #[test]
     fn test_notification_dispatch_disabled_config() {
         let mut mgr = NotificationManager::new();
-        let mut config = NotificationConfig::new(
-            "disabled",
-            NotificationChannel::Email,
-            "admin@example.com",
-        )
-        .with_event(NotificationEvent::ScanCompleted);
+        let mut config =
+            NotificationConfig::new("disabled", NotificationChannel::Email, "admin@example.com")
+                .with_event(NotificationEvent::ScanCompleted);
         config.enabled = false;
         mgr.add_config(config);
 
-        let msg = NotificationMessage::new(
-            NotificationEvent::ScanCompleted,
-            "Done",
-            "Done.",
-        );
+        let msg = NotificationMessage::new(NotificationEvent::ScanCompleted, "Done", "Done.");
 
         let records = mgr.dispatch(&msg);
         assert_eq!(records.len(), 0);
@@ -709,11 +686,7 @@ mod tests {
             .with_event(NotificationEvent::ScanCompleted),
         );
 
-        let msg = NotificationMessage::new(
-            NotificationEvent::ScanCompleted,
-            "Test",
-            "body",
-        );
+        let msg = NotificationMessage::new(NotificationEvent::ScanCompleted, "Test", "body");
         mgr.dispatch(&msg);
         assert_eq!(mgr.history_len(), 1);
 
@@ -724,11 +697,8 @@ mod tests {
     #[test]
     fn test_notification_manager_get_config() {
         let mut mgr = NotificationManager::new();
-        let config = NotificationConfig::new(
-            "my-config",
-            NotificationChannel::Email,
-            "admin@example.com",
-        );
+        let config =
+            NotificationConfig::new("my-config", NotificationChannel::Email, "admin@example.com");
         let id = config.id.clone();
         mgr.add_config(config);
 
@@ -764,20 +734,12 @@ mod tests {
     fn test_notification_manager_serialization() {
         let mut mgr = NotificationManager::new();
         mgr.add_config(
-            NotificationConfig::new(
-                "email",
-                NotificationChannel::Email,
-                "admin@example.com",
-            )
-            .with_event(NotificationEvent::ScanCompleted),
+            NotificationConfig::new("email", NotificationChannel::Email, "admin@example.com")
+                .with_event(NotificationEvent::ScanCompleted),
         );
         mgr.add_config(
-            NotificationConfig::new(
-                "slack",
-                NotificationChannel::Slack,
-                "#alerts",
-            )
-            .with_event(NotificationEvent::HighRiskFound),
+            NotificationConfig::new("slack", NotificationChannel::Slack, "#alerts")
+                .with_event(NotificationEvent::HighRiskFound),
         );
 
         let json = serde_json::to_string(&mgr).unwrap();
@@ -798,11 +760,8 @@ mod tests {
             .with_event(NotificationEvent::ScanCompleted),
         );
 
-        let msg = NotificationMessage::new(
-            NotificationEvent::ScanCompleted,
-            "Done",
-            "Scan finished.",
-        );
+        let msg =
+            NotificationMessage::new(NotificationEvent::ScanCompleted, "Done", "Scan finished.");
 
         let records = mgr.dispatch(&msg);
         assert_eq!(records.len(), 1);

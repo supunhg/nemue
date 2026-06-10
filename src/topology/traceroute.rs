@@ -1,8 +1,9 @@
+#![allow(dead_code)]
 // Traceroute implementation with multiple protocols
+use serde::{Deserialize, Serialize};
 use std::net::IpAddr;
 use std::time::{Duration, Instant};
 use tokio::time::timeout;
-use serde::{Serialize, Deserialize};
 
 /// Traceroute configuration
 #[derive(Debug, Clone)]
@@ -116,7 +117,8 @@ impl Traceroute {
             }
 
             // Use the fastest response for this hop
-            if let Some(best_hop) = hop_responses.into_iter()
+            if let Some(best_hop) = hop_responses
+                .into_iter()
                 .filter(|h| h.address.is_some())
                 .min_by_key(|h| h.rtt)
             {
@@ -160,10 +162,13 @@ impl Traceroute {
 
         // Process hops in batches
         let batch_size = self.config.parallel_probes as usize;
-        
-        for ttl_batch in (1..=self.config.max_hops).collect::<Vec<u8>>().chunks(batch_size) {
+
+        for ttl_batch in (1..=self.config.max_hops)
+            .collect::<Vec<u8>>()
+            .chunks(batch_size)
+        {
             let mut batch_results = Vec::new();
-            
+
             for &ttl in ttl_batch {
                 let probe_result = self.send_probe(target, ttl, 1).await;
                 batch_results.push((ttl, probe_result));
@@ -214,7 +219,10 @@ impl Traceroute {
         let probe_start = Instant::now();
 
         match self.config.protocol {
-            TracerouteProtocol::Icmp => self.send_icmp_probe(target, ttl, attempt, probe_start).await,
+            TracerouteProtocol::Icmp => {
+                self.send_icmp_probe(target, ttl, attempt, probe_start)
+                    .await
+            }
             TracerouteProtocol::Udp => self.send_udp_probe(target, ttl, attempt, probe_start).await,
             TracerouteProtocol::Tcp => self.send_tcp_probe(target, ttl, attempt, probe_start).await,
         }
@@ -230,10 +238,8 @@ impl Traceroute {
     ) -> Result<HopInfo, String> {
         // Simplified probe - in production would use raw sockets
         // For now, simulate with timeout
-        let probe_result = timeout(
-            self.config.timeout,
-            self.simulate_icmp_probe(target, ttl)
-        ).await;
+        let probe_result =
+            timeout(self.config.timeout, self.simulate_icmp_probe(target, ttl)).await;
 
         match probe_result {
             Ok(Ok((addr, is_dest))) => {
@@ -262,36 +268,39 @@ impl Traceroute {
     ) -> Result<HopInfo, String> {
         use tokio::net::UdpSocket;
 
-        let probe_result = timeout(
-            self.config.timeout,
-            async {
-                let local_addr = if target.is_ipv4() {
-                    "0.0.0.0:0"
-                } else {
-                    "[::]:0"
-                };
+        let probe_result = timeout(self.config.timeout, async {
+            let local_addr = if target.is_ipv4() {
+                "0.0.0.0:0"
+            } else {
+                "[::]:0"
+            };
 
-                let socket = UdpSocket::bind(local_addr).await
-                    .map_err(|e| format!("Failed to bind UDP socket: {}", e))?;
+            let socket = UdpSocket::bind(local_addr)
+                .await
+                .map_err(|e| format!("Failed to bind UDP socket: {}", e))?;
 
-                // Set TTL
-                // Note: tokio doesn't have direct TTL setting, would need raw sockets
-                // For now, simulate the behavior
-                
-                let dest_port = 33434 + ttl as u16;
-                let dest = std::net::SocketAddr::new(target, dest_port);
-                
-                socket.send_to(&[0u8; 32], dest).await
-                    .map_err(|e| format!("Failed to send UDP probe: {}", e))?;
+            // Set TTL
+            // Note: tokio doesn't have direct TTL setting, would need raw sockets
+            // For now, simulate the behavior
 
-                // Wait for ICMP Time Exceeded or Port Unreachable
-                let mut buf = [0u8; 1024];
-                let (len, addr) = socket.recv_from(&mut buf).await
-                    .map_err(|e| format!("Failed to receive UDP response: {}", e))?;
+            let dest_port = 33434 + ttl as u16;
+            let dest = std::net::SocketAddr::new(target, dest_port);
 
-                Ok::<_, String>((addr.ip(), len > 0))
-            }
-        ).await;
+            socket
+                .send_to(&[0u8; 32], dest)
+                .await
+                .map_err(|e| format!("Failed to send UDP probe: {}", e))?;
+
+            // Wait for ICMP Time Exceeded or Port Unreachable
+            let mut buf = [0u8; 1024];
+            let (len, addr) = socket
+                .recv_from(&mut buf)
+                .await
+                .map_err(|e| format!("Failed to receive UDP response: {}", e))?;
+
+            Ok::<_, String>((addr.ip(), len > 0))
+        })
+        .await;
 
         match probe_result {
             Ok(Ok((addr, is_dest))) => {
@@ -320,28 +329,26 @@ impl Traceroute {
     ) -> Result<HopInfo, String> {
         use tokio::net::TcpStream;
 
-        let probe_result = timeout(
-            self.config.timeout,
-            async {
-                let dest = std::net::SocketAddr::new(target, self.config.port);
-                
-                // TCP traceroute works by sending SYN packets with increasing TTL
-                // When TTL expires, routers send ICMP Time Exceeded
-                // When destination is reached, it sends SYN-ACK or RST
-                
-                match TcpStream::connect(dest).await {
-                    Ok(_stream) => {
-                        // Connection successful - this is the destination
-                        Ok::<_, String>((target, true))
-                    }
-                    Err(e) => {
-                        // Connection failed - could be TTL exceeded or port unreachable
-                        // In production, we would capture ICMP messages
-                        Err(format!("TCP probe failed: {}", e))
-                    }
+        let probe_result = timeout(self.config.timeout, async {
+            let dest = std::net::SocketAddr::new(target, self.config.port);
+
+            // TCP traceroute works by sending SYN packets with increasing TTL
+            // When TTL expires, routers send ICMP Time Exceeded
+            // When destination is reached, it sends SYN-ACK or RST
+
+            match TcpStream::connect(dest).await {
+                Ok(_stream) => {
+                    // Connection successful - this is the destination
+                    Ok::<_, String>((target, true))
+                }
+                Err(e) => {
+                    // Connection failed - could be TTL exceeded or port unreachable
+                    // In production, we would capture ICMP messages
+                    Err(format!("TCP probe failed: {}", e))
                 }
             }
-        ).await;
+        })
+        .await;
 
         match probe_result {
             Ok(Ok((addr, is_dest))) => {
@@ -361,7 +368,11 @@ impl Traceroute {
     }
 
     /// Simulate ICMP probe (placeholder for raw socket implementation)
-    async fn simulate_icmp_probe(&self, _target: IpAddr, _ttl: u8) -> Result<(IpAddr, bool), String> {
+    async fn simulate_icmp_probe(
+        &self,
+        _target: IpAddr,
+        _ttl: u8,
+    ) -> Result<(IpAddr, bool), String> {
         // In production: send ICMP Echo Request with TTL
         // Wait for ICMP Time Exceeded or Echo Reply
         // Return the router IP that responded
@@ -514,7 +525,7 @@ mod tests {
         };
         let tracer = Traceroute::new(config);
         let target = IpAddr::from_str("8.8.8.8").unwrap();
-        
+
         // Will timeout since we don't have raw socket implementation
         let result = tracer.trace(target).await;
         assert!(result.is_ok());
@@ -557,17 +568,15 @@ mod tests {
     async fn test_traceroute_result_serialization() {
         let result = TracerouteResult {
             target: IpAddr::from_str("8.8.8.8").unwrap(),
-            hops: vec![
-                HopInfo {
-                    ttl: 1,
-                    address: Some(IpAddr::from_str("192.168.1.1").unwrap()),
-                    hostname: None,
-                    rtt: Some(Duration::from_millis(5)),
-                    attempt: 1,
-                    protocol: TracerouteProtocol::Icmp,
-                    is_destination: false,
-                },
-            ],
+            hops: vec![HopInfo {
+                ttl: 1,
+                address: Some(IpAddr::from_str("192.168.1.1").unwrap()),
+                hostname: None,
+                rtt: Some(Duration::from_millis(5)),
+                attempt: 1,
+                protocol: TracerouteProtocol::Icmp,
+                is_destination: false,
+            }],
             completed: false,
             total_time: Duration::from_millis(100),
             protocol: TracerouteProtocol::Icmp,
@@ -575,7 +584,7 @@ mod tests {
 
         let json = serde_json::to_string(&result).unwrap();
         let deserialized: TracerouteResult = serde_json::from_str(&json).unwrap();
-        
+
         assert_eq!(deserialized.target, result.target);
         assert_eq!(deserialized.hops.len(), 1);
         assert_eq!(deserialized.protocol, TracerouteProtocol::Icmp);

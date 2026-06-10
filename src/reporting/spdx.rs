@@ -1,11 +1,11 @@
 // SPDX (Software Package Data Exchange) report generation for license compliance
-use crate::reporting::{ScanReport, Severity};
+use crate::reporting::ScanReport;
 
 pub struct SpdxReportGenerator;
 
 impl SpdxReportGenerator {
     pub fn generate(report: &ScanReport) -> String {
-        let mut spdx = serde_json::json!({
+        let spdx = serde_json::json!({
             "spdxVersion": "SPDX-2.3",
             "dataLicense": "CC0-1.0",
             "SPDXID": "SPDXRef-DOCUMENT",
@@ -154,16 +154,29 @@ mod tests {
                 version: "0.1.0".to_string(),
             })
             .summary(ExecutiveSummary {
-                total_hosts: 5, hosts_up: 4, total_ports: 500, open_ports: 20,
-                vulnerabilities: VulnerabilitySummary { critical: 1, high: 2, medium: 1, low: 0, info: 0 },
-                risk_score: 7.5, compliance_score: 80.0,
+                total_hosts: 5,
+                hosts_up: 4,
+                total_ports: 500,
+                open_ports: 20,
+                vulnerabilities: VulnerabilitySummary {
+                    critical: 1,
+                    high: 2,
+                    medium: 1,
+                    low: 0,
+                    info: 0,
+                },
+                risk_score: 7.5,
+                compliance_score: 80.0,
             })
             .compliance(ComplianceStatus {
                 frameworks: vec![ComplianceFramework {
                     name: "PCI-DSS".to_string(),
                     version: "4.0".to_string(),
-                    controls_total: 10, controls_passing: 8, controls_failing: 2,
-                    score: 80.0, findings: vec![],
+                    controls_total: 10,
+                    controls_passing: 8,
+                    controls_failing: 2,
+                    score: 80.0,
+                    findings: vec![],
                 }],
                 overall_score: 80.0,
             })
@@ -184,7 +197,8 @@ mod tests {
     #[test]
     fn test_spdx_version() {
         let report = sample_report();
-        let json: serde_json::Value = serde_json::from_str(&SpdxReportGenerator::generate(&report)).unwrap();
+        let json: serde_json::Value =
+            serde_json::from_str(&SpdxReportGenerator::generate(&report)).unwrap();
         assert_eq!(json["spdxVersion"], "SPDX-2.3");
         assert_eq!(json["dataLicense"], "CC0-1.0");
         assert_eq!(json["SPDXID"], "SPDXRef-DOCUMENT");
@@ -193,15 +207,20 @@ mod tests {
     #[test]
     fn test_spdx_document_info() {
         let report = sample_report();
-        let json: serde_json::Value = serde_json::from_str(&SpdxReportGenerator::generate(&report)).unwrap();
+        let json: serde_json::Value =
+            serde_json::from_str(&SpdxReportGenerator::generate(&report)).unwrap();
         assert_eq!(json["name"], "nemue-scan-scan-001");
-        assert!(json["documentNamespace"].as_str().unwrap().contains("scan-001"));
+        assert!(json["documentNamespace"]
+            .as_str()
+            .unwrap()
+            .contains("scan-001"));
     }
 
     #[test]
     fn test_spdx_creation_info() {
         let report = sample_report();
-        let json: serde_json::Value = serde_json::from_str(&SpdxReportGenerator::generate(&report)).unwrap();
+        let json: serde_json::Value =
+            serde_json::from_str(&SpdxReportGenerator::generate(&report)).unwrap();
         let creators = json["creationInfo"]["creators"].as_array().unwrap();
         assert!(creators[0].as_str().unwrap().contains("Nemue"));
     }
@@ -209,7 +228,8 @@ mod tests {
     #[test]
     fn test_spdx_packages() {
         let report = sample_report();
-        let json: serde_json::Value = serde_json::from_str(&SpdxReportGenerator::generate(&report)).unwrap();
+        let json: serde_json::Value =
+            serde_json::from_str(&SpdxReportGenerator::generate(&report)).unwrap();
         let packages = json["packages"].as_array().unwrap();
         assert_eq!(packages.len(), 2); // scan target + 1 finding
         assert_eq!(packages[0]["SPDXID"], "SPDXRef-ScanTarget");
@@ -218,7 +238,8 @@ mod tests {
     #[test]
     fn test_spdx_relationships() {
         let report = sample_report();
-        let json: serde_json::Value = serde_json::from_str(&SpdxReportGenerator::generate(&report)).unwrap();
+        let json: serde_json::Value =
+            serde_json::from_str(&SpdxReportGenerator::generate(&report)).unwrap();
         let rels = json["relationships"].as_array().unwrap();
         assert!(rels.len() >= 2); // DESCRIBES + HAS_VULNERABILITY
         assert_eq!(rels[0]["relationshipType"], "DESCRIBES");
@@ -227,16 +248,21 @@ mod tests {
     #[test]
     fn test_spdx_annotations() {
         let report = sample_report();
-        let json: serde_json::Value = serde_json::from_str(&SpdxReportGenerator::generate(&report)).unwrap();
+        let json: serde_json::Value =
+            serde_json::from_str(&SpdxReportGenerator::generate(&report)).unwrap();
         let annotations = json["annotations"].as_array().unwrap();
         assert!(annotations.len() >= 2);
-        assert!(annotations[0]["annotationComment"].as_str().unwrap().contains("Risk score"));
+        assert!(annotations[0]["annotationComment"]
+            .as_str()
+            .unwrap()
+            .contains("Risk score"));
     }
 
     #[test]
     fn test_spdx_external_refs() {
         let report = sample_report();
-        let json: serde_json::Value = serde_json::from_str(&SpdxReportGenerator::generate(&report)).unwrap();
+        let json: serde_json::Value =
+            serde_json::from_str(&SpdxReportGenerator::generate(&report)).unwrap();
         let refs = &json["packages"][1]["externalRefs"].as_array().unwrap();
         assert!(refs.len() >= 2); // CPE + CVE
         assert_eq!(refs[0]["referenceType"], "cpe23Type");
@@ -247,9 +273,14 @@ mod tests {
     #[test]
     fn test_spdx_compliance_relationships() {
         let report = sample_report();
-        let json: serde_json::Value = serde_json::from_str(&SpdxReportGenerator::generate(&report)).unwrap();
+        let json: serde_json::Value =
+            serde_json::from_str(&SpdxReportGenerator::generate(&report)).unwrap();
         let rels = json["relationships"].as_array().unwrap();
-        let fw_rel = rels.iter().find(|r| r["comment"].as_str().map_or(false, |c| c.contains("PCI-DSS")));
+        let fw_rel = rels.iter().find(|r| {
+            r["comment"]
+                .as_str()
+                .map_or(false, |c| c.contains("PCI-DSS"))
+        });
         assert!(fw_rel.is_some());
     }
 
@@ -257,19 +288,37 @@ mod tests {
     fn test_spdx_empty_report() {
         let report = ReportBuilder::new()
             .metadata(ReportMetadata {
-                scan_id: "s".to_string(), report_id: "r".to_string(),
-                generated_at: Utc::now(), scan_start: Utc::now(), scan_end: Utc::now(),
-                target_count: 0, version: "0.1.0".to_string(),
+                scan_id: "s".to_string(),
+                report_id: "r".to_string(),
+                generated_at: Utc::now(),
+                scan_start: Utc::now(),
+                scan_end: Utc::now(),
+                target_count: 0,
+                version: "0.1.0".to_string(),
             })
             .summary(ExecutiveSummary {
-                total_hosts: 0, hosts_up: 0, total_ports: 0, open_ports: 0,
-                vulnerabilities: VulnerabilitySummary { critical: 0, high: 0, medium: 0, low: 0, info: 0 },
-                risk_score: 0.0, compliance_score: 0.0,
+                total_hosts: 0,
+                hosts_up: 0,
+                total_ports: 0,
+                open_ports: 0,
+                vulnerabilities: VulnerabilitySummary {
+                    critical: 0,
+                    high: 0,
+                    medium: 0,
+                    low: 0,
+                    info: 0,
+                },
+                risk_score: 0.0,
+                compliance_score: 0.0,
             })
-            .compliance(ComplianceStatus { frameworks: vec![], overall_score: 0.0 })
+            .compliance(ComplianceStatus {
+                frameworks: vec![],
+                overall_score: 0.0,
+            })
             .build()
             .unwrap();
-        let json: serde_json::Value = serde_json::from_str(&SpdxReportGenerator::generate(&report)).unwrap();
+        let json: serde_json::Value =
+            serde_json::from_str(&SpdxReportGenerator::generate(&report)).unwrap();
         assert_eq!(json["packages"].as_array().unwrap().len(), 1); // just scan target
         assert_eq!(json["relationships"].as_array().unwrap().len(), 1); // just DESCRIBES
     }

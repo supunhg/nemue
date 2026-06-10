@@ -1,6 +1,6 @@
 // Trend analysis for historical scan comparison
-use serde::{Serialize, Deserialize};
-use chrono::{DateTime, Utc, Duration};
+use chrono::{DateTime, Duration, Utc};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -59,11 +59,15 @@ pub enum TrendDirection {
     Stable,
 }
 
+impl Default for TrendAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TrendAnalyzer {
     pub fn new() -> Self {
-        Self {
-            scans: Vec::new(),
-        }
+        Self { scans: Vec::new() }
     }
 
     pub fn add_snapshot(&mut self, snapshot: ScanSnapshot) {
@@ -78,8 +82,9 @@ impl TrendAnalyzer {
 
         let now = Utc::now();
         let period_start = now - Duration::days(days);
-        
-        let recent_scans: Vec<&ScanSnapshot> = self.scans
+
+        let recent_scans: Vec<&ScanSnapshot> = self
+            .scans
             .iter()
             .filter(|s| s.timestamp >= period_start)
             .collect();
@@ -113,12 +118,7 @@ impl TrendAnalyzer {
 
         trends.insert(
             "risk_score".to_string(),
-            self.calculate_trend(
-                &recent_scans,
-                |s| s.metrics.risk_score,
-                "Risk Score",
-                true,
-            ),
+            self.calculate_trend(&recent_scans, |s| s.metrics.risk_score, "Risk Score", true),
         );
 
         trends.insert(
@@ -190,9 +190,18 @@ impl TrendAnalyzer {
     }
 
     fn generate_summary(&self, trends: &HashMap<String, Trend>) -> String {
-        let improving = trends.values().filter(|t| t.direction == TrendDirection::Improving).count();
-        let worsening = trends.values().filter(|t| t.direction == TrendDirection::Worsening).count();
-        let stable = trends.values().filter(|t| t.direction == TrendDirection::Stable).count();
+        let improving = trends
+            .values()
+            .filter(|t| t.direction == TrendDirection::Improving)
+            .count();
+        let worsening = trends
+            .values()
+            .filter(|t| t.direction == TrendDirection::Worsening)
+            .count();
+        let stable = trends
+            .values()
+            .filter(|t| t.direction == TrendDirection::Stable)
+            .count();
 
         format!(
             "Trend Analysis: {} improving, {} stable, {} worsening",
@@ -246,7 +255,7 @@ mod tests {
     fn test_add_snapshot() {
         let mut analyzer = TrendAnalyzer::new();
         let snapshot = create_snapshot(0, 5, 10, 7.5);
-        
+
         analyzer.add_snapshot(snapshot);
         assert_eq!(analyzer.scans.len(), 1);
     }
@@ -261,13 +270,13 @@ mod tests {
     #[test]
     fn test_analyze_with_data() {
         let mut analyzer = TrendAnalyzer::new();
-        
+
         analyzer.add_snapshot(create_snapshot(7, 10, 15, 8.0));
         analyzer.add_snapshot(create_snapshot(0, 5, 10, 6.0));
-        
+
         let report = analyzer.analyze(30);
         assert!(report.is_some());
-        
+
         let report = report.unwrap();
         assert_eq!(report.total_scans, 2);
         assert!(!report.trends.is_empty());
@@ -276,14 +285,14 @@ mod tests {
     #[test]
     fn test_improving_trend() {
         let mut analyzer = TrendAnalyzer::new();
-        
+
         // Vulnerability count decreased (improving)
         analyzer.add_snapshot(create_snapshot(7, 10, 15, 8.0));
         analyzer.add_snapshot(create_snapshot(0, 5, 8, 6.0));
-        
+
         let report = analyzer.analyze(30).unwrap();
         let crit_trend = report.trends.get("critical_vulnerabilities").unwrap();
-        
+
         assert_eq!(crit_trend.direction, TrendDirection::Improving);
         assert!(crit_trend.change_percent < 0.0);
     }
@@ -291,14 +300,14 @@ mod tests {
     #[test]
     fn test_worsening_trend() {
         let mut analyzer = TrendAnalyzer::new();
-        
+
         // Vulnerability count increased (worsening)
         analyzer.add_snapshot(create_snapshot(7, 5, 8, 6.0));
         analyzer.add_snapshot(create_snapshot(0, 10, 15, 8.0));
-        
+
         let report = analyzer.analyze(30).unwrap();
         let crit_trend = report.trends.get("critical_vulnerabilities").unwrap();
-        
+
         assert_eq!(crit_trend.direction, TrendDirection::Worsening);
         assert!(crit_trend.change_percent > 0.0);
     }
@@ -306,14 +315,14 @@ mod tests {
     #[test]
     fn test_stable_trend() {
         let mut analyzer = TrendAnalyzer::new();
-        
+
         // Small change (stable)
         analyzer.add_snapshot(create_snapshot(7, 10, 15, 7.0));
         analyzer.add_snapshot(create_snapshot(0, 10, 15, 7.1));
-        
+
         let report = analyzer.analyze(30).unwrap();
         let risk_trend = report.trends.get("risk_score").unwrap();
-        
+
         assert_eq!(risk_trend.direction, TrendDirection::Stable);
     }
 
@@ -333,10 +342,10 @@ mod tests {
     #[test]
     fn test_summary_generation() {
         let mut analyzer = TrendAnalyzer::new();
-        
+
         analyzer.add_snapshot(create_snapshot(7, 10, 15, 8.0));
         analyzer.add_snapshot(create_snapshot(0, 5, 10, 6.0));
-        
+
         let report = analyzer.analyze(30).unwrap();
         assert!(report.summary.contains("improving"));
     }
@@ -344,10 +353,10 @@ mod tests {
     #[test]
     fn test_get_snapshots() {
         let mut analyzer = TrendAnalyzer::new();
-        
+
         analyzer.add_snapshot(create_snapshot(7, 10, 15, 8.0));
         analyzer.add_snapshot(create_snapshot(0, 5, 10, 6.0));
-        
+
         let snapshots = analyzer.get_snapshots();
         assert_eq!(snapshots.len(), 2);
     }

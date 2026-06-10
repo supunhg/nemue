@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -136,7 +137,8 @@ impl IoTDeviceFingerprinter {
             }
         }
 
-        let (category, vendor, model, confidence) = self.match_fingerprint(&open_ports, &banner_info);
+        let (category, vendor, model, confidence) =
+            self.match_fingerprint(&open_ports, &banner_info);
         let firmware_version = self.detect_firmware_version(&banner_info);
         let os = self.detect_os(&banner_info);
         let vulnerabilities = self.check_vulnerabilities(&vendor, &model, &firmware_version);
@@ -157,7 +159,11 @@ impl IoTDeviceFingerprinter {
         })
     }
 
-    pub async fn identify_device_type(&self, target: IpAddr, ports: &[u16]) -> Result<DeviceCategory> {
+    pub async fn identify_device_type(
+        &self,
+        target: IpAddr,
+        ports: &[u16],
+    ) -> Result<DeviceCategory> {
         let result = self.fingerprint(target, ports).await?;
         Ok(result.category)
     }
@@ -172,7 +178,11 @@ impl IoTDeviceFingerprinter {
         Ok(result.firmware_version)
     }
 
-    pub async fn assess_vulnerabilities(&self, target: IpAddr, ports: &[u16]) -> Result<Vec<VulnerabilityInfo>> {
+    pub async fn assess_vulnerabilities(
+        &self,
+        target: IpAddr,
+        ports: &[u16],
+    ) -> Result<Vec<VulnerabilityInfo>> {
         let result = self.fingerprint(target, ports).await?;
         Ok(result.vulnerabilities)
     }
@@ -183,7 +193,7 @@ impl IoTDeviceFingerprinter {
         banner_info: &HashMap<String, String>,
     ) -> (DeviceCategory, Option<String>, Option<String>, f64) {
         // Check banners for known patterns
-        for (_key, banner) in banner_info {
+        for banner in banner_info.values() {
             let lower = banner.to_lowercase();
 
             for sig in &self.fingerprint_db {
@@ -201,17 +211,48 @@ impl IoTDeviceFingerprinter {
 
             // Generic detection based on banner content
             if lower.contains("hikvision") {
-                return (DeviceCategory::IPCamera, Some("Hikvision".to_string()), None, 0.8);
+                return (
+                    DeviceCategory::IPCamera,
+                    Some("Hikvision".to_string()),
+                    None,
+                    0.8,
+                );
             } else if lower.contains("dahua") {
-                return (DeviceCategory::IPCamera, Some("Dahua".to_string()), None, 0.8);
+                return (
+                    DeviceCategory::IPCamera,
+                    Some("Dahua".to_string()),
+                    None,
+                    0.8,
+                );
             } else if lower.contains("ubnt") || lower.contains("ubiquiti") {
-                return (DeviceCategory::NetworkRouter, Some("Ubiquiti".to_string()), None, 0.8);
+                return (
+                    DeviceCategory::NetworkRouter,
+                    Some("Ubiquiti".to_string()),
+                    None,
+                    0.8,
+                );
             } else if lower.contains("mikrotik") {
-                return (DeviceCategory::NetworkRouter, Some("MikroTik".to_string()), None, 0.8);
+                return (
+                    DeviceCategory::NetworkRouter,
+                    Some("MikroTik".to_string()),
+                    None,
+                    0.8,
+                );
             } else if lower.contains("openwrt") {
-                return (DeviceCategory::NetworkRouter, Some("OpenWrt".to_string()), None, 0.7);
-            } else if lower.contains("samsung") && (lower.contains("tv") || lower.contains("smart")) {
-                return (DeviceCategory::SmartTV, Some("Samsung".to_string()), None, 0.8);
+                return (
+                    DeviceCategory::NetworkRouter,
+                    Some("OpenWrt".to_string()),
+                    None,
+                    0.7,
+                );
+            } else if lower.contains("samsung") && (lower.contains("tv") || lower.contains("smart"))
+            {
+                return (
+                    DeviceCategory::SmartTV,
+                    Some("Samsung".to_string()),
+                    None,
+                    0.8,
+                );
             } else if lower.contains("synology") {
                 return (DeviceCategory::NAS, Some("Synology".to_string()), None, 0.8);
             } else if lower.contains("qnap") {
@@ -240,7 +281,7 @@ impl IoTDeviceFingerprinter {
     }
 
     fn detect_firmware_version(&self, banner_info: &HashMap<String, String>) -> Option<String> {
-        for (_, banner) in banner_info {
+        for banner in banner_info.values() {
             let lower = banner.to_lowercase();
 
             // Common firmware version patterns
@@ -283,7 +324,7 @@ impl IoTDeviceFingerprinter {
     }
 
     fn detect_os(&self, banner_info: &HashMap<String, String>) -> Option<String> {
-        for (_, banner) in banner_info {
+        for banner in banner_info.values() {
             let lower = banner.to_lowercase();
             if lower.contains("linux") {
                 return Some("Linux".to_string());
@@ -335,7 +376,10 @@ impl IoTDeviceFingerprinter {
                         "Command injection vulnerability via malicious HTTP messages",
                     )
                     .with_versions(
-                        vec!["5.3.0", "5.3.5", "5.3.6", "5.3.7", "5.3.8", "5.3.9", "5.4.0", "5.4.5", "5.5.0"],
+                        vec![
+                            "5.3.0", "5.3.5", "5.3.6", "5.3.7", "5.3.8", "5.3.9", "5.4.0", "5.4.5",
+                            "5.5.0",
+                        ],
                         Some("5.6.0"),
                     ),
                 );
@@ -357,7 +401,13 @@ impl IoTDeviceFingerprinter {
                         "MikroTik Winbox File Read",
                         "Vulnerability allowing unauthenticated file read via Winbox",
                     )
-                    .with_versions(vec!["6.29", "6.30", "6.31", "6.32", "6.33", "6.34", "6.35", "6.36", "6.37", "6.38", "6.39", "6.40"], Some("6.40.5")),
+                    .with_versions(
+                        vec![
+                            "6.29", "6.30", "6.31", "6.32", "6.33", "6.34", "6.35", "6.36", "6.37",
+                            "6.38", "6.39", "6.40",
+                        ],
+                        Some("6.40.5"),
+                    ),
                 );
             } else if v_lower.contains("ubiquiti") || v_lower.contains("ubnt") {
                 vulns.push(
@@ -444,7 +494,11 @@ impl IoTDeviceFingerprinter {
                 vendor: "Ubiquiti".to_string(),
                 model: "UniFi".to_string(),
                 category: DeviceCategory::NetworkRouter,
-                banner_patterns: vec!["ubnt".to_string(), "ubiquiti".to_string(), "unifi".to_string()],
+                banner_patterns: vec![
+                    "ubnt".to_string(),
+                    "ubiquiti".to_string(),
+                    "unifi".to_string(),
+                ],
                 port_combinations: vec![vec![22, 80, 443, 8080, 8443]],
                 os_pattern: Some("Linux".to_string()),
             },
@@ -477,7 +531,10 @@ mod tests {
         assert_eq!(DeviceCategory::IPCamera.as_str(), "IP Camera");
         assert_eq!(DeviceCategory::NetworkRouter.as_str(), "Network Router");
         assert_eq!(DeviceCategory::SmartSpeaker.as_str(), "Smart Speaker");
-        assert_eq!(DeviceCategory::IndustrialController.as_str(), "Industrial Controller");
+        assert_eq!(
+            DeviceCategory::IndustrialController.as_str(),
+            "Industrial Controller"
+        );
         assert_eq!(DeviceCategory::NAS.as_str(), "Network Attached Storage");
         assert_eq!(DeviceCategory::Unknown.as_str(), "Unknown");
     }
@@ -539,7 +596,10 @@ mod tests {
     fn test_detect_os_linux() {
         let fp = IoTDeviceFingerprinter::new(1000);
         let mut banners = HashMap::new();
-        banners.insert("port_80".to_string(), "Server: Apache/2.4 (Linux)".to_string());
+        banners.insert(
+            "port_80".to_string(),
+            "Server: Apache/2.4 (Linux)".to_string(),
+        );
         let os = fp.detect_os(&banners);
         assert_eq!(os, Some("Linux".to_string()));
     }
@@ -608,11 +668,7 @@ mod tests {
     #[test]
     fn test_check_vulnerabilities_mikrotik() {
         let fp = IoTDeviceFingerprinter::new(1000);
-        let vulns = fp.check_vulnerabilities(
-            &Some("MikroTik".to_string()),
-            &None,
-            &None,
-        );
+        let vulns = fp.check_vulnerabilities(&Some("MikroTik".to_string()), &None, &None);
         assert!(!vulns.is_empty());
         assert!(vulns.iter().any(|v| v.id == "CVE-2018-14847"));
     }
@@ -660,9 +716,7 @@ mod tests {
     #[tokio::test]
     async fn test_grab_banner_closed_port() {
         let fp = IoTDeviceFingerprinter::new(200);
-        let result = fp
-            .grab_banner(IpAddr::V4([127, 0, 0, 1].into()), 1)
-            .await;
+        let result = fp.grab_banner(IpAddr::V4([127, 0, 0, 1].into()), 1).await;
         assert!(result.is_err());
     }
 }

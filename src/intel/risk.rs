@@ -213,7 +213,8 @@ impl RiskEngine {
 
         for (port, _service) in open_ports {
             // Check against high-risk ports
-            if let Some((_, svc_name, reason)) = high_risk_ports.iter().find(|(p, _, _)| p == port) {
+            if let Some((_, svc_name, reason)) = high_risk_ports.iter().find(|(p, _, _)| p == port)
+            {
                 let score = 15u8;
                 total_score = total_score.saturating_add(score);
 
@@ -236,7 +237,8 @@ impl RiskEngine {
                     category: RiskCategory::ServiceExposure,
                     severity: RiskLevel::Medium,
                     title: format!("Administrative interface exposed on port {}", port),
-                    description: "Management interfaces should not be exposed to the internet".to_string(),
+                    description: "Management interfaces should not be exposed to the internet"
+                        .to_string(),
                     affected_ports: vec![*port],
                     score,
                 });
@@ -280,8 +282,14 @@ impl RiskEngine {
     fn generate_recommendations(&self, findings: &[RiskFinding]) -> Vec<String> {
         let mut recommendations = Vec::new();
 
-        let critical_count = findings.iter().filter(|f| f.severity == RiskLevel::Critical).count();
-        let high_count = findings.iter().filter(|f| f.severity == RiskLevel::High).count();
+        let critical_count = findings
+            .iter()
+            .filter(|f| f.severity == RiskLevel::Critical)
+            .count();
+        let high_count = findings
+            .iter()
+            .filter(|f| f.severity == RiskLevel::High)
+            .count();
 
         if critical_count > 0 {
             recommendations.push(format!(
@@ -298,26 +306,38 @@ impl RiskEngine {
         }
 
         // Check for specific vulnerability types
-        if findings.iter().any(|f| matches!(f.category, RiskCategory::ThreatIntelligence)) {
-            recommendations.push("🛡️  Consider blocking traffic from flagged threat IPs".to_string());
+        if findings
+            .iter()
+            .any(|f| matches!(f.category, RiskCategory::ThreatIntelligence))
+        {
+            recommendations
+                .push("🛡️  Consider blocking traffic from flagged threat IPs".to_string());
         }
 
-        if findings.iter().any(|f| f.title.contains("Telnet") || f.title.contains("FTP")) {
+        if findings
+            .iter()
+            .any(|f| f.title.contains("Telnet") || f.title.contains("FTP"))
+        {
             recommendations.push("🔐 Replace unencrypted protocols (Telnet, FTP) with secure alternatives (SSH, SFTP)".to_string());
         }
 
         if findings.iter().any(|f| f.title.contains("database")) {
-            recommendations.push("🗄️  Restrict database access to internal networks only".to_string());
+            recommendations
+                .push("🗄️  Restrict database access to internal networks only".to_string());
         }
 
         if findings.iter().any(|f| f.title.contains("Administrative")) {
-            recommendations.push("🔧 Move administrative interfaces behind VPN or IP whitelist".to_string());
+            recommendations
+                .push("🔧 Move administrative interfaces behind VPN or IP whitelist".to_string());
         }
 
         if recommendations.is_empty() {
-            recommendations.push("✅ No critical issues detected - maintain current security posture".to_string());
+            recommendations.push(
+                "✅ No critical issues detected - maintain current security posture".to_string(),
+            );
         } else {
-            recommendations.push("📊 Conduct regular vulnerability assessments to stay secure".to_string());
+            recommendations
+                .push("📊 Conduct regular vulnerability assessments to stay secure".to_string());
         }
 
         recommendations
@@ -414,7 +434,7 @@ mod tests {
     fn test_comprehensive_risk_assessment() {
         let engine = RiskEngine::new();
         let open_ports = vec![(23, "Telnet".to_string()), (80, "HTTP".to_string())];
-        
+
         let vulnerabilities = vec![CveInfo {
             cve_id: "CVE-2021-44228".to_string(),
             description: "Critical RCE".to_string(),
@@ -434,10 +454,14 @@ mod tests {
             sources: vec!["Test".to_string()],
         };
 
-        let assessment = engine.assess_risk("1.2.3.4", &open_ports, &vulnerabilities, Some(&threat));
-        
+        let assessment =
+            engine.assess_risk("1.2.3.4", &open_ports, &vulnerabilities, Some(&threat));
+
         assert!(assessment.overall_score > 50);
-        assert_eq!(assessment.risk_level, RiskLevel::from_score(assessment.overall_score));
+        assert_eq!(
+            assessment.risk_level,
+            RiskLevel::from_score(assessment.overall_score)
+        );
         assert!(!assessment.findings.is_empty());
         assert!(!assessment.recommendations.is_empty());
     }
@@ -472,7 +496,7 @@ mod tests {
         ];
 
         RiskEngine::prioritize_findings(&mut findings);
-        
+
         // Critical vulnerability should be first
         assert_eq!(findings[0].severity, RiskLevel::Critical);
         assert_eq!(findings[0].score, 30);

@@ -19,7 +19,7 @@ use tokio::net::TcpStream;
 use tokio::time::timeout;
 use tracing::{debug, info};
 
-use super::{PortState, ScanResult, Protocol};
+use super::{PortState, Protocol, ScanResult};
 
 /// IP ID sequence behavior of the zombie host
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -122,9 +122,18 @@ pub async fn idle_scan(
 
     info!(
         "Idle scan complete: {} open, {} closed, {} filtered",
-        results.iter().filter(|r| r.state == PortState::Open).count(),
-        results.iter().filter(|r| r.state == PortState::Closed).count(),
-        results.iter().filter(|r| r.state == PortState::Filtered).count(),
+        results
+            .iter()
+            .filter(|r| r.state == PortState::Open)
+            .count(),
+        results
+            .iter()
+            .filter(|r| r.state == PortState::Closed)
+            .count(),
+        results
+            .iter()
+            .filter(|r| r.state == PortState::Filtered)
+            .count(),
     );
 
     Ok(results)
@@ -177,7 +186,8 @@ async fn get_zombie_ip_id(config: &IdleScanConfig) -> Result<u16> {
             // In production, this would read from raw socket
             let ip_id = (Instant::now()
                 .duration_since(Instant::now() - Duration::from_secs(1))
-                .as_millis() & 0xFFFF) as u16;
+                .as_millis()
+                & 0xFFFF) as u16;
 
             Ok(ip_id)
         }
@@ -244,14 +254,15 @@ fn send_spoofed_syn(config: &IdleScanConfig, target: Ipv4Addr, port: u16) -> Res
 
     // Build spoofed SYN packet
     let packet = build_spoofed_syn_packet(
-        config.zombie,  // Source IP (zombie)
-        target,         // Destination IP
+        config.zombie, // Source IP (zombie)
+        target,        // Destination IP
         config.source_port,
         port,
     )?;
 
     // Send packet
-    tx.send_to(&packet, None)
+    let _ = tx
+        .send_to(&packet, None)
         .ok_or_else(|| anyhow!("Failed to send packet"))?;
 
     Ok(())
@@ -299,11 +310,8 @@ fn build_spoofed_syn_packet(
         tcp_packet.set_window(64240);
         tcp_packet.set_urgent_ptr(0);
 
-        let checksum = pnet::packet::tcp::ipv4_checksum(
-            &tcp_packet.to_immutable(),
-            &source_ip,
-            &dest_ip,
-        );
+        let checksum =
+            pnet::packet::tcp::ipv4_checksum(&tcp_packet.to_immutable(), &source_ip, &dest_ip);
         tcp_packet.set_checksum(checksum);
     }
 
@@ -334,10 +342,7 @@ fn get_source_ip(interface: &pnet::datalink::NetworkInterface) -> Result<Ipv4Add
 }
 
 /// Convert idle scan results to standard scan results
-pub fn to_scan_results(
-    results: Vec<IdleScanResult>,
-    target: IpAddr,
-) -> Vec<ScanResult> {
+pub fn to_scan_results(results: Vec<IdleScanResult>, target: IpAddr) -> Vec<ScanResult> {
     results
         .into_iter()
         .map(|r| ScanResult {
@@ -372,22 +377,13 @@ mod tests {
     #[test]
     fn test_ip_id_behavior() {
         // Incremental
-        assert_eq!(
-            analyze_ip_ids(&[100, 101, 102]),
-            IpIdBehavior::Incremental
-        );
+        assert_eq!(analyze_ip_ids(&[100, 101, 102]), IpIdBehavior::Incremental);
 
         // Constant
-        assert_eq!(
-            analyze_ip_ids(&[100, 100, 100]),
-            IpIdBehavior::Constant
-        );
+        assert_eq!(analyze_ip_ids(&[100, 100, 100]), IpIdBehavior::Constant);
 
         // Zero
-        assert_eq!(
-            analyze_ip_ids(&[0, 0, 0]),
-            IpIdBehavior::Zero
-        );
+        assert_eq!(analyze_ip_ids(&[0, 0, 0]), IpIdBehavior::Zero);
     }
 
     fn analyze_ip_ids(ids: &[u16]) -> IpIdBehavior {

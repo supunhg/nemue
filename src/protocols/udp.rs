@@ -18,7 +18,7 @@ impl UdpScanner {
     /// Perform UDP scan on a single port
     pub async fn scan(&self, target: IpAddr, port: u16) -> Result<ScanResult> {
         let state = self.udp_scan(target, port).await?;
-        
+
         Ok(ScanResult {
             target,
             port,
@@ -45,7 +45,7 @@ impl UdpScanner {
 
         // Send service-specific probe
         let probe = self.get_probe_for_port(port);
-        socket.send(&probe).await?;
+        socket.send(probe).await?;
 
         // Try to receive response
         let mut buf = [0u8; 1024];
@@ -99,11 +99,10 @@ impl UdpScanner {
                 // NTP request
                 &[
                     0x1b, // LI, Version, Mode
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00,
                 ]
             }
             161 | 162 => {
@@ -117,8 +116,8 @@ impl UdpScanner {
                     0x02, 0x01, 0x00, // Error status
                     0x02, 0x01, 0x00, // Error index
                     0x30, 0x0e, // Variable bindings
-                    0x30, 0x0c,
-                    0x06, 0x08, 0x2b, 0x06, 0x01, 0x02, 0x01, 0x01, 0x01, 0x00, // OID
+                    0x30, 0x0c, 0x06, 0x08, 0x2b, 0x06, 0x01, 0x02, 0x01, 0x01, 0x01,
+                    0x00, // OID
                     0x05, 0x00, // NULL
                 ]
             }
@@ -128,8 +127,7 @@ impl UdpScanner {
                     0x00, 0x00, // Transaction ID
                     0x00, 0x10, // Flags
                     0x00, 0x01, // Questions
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x20, 0x43, 0x4b, // Encoded name
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x43, 0x4b, // Encoded name
                 ]
             }
             5060 | 5061 => {
@@ -209,12 +207,17 @@ mod tests {
     #[tokio::test]
     async fn test_udp_scan_timeout() {
         let scanner = UdpScanner::new(100); // Very short timeout
-        // Scan a port unlikely to be open on localhost
-        let result = scanner.scan(IpAddr::V4(std::net::Ipv4Addr::new(127, 0, 0, 1)), 58732).await;
+                                            // Scan a port unlikely to be open on localhost
+        let result = scanner
+            .scan(IpAddr::V4(std::net::Ipv4Addr::new(127, 0, 0, 1)), 58732)
+            .await;
         assert!(result.is_ok());
         // Should timeout and return Filtered, or get Closed from ICMP unreachable
         if let Ok(scan_result) = result {
-            assert!(matches!(scan_result.state, PortState::Filtered | PortState::Closed | PortState::Open));
+            assert!(matches!(
+                scan_result.state,
+                PortState::Filtered | PortState::Closed | PortState::Open
+            ));
         }
     }
 }

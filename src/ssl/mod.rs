@@ -1,5 +1,5 @@
 //! SSL/TLS Analysis Module
-//! 
+//!
 //! Comprehensive SSL/TLS security testing including:
 //! - Certificate parsing and validation
 //! - Cipher suite enumeration
@@ -8,13 +8,13 @@
 
 pub mod certificate;
 pub mod cipher;
-pub mod vulnerabilities;
 pub mod scanner;
+pub mod vulnerabilities;
 
 pub use certificate::{Certificate, CertificateChain, CertificateInfo};
-pub use cipher::{CipherSuite, CipherStrength, SupportedCiphers};
+pub use cipher::{CipherStrength, CipherSuite, SupportedCiphers};
+pub use scanner::{SslScanResult, SslScanner};
 pub use vulnerabilities::{SslVulnerability, VulnerabilityScanner};
-pub use scanner::{SslScanner, SslScanResult};
 
 use serde::{Deserialize, Serialize};
 use std::net::IpAddr;
@@ -38,7 +38,10 @@ pub enum TlsVersion {
 
 impl TlsVersion {
     pub fn is_deprecated(&self) -> bool {
-        matches!(self, TlsVersion::SslV2 | TlsVersion::SslV3 | TlsVersion::Tls10 | TlsVersion::Tls11)
+        matches!(
+            self,
+            TlsVersion::SslV2 | TlsVersion::SslV3 | TlsVersion::Tls10 | TlsVersion::Tls11
+        )
     }
 
     pub fn as_str(&self) -> &str {

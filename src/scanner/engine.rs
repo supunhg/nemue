@@ -1,21 +1,18 @@
 use anyhow::{anyhow, Result};
 use futures::stream::{self, StreamExt};
 use std::net::IpAddr;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+use std::sync::Arc;
 use std::time::Instant;
 use tokio::sync::Semaphore;
 use tracing::info;
 
-use super::{
-    Port, PortParser, PortState, RateLimiter, ScanResult, ScanResults,
-    TargetParser,
-};
+use super::{Port, PortParser, PortState, RateLimiter, ScanResult, ScanResults, TargetParser};
+use crate::fingerprint::OsDetector;
+use crate::performance::metrics::MetricsCollector;
 use crate::protocols::tcp::TcpScanner;
 use crate::protocols::udp::UdpScanner;
-use crate::fingerprint::OsDetector;
 use crate::service::ServiceDetector;
-use crate::performance::metrics::MetricsCollector;
 
 const MIN_BATCH_SIZE: usize = 16;
 const MAX_BATCH_SIZE: usize = 512;
@@ -101,7 +98,12 @@ impl ScanEngine {
         })
     }
 
-    pub fn with_options(max_rate: u32, timeout: u64, service_detection: bool, os_detection: bool) -> Result<Self> {
+    pub fn with_options(
+        max_rate: u32,
+        timeout: u64,
+        service_detection: bool,
+        os_detection: bool,
+    ) -> Result<Self> {
         Ok(Self {
             rate_limiter: RateLimiter::new(max_rate),
             timeout,
@@ -116,11 +118,11 @@ impl ScanEngine {
     }
 
     pub fn with_all_options(
-        max_rate: u32, 
-        timeout: u64, 
-        service_detection: bool, 
+        max_rate: u32,
+        timeout: u64,
+        service_detection: bool,
         os_detection: bool,
-        use_raw: bool
+        use_raw: bool,
     ) -> Result<Self> {
         Ok(Self {
             rate_limiter: RateLimiter::new(max_rate),
@@ -153,12 +155,7 @@ impl ScanEngine {
         &self.metrics
     }
 
-    pub async fn scan(
-        &self,
-        target: &str,
-        ports: &str,
-        scan_type: &str,
-    ) -> Result<ScanResults> {
+    pub async fn scan(&self, target: &str, ports: &str, scan_type: &str) -> Result<ScanResults> {
         let scan_start = chrono::Utc::now();
 
         // Parse targets
@@ -181,15 +178,17 @@ impl ScanEngine {
             let port_list = port_list.clone();
             let scan_type = scan_type.to_string();
             async move {
-                engine.scan_single_target(target_ip, &port_list, &scan_type).await
+                engine
+                    .scan_single_target(target_ip, &port_list, &scan_type)
+                    .await
             }
         });
 
         let mut all_results = Vec::new();
         let mut os_fingerprints = Vec::new();
 
-        let mut stream = stream::iter(target_futures)
-            .buffer_unordered(engine.max_concurrent_targets);
+        let mut stream =
+            stream::iter(target_futures).buffer_unordered(engine.max_concurrent_targets);
 
         while let Some(result) = stream.next().await {
             match result {
@@ -270,7 +269,11 @@ impl ScanEngine {
         // Filter out excluded ports
         port_list.retain(|port| !exclude_list.contains(port));
 
-        info!("Parsed {} port(s) ({} excluded)", port_list.len(), exclude_list.len());
+        info!(
+            "Parsed {} port(s) ({} excluded)",
+            port_list.len(),
+            exclude_list.len()
+        );
 
         let target_count = targets.len();
         let port_count = port_list.len();
@@ -284,15 +287,17 @@ impl ScanEngine {
             let port_list = port_list.clone();
             let scan_type = scan_type.to_string();
             async move {
-                engine.scan_single_target(target_ip, &port_list, &scan_type).await
+                engine
+                    .scan_single_target(target_ip, &port_list, &scan_type)
+                    .await
             }
         });
 
         let mut all_results = Vec::new();
         let mut os_fingerprints = Vec::new();
 
-        let mut stream = stream::iter(target_futures)
-            .buffer_unordered(engine.max_concurrent_targets);
+        let mut stream =
+            stream::iter(target_futures).buffer_unordered(engine.max_concurrent_targets);
 
         while let Some(result) = stream.next().await {
             match result {
@@ -328,18 +333,23 @@ impl ScanEngine {
         let max_concurrent = self.max_concurrent_ports;
         let metrics = self.metrics.clone();
 
-        self.parallel_scan_ports(ports, move |port| {
-            let scanner = tcp_scanner.clone();
-            let rl = rate_limiter.clone();
-            let metrics = metrics.clone();
-            async move {
-                rl.wait().await;
-                metrics.increment_packets_sent(1);
-                let result = scanner.syn_scan(target, port.value()).await;
-                metrics.increment_packets_received(1);
-                result
-            }
-        }, max_concurrent).await
+        self.parallel_scan_ports(
+            ports,
+            move |port| {
+                let scanner = tcp_scanner.clone();
+                let rl = rate_limiter.clone();
+                let metrics = metrics.clone();
+                async move {
+                    rl.wait().await;
+                    metrics.increment_packets_sent(1);
+                    let result = scanner.syn_scan(target, port.value()).await;
+                    metrics.increment_packets_received(1);
+                    result
+                }
+            },
+            max_concurrent,
+        )
+        .await
     }
 
     async fn connect_scan(&self, target: IpAddr, ports: &[Port]) -> Result<Vec<ScanResult>> {
@@ -350,23 +360,28 @@ impl ScanEngine {
         let pool = self.connection_pool.clone();
         let metrics = self.metrics.clone();
 
-        self.parallel_scan_ports(ports, move |port| {
-            let scanner = tcp_scanner.clone();
-            let rl = rate_limiter.clone();
-            let pool = pool.clone();
-            let metrics = metrics.clone();
-            async move {
-                pool.acquire();
-                metrics.increment_active_connections();
-                rl.wait().await;
-                metrics.increment_packets_sent(1);
-                let result = scanner.connect_scan(target, port.value()).await;
-                metrics.increment_packets_received(1);
-                metrics.decrement_active_connections();
-                pool.release();
-                result
-            }
-        }, max_concurrent).await
+        self.parallel_scan_ports(
+            ports,
+            move |port| {
+                let scanner = tcp_scanner.clone();
+                let rl = rate_limiter.clone();
+                let pool = pool.clone();
+                let metrics = metrics.clone();
+                async move {
+                    pool.acquire();
+                    metrics.increment_active_connections();
+                    rl.wait().await;
+                    metrics.increment_packets_sent(1);
+                    let result = scanner.connect_scan(target, port.value()).await;
+                    metrics.increment_packets_received(1);
+                    metrics.decrement_active_connections();
+                    pool.release();
+                    result
+                }
+            },
+            max_concurrent,
+        )
+        .await
     }
 
     async fn udp_scan(&self, target: IpAddr, ports: &[Port]) -> Result<Vec<ScanResult>> {
@@ -376,18 +391,23 @@ impl ScanEngine {
         let max_concurrent = self.max_concurrent_ports / 2; // Lower concurrency for UDP
         let metrics = self.metrics.clone();
 
-        self.parallel_scan_ports(ports, move |port| {
-            let scanner = udp_scanner.clone();
-            let rl = rate_limiter.clone();
-            let metrics = metrics.clone();
-            async move {
-                rl.wait().await;
-                metrics.increment_packets_sent(1);
-                let result = scanner.scan(target, port.value()).await;
-                metrics.increment_packets_received(1);
-                result
-            }
-        }, max_concurrent).await
+        self.parallel_scan_ports(
+            ports,
+            move |port| {
+                let scanner = udp_scanner.clone();
+                let rl = rate_limiter.clone();
+                let metrics = metrics.clone();
+                async move {
+                    rl.wait().await;
+                    metrics.increment_packets_sent(1);
+                    let result = scanner.scan(target, port.value()).await;
+                    metrics.increment_packets_received(1);
+                    result
+                }
+            },
+            max_concurrent,
+        )
+        .await
     }
 
     /// Generic parallel port scanning with adaptive batch sizing and high-throughput spawning
@@ -436,8 +456,15 @@ impl ScanEngine {
         }
 
         let elapsed = scan_start.elapsed().as_secs_f64();
-        let open_count = results.iter().filter(|r| r.state == PortState::Open).count();
-        let pps = if elapsed > 0.0 { results.len() as f64 / elapsed } else { 0.0 };
+        let open_count = results
+            .iter()
+            .filter(|r| r.state == PortState::Open)
+            .count();
+        let pps = if elapsed > 0.0 {
+            results.len() as f64 / elapsed
+        } else {
+            0.0
+        };
 
         info!(
             "Scan completed: {} ports scanned, {} open in {:.2}s ({:.0} ports/sec)",
@@ -450,17 +477,28 @@ impl ScanEngine {
         Ok(results)
     }
 
-    async fn detect_services(&self, target: IpAddr, mut results: Vec<ScanResult>) -> Vec<ScanResult> {
-        info!("Performing service detection on {} open ports", 
-            results.iter().filter(|r| r.state == PortState::Open).count());
+    async fn detect_services(
+        &self,
+        target: IpAddr,
+        mut results: Vec<ScanResult>,
+    ) -> Vec<ScanResult> {
+        info!(
+            "Performing service detection on {} open ports",
+            results
+                .iter()
+                .filter(|r| r.state == PortState::Open)
+                .count()
+        );
 
         let service_detector = ServiceDetector::new(self.timeout);
-        
+
         for result in &mut results {
             if result.state == PortState::Open {
                 if let Ok(service_info) = service_detector.detect(target, result.port).await {
-                    info!("Detected service on port {}: {} (confidence: {}%)", 
-                        result.port, service_info.service, service_info.confidence);
+                    info!(
+                        "Detected service on port {}: {} (confidence: {}%)",
+                        result.port, service_info.service, service_info.confidence
+                    );
                     result.service = Some(service_info.service.clone());
                     result.service_info = Some(service_info);
                 }
@@ -470,11 +508,15 @@ impl ScanEngine {
         results
     }
 
-    async fn detect_os(&self, target: IpAddr, results: &[ScanResult]) -> Option<crate::fingerprint::OsFingerprint> {
+    async fn detect_os(
+        &self,
+        target: IpAddr,
+        results: &[ScanResult],
+    ) -> Option<crate::fingerprint::OsFingerprint> {
         // For now, we'll use a simple heuristic based on common port responses
         // In a full implementation, this would involve sending special TCP packets
         // and analyzing the responses
-        
+
         let open_ports: Vec<u16> = results
             .iter()
             .filter(|r| r.state == PortState::Open)
@@ -490,19 +532,24 @@ impl ScanEngine {
         // Simplified OS detection - in reality, we'd send special probes
         // For now, use heuristics based on open ports and service info
         let os_detector = OsDetector::new();
-        
+
         // Default TTL detection (would need raw sockets for real implementation)
         let ttl = self.estimate_ttl(&open_ports);
         let window_size = self.estimate_window_size(&open_ports);
-        
+
         let mut fingerprint = os_detector.detect(ttl, window_size, vec![]);
         fingerprint.target = target;
 
-        let os_name = fingerprint.os_family.as_ref()
+        let os_name = fingerprint
+            .os_family
+            .as_ref()
             .map(|s| s.as_str())
             .unwrap_or("Unknown");
-        
-        info!("OS detected: {} (confidence: {}%)", os_name, fingerprint.confidence);
+
+        info!(
+            "OS detected: {} (confidence: {}%)",
+            os_name, fingerprint.confidence
+        );
 
         Some(fingerprint)
     }

@@ -1,9 +1,9 @@
 // Performance monitoring and metrics collection
-use std::sync::Arc;
+use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+use std::sync::Arc;
 use std::time::Instant;
 use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
 
 /// Real-time performance metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -12,7 +12,7 @@ pub struct PerformanceMetrics {
     pub packets_received: u64,
     pub bytes_sent: u64,
     pub bytes_received: u64,
-    pub scan_rate: f64,  // packets per second
+    pub scan_rate: f64, // packets per second
     pub active_connections: usize,
     pub memory_usage_mb: usize,
     pub cpu_usage_percent: f32,
@@ -227,7 +227,7 @@ mod tests {
         let collector = MetricsCollector::new();
         collector.increment_packets_sent(100);
         collector.add_bytes_sent(4096);
-        
+
         let metrics = collector.snapshot().await;
         assert_eq!(metrics.packets_sent, 100);
         assert_eq!(metrics.bytes_sent, 4096);

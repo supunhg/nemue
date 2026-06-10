@@ -1,23 +1,13 @@
+#![allow(dead_code)]
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct GcpConfig {
     pub project_id: String,
     pub zone: Option<String>,
     pub service_account_key: Option<String>,
     pub credentials_file: Option<String>,
-}
-
-impl Default for GcpConfig {
-    fn default() -> Self {
-        Self {
-            project_id: String::new(),
-            zone: None,
-            service_account_key: None,
-            credentials_file: None,
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -44,7 +34,10 @@ pub enum GcsPublicAccess {
 
 impl GcsPublicAccess {
     pub fn is_public(&self) -> bool {
-        matches!(self, GcsPublicAccess::PublicRead | GcsPublicAccess::PublicReadWrite)
+        matches!(
+            self,
+            GcsPublicAccess::PublicRead | GcsPublicAccess::PublicReadWrite
+        )
     }
 
     pub fn severity_label(&self) -> &str {
@@ -183,9 +176,20 @@ impl GcpScanReport {
     }
 
     pub fn critical_count(&self) -> usize {
-        self.iam_findings.iter().filter(|f| f.severity == "CRITICAL").count()
-            + self.firewall_findings.iter().filter(|f| f.severity == "CRITICAL").count()
-            + self.audit_log_findings.iter().filter(|f| f.severity == "CRITICAL").count()
+        self.iam_findings
+            .iter()
+            .filter(|f| f.severity == "CRITICAL")
+            .count()
+            + self
+                .firewall_findings
+                .iter()
+                .filter(|f| f.severity == "CRITICAL")
+                .count()
+            + self
+                .audit_log_findings
+                .iter()
+                .filter(|f| f.severity == "CRITICAL")
+                .count()
     }
 }
 
@@ -214,7 +218,11 @@ impl GcpScanner {
                 1 => GcsPublicAccess::PublicRead,
                 _ => GcsPublicAccess::Private,
             },
-            encryption: if encrypted { GcsEncryptionStatus::GoogleManaged } else { GcsEncryptionStatus::None },
+            encryption: if encrypted {
+                GcsEncryptionStatus::GoogleManaged
+            } else {
+                GcsEncryptionStatus::None
+            },
             versioning,
             logging,
             retention_period: None,
@@ -231,9 +239,15 @@ impl GcpScanner {
                     findings.push(GcpIamFinding {
                         finding_type: GcpIamFindingType::PrimitiveRoles,
                         resource: format!("{}:{}", member, role),
-                        severity: if *role == "roles/owner" { "CRITICAL" } else { "HIGH" }.to_string(),
+                        severity: if *role == "roles/owner" {
+                            "CRITICAL"
+                        } else {
+                            "HIGH"
+                        }
+                        .to_string(),
                         description: format!("{} is bound to primitive role '{}'", member, role),
-                        recommendation: "Use predefined or custom roles instead of primitive roles".to_string(),
+                        recommendation: "Use predefined or custom roles instead of primitive roles"
+                            .to_string(),
                     });
                 }
 
@@ -243,17 +257,25 @@ impl GcpScanner {
                         resource: format!("{}:{}", member, role),
                         severity: "CRITICAL".to_string(),
                         description: format!("Owner role granted to '{}'", member),
-                        recommendation: "Remove Owner role; use least-privilege predefined roles".to_string(),
+                        recommendation: "Remove Owner role; use least-privilege predefined roles"
+                            .to_string(),
                     });
                 }
 
-                if role.contains("admin") && (*role == "roles/iam.securityAdmin" || *role == "roles/resourcemanager.organizationAdmin") {
+                if role.contains("admin")
+                    && (*role == "roles/iam.securityAdmin"
+                        || *role == "roles/resourcemanager.organizationAdmin")
+                {
                     findings.push(GcpIamFinding {
                         finding_type: GcpIamFindingType::OverlyPermissiveBinding,
                         resource: format!("{}:{}", member, role),
                         severity: "HIGH".to_string(),
-                        description: format!("Highly privileged role '{}' granted to '{}'", role, member),
-                        recommendation: "Review and restrict privileged role assignments".to_string(),
+                        description: format!(
+                            "Highly privileged role '{}' granted to '{}'",
+                            role, member
+                        ),
+                        recommendation: "Review and restrict privileged role assignments"
+                            .to_string(),
                     });
                 }
             }
@@ -263,7 +285,10 @@ impl GcpScanner {
                     finding_type: GcpIamFindingType::ServiceAccountKeyAge,
                     resource: member.to_string(),
                     severity: "MEDIUM".to_string(),
-                    description: format!("Service account key for '{}' is older than 90 days", member),
+                    description: format!(
+                        "Service account key for '{}' is older than 90 days",
+                        member
+                    ),
                     recommendation: "Rotate service account keys every 90 days".to_string(),
                 });
             }
@@ -272,11 +297,13 @@ impl GcpScanner {
         findings
     }
 
-    pub fn analyze_firewall_rules(rules: &[(&str, &str, &str, Vec<&str>, Vec<&str>)]) -> Vec<FirewallRuleFinding> {
+    pub fn analyze_firewall_rules(
+        rules: &[(&str, &str, &str, Vec<&str>, Vec<&str>)],
+    ) -> Vec<FirewallRuleFinding> {
         let mut findings = Vec::new();
 
         for &(rule_name, network, direction, ref source_ranges, ref allowed_ports) in rules {
-            let is_world = source_ranges.iter().any(|r| *r == "0.0.0.0/0");
+            let is_world = source_ranges.contains(&"0.0.0.0/0");
 
             if !is_world {
                 continue;
@@ -360,7 +387,10 @@ impl GcpScanner {
             findings.push(AuditLogFinding {
                 finding_type: AuditLogFindingType::NoRetention,
                 severity: "MEDIUM".to_string(),
-                description: format!("Audit log retention is {} days, should be at least 365", retention_days),
+                description: format!(
+                    "Audit log retention is {} days, should be at least 365",
+                    retention_days
+                ),
                 recommendation: "Set audit log retention to at least 365 days".to_string(),
             });
         }
@@ -406,76 +436,109 @@ mod tests {
 
     #[test]
     fn test_gcp_iam_primitive_roles() {
-        let bindings = vec![
-            ("user:alice@example.com", vec!["roles/viewer"], false, false),
-        ];
+        let bindings = vec![("user:alice@example.com", vec!["roles/viewer"], false, false)];
         let findings = GcpScanner::check_iam(&bindings);
-        assert!(findings.iter().any(|f| f.finding_type == GcpIamFindingType::PrimitiveRoles));
+        assert!(findings
+            .iter()
+            .any(|f| f.finding_type == GcpIamFindingType::PrimitiveRoles));
     }
 
     #[test]
     fn test_gcp_iam_owner() {
-        let bindings = vec![
-            ("user:admin@example.com", vec!["roles/owner"], false, false),
-        ];
+        let bindings = vec![("user:admin@example.com", vec!["roles/owner"], false, false)];
         let findings = GcpScanner::check_iam(&bindings);
-        assert!(findings.iter().any(|f| f.finding_type == GcpIamFindingType::OwnerRoleGranted));
+        assert!(findings
+            .iter()
+            .any(|f| f.finding_type == GcpIamFindingType::OwnerRoleGranted));
         assert!(findings.iter().any(|f| f.severity == "CRITICAL"));
     }
 
     #[test]
     fn test_gcp_iam_no_issues() {
-        let bindings = vec![
-            ("user:dev@example.com", vec!["roles/storage.objectViewer"], false, false),
-        ];
+        let bindings = vec![(
+            "user:dev@example.com",
+            vec!["roles/storage.objectViewer"],
+            false,
+            false,
+        )];
         let findings = GcpScanner::check_iam(&bindings);
         assert_eq!(findings.len(), 0);
     }
 
     #[test]
     fn test_gcp_iam_key_age() {
-        let bindings = vec![
-            ("sa@project.iam.gserviceaccount.com", vec!["roles/storage.admin"], true, true),
-        ];
+        let bindings = vec![(
+            "sa@project.iam.gserviceaccount.com",
+            vec!["roles/storage.admin"],
+            true,
+            true,
+        )];
         let findings = GcpScanner::check_iam(&bindings);
-        assert!(findings.iter().any(|f| f.finding_type == GcpIamFindingType::ServiceAccountKeyAge));
+        assert!(findings
+            .iter()
+            .any(|f| f.finding_type == GcpIamFindingType::ServiceAccountKeyAge));
     }
 
     #[test]
     fn test_firewall_ssh_open() {
-        let rules = vec![
-            ("allow-ssh", "default", "Ingress", vec!["0.0.0.0/0"], vec!["22"]),
-        ];
+        let rules = vec![(
+            "allow-ssh",
+            "default",
+            "Ingress",
+            vec!["0.0.0.0/0"],
+            vec!["22"],
+        )];
         let findings = GcpScanner::analyze_firewall_rules(&rules);
         assert_eq!(findings.len(), 1);
-        assert_eq!(findings[0].finding_type, FirewallRuleFindingType::UnrestrictedSsh);
+        assert_eq!(
+            findings[0].finding_type,
+            FirewallRuleFindingType::UnrestrictedSsh
+        );
         assert_eq!(findings[0].severity, "CRITICAL");
     }
 
     #[test]
     fn test_firewall_rdp_open() {
-        let rules = vec![
-            ("allow-rdp", "default", "Ingress", vec!["0.0.0.0/0"], vec!["3389"]),
-        ];
+        let rules = vec![(
+            "allow-rdp",
+            "default",
+            "Ingress",
+            vec!["0.0.0.0/0"],
+            vec!["3389"],
+        )];
         let findings = GcpScanner::analyze_firewall_rules(&rules);
-        assert_eq!(findings[0].finding_type, FirewallRuleFindingType::UnrestrictedRdp);
+        assert_eq!(
+            findings[0].finding_type,
+            FirewallRuleFindingType::UnrestrictedRdp
+        );
     }
 
     #[test]
     fn test_firewall_all_ports() {
-        let rules = vec![
-            ("allow-all", "default", "Ingress", vec!["0.0.0.0/0"], vec!["all"]),
-        ];
+        let rules = vec![(
+            "allow-all",
+            "default",
+            "Ingress",
+            vec!["0.0.0.0/0"],
+            vec!["all"],
+        )];
         let findings = GcpScanner::analyze_firewall_rules(&rules);
-        assert_eq!(findings[0].finding_type, FirewallRuleFindingType::AllPortsAllProtocols);
+        assert_eq!(
+            findings[0].finding_type,
+            FirewallRuleFindingType::AllPortsAllProtocols
+        );
         assert_eq!(findings[0].severity, "CRITICAL");
     }
 
     #[test]
     fn test_firewall_private_source() {
-        let rules = vec![
-            ("internal-ssh", "default", "Ingress", vec!["10.0.0.0/8"], vec!["22"]),
-        ];
+        let rules = vec![(
+            "internal-ssh",
+            "default",
+            "Ingress",
+            vec!["10.0.0.0/8"],
+            vec!["22"],
+        )];
         let findings = GcpScanner::analyze_firewall_rules(&rules);
         assert_eq!(findings.len(), 0);
     }
@@ -496,7 +559,10 @@ mod tests {
     fn test_audit_logs_partial() {
         let findings = GcpScanner::analyze_audit_logs(true, false, 365, true);
         assert_eq!(findings.len(), 1);
-        assert_eq!(findings[0].finding_type, AuditLogFindingType::NoDataAccessLogs);
+        assert_eq!(
+            findings[0].finding_type,
+            AuditLogFindingType::NoDataAccessLogs
+        );
     }
 
     #[test]
@@ -504,12 +570,22 @@ mod tests {
         let report = GcpScanReport {
             config: GcpConfig::default(),
             buckets: vec![],
-            iam_findings: vec![
-                GcpIamFinding { finding_type: GcpIamFindingType::OwnerRoleGranted, resource: "x".into(), severity: "CRITICAL".into(), description: "".into(), recommendation: "".into() },
-            ],
-            firewall_findings: vec![
-                FirewallRuleFinding { rule_name: "r1".into(), network: "default".into(), finding_type: FirewallRuleFindingType::UnrestrictedSsh, direction: "".into(), source_ranges: vec![], allowed_ports: vec![], severity: "CRITICAL".into() },
-            ],
+            iam_findings: vec![GcpIamFinding {
+                finding_type: GcpIamFindingType::OwnerRoleGranted,
+                resource: "x".into(),
+                severity: "CRITICAL".into(),
+                description: "".into(),
+                recommendation: "".into(),
+            }],
+            firewall_findings: vec![FirewallRuleFinding {
+                rule_name: "r1".into(),
+                network: "default".into(),
+                finding_type: FirewallRuleFindingType::UnrestrictedSsh,
+                direction: "".into(),
+                source_ranges: vec![],
+                allowed_ports: vec![],
+                severity: "CRITICAL".into(),
+            }],
             audit_log_findings: vec![],
             scan_timestamp: "2024-01-01T00:00:00Z".into(),
         };

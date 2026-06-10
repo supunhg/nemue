@@ -4,8 +4,8 @@
 use rmcp::{
     handler::server::ServerHandler,
     model::{
-        CallToolRequestParams, CallToolResult, Content,
-        Implementation, ListToolsResult, PaginatedRequestParams, ServerInfo,
+        CallToolRequestParams, CallToolResult, Content, Implementation, ListToolsResult,
+        PaginatedRequestParams, ServerInfo,
     },
     service::RequestContext,
     RoleServer,
@@ -74,8 +74,9 @@ impl ServerHandler for NemueMcpServer {
     ) -> impl std::future::Future<Output = Result<CallToolResult, rmcp::ErrorData>> + Send {
         let engine = self.engine.clone();
         async move {
-            let args = request.arguments
-                .map(|m| serde_json::Value::Object(m))
+            let args = request
+                .arguments
+                .map(serde_json::Value::Object)
                 .unwrap_or(serde_json::Value::Object(serde_json::Map::new()));
             let name = request.name.to_string();
             match name.as_str() {
@@ -87,7 +88,9 @@ impl ServerHandler for NemueMcpServer {
                 "nemue_host_discovery" => handle_host_discovery(&args).await,
 
                 "nemue_vuln_scan" => handle_vuln_scan(&engine, &args).await,
-                _ => Err(rmcp::ErrorData::method_not_found::<rmcp::model::CallToolRequestMethod>()),
+                _ => Err(rmcp::ErrorData::method_not_found::<
+                    rmcp::model::CallToolRequestMethod,
+                >()),
             }
         }
     }
@@ -108,8 +111,12 @@ fn error_result(msg: String) -> CallToolResult {
     CallToolResult::error(vec![Content::text(msg)])
 }
 
-async fn handle_scan(engine: &Arc<Mutex<ScanEngine>>, args: &Value) -> Result<CallToolResult, rmcp::ErrorData> {
-    let target = args["target"].as_str()
+async fn handle_scan(
+    engine: &Arc<Mutex<ScanEngine>>,
+    args: &Value,
+) -> Result<CallToolResult, rmcp::ErrorData> {
+    let target = args["target"]
+        .as_str()
         .ok_or_else(|| rmcp::ErrorData::invalid_params("target required", None))?;
     let ports = args["ports"].as_str().unwrap_or("top-1000");
     let scan_type = args["scan_type"].as_str().unwrap_or("connect");
@@ -133,15 +140,24 @@ async fn handle_scan(engine: &Arc<Mutex<ScanEngine>>, args: &Value) -> Result<Ca
     }
 }
 
-async fn handle_quick_scan(engine: &Arc<Mutex<ScanEngine>>, args: &Value) -> Result<CallToolResult, rmcp::ErrorData> {
-    let target = args["target"].as_str()
+async fn handle_quick_scan(
+    engine: &Arc<Mutex<ScanEngine>>,
+    args: &Value,
+) -> Result<CallToolResult, rmcp::ErrorData> {
+    let target = args["target"]
+        .as_str()
         .ok_or_else(|| rmcp::ErrorData::invalid_params("target required", None))?;
     let top = args["top_ports"].as_u64().unwrap_or(100);
 
     let engine = engine.lock().await;
-    match engine.scan(target, &format!("top-{}", top), "connect").await {
+    match engine
+        .scan(target, &format!("top-{}", top), "connect")
+        .await
+    {
         Ok(results) => {
-            let open: Vec<Value> = results.results.iter()
+            let open: Vec<Value> = results
+                .results
+                .iter()
                 .filter(|r| r.state == crate::scanner::PortState::Open)
                 .map(|r| json!({"port": r.port, "service": r.service}))
                 .collect();
@@ -155,10 +171,15 @@ async fn handle_quick_scan(engine: &Arc<Mutex<ScanEngine>>, args: &Value) -> Res
     }
 }
 
-async fn handle_service_detect(engine: &Arc<Mutex<ScanEngine>>, args: &Value) -> Result<CallToolResult, rmcp::ErrorData> {
-    let target = args["target"].as_str()
+async fn handle_service_detect(
+    engine: &Arc<Mutex<ScanEngine>>,
+    args: &Value,
+) -> Result<CallToolResult, rmcp::ErrorData> {
+    let target = args["target"]
+        .as_str()
         .ok_or_else(|| rmcp::ErrorData::invalid_params("target required", None))?;
-    let ports = args["ports"].as_str()
+    let ports = args["ports"]
+        .as_str()
         .ok_or_else(|| rmcp::ErrorData::invalid_params("ports required", None))?;
 
     let engine = engine.lock().await;
@@ -174,8 +195,12 @@ async fn handle_service_detect(engine: &Arc<Mutex<ScanEngine>>, args: &Value) ->
     }
 }
 
-async fn handle_os_detect(engine: &Arc<Mutex<ScanEngine>>, args: &Value) -> Result<CallToolResult, rmcp::ErrorData> {
-    let target = args["target"].as_str()
+async fn handle_os_detect(
+    engine: &Arc<Mutex<ScanEngine>>,
+    args: &Value,
+) -> Result<CallToolResult, rmcp::ErrorData> {
+    let target = args["target"]
+        .as_str()
         .ok_or_else(|| rmcp::ErrorData::invalid_params("target required", None))?;
 
     let engine = engine.lock().await;
@@ -189,11 +214,13 @@ async fn handle_os_detect(engine: &Arc<Mutex<ScanEngine>>, args: &Value) -> Resu
 }
 
 async fn handle_ssl_check(args: &Value) -> Result<CallToolResult, rmcp::ErrorData> {
-    let target = args["target"].as_str()
+    let target = args["target"]
+        .as_str()
         .ok_or_else(|| rmcp::ErrorData::invalid_params("target required", None))?;
     let port = args["port"].as_u64().unwrap_or(443) as u16;
 
-    let target_ip: std::net::IpAddr = target.parse()
+    let target_ip: std::net::IpAddr = target
+        .parse()
         .map_err(|_| rmcp::ErrorData::invalid_params("invalid IP address", None))?;
     let config = crate::ssl::SslConfig {
         target: target_ip,
@@ -206,7 +233,8 @@ async fn handle_ssl_check(args: &Value) -> Result<CallToolResult, rmcp::ErrorDat
     let ssl_scanner = crate::ssl::SslScanner::new(config);
     match ssl_scanner.scan().await {
         Ok(result) => {
-            let val = serde_json::to_value(&result).unwrap_or(json!({"error": "serialization failed"}));
+            let val =
+                serde_json::to_value(&result).unwrap_or(json!({"error": "serialization failed"}));
             Ok(json_result(val))
         }
         Err(e) => Ok(error_result(format!("SSL check failed: {}", e))),
@@ -214,7 +242,8 @@ async fn handle_ssl_check(args: &Value) -> Result<CallToolResult, rmcp::ErrorDat
 }
 
 async fn handle_host_discovery(args: &Value) -> Result<CallToolResult, rmcp::ErrorData> {
-    let target = args["target"].as_str()
+    let target = args["target"]
+        .as_str()
         .ok_or_else(|| rmcp::ErrorData::invalid_params("target required", None))?;
 
     let engine = ScanEngine::new(1000, 1000)
@@ -222,7 +251,9 @@ async fn handle_host_discovery(args: &Value) -> Result<CallToolResult, rmcp::Err
 
     match engine.scan(target, "22,80,443", "connect").await {
         Ok(results) => {
-            let hosts: Vec<Value> = results.results.iter()
+            let hosts: Vec<Value> = results
+                .results
+                .iter()
                 .filter(|r| r.state == crate::scanner::PortState::Open)
                 .map(|r| json!({"host": r.target, "port": r.port}))
                 .collect();
@@ -232,15 +263,21 @@ async fn handle_host_discovery(args: &Value) -> Result<CallToolResult, rmcp::Err
     }
 }
 
-async fn handle_vuln_scan(engine: &Arc<Mutex<ScanEngine>>, args: &Value) -> Result<CallToolResult, rmcp::ErrorData> {
-    let target = args["target"].as_str()
+async fn handle_vuln_scan(
+    engine: &Arc<Mutex<ScanEngine>>,
+    args: &Value,
+) -> Result<CallToolResult, rmcp::ErrorData> {
+    let target = args["target"]
+        .as_str()
         .ok_or_else(|| rmcp::ErrorData::invalid_params("target required", None))?;
     let ports = args["ports"].as_str().unwrap_or("top-1000");
 
     let engine = engine.lock().await;
     match engine.scan(target, ports, "connect").await {
         Ok(results) => {
-            let open: Vec<Value> = results.results.iter()
+            let open: Vec<Value> = results
+                .results
+                .iter()
                 .filter(|r| r.state == crate::scanner::PortState::Open)
                 .map(|r| json!({"port": r.port, "service": r.service}))
                 .collect();
@@ -253,4 +290,3 @@ async fn handle_vuln_scan(engine: &Arc<Mutex<ScanEngine>>, args: &Value) -> Resu
         Err(e) => Ok(error_result(format!("Vuln scan failed: {}", e))),
     }
 }
-

@@ -1,5 +1,5 @@
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
-use anyhow::{Result, Context};
 use std::time::Duration;
 
 /// Supported SIEM output formats
@@ -59,10 +59,10 @@ impl SiemSeverity {
 
     pub fn to_syslog_severity(&self) -> u8 {
         match self {
-            SiemSeverity::Low => 5,       // Notice
-            SiemSeverity::Medium => 4,    // Warning
-            SiemSeverity::High => 3,      // Error
-            SiemSeverity::Critical => 2,  // Critical
+            SiemSeverity::Low => 5,      // Notice
+            SiemSeverity::Medium => 4,   // Warning
+            SiemSeverity::High => 3,     // Error
+            SiemSeverity::Critical => 2, // Critical
         }
     }
 }
@@ -117,15 +117,20 @@ impl SiemClient {
         config: &SiemConfig,
         event: &SiemEvent,
     ) -> Result<()> {
-        let url = config.elasticsearch_url.as_ref()
+        let url = config
+            .elasticsearch_url
+            .as_ref()
             .context("ElasticSearch URL not configured")?;
-        let index = config.elasticsearch_index.as_ref()
-            .map(|s| s.as_str())
+        let index = config
+            .elasticsearch_index
+            .as_deref()
             .unwrap_or("nemue-scans");
 
         let full_url = format!("{}/{}/_doc", url.trim_end_matches('/'), index);
 
-        let mut req = self.http_client.post(&full_url)
+        let mut req = self
+            .http_client
+            .post(&full_url)
             .header("Content-Type", "application/json")
             .json(event);
 
@@ -133,7 +138,9 @@ impl SiemClient {
             req = req.bearer_auth(token);
         }
 
-        let resp = req.send().await
+        let resp = req
+            .send()
+            .await
             .context("Failed to send to ElasticSearch")?;
 
         if !resp.status().is_success() {
@@ -147,15 +154,15 @@ impl SiemClient {
     }
 
     /// Send event to a generic HTTP SIEM endpoint
-    pub async fn send_to_http_endpoint(
-        &self,
-        config: &SiemConfig,
-        payload: &str,
-    ) -> Result<()> {
-        let url = config.http_endpoint.as_ref()
+    pub async fn send_to_http_endpoint(&self, config: &SiemConfig, payload: &str) -> Result<()> {
+        let url = config
+            .http_endpoint
+            .as_ref()
             .context("HTTP endpoint not configured")?;
 
-        let mut req = self.http_client.post(url)
+        let mut req = self
+            .http_client
+            .post(url)
             .header("Content-Type", "application/json")
             .body(payload.to_string());
 
@@ -163,7 +170,9 @@ impl SiemClient {
             req = req.bearer_auth(token);
         }
 
-        let resp = req.send().await
+        let resp = req
+            .send()
+            .await
             .context("Failed to send to SIEM endpoint")?;
 
         if !resp.status().is_success() {
@@ -249,17 +258,16 @@ impl SiemClient {
         let severity = event.severity.to_syslog_severity();
         let priority = facility * 8 + severity;
 
-        let timestamp = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string();
+        let timestamp = chrono::Utc::now()
+            .format("%Y-%m-%dT%H:%M:%S%.3fZ")
+            .to_string();
         let hostname = hostname::get()
             .map(|h| h.to_string_lossy().to_string())
             .unwrap_or_else(|_| "nemue".to_string());
 
         format!(
             "<{}>1 {} {} nemue - - - {}",
-            priority,
-            timestamp,
-            hostname,
-            event.message
+            priority, timestamp, hostname, event.message
         )
     }
 }
@@ -378,9 +386,18 @@ mod tests {
     #[test]
     fn test_siem_format_serialization() {
         assert_eq!(serde_json::to_string(&SiemFormat::Cef).unwrap(), "\"cef\"");
-        assert_eq!(serde_json::to_string(&SiemFormat::Leef).unwrap(), "\"leef\"");
-        assert_eq!(serde_json::to_string(&SiemFormat::Json).unwrap(), "\"json\"");
-        assert_eq!(serde_json::to_string(&SiemFormat::Syslog).unwrap(), "\"syslog\"");
+        assert_eq!(
+            serde_json::to_string(&SiemFormat::Leef).unwrap(),
+            "\"leef\""
+        );
+        assert_eq!(
+            serde_json::to_string(&SiemFormat::Json).unwrap(),
+            "\"json\""
+        );
+        assert_eq!(
+            serde_json::to_string(&SiemFormat::Syslog).unwrap(),
+            "\"syslog\""
+        );
     }
 
     #[test]
@@ -397,7 +414,10 @@ mod tests {
         let json = serde_json::to_string(&config).unwrap();
         let deserialized: SiemConfig = serde_json::from_str(&json).unwrap();
         assert_eq!(deserialized.format, SiemFormat::Json);
-        assert_eq!(deserialized.elasticsearch_url.unwrap(), "http://localhost:9200");
+        assert_eq!(
+            deserialized.elasticsearch_url.unwrap(),
+            "http://localhost:9200"
+        );
     }
 
     #[test]
@@ -440,7 +460,11 @@ mod tests {
             let mut event = sample_event();
             event.severity = severity;
             let leef = client.format_event(&event, &SiemFormat::Leef);
-            assert!(leef.contains(expected), "Expected {} in LEEF output", expected);
+            assert!(
+                leef.contains(expected),
+                "Expected {} in LEEF output",
+                expected
+            );
         }
     }
 }

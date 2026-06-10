@@ -1,65 +1,72 @@
 // Report generation module for compliance and analysis
-pub mod compliance;
-pub mod html;
-pub mod audit;
-pub mod trends;
-pub mod templates;
-pub mod dashboard;
 pub mod analytics;
-pub mod scheduler;
+pub mod audit;
 pub mod collaboration;
-pub mod pdf;
-pub mod markdown;
+pub mod compliance;
 pub mod custom;
-pub mod executive;
-pub mod xml_report;
-pub mod sarif;
-pub mod junit;
 pub mod cyclonedx;
+pub mod dashboard;
+pub mod executive;
+pub mod html;
+pub mod junit;
+pub mod markdown;
+pub mod pdf;
+pub mod sarif;
+pub mod scheduler;
 pub mod spdx;
+pub mod templates;
+pub mod trends;
+pub mod xml_report;
 
-pub use compliance::{
-    ComplianceMapper, Framework, Control, ControlTest, CheckType,
-    ComplianceResult, ControlResult, ControlStatus,
-};
-pub use html::HtmlReportGenerator;
-pub use audit::{AuditTrail, AuditEntry, AuditMetadata, EventType, Evidence, EvidenceType};
-pub use trends::{TrendAnalyzer, ScanSnapshot, ScanMetrics, VulnerabilityMetrics, TrendReport, Trend, TrendDirection};
-pub use templates::{TemplateEngine, ReportTemplate, TemplateSection, ContentType};
-pub use dashboard::{
-    Dashboard, DashboardBuilder, Widget, WidgetType, WidgetData, MetricData, ChartData, AlertLevel,
-    LiveStatistics, RealTimeMonitor, MonitorStatus, ScanProgress, MonitorEvent, MonitorEventType,
-    InteractiveChart, ChartKind, DataSeries, DataPoint, ChartAxes, ChartInteractions, ChartAnnotation,
-    AnnotationType, DrillDown, DrillDownType, DrillFilter, DrillDownData, DrillEntry,
-};
 pub use analytics::{
-    AnalyticsEngine, RiskModel, ModelType, Prediction, RiskFactor, VulnerabilityPrediction,
-    TrendAnalysis, TrendDataPoint, AnalysisTrendDirection, ForecastPoint,
-    StatisticalSummary, DistributionType, ComparativeResult, ComparisonMetric,
-    PredictiveModel, PredictedVulnerability,
+    AnalysisTrendDirection, AnalyticsEngine, ComparativeResult, ComparisonMetric, DistributionType,
+    ForecastPoint, ModelType, PredictedVulnerability, Prediction, PredictiveModel, RiskFactor,
+    RiskModel, StatisticalSummary, TrendAnalysis, TrendDataPoint, VulnerabilityPrediction,
 };
-pub use scheduler::{
-    ReportScheduler, ReportSchedule, ScheduledReportType, Recurrence, ScheduleConfig,
-    OutputFormat, DistributionList, Recipient, RecipientRole, ReportArchive, ArchiveEntry,
-    ArchiveMetadata, GenerationLogEntry, GenerationStatus, ArchiveStats,
-};
+pub use audit::{AuditEntry, AuditMetadata, AuditTrail, EventType, Evidence, EvidenceType};
 pub use collaboration::{
-    CollaborationManager, SharedReport, ReportVersion, Comment, Reaction, Annotation as CollabAnnotation,
-    AnnotationKind, AnnotationCoordinates, ShareEntry, Permission, ReportStatus,
-    AccessPolicy, AccessRule, AccessCondition, ConditionOperator, CollabAuditEntry, CollabAction,
+    AccessCondition, AccessPolicy, AccessRule, Annotation as CollabAnnotation,
+    AnnotationCoordinates, AnnotationKind, CollabAction, CollabAuditEntry, CollaborationManager,
+    Comment, ConditionOperator, Permission, Reaction, ReportStatus, ReportVersion, ShareEntry,
+    SharedReport,
 };
-pub use pdf::PdfReportGenerator;
-pub use markdown::MarkdownReportGenerator;
-pub use custom::{ReportCustomization, Branding, CustomSeverity, CustomSection, SectionContent, ChartType, CustomRecommendation};
-pub use executive::ExecutiveReport;
-pub use xml_report::XmlReportGenerator;
-pub use sarif::SarifReportGenerator;
-pub use junit::JunitReportGenerator;
+pub use compliance::{
+    CheckType, ComplianceMapper, ComplianceResult, Control, ControlResult, ControlStatus,
+    ControlTest, Framework,
+};
+pub use custom::{
+    Branding, ChartType, CustomRecommendation, CustomSection, CustomSeverity, ReportCustomization,
+    SectionContent,
+};
 pub use cyclonedx::CycloneDxReportGenerator;
+pub use dashboard::{
+    AlertLevel, AnnotationType, ChartAnnotation, ChartAxes, ChartData, ChartInteractions,
+    ChartKind, Dashboard, DashboardBuilder, DataPoint, DataSeries, DrillDown, DrillDownData,
+    DrillDownType, DrillEntry, DrillFilter, InteractiveChart, LiveStatistics, MetricData,
+    MonitorEvent, MonitorEventType, MonitorStatus, RealTimeMonitor, ScanProgress, Widget,
+    WidgetData, WidgetType,
+};
+pub use executive::ExecutiveReport;
+pub use html::HtmlReportGenerator;
+pub use junit::JunitReportGenerator;
+pub use markdown::MarkdownReportGenerator;
+pub use pdf::PdfReportGenerator;
+pub use sarif::SarifReportGenerator;
+pub use scheduler::{
+    ArchiveEntry, ArchiveMetadata, ArchiveStats, DistributionList, GenerationLogEntry,
+    GenerationStatus, OutputFormat, Recipient, RecipientRole, Recurrence, ReportArchive,
+    ReportSchedule, ReportScheduler, ScheduleConfig, ScheduledReportType,
+};
 pub use spdx::SpdxReportGenerator;
+pub use templates::{ContentType, ReportTemplate, TemplateEngine, TemplateSection};
+pub use trends::{
+    ScanMetrics, ScanSnapshot, Trend, TrendAnalyzer, TrendDirection, TrendReport,
+    VulnerabilityMetrics,
+};
+pub use xml_report::XmlReportGenerator;
 
-use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScanReport {
@@ -165,6 +172,12 @@ pub struct ReportBuilder {
     recommendations: Vec<Recommendation>,
 }
 
+impl Default for ReportBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ReportBuilder {
     pub fn new() -> Self {
         Self {
@@ -219,28 +232,44 @@ impl ScanReport {
 
     pub fn to_text(&self) -> String {
         let mut output = String::new();
-        
+
         output.push_str("=".repeat(80).as_str());
         output.push('\n');
-        output.push_str(&format!("SECURITY SCAN REPORT - {}\n", self.metadata.report_id));
+        output.push_str(&format!(
+            "SECURITY SCAN REPORT - {}\n",
+            self.metadata.report_id
+        ));
         output.push_str("=".repeat(80).as_str());
         output.push('\n');
         output.push('\n');
 
         output.push_str(&format!("Generated: {}\n", self.metadata.generated_at));
-        output.push_str(&format!("Scan Duration: {} to {}\n", 
-            self.metadata.scan_start, self.metadata.scan_end));
+        output.push_str(&format!(
+            "Scan Duration: {} to {}\n",
+            self.metadata.scan_start, self.metadata.scan_end
+        ));
         output.push('\n');
 
         output.push_str("EXECUTIVE SUMMARY\n");
         output.push_str("-".repeat(80).as_str());
         output.push('\n');
-        output.push_str(&format!("Total Hosts: {}\n", self.executive_summary.total_hosts));
+        output.push_str(&format!(
+            "Total Hosts: {}\n",
+            self.executive_summary.total_hosts
+        ));
         output.push_str(&format!("Hosts Up: {}\n", self.executive_summary.hosts_up));
-        output.push_str(&format!("Open Ports: {}/{}\n", 
-            self.executive_summary.open_ports, self.executive_summary.total_ports));
-        output.push_str(&format!("Risk Score: {:.1}/10\n", self.executive_summary.risk_score));
-        output.push_str(&format!("Compliance Score: {:.1}%\n", self.executive_summary.compliance_score));
+        output.push_str(&format!(
+            "Open Ports: {}/{}\n",
+            self.executive_summary.open_ports, self.executive_summary.total_ports
+        ));
+        output.push_str(&format!(
+            "Risk Score: {:.1}/10\n",
+            self.executive_summary.risk_score
+        ));
+        output.push_str(&format!(
+            "Compliance Score: {:.1}%\n",
+            self.executive_summary.compliance_score
+        ));
         output.push('\n');
 
         output.push_str("VULNERABILITIES\n");
@@ -260,7 +289,10 @@ impl ScanReport {
             output.push('\n');
             for finding in &self.findings {
                 output.push_str(&format!("[{:?}] {}\n", finding.severity, finding.title));
-                output.push_str(&format!("  Affected: {} hosts\n", finding.affected_hosts.len()));
+                output.push_str(&format!(
+                    "  Affected: {} hosts\n",
+                    finding.affected_hosts.len()
+                ));
                 if let Some(cvss) = finding.cvss_score {
                     output.push_str(&format!("  CVSS: {:.1}\n", cvss));
                 }
@@ -278,21 +310,48 @@ impl ScanReport {
         output.push_str("# Report Metadata\n");
         output.push_str(&format!("Report ID,{}\n", self.metadata.report_id));
         output.push_str(&format!("Scan ID,{}\n", self.metadata.scan_id));
-        output.push_str(&format!("Generated,{}\n", self.metadata.generated_at.format("%Y-%m-%d %H:%M:%S UTC")));
+        output.push_str(&format!(
+            "Generated,{}\n",
+            self.metadata.generated_at.format("%Y-%m-%d %H:%M:%S UTC")
+        ));
         output.push_str(&format!("Targets,{}\n", self.metadata.target_count));
         output.push('\n');
 
         // Summary section
         output.push_str("# Executive Summary\n");
-        output.push_str(&format!("Total Hosts,{}\n", self.executive_summary.total_hosts));
+        output.push_str(&format!(
+            "Total Hosts,{}\n",
+            self.executive_summary.total_hosts
+        ));
         output.push_str(&format!("Hosts Up,{}\n", self.executive_summary.hosts_up));
-        output.push_str(&format!("Open Ports,{}/{}\n", self.executive_summary.open_ports, self.executive_summary.total_ports));
-        output.push_str(&format!("Risk Score,{:.1}\n", self.executive_summary.risk_score));
-        output.push_str(&format!("Compliance Score,{:.1}%\n", self.executive_summary.compliance_score));
-        output.push_str(&format!("Critical Vulns,{}\n", self.executive_summary.vulnerabilities.critical));
-        output.push_str(&format!("High Vulns,{}\n", self.executive_summary.vulnerabilities.high));
-        output.push_str(&format!("Medium Vulns,{}\n", self.executive_summary.vulnerabilities.medium));
-        output.push_str(&format!("Low Vulns,{}\n", self.executive_summary.vulnerabilities.low));
+        output.push_str(&format!(
+            "Open Ports,{}/{}\n",
+            self.executive_summary.open_ports, self.executive_summary.total_ports
+        ));
+        output.push_str(&format!(
+            "Risk Score,{:.1}\n",
+            self.executive_summary.risk_score
+        ));
+        output.push_str(&format!(
+            "Compliance Score,{:.1}%\n",
+            self.executive_summary.compliance_score
+        ));
+        output.push_str(&format!(
+            "Critical Vulns,{}\n",
+            self.executive_summary.vulnerabilities.critical
+        ));
+        output.push_str(&format!(
+            "High Vulns,{}\n",
+            self.executive_summary.vulnerabilities.high
+        ));
+        output.push_str(&format!(
+            "Medium Vulns,{}\n",
+            self.executive_summary.vulnerabilities.medium
+        ));
+        output.push_str(&format!(
+            "Low Vulns,{}\n",
+            self.executive_summary.vulnerabilities.low
+        ));
         output.push('\n');
 
         // Findings
@@ -300,7 +359,9 @@ impl ScanReport {
         for finding in &self.findings {
             let hosts = finding.affected_hosts.join(";");
             let cves = finding.cve_ids.join(";");
-            let cvss = finding.cvss_score.map_or("-".to_string(), |s| format!("{:.1}", s));
+            let cvss = finding
+                .cvss_score
+                .map_or("-".to_string(), |s| format!("{:.1}", s));
             let remediation = finding.remediation.replace(',', ";").replace('\n', " ");
             output.push_str(&format!(
                 "{},{:?},{},{},{},{},{}\n",
@@ -327,15 +388,37 @@ impl ScanReport {
     pub fn to_xml(&self) -> String {
         let mut xml = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
         xml.push_str("<security_report>\n");
-        xml.push_str(&format!("  <metadata>\n    <report_id>{}</report_id>\n    <scan_id>{}</scan_id>\n", self.metadata.report_id, self.metadata.scan_id));
-        xml.push_str(&format!("    <generated_at>{}</generated_at>\n    <version>{}</version>\n  </metadata>\n", self.metadata.generated_at.format("%Y-%m-%dT%H:%M:%SZ"), self.metadata.version));
+        xml.push_str(&format!(
+            "  <metadata>\n    <report_id>{}</report_id>\n    <scan_id>{}</scan_id>\n",
+            self.metadata.report_id, self.metadata.scan_id
+        ));
+        xml.push_str(&format!(
+            "    <generated_at>{}</generated_at>\n    <version>{}</version>\n  </metadata>\n",
+            self.metadata.generated_at.format("%Y-%m-%dT%H:%M:%SZ"),
+            self.metadata.version
+        ));
 
         xml.push_str("  <executive_summary>\n");
-        xml.push_str(&format!("    <total_hosts>{}</total_hosts>\n", self.executive_summary.total_hosts));
-        xml.push_str(&format!("    <hosts_up>{}</hosts_up>\n", self.executive_summary.hosts_up));
-        xml.push_str(&format!("    <open_ports>{}</open_ports>\n", self.executive_summary.open_ports));
-        xml.push_str(&format!("    <risk_score>{:.1}</risk_score>\n", self.executive_summary.risk_score));
-        xml.push_str(&format!("    <compliance_score>{:.1}</compliance_score>\n", self.executive_summary.compliance_score));
+        xml.push_str(&format!(
+            "    <total_hosts>{}</total_hosts>\n",
+            self.executive_summary.total_hosts
+        ));
+        xml.push_str(&format!(
+            "    <hosts_up>{}</hosts_up>\n",
+            self.executive_summary.hosts_up
+        ));
+        xml.push_str(&format!(
+            "    <open_ports>{}</open_ports>\n",
+            self.executive_summary.open_ports
+        ));
+        xml.push_str(&format!(
+            "    <risk_score>{:.1}</risk_score>\n",
+            self.executive_summary.risk_score
+        ));
+        xml.push_str(&format!(
+            "    <compliance_score>{:.1}</compliance_score>\n",
+            self.executive_summary.compliance_score
+        ));
         xml.push_str(&format!("    <vulnerabilities critical=\"{}\" high=\"{}\" medium=\"{}\" low=\"{}\" info=\"{}\" />\n",
             self.executive_summary.vulnerabilities.critical,
             self.executive_summary.vulnerabilities.high,
@@ -347,9 +430,18 @@ impl ScanReport {
         xml.push_str("  <findings>\n");
         for finding in &self.findings {
             xml.push_str(&format!("    <finding id=\"{}\">\n", finding.id));
-            xml.push_str(&format!("      <severity>{:?}</severity>\n", finding.severity));
-            xml.push_str(&format!("      <title>{}</title>\n", Self::xml_escape(&finding.title)));
-            xml.push_str(&format!("      <description>{}</description>\n", Self::xml_escape(&finding.description)));
+            xml.push_str(&format!(
+                "      <severity>{:?}</severity>\n",
+                finding.severity
+            ));
+            xml.push_str(&format!(
+                "      <title>{}</title>\n",
+                Self::xml_escape(&finding.title)
+            ));
+            xml.push_str(&format!(
+                "      <description>{}</description>\n",
+                Self::xml_escape(&finding.description)
+            ));
             for host in &finding.affected_hosts {
                 xml.push_str(&format!("      <affected_host>{}</affected_host>\n", host));
             }
@@ -359,12 +451,18 @@ impl ScanReport {
             for cve in &finding.cve_ids {
                 xml.push_str(&format!("      <cve_id>{}</cve_id>\n", cve));
             }
-            xml.push_str(&format!("      <remediation>{}</remediation>\n", Self::xml_escape(&finding.remediation)));
+            xml.push_str(&format!(
+                "      <remediation>{}</remediation>\n",
+                Self::xml_escape(&finding.remediation)
+            ));
             xml.push_str("    </finding>\n");
         }
         xml.push_str("  </findings>\n");
 
-        xml.push_str(&format!("  <compliance overall_score=\"{:.1}\">\n", self.compliance.overall_score));
+        xml.push_str(&format!(
+            "  <compliance overall_score=\"{:.1}\">\n",
+            self.compliance.overall_score
+        ));
         for fw in &self.compliance.frameworks {
             xml.push_str(&format!("    <framework name=\"{}\" version=\"{}\" score=\"{:.1}\" passing=\"{}\" failing=\"{}\" />\n",
                 Self::xml_escape(&fw.name), fw.version, fw.score, fw.controls_passing, fw.controls_failing));
@@ -373,11 +471,26 @@ impl ScanReport {
 
         xml.push_str("  <recommendations>\n");
         for rec in &self.recommendations {
-            xml.push_str(&format!("    <recommendation priority=\"{:?}\">\n", rec.priority));
-            xml.push_str(&format!("      <category>{}</category>\n", Self::xml_escape(&rec.category)));
-            xml.push_str(&format!("      <title>{}</title>\n", Self::xml_escape(&rec.title)));
-            xml.push_str(&format!("      <impact>{}</impact>\n", Self::xml_escape(&rec.impact)));
-            xml.push_str(&format!("      <effort>{}</effort>\n", Self::xml_escape(&rec.effort)));
+            xml.push_str(&format!(
+                "    <recommendation priority=\"{:?}\">\n",
+                rec.priority
+            ));
+            xml.push_str(&format!(
+                "      <category>{}</category>\n",
+                Self::xml_escape(&rec.category)
+            ));
+            xml.push_str(&format!(
+                "      <title>{}</title>\n",
+                Self::xml_escape(&rec.title)
+            ));
+            xml.push_str(&format!(
+                "      <impact>{}</impact>\n",
+                Self::xml_escape(&rec.impact)
+            ));
+            xml.push_str(&format!(
+                "      <effort>{}</effort>\n",
+                Self::xml_escape(&rec.effort)
+            ));
             xml.push_str("    </recommendation>\n");
         }
         xml.push_str("  </recommendations>\n");
@@ -386,7 +499,10 @@ impl ScanReport {
     }
 
     fn xml_escape(s: &str) -> String {
-        s.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;").replace('"', "&quot;")
+        s.replace('&', "&amp;")
+            .replace('<', "&lt;")
+            .replace('>', "&gt;")
+            .replace('"', "&quot;")
     }
 }
 
@@ -443,9 +559,7 @@ mod tests {
 
     #[test]
     fn test_report_builder_missing_fields() {
-        let report = ReportBuilder::new()
-            .metadata(sample_metadata())
-            .build();
+        let report = ReportBuilder::new().metadata(sample_metadata()).build();
 
         assert!(report.is_err());
     }

@@ -118,10 +118,7 @@ pub struct TargetStats {
 }
 
 impl GroupResult {
-    pub fn from_scan_results(
-        group: &ScanGroup,
-        results: HashMap<String, ScanResults>,
-    ) -> Self {
+    pub fn from_scan_results(group: &ScanGroup, results: HashMap<String, ScanResults>) -> Self {
         let stats = GroupStats::compute(group, &results);
         Self {
             group_id: group.id.clone(),
@@ -163,10 +160,7 @@ impl GroupResult {
 }
 
 impl GroupStats {
-    pub fn compute(
-        group: &ScanGroup,
-        results: &HashMap<String, ScanResults>,
-    ) -> Self {
+    pub fn compute(group: &ScanGroup, results: &HashMap<String, ScanResults>) -> Self {
         let mut total_open = 0;
         let mut total_closed = 0;
         let mut total_filtered = 0;
@@ -362,13 +356,25 @@ mod tests {
         assert!(group.has_target("192.168.1.2"));
         assert!(!group.has_target("192.168.1.5"));
 
-        let labeled = group.targets.iter().find(|t| t.address == "192.168.1.2").unwrap();
+        let labeled = group
+            .targets
+            .iter()
+            .find(|t| t.address == "192.168.1.2")
+            .unwrap();
         assert_eq!(labeled.label.as_deref(), Some("web-server"));
 
-        let with_ports = group.targets.iter().find(|t| t.address == "192.168.1.3").unwrap();
+        let with_ports = group
+            .targets
+            .iter()
+            .find(|t| t.address == "192.168.1.3")
+            .unwrap();
         assert_eq!(with_ports.ports.as_deref(), Some("80,443"));
 
-        let full = group.targets.iter().find(|t| t.address == "192.168.1.4").unwrap();
+        let full = group
+            .targets
+            .iter()
+            .find(|t| t.address == "192.168.1.4")
+            .unwrap();
         assert_eq!(full.label.as_deref(), Some("db-server"));
         assert_eq!(full.ports.as_deref(), Some("3306,5432"));
     }

@@ -43,7 +43,13 @@ impl EncryptionType {
     }
 
     pub fn is_secure(&self) -> bool {
-        matches!(self, EncryptionType::Wpa2 | EncryptionType::Wpa3 | EncryptionType::Wpa2Wpa3Mixed | EncryptionType::EnhancedOpen)
+        matches!(
+            self,
+            EncryptionType::Wpa2
+                | EncryptionType::Wpa3
+                | EncryptionType::Wpa2Wpa3Mixed
+                | EncryptionType::EnhancedOpen
+        )
     }
 }
 
@@ -76,7 +82,10 @@ impl WifiSecurity {
         };
 
         let pmf_required = matches!(encryption, EncryptionType::Wpa3);
-        let pmf_capable = matches!(encryption, EncryptionType::Wpa2 | EncryptionType::Wpa3 | EncryptionType::Wpa2Wpa3Mixed);
+        let pmf_capable = matches!(
+            encryption,
+            EncryptionType::Wpa2 | EncryptionType::Wpa3 | EncryptionType::Wpa2Wpa3Mixed
+        );
 
         Self {
             encryption,
@@ -92,19 +101,24 @@ impl WifiSecurity {
         self.vulnerabilities.clear();
 
         if self.encryption == EncryptionType::Open {
-            self.vulnerabilities.push("Network is open with no encryption".to_string());
+            self.vulnerabilities
+                .push("Network is open with no encryption".to_string());
         }
         if self.encryption == EncryptionType::Wep {
-            self.vulnerabilities.push("WEP encryption is trivially crackable".to_string());
+            self.vulnerabilities
+                .push("WEP encryption is trivially crackable".to_string());
         }
         if self.encryption == EncryptionType::Wpa {
-            self.vulnerabilities.push("WPA uses deprecated TKIP cipher".to_string());
+            self.vulnerabilities
+                .push("WPA uses deprecated TKIP cipher".to_string());
         }
         if !self.pmf_capable && self.encryption != EncryptionType::Open {
-            self.vulnerabilities.push("Protected Management Frames (802.11w) not supported".to_string());
+            self.vulnerabilities
+                .push("Protected Management Frames (802.11w) not supported".to_string());
         }
         if self.cipher == "TKIP" {
-            self.vulnerabilities.push("TKIP cipher is vulnerable to fragmentation attacks".to_string());
+            self.vulnerabilities
+                .push("TKIP cipher is vulnerable to fragmentation attacks".to_string());
         }
     }
 
@@ -245,7 +259,7 @@ impl WifiScanResult {
             if ap.wps_enabled {
                 summary.wps_enabled += 1;
             }
-            if ap.security.vulnerabilities.len() > 0 {
+            if !ap.security.vulnerabilities.is_empty() {
                 summary.vulnerable += 1;
             }
         }
@@ -300,7 +314,10 @@ impl WifiScanner {
             .into_iter()
             .map(|(channel, aps_on_channel)| {
                 let frequency = Self::channel_to_frequency(channel, &aps_on_channel[0].band);
-                let client_count: usize = aps_on_channel.iter().map(|ap| ap.connected_clients.len()).sum();
+                let client_count: usize = aps_on_channel
+                    .iter()
+                    .map(|ap| ap.connected_clients.len())
+                    .sum();
                 let ap_count = aps_on_channel.len();
 
                 ChannelInfo {
@@ -386,7 +403,11 @@ impl WifiScanner {
     fn channel_to_frequency(channel: u32, band: &WifiBand) -> u32 {
         match band {
             WifiBand::Band2GHz => {
-                if channel == 14 { 2484 } else { 2407 + channel * 5 }
+                if channel == 14 {
+                    2484
+                } else {
+                    2407 + channel * 5
+                }
             }
             WifiBand::Band5GHz => 5000 + channel * 5,
             WifiBand::Band6GHz => 5950 + channel * 5,
@@ -400,11 +421,7 @@ impl WifiScanner {
     fn count_overlapping(channel: u32, aps: &[AccessPoint]) -> usize {
         aps.iter()
             .filter(|ap| {
-                let diff = if ap.channel > channel {
-                    ap.channel - channel
-                } else {
-                    channel - ap.channel
-                };
+                let diff = ap.channel.abs_diff(channel);
                 diff <= 4 && diff > 0
             })
             .count()
@@ -540,7 +557,10 @@ mod tests {
         let findings = WifiScanner::security_assessment(&aps);
         assert!(!findings.is_empty());
 
-        let critical: Vec<_> = findings.iter().filter(|f| f.severity == FindingSeverity::Critical).collect();
+        let critical: Vec<_> = findings
+            .iter()
+            .filter(|f| f.severity == FindingSeverity::Critical)
+            .collect();
         assert!(critical.len() >= 1);
     }
 
@@ -575,9 +595,18 @@ mod tests {
 
     #[test]
     fn test_channel_to_frequency() {
-        assert_eq!(WifiScanner::channel_to_frequency(1, &WifiBand::Band2GHz), 2412);
-        assert_eq!(WifiScanner::channel_to_frequency(6, &WifiBand::Band2GHz), 2437);
-        assert_eq!(WifiScanner::channel_to_frequency(36, &WifiBand::Band5GHz), 5180);
+        assert_eq!(
+            WifiScanner::channel_to_frequency(1, &WifiBand::Band2GHz),
+            2412
+        );
+        assert_eq!(
+            WifiScanner::channel_to_frequency(6, &WifiBand::Band2GHz),
+            2437
+        );
+        assert_eq!(
+            WifiScanner::channel_to_frequency(36, &WifiBand::Band5GHz),
+            5180
+        );
     }
 
     #[test]
@@ -592,9 +621,15 @@ mod tests {
     fn test_interference_level() {
         assert_eq!(InterferenceLevel::from_ap_count(0), InterferenceLevel::None);
         assert_eq!(InterferenceLevel::from_ap_count(2), InterferenceLevel::Low);
-        assert_eq!(InterferenceLevel::from_ap_count(5), InterferenceLevel::Medium);
+        assert_eq!(
+            InterferenceLevel::from_ap_count(5),
+            InterferenceLevel::Medium
+        );
         assert_eq!(InterferenceLevel::from_ap_count(8), InterferenceLevel::High);
-        assert_eq!(InterferenceLevel::from_ap_count(15), InterferenceLevel::Critical);
+        assert_eq!(
+            InterferenceLevel::from_ap_count(15),
+            InterferenceLevel::Critical
+        );
     }
 
     #[test]
@@ -603,7 +638,10 @@ mod tests {
         ap.wps_enabled = true;
 
         let findings = WifiScanner::security_assessment(&[ap]);
-        let wps_findings: Vec<_> = findings.iter().filter(|f| f.finding_type == SecurityFindingType::WpsEnabled).collect();
+        let wps_findings: Vec<_> = findings
+            .iter()
+            .filter(|f| f.finding_type == SecurityFindingType::WpsEnabled)
+            .collect();
         assert_eq!(wps_findings.len(), 1);
     }
 }

@@ -112,8 +112,10 @@ impl ScanCompressor {
 
         match self.config.algorithm {
             CompressionAlgorithm::Gzip => {
-                let mut encoder =
-                    flate2::write::GzEncoder::new(writer, flate2::Compression::new(self.config.level));
+                let mut encoder = flate2::write::GzEncoder::new(
+                    writer,
+                    flate2::Compression::new(self.config.level),
+                );
                 encoder.write_all(&json)?;
                 encoder.finish()?;
             }
@@ -249,7 +251,11 @@ mod tests {
         let results = create_test_results(100);
 
         let (_, stats) = compressor.compress(&results).unwrap();
-        assert!(stats.ratio > 0.3, "Expected >30% compression, got {:.1}%", stats.ratio * 100.0);
+        assert!(
+            stats.ratio > 0.3,
+            "Expected >30% compression, got {:.1}%",
+            stats.ratio * 100.0
+        );
     }
 
     #[test]
@@ -258,7 +264,11 @@ mod tests {
         let results = create_test_results(100);
 
         let (_, stats) = compressor.compress(&results).unwrap();
-        assert!(stats.ratio > 0.3, "Expected >30% compression, got {:.1}%", stats.ratio * 100.0);
+        assert!(
+            stats.ratio > 0.3,
+            "Expected >30% compression, got {:.1}%",
+            stats.ratio * 100.0
+        );
     }
 
     #[test]

@@ -2,14 +2,14 @@
 // Comprehensive reporting for fuzzing operations
 
 use anyhow::Result;
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
-use serde::{Serialize, Deserialize};
-use chrono::{DateTime, Utc};
 
+use super::cloud::CloudStorageResult;
 use super::engine::FuzzResult;
 use super::subdomain::SubdomainResult;
-use super::cloud::CloudStorageResult;
 
 /// Fuzzer report containing all results and statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -78,9 +78,18 @@ impl ScanStats {
     /// Create new scan statistics from results
     pub fn from_results(results: &[FuzzResult], duration: Duration) -> Self {
         let total = results.len();
-        let successful = results.iter().filter(|r| r.status_code >= 200 && r.status_code < 300).count();
-        let redirects = results.iter().filter(|r| r.status_code >= 300 && r.status_code < 400).count();
-        let client_errors = results.iter().filter(|r| r.status_code >= 400 && r.status_code < 500).count();
+        let successful = results
+            .iter()
+            .filter(|r| r.status_code >= 200 && r.status_code < 300)
+            .count();
+        let redirects = results
+            .iter()
+            .filter(|r| r.status_code >= 300 && r.status_code < 400)
+            .count();
+        let client_errors = results
+            .iter()
+            .filter(|r| r.status_code >= 400 && r.status_code < 500)
+            .count();
         let server_errors = results.iter().filter(|r| r.status_code >= 500).count();
 
         let req_per_sec = if duration.as_secs() > 0 {
@@ -153,32 +162,63 @@ impl FuzzOutput {
     pub fn format_text(report: &FuzzReport) -> String {
         let mut output = String::new();
 
-        output.push_str(&format!("╔═══════════════════════════════════════════════════════════════╗\n"));
-        output.push_str(&format!("║           Nemue Fuzzer Report - {}           ║\n", report.metadata.scan_id));
-        output.push_str(&format!("╚═══════════════════════════════════════════════════════════════╝\n\n"));
+        output.push_str("╔═══════════════════════════════════════════════════════════════╗\n");
+        output.push_str(&format!(
+            "║           Nemue Fuzzer Report - {}           ║\n",
+            report.metadata.scan_id
+        ));
+        output.push_str("╚═══════════════════════════════════════════════════════════════╝\n\n");
 
         // Metadata
         output.push_str(&format!("Target:     {}\n", report.metadata.target));
         output.push_str(&format!("Mode:       {}\n", report.metadata.mode));
-        output.push_str(&format!("Started:    {}\n", report.metadata.start_time.format("%Y-%m-%d %H:%M:%S UTC")));
+        output.push_str(&format!(
+            "Started:    {}\n",
+            report.metadata.start_time.format("%Y-%m-%d %H:%M:%S UTC")
+        ));
         if let Some(end) = report.metadata.end_time {
-            output.push_str(&format!("Finished:   {}\n", end.format("%Y-%m-%d %H:%M:%S UTC")));
+            output.push_str(&format!(
+                "Finished:   {}\n",
+                end.format("%Y-%m-%d %H:%M:%S UTC")
+            ));
         }
-        output.push_str(&format!("Wordlist:   {} ({} entries)\n\n", 
-            report.metadata.wordlist_name, 
-            report.metadata.wordlist_size));
+        output.push_str(&format!(
+            "Wordlist:   {} ({} entries)\n\n",
+            report.metadata.wordlist_name, report.metadata.wordlist_size
+        ));
 
         // Statistics
         output.push_str("═══ STATISTICS ═══\n");
-        output.push_str(&format!("Total Requests:    {}\n", report.stats.total_requests));
+        output.push_str(&format!(
+            "Total Requests:    {}\n",
+            report.stats.total_requests
+        ));
         output.push_str(&format!("Successful (2xx):  {}\n", report.stats.successful));
         output.push_str(&format!("Redirects (3xx):   {}\n", report.stats.redirects));
-        output.push_str(&format!("Client Errors:     {}\n", report.stats.client_errors));
-        output.push_str(&format!("Server Errors:     {}\n", report.stats.server_errors));
-        output.push_str(&format!("Duration:          {:.2}s\n", report.stats.duration.as_secs_f64()));
-        output.push_str(&format!("Requests/sec:      {:.2}\n", report.stats.req_per_sec));
-        output.push_str(&format!("Avg Response Time: {}ms\n", report.stats.avg_response_time));
-        output.push_str(&format!("Median Time:       {}ms\n\n", report.stats.median_response_time));
+        output.push_str(&format!(
+            "Client Errors:     {}\n",
+            report.stats.client_errors
+        ));
+        output.push_str(&format!(
+            "Server Errors:     {}\n",
+            report.stats.server_errors
+        ));
+        output.push_str(&format!(
+            "Duration:          {:.2}s\n",
+            report.stats.duration.as_secs_f64()
+        ));
+        output.push_str(&format!(
+            "Requests/sec:      {:.2}\n",
+            report.stats.req_per_sec
+        ));
+        output.push_str(&format!(
+            "Avg Response Time: {}ms\n",
+            report.stats.avg_response_time
+        ));
+        output.push_str(&format!(
+            "Median Time:       {}ms\n\n",
+            report.stats.median_response_time
+        ));
 
         // Results
         if !report.fuzz_results.is_empty() {
@@ -190,29 +230,42 @@ impl FuzzOutput {
                     400..=499 => "✗",
                     _ => "!",
                 };
-                
-                output.push_str(&format!("{} [{}] {} ({} bytes, {}ms)\n",
+
+                output.push_str(&format!(
+                    "{} [{}] {} ({} bytes, {}ms)\n",
                     status_emoji,
                     result.status_code,
                     result.path,
                     result.size,
-                    result.response_time));
+                    result.response_time
+                ));
             }
         }
 
         if !report.subdomain_results.is_empty() {
             output.push_str("\n═══ SUBDOMAINS ═══\n");
             for subdomain in &report.subdomain_results {
-                output.push_str(&format!("• {} → {:?}\n", subdomain.subdomain, subdomain.ips));
+                output.push_str(&format!(
+                    "• {} → {:?}\n",
+                    subdomain.subdomain, subdomain.ips
+                ));
             }
         }
 
         if !report.cloud_results.is_empty() {
             output.push_str("\n═══ CLOUD STORAGE ═══\n");
             for cloud in &report.cloud_results {
-                let access = if cloud.public_access { "PUBLIC" } else { "PRIVATE" };
-                output.push_str(&format!("• {} [{}] - {} files\n", 
-                    cloud.name, access, cloud.files.len()));
+                let access = if cloud.public_access {
+                    "PUBLIC"
+                } else {
+                    "PRIVATE"
+                };
+                output.push_str(&format!(
+                    "• {} [{}] - {} files\n",
+                    cloud.name,
+                    access,
+                    cloud.files.len()
+                ));
             }
         }
 
@@ -227,19 +280,24 @@ impl FuzzOutput {
     /// Format as CSV
     pub fn format_csv(results: &[FuzzResult]) -> String {
         let mut output = String::new();
-        
+
         // Header
         output.push_str("Path,Status,Size,Time(ms),Redirect,RedirectLocation\n");
-        
+
         // Data
         for result in results {
-            output.push_str(&format!("{},{},{},{},{},{}\n",
+            output.push_str(&format!(
+                "{},{},{},{},{},{}\n",
                 result.path,
                 result.status_code,
                 result.size,
                 result.response_time,
                 result.is_redirect,
-                result.redirect_location.as_ref().unwrap_or(&"-".to_string())));
+                result
+                    .redirect_location
+                    .as_ref()
+                    .unwrap_or(&"-".to_string())
+            ));
         }
 
         output
@@ -250,36 +308,60 @@ impl FuzzOutput {
         let mut output = String::new();
 
         output.push_str(&format!("# Fuzzer Report: {}\n\n", report.metadata.target));
-        
+
         output.push_str("## Scan Information\n\n");
         output.push_str(&format!("- **Target**: {}\n", report.metadata.target));
         output.push_str(&format!("- **Mode**: {}\n", report.metadata.mode));
-        output.push_str(&format!("- **Started**: {}\n", report.metadata.start_time.format("%Y-%m-%d %H:%M:%S UTC")));
-        output.push_str(&format!("- **Wordlist**: {} ({} entries)\n\n", 
-            report.metadata.wordlist_name, 
-            report.metadata.wordlist_size));
+        output.push_str(&format!(
+            "- **Started**: {}\n",
+            report.metadata.start_time.format("%Y-%m-%d %H:%M:%S UTC")
+        ));
+        output.push_str(&format!(
+            "- **Wordlist**: {} ({} entries)\n\n",
+            report.metadata.wordlist_name, report.metadata.wordlist_size
+        ));
 
         output.push_str("## Statistics\n\n");
         output.push_str("| Metric | Value |\n");
         output.push_str("|--------|-------|\n");
-        output.push_str(&format!("| Total Requests | {} |\n", report.stats.total_requests));
-        output.push_str(&format!("| Successful (2xx) | {} |\n", report.stats.successful));
-        output.push_str(&format!("| Redirects (3xx) | {} |\n", report.stats.redirects));
-        output.push_str(&format!("| Client Errors (4xx) | {} |\n", report.stats.client_errors));
-        output.push_str(&format!("| Server Errors (5xx) | {} |\n", report.stats.server_errors));
-        output.push_str(&format!("| Duration | {:.2}s |\n", report.stats.duration.as_secs_f64()));
-        output.push_str(&format!("| Requests/sec | {:.2} |\n\n", report.stats.req_per_sec));
+        output.push_str(&format!(
+            "| Total Requests | {} |\n",
+            report.stats.total_requests
+        ));
+        output.push_str(&format!(
+            "| Successful (2xx) | {} |\n",
+            report.stats.successful
+        ));
+        output.push_str(&format!(
+            "| Redirects (3xx) | {} |\n",
+            report.stats.redirects
+        ));
+        output.push_str(&format!(
+            "| Client Errors (4xx) | {} |\n",
+            report.stats.client_errors
+        ));
+        output.push_str(&format!(
+            "| Server Errors (5xx) | {} |\n",
+            report.stats.server_errors
+        ));
+        output.push_str(&format!(
+            "| Duration | {:.2}s |\n",
+            report.stats.duration.as_secs_f64()
+        ));
+        output.push_str(&format!(
+            "| Requests/sec | {:.2} |\n\n",
+            report.stats.req_per_sec
+        ));
 
         if !report.fuzz_results.is_empty() {
             output.push_str("## Findings\n\n");
             output.push_str("| Status | Path | Size | Time |\n");
             output.push_str("|--------|------|------|------|\n");
             for result in &report.fuzz_results {
-                output.push_str(&format!("| {} | {} | {} bytes | {}ms |\n",
-                    result.status_code,
-                    result.path,
-                    result.size,
-                    result.response_time));
+                output.push_str(&format!(
+                    "| {} | {} | {} bytes | {}ms |\n",
+                    result.status_code, result.path, result.size, result.response_time
+                ));
             }
         }
 
@@ -293,11 +375,17 @@ impl FuzzOutput {
         output.push_str("<!DOCTYPE html>\n<html>\n<head>\n");
         output.push_str("<title>Fuzzer Report</title>\n");
         output.push_str("<style>\n");
-        output.push_str("body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }\n");
+        output.push_str(
+            "body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }\n",
+        );
         output.push_str("h1 { color: #333; }\n");
-        output.push_str(".stats { background: white; padding: 20px; border-radius: 5px; margin: 20px 0; }\n");
+        output.push_str(
+            ".stats { background: white; padding: 20px; border-radius: 5px; margin: 20px 0; }\n",
+        );
         output.push_str("table { width: 100%; border-collapse: collapse; background: white; }\n");
-        output.push_str("th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }\n");
+        output.push_str(
+            "th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }\n",
+        );
         output.push_str("th { background: #4CAF50; color: white; }\n");
         output.push_str(".status-200 { color: green; }\n");
         output.push_str(".status-300 { color: orange; }\n");
@@ -305,14 +393,29 @@ impl FuzzOutput {
         output.push_str(".status-500 { color: darkred; }\n");
         output.push_str("</style>\n</head>\n<body>\n");
 
-        output.push_str(&format!("<h1>Fuzzer Report: {}</h1>\n", report.metadata.target));
-        
+        output.push_str(&format!(
+            "<h1>Fuzzer Report: {}</h1>\n",
+            report.metadata.target
+        ));
+
         output.push_str("<div class='stats'>\n");
         output.push_str("<h2>Scan Statistics</h2>\n");
-        output.push_str(&format!("<p><strong>Total Requests:</strong> {}</p>\n", report.stats.total_requests));
-        output.push_str(&format!("<p><strong>Successful:</strong> {}</p>\n", report.stats.successful));
-        output.push_str(&format!("<p><strong>Duration:</strong> {:.2}s</p>\n", report.stats.duration.as_secs_f64()));
-        output.push_str(&format!("<p><strong>Requests/sec:</strong> {:.2}</p>\n", report.stats.req_per_sec));
+        output.push_str(&format!(
+            "<p><strong>Total Requests:</strong> {}</p>\n",
+            report.stats.total_requests
+        ));
+        output.push_str(&format!(
+            "<p><strong>Successful:</strong> {}</p>\n",
+            report.stats.successful
+        ));
+        output.push_str(&format!(
+            "<p><strong>Duration:</strong> {:.2}s</p>\n",
+            report.stats.duration.as_secs_f64()
+        ));
+        output.push_str(&format!(
+            "<p><strong>Requests/sec:</strong> {:.2}</p>\n",
+            report.stats.req_per_sec
+        ));
         output.push_str("</div>\n");
 
         if !report.fuzz_results.is_empty() {
@@ -326,12 +429,14 @@ impl FuzzOutput {
                     400..=499 => "status-400",
                     _ => "status-500",
                 };
-                output.push_str(&format!("<tr><td class='{}'>{}</td><td>{}</td><td>{} bytes</td><td>{}ms</td></tr>\n",
+                output.push_str(&format!(
+                    "<tr><td class='{}'>{}</td><td>{}</td><td>{} bytes</td><td>{}ms</td></tr>\n",
                     status_class,
                     result.status_code,
                     result.path,
                     result.size,
-                    result.response_time));
+                    result.response_time
+                ));
             }
             output.push_str("</table>\n");
         }
@@ -391,18 +496,20 @@ impl ProgressTracker {
         let elapsed = self.elapsed().as_secs_f64();
         let rate = self.processed as f64 / elapsed;
         let remaining = self.total_items - self.processed;
-        
+
         Duration::from_secs_f64(remaining as f64 / rate)
     }
 
     /// Get current status line
     pub fn status_line(&self) -> String {
-        format!("[{:.1}%] {}/{} | Found: {} | ETA: {}s",
+        format!(
+            "[{:.1}%] {}/{} | Found: {} | ETA: {}s",
             self.progress(),
             self.processed,
             self.total_items,
             self.successful,
-            self.eta().as_secs())
+            self.eta().as_secs()
+        )
     }
 }
 
@@ -437,7 +544,7 @@ mod tests {
     fn test_scan_stats_from_empty() {
         let results = Vec::new();
         let stats = ScanStats::from_results(&results, Duration::from_secs(10));
-        
+
         assert_eq!(stats.total_requests, 0);
         assert_eq!(stats.successful, 0);
         assert_eq!(stats.avg_response_time, 0);

@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use anyhow::{anyhow, Result};
 use std::net::{IpAddr, SocketAddr};
 use std::time::Duration;
@@ -113,14 +114,24 @@ impl LdapSecurityFinding {
     pub fn description(&self) -> &str {
         match self {
             LdapSecurityFinding::AnonymousBindAllowed => "Anonymous LDAP bind is permitted",
-            LdapSecurityFinding::CleartextTransport => "LDAP traffic is not encrypted (no LDAPS/StartTLS)",
-            LdapSecurityFinding::NoSizeLimit => "Server does not enforce size limits on search results",
-            LdapSecurityFinding::NoTimeLimit => "Server does not enforce time limits on search results",
+            LdapSecurityFinding::CleartextTransport => {
+                "LDAP traffic is not encrypted (no LDAPS/StartTLS)"
+            }
+            LdapSecurityFinding::NoSizeLimit => {
+                "Server does not enforce size limits on search results"
+            }
+            LdapSecurityFinding::NoTimeLimit => {
+                "Server does not enforce time limits on search results"
+            }
             LdapSecurityFinding::BaseDnExposed => "Base DN can be discovered via Root DSE",
             LdapSecurityFinding::NullBindSuccess => "Null (empty) bind credentials accepted",
-            LdapSecurityFinding::WeakAuthentication => "Server allows simple authentication without TLS",
+            LdapSecurityFinding::WeakAuthentication => {
+                "Server allows simple authentication without TLS"
+            }
             LdapSecurityFinding::SchemaExposed => "LDAP schema is exposed via subschemaSubentry",
-            LdapSecurityFinding::NoAccessControl => "Server does not enforce access control on anonymous queries",
+            LdapSecurityFinding::NoAccessControl => {
+                "Server does not enforce access control on anonymous queries"
+            }
             LdapSecurityFinding::DefaultConfig => "Server appears to use default configuration",
         }
     }
@@ -221,7 +232,10 @@ impl LdapScanner {
             });
         }
 
-        let is_anonymous_bind_allowed = self.test_anonymous_bind(target, port).await.unwrap_or(false);
+        let is_anonymous_bind_allowed = self
+            .test_anonymous_bind(target, port)
+            .await
+            .unwrap_or(false);
         let is_null_bind_allowed = self.test_null_bind(target, port).await.unwrap_or(false);
         let ldap_version = self.detect_ldap_version(target, port).await;
 
@@ -229,13 +243,26 @@ impl LdapScanner {
         let naming_contexts = self.extract_naming_contexts(&root_dse);
         let base_dn = naming_contexts.first().cloned();
         let supported_controls = self.extract_attribute_values(&root_dse, "supportedControl");
-        let supported_sasl_mechanisms = self.extract_attribute_values(&root_dse, "supportedSASLMechanisms");
+        let supported_sasl_mechanisms =
+            self.extract_attribute_values(&root_dse, "supportedSASLMechanisms");
         let supported_extensions = self.extract_attribute_values(&root_dse, "supportedExtension");
         let supported_features = self.extract_attribute_values(&root_dse, "supportedFeatures");
-        let vendor_name = self.extract_attribute_values(&root_dse, "vendorName").into_iter().next();
-        let vendor_version = self.extract_attribute_values(&root_dse, "vendorVersion").into_iter().next();
-        let subschema_subentry = self.extract_attribute_values(&root_dse, "subschemaSubentry").into_iter().next();
-        let default_naming_context = self.extract_attribute_values(&root_dse, "defaultNamingContext").into_iter().next();
+        let vendor_name = self
+            .extract_attribute_values(&root_dse, "vendorName")
+            .into_iter()
+            .next();
+        let vendor_version = self
+            .extract_attribute_values(&root_dse, "vendorVersion")
+            .into_iter()
+            .next();
+        let subschema_subentry = self
+            .extract_attribute_values(&root_dse, "subschemaSubentry")
+            .into_iter()
+            .next();
+        let default_naming_context = self
+            .extract_attribute_values(&root_dse, "defaultNamingContext")
+            .into_iter()
+            .next();
 
         let security_findings = self.assess_security(
             is_anonymous_bind_allowed,
@@ -374,22 +401,34 @@ impl LdapScanner {
             "",
             Self::SCOPE_BASE,
             Self::DEREF_NEVER,
-            0, // size limit
-            0, // time limit
+            0,     // size limit
+            0,     // time limit
             false, // types only
             "(objectClass=*)",
-            &["namingContexts", "supportedControl", "supportedSASLMechanisms",
-              "supportedExtension", "supportedFeatures", "vendorName", "vendorVersion",
-              "subschemaSubentry", "defaultNamingContext"],
+            &[
+                "namingContexts",
+                "supportedControl",
+                "supportedSASLMechanisms",
+                "supportedExtension",
+                "supportedFeatures",
+                "vendorName",
+                "vendorVersion",
+                "subschemaSubentry",
+                "defaultNamingContext",
+            ],
         );
         writer.write_all(&search_request).await?;
 
-        let mut entries = Vec::new();
         let mut buffer = vec![0u8; 65536];
         let mut total_read = 0;
 
         loop {
-            match timeout(self.timeout_duration, reader.read(&mut buffer[total_read..])).await {
+            match timeout(
+                self.timeout_duration,
+                reader.read(&mut buffer[total_read..]),
+            )
+            .await
+            {
                 Ok(Ok(n)) if n > 0 => {
                     total_read += n;
                     if total_read > buffer.len() - 1024 {
@@ -405,7 +444,7 @@ impl LdapScanner {
         }
 
         // Parse search results
-        entries = self.parse_search_results(&buffer[..total_read]);
+        let entries = self.parse_search_results(&buffer[..total_read]);
 
         Ok(entries)
     }
@@ -574,7 +613,7 @@ impl LdapScanner {
         filter: &str,
         attributes: &[&str],
     ) -> Vec<u8> {
-        let mut message: Vec<u8> = Vec::new();
+        let _message: Vec<u8> = Vec::new();
 
         // messageID = 2
         let mut ldap_msg = Vec::new();
@@ -684,7 +723,7 @@ impl LdapScanner {
                 let mut j = content_start;
                 if j < content_end && data[j] == Self::TAG_SEQUENCE {
                     j += 1;
-                    let seq_len = self.parse_length(&data[j..])?;
+                    let _seq_len = self.parse_length(&data[j..])?;
                     j += self.length_field_size(&data[j..]);
 
                     if j < content_end && data[j] == Self::TAG_ENUMERATED {
@@ -752,7 +791,7 @@ impl LdapScanner {
 
         while i < data.len() {
             if data[i] == Self::TAG_SEARCH_RESULT_ENTRY {
-                let content_len = match self.parse_length(&data[i + 1..]) {
+                let _content_len = match self.parse_length(&data[i + 1..]) {
                     Some(l) => l,
                     None => {
                         i += 1;
@@ -770,7 +809,8 @@ impl LdapScanner {
                             continue;
                         }
                     };
-                    let dn_start = content_start + 1 + self.length_field_size(&data[content_start + 1..]);
+                    let dn_start =
+                        content_start + 1 + self.length_field_size(&data[content_start + 1..]);
                     if dn_start + dn_len <= data.len() {
                         if let Ok(dn) = std::str::from_utf8(&data[dn_start..dn_start + dn_len]) {
                             let entry = LdapEntry {
@@ -796,21 +836,33 @@ mod tests {
     #[test]
     fn test_ldap_result_code_from_u32() {
         assert_eq!(LdapResultCode::from_u32(0), LdapResultCode::Success);
-        assert_eq!(LdapResultCode::from_u32(49), LdapResultCode::InvalidCredentials);
-        assert_eq!(LdapResultCode::from_u32(48), LdapResultCode::InappropriateAuthentication);
+        assert_eq!(
+            LdapResultCode::from_u32(49),
+            LdapResultCode::InvalidCredentials
+        );
+        assert_eq!(
+            LdapResultCode::from_u32(48),
+            LdapResultCode::InappropriateAuthentication
+        );
         assert_eq!(LdapResultCode::from_u32(999), LdapResultCode::Other);
     }
 
     #[test]
     fn test_ldap_result_code_description() {
         assert_eq!(LdapResultCode::Success.description(), "Success");
-        assert_eq!(LdapResultCode::InvalidCredentials.description(), "Invalid Credentials");
+        assert_eq!(
+            LdapResultCode::InvalidCredentials.description(),
+            "Invalid Credentials"
+        );
         assert_eq!(LdapResultCode::Other.description(), "Other");
     }
 
     #[test]
     fn test_ldap_security_finding_severity() {
-        assert_eq!(LdapSecurityFinding::AnonymousBindAllowed.severity(), "CRITICAL");
+        assert_eq!(
+            LdapSecurityFinding::AnonymousBindAllowed.severity(),
+            "CRITICAL"
+        );
         assert_eq!(LdapSecurityFinding::CleartextTransport.severity(), "HIGH");
         assert_eq!(LdapSecurityFinding::BaseDnExposed.severity(), "LOW");
         assert_eq!(LdapSecurityFinding::NullBindSuccess.severity(), "CRITICAL");
@@ -818,9 +870,15 @@ mod tests {
 
     #[test]
     fn test_ldap_security_finding_description() {
-        assert!(!LdapSecurityFinding::AnonymousBindAllowed.description().is_empty());
-        assert!(!LdapSecurityFinding::CleartextTransport.description().is_empty());
-        assert!(!LdapSecurityFinding::WeakAuthentication.description().is_empty());
+        assert!(!LdapSecurityFinding::AnonymousBindAllowed
+            .description()
+            .is_empty());
+        assert!(!LdapSecurityFinding::CleartextTransport
+            .description()
+            .is_empty());
+        assert!(!LdapSecurityFinding::WeakAuthentication
+            .description()
+            .is_empty());
     }
 
     #[test]
@@ -933,25 +991,38 @@ mod tests {
     #[test]
     fn test_assess_security_anonymous() {
         let scanner = LdapScanner::new(1000);
-        let findings = scanner.assess_security(true, false, 389, &["dc=example,dc=com".to_string()], &None);
-        assert!(findings.iter().any(|f| matches!(f, LdapSecurityFinding::AnonymousBindAllowed)));
-        assert!(findings.iter().any(|f| matches!(f, LdapSecurityFinding::CleartextTransport)));
-        assert!(findings.iter().any(|f| matches!(f, LdapSecurityFinding::BaseDnExposed)));
-        assert!(findings.iter().any(|f| matches!(f, LdapSecurityFinding::NoAccessControl)));
+        let findings =
+            scanner.assess_security(true, false, 389, &["dc=example,dc=com".to_string()], &None);
+        assert!(findings
+            .iter()
+            .any(|f| matches!(f, LdapSecurityFinding::AnonymousBindAllowed)));
+        assert!(findings
+            .iter()
+            .any(|f| matches!(f, LdapSecurityFinding::CleartextTransport)));
+        assert!(findings
+            .iter()
+            .any(|f| matches!(f, LdapSecurityFinding::BaseDnExposed)));
+        assert!(findings
+            .iter()
+            .any(|f| matches!(f, LdapSecurityFinding::NoAccessControl)));
     }
 
     #[test]
     fn test_assess_security_ldaps() {
         let scanner = LdapScanner::new(1000);
         let findings = scanner.assess_security(false, false, 636, &[], &None);
-        assert!(!findings.iter().any(|f| matches!(f, LdapSecurityFinding::CleartextTransport)));
+        assert!(!findings
+            .iter()
+            .any(|f| matches!(f, LdapSecurityFinding::CleartextTransport)));
     }
 
     #[test]
     fn test_assess_security_null_bind() {
         let scanner = LdapScanner::new(1000);
         let findings = scanner.assess_security(false, true, 389, &[], &None);
-        assert!(findings.iter().any(|f| matches!(f, LdapSecurityFinding::NullBindSuccess)));
+        assert!(findings
+            .iter()
+            .any(|f| matches!(f, LdapSecurityFinding::NullBindSuccess)));
     }
 
     #[test]
@@ -959,16 +1030,19 @@ mod tests {
         let scanner = LdapScanner::new(1000);
         let subschema = Some("cn=Subschema".to_string());
         let findings = scanner.assess_security(false, false, 389, &[], &subschema);
-        assert!(findings.iter().any(|f| matches!(f, LdapSecurityFinding::SchemaExposed)));
+        assert!(findings
+            .iter()
+            .any(|f| matches!(f, LdapSecurityFinding::SchemaExposed)));
     }
 
     #[test]
     fn test_ldap_entry_fields() {
         let entry = LdapEntry {
             dn: "dc=example,dc=com".to_string(),
-            attributes: vec![
-                ("objectClass".to_string(), vec!["top".to_string(), "domain".to_string()]),
-            ],
+            attributes: vec![(
+                "objectClass".to_string(),
+                vec!["top".to_string(), "domain".to_string()],
+            )],
         };
         assert_eq!(entry.dn, "dc=example,dc=com");
         assert_eq!(entry.attributes.len(), 1);
@@ -986,7 +1060,9 @@ mod tests {
     #[tokio::test]
     async fn test_detect_ldap_on_closed_port() {
         let scanner = LdapScanner::new(200);
-        let result = scanner.detect_ldap(IpAddr::V4([127, 0, 0, 1].into()), 1).await;
+        let result = scanner
+            .detect_ldap(IpAddr::V4([127, 0, 0, 1].into()), 1)
+            .await;
         assert!(result.is_ok());
         assert!(!result.unwrap());
     }
@@ -1001,7 +1077,9 @@ mod tests {
     #[test]
     fn test_ldap_security_finding_new_descriptions() {
         assert!(!LdapSecurityFinding::SchemaExposed.description().is_empty());
-        assert!(!LdapSecurityFinding::NoAccessControl.description().is_empty());
+        assert!(!LdapSecurityFinding::NoAccessControl
+            .description()
+            .is_empty());
         assert!(!LdapSecurityFinding::DefaultConfig.description().is_empty());
     }
 

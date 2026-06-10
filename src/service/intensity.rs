@@ -62,12 +62,12 @@ impl IntensityLevel {
         match self.0 {
             0 => 0,
             1 => 1,
-            2 => 3,   // --version-light
+            2 => 3, // --version-light
             3 => 5,
             4 => 8,
             5 => 12,
             6 => 18,
-            7 => 25,  // default
+            7 => 25, // default
             8 => 40,
             9 => 100, // --version-all
             _ => 0,
@@ -79,14 +79,14 @@ impl IntensityLevel {
         match self.0 {
             0 => 0.0,
             1 => 0.1,
-            2 => 0.3,  // light
+            2 => 0.3, // light
             3 => 0.5,
             4 => 0.7,
             5 => 0.85,
             6 => 0.95,
-            7 => 1.0,  // default baseline
+            7 => 1.0, // default baseline
             8 => 1.5,
-            9 => 4.0,  // all probes - significantly slower
+            9 => 4.0, // all probes - significantly slower
             _ => 1.0,
         }
     }
@@ -154,24 +154,24 @@ impl MatchPattern {
         } else {
             self.pattern_str.clone()
         };
-        
+
         let re = match Regex::new(&pattern) {
             Ok(r) => r,
             Err(_) => return None,
         };
-        
+
         let caps = re.captures(data)?;
         let mut groups = Vec::new();
         for i in 0..caps.len() {
             groups.push(
                 caps.get(i)
                     .map(|m| String::from_utf8_lossy(m.as_bytes()).to_string())
-                    .unwrap_or_default()
+                    .unwrap_or_default(),
             );
         }
         Some(groups)
     }
-    
+
     /// Substitute version template with captured groups
     pub fn substitute_template(template: &str, captures: &[String]) -> String {
         let mut result = template.to_string();
@@ -345,9 +345,7 @@ pub struct ProbeDatabase {
 
 impl ProbeDatabase {
     pub fn new() -> Self {
-        let mut db = Self {
-            probes: Vec::new(),
-        };
+        let mut db = Self { probes: Vec::new() };
         db.load_default_probes();
         db
     }
@@ -358,83 +356,83 @@ impl ProbeDatabase {
         self.add_probe(
             ServiceProbe::new("HTTP".to_string(), ProbeProtocol::Tcp)
                 .with_data(b"GET / HTTP/1.0\r\n\r\n".to_vec())
-                .with_rarity(ProbeRarity::VeryCommon)
+                .with_rarity(ProbeRarity::VeryCommon),
         );
 
         self.add_probe(
             ServiceProbe::new("SSH".to_string(), ProbeProtocol::Tcp)
                 .with_data(Vec::new()) // Banner grab only
-                .with_rarity(ProbeRarity::VeryCommon)
+                .with_rarity(ProbeRarity::VeryCommon),
         );
 
         self.add_probe(
             ServiceProbe::new("FTP".to_string(), ProbeProtocol::Tcp)
                 .with_data(Vec::new())
-                .with_rarity(ProbeRarity::VeryCommon)
+                .with_rarity(ProbeRarity::VeryCommon),
         );
 
         // Common services (intensity 3-4)
         self.add_probe(
             ServiceProbe::new("SMTP".to_string(), ProbeProtocol::Tcp)
                 .with_data(b"EHLO test\r\n".to_vec())
-                .with_rarity(ProbeRarity::Common)
+                .with_rarity(ProbeRarity::Common),
         );
 
         self.add_probe(
             ServiceProbe::new("DNS".to_string(), ProbeProtocol::Udp)
                 .with_data(Vec::new())
-                .with_rarity(ProbeRarity::Common)
+                .with_rarity(ProbeRarity::Common),
         );
 
         self.add_probe(
             ServiceProbe::new("MySQL".to_string(), ProbeProtocol::Tcp)
                 .with_data(Vec::new())
-                .with_rarity(ProbeRarity::Common)
+                .with_rarity(ProbeRarity::Common),
         );
 
         // Moderate services (intensity 5-6)
         self.add_probe(
             ServiceProbe::new("PostgreSQL".to_string(), ProbeProtocol::Tcp)
                 .with_data(Vec::new())
-                .with_rarity(ProbeRarity::Moderate)
+                .with_rarity(ProbeRarity::Moderate),
         );
 
         self.add_probe(
             ServiceProbe::new("Redis".to_string(), ProbeProtocol::Tcp)
                 .with_data(b"PING\r\n".to_vec())
-                .with_rarity(ProbeRarity::Moderate)
+                .with_rarity(ProbeRarity::Moderate),
         );
 
         self.add_probe(
             ServiceProbe::new("MongoDB".to_string(), ProbeProtocol::Tcp)
                 .with_data(Vec::new())
-                .with_rarity(ProbeRarity::Moderate)
+                .with_rarity(ProbeRarity::Moderate),
         );
 
         // Uncommon services (intensity 7-8)
         self.add_probe(
             ServiceProbe::new("Memcached".to_string(), ProbeProtocol::Tcp)
                 .with_data(b"stats\r\n".to_vec())
-                .with_rarity(ProbeRarity::Uncommon)
+                .with_rarity(ProbeRarity::Uncommon),
         );
 
         self.add_probe(
             ServiceProbe::new("Elasticsearch".to_string(), ProbeProtocol::Tcp)
                 .with_data(b"GET / HTTP/1.0\r\n\r\n".to_vec())
-                .with_rarity(ProbeRarity::Uncommon)
+                .with_rarity(ProbeRarity::Uncommon),
         );
 
         // Rare/specialized (intensity 9)
         self.add_probe(
             ServiceProbe::new("Cassandra".to_string(), ProbeProtocol::Tcp)
                 .with_data(Vec::new())
-                .with_rarity(ProbeRarity::Rare)
+                .with_rarity(ProbeRarity::Rare),
         );
 
         self.add_probe(
             ServiceProbe::new("CouchDB".to_string(), ProbeProtocol::Tcp)
                 .with_data(b"GET / HTTP/1.0\r\n\r\n".to_vec())
-                .with_rarity(ProbeRarity::Rare)
+                .with_rarity(ProbeRarity::Rare),
         );
     }
 
@@ -452,7 +450,8 @@ impl ProbeDatabase {
 
     /// Get probe count at intensity level
     pub fn probe_count(&self, level: &IntensityLevel) -> usize {
-        self.probes.iter()
+        self.probes
+            .iter()
             .filter(|p| p.intensity <= level.value())
             .count()
     }
@@ -542,8 +541,7 @@ mod tests {
 
     #[test]
     fn test_service_probe_should_use() {
-        let probe = ServiceProbe::new("Test".to_string(), ProbeProtocol::Tcp)
-            .with_intensity(5);
+        let probe = ServiceProbe::new("Test".to_string(), ProbeProtocol::Tcp).with_intensity(5);
 
         let level_low = IntensityLevel::new(3).unwrap();
         let level_high = IntensityLevel::new(7).unwrap();
@@ -565,7 +563,8 @@ mod tests {
     #[test]
     fn test_detection_config_builder() {
         let config = DetectionConfig::new()
-            .with_intensity(5).unwrap()
+            .with_intensity(5)
+            .unwrap()
             .with_all_ports()
             .with_trace()
             .with_timeout(3000);
@@ -579,28 +578,28 @@ mod tests {
     #[test]
     fn test_probe_database() {
         let db = ProbeDatabase::new();
-        
+
         // Should have default probes loaded
         assert!(!db.probes.is_empty());
-        
+
         // Light mode should have fewer probes
         let light_config = DetectionConfig::light();
         let light_probes = db.get_probes(&light_config);
-        
+
         // All mode should have all probes
         let all_config = DetectionConfig::all();
         let all_probes = db.get_probes(&all_config);
-        
+
         assert!(light_probes.len() < all_probes.len());
     }
 
     #[test]
     fn test_probe_database_probe_count() {
         let db = ProbeDatabase::new();
-        
+
         let count_light = db.probe_count(&IntensityLevel::light());
         let count_all = db.probe_count(&IntensityLevel::all());
-        
+
         assert!(count_light < count_all);
         assert_eq!(count_all, db.probes.len());
     }

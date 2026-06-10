@@ -279,14 +279,29 @@ impl TrendAnalyzer {
 
         output.push_str("=== Trend Analysis Report ===\n\n");
         output.push_str(&format!("Period: {}\n", report.period));
-        output.push_str(&format!("Generated: {}\n", report.generated_at.format("%Y-%m-%d %H:%M:%S UTC")));
+        output.push_str(&format!(
+            "Generated: {}\n",
+            report.generated_at.format("%Y-%m-%d %H:%M:%S UTC")
+        ));
         output.push_str(&format!("Scans analyzed: {}\n", report.scan_count));
-        output.push_str(&format!("Stability score: {:.1}%\n\n", report.summary.stability_score));
+        output.push_str(&format!(
+            "Stability score: {:.1}%\n\n",
+            report.summary.stability_score
+        ));
 
         output.push_str("--- Summary ---\n");
-        output.push_str(&format!("  New ports appeared:    {}\n", report.summary.total_new_ports));
-        output.push_str(&format!("  Ports closed:         {}\n", report.summary.total_closed_ports));
-        output.push_str(&format!("  Service changes:      {}\n", report.summary.total_service_changes));
+        output.push_str(&format!(
+            "  New ports appeared:    {}\n",
+            report.summary.total_new_ports
+        ));
+        output.push_str(&format!(
+            "  Ports closed:         {}\n",
+            report.summary.total_closed_ports
+        ));
+        output.push_str(&format!(
+            "  Service changes:      {}\n",
+            report.summary.total_service_changes
+        ));
 
         if !report.new_ports.is_empty() {
             output.push_str("\n--- New Ports (over time) ---\n");
@@ -421,7 +436,10 @@ mod tests {
     #[test]
     fn test_analyze_insufficient_data() {
         let mut history = ScanHistory::new();
-        history.add_entry("192.168.1.1".to_string(), create_results(80, PortState::Open, Some("http")));
+        history.add_entry(
+            "192.168.1.1".to_string(),
+            create_results(80, PortState::Open, Some("http")),
+        );
 
         let report = TrendAnalyzer::analyze(&history, "192.168.1.1");
         assert_eq!(report.scan_count, 1);
@@ -484,8 +502,14 @@ mod tests {
 
         let report = TrendAnalyzer::analyze(&history, "192.168.1.1");
         assert_eq!(report.summary.total_service_changes, 1);
-        assert_eq!(report.service_changes[0].old_service, Some("apache".to_string()));
-        assert_eq!(report.service_changes[0].new_service, Some("nginx".to_string()));
+        assert_eq!(
+            report.service_changes[0].old_service,
+            Some("apache".to_string())
+        );
+        assert_eq!(
+            report.service_changes[0].new_service,
+            Some("nginx".to_string())
+        );
     }
 
     #[test]

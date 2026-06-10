@@ -1,11 +1,10 @@
-use nemue::scanner::{ScanResults, ScanResult, PortState, Protocol};
+use chrono::Utc;
 use nemue::reporting::{
-    ReportBuilder, ReportMetadata, ExecutiveSummary, VulnerabilitySummary,
-    ComplianceStatus, ComplianceFramework, Finding, Severity, Recommendation,
-    Priority, ScanReport,
+    ComplianceFramework, ComplianceStatus, ExecutiveSummary, Finding, Priority, Recommendation,
+    ReportBuilder, ReportMetadata, ScanReport, Severity, VulnerabilitySummary,
 };
 use nemue::scanner::config::NemueConfig;
-use chrono::Utc;
+use nemue::scanner::{PortState, Protocol, ScanResult, ScanResults};
 use std::net::IpAddr;
 
 // =============================================================================
@@ -244,11 +243,23 @@ pub fn udp_results() -> ScanResults {
 pub fn large_results(count: usize) -> ScanResults {
     let results: Vec<ScanResult> = (0..count)
         .map(|i| ScanResult {
-            target: format!("192.168.{}.{}", (i / 256) % 256, i % 256).parse().unwrap(),
+            target: format!("192.168.{}.{}", (i / 256) % 256, i % 256)
+                .parse()
+                .unwrap(),
             port: (1024 + (i as u16 % 64511)),
-            state: if i % 3 == 0 { PortState::Open } else if i % 3 == 1 { PortState::Closed } else { PortState::Filtered },
+            state: if i % 3 == 0 {
+                PortState::Open
+            } else if i % 3 == 1 {
+                PortState::Closed
+            } else {
+                PortState::Filtered
+            },
             protocol: Protocol::TCP,
-            service: if i % 3 == 0 { Some("http".to_string()) } else { None },
+            service: if i % 3 == 0 {
+                Some("http".to_string())
+            } else {
+                None
+            },
             service_info: None,
             hostname: None,
             reason: None,
@@ -428,7 +439,11 @@ pub fn generate_scan_results(target_count: usize, ports_per_target: usize) -> Sc
                 port,
                 state,
                 protocol: Protocol::TCP,
-                service: if rng.gen_bool(0.3) { Some("http".to_string()) } else { None },
+                service: if rng.gen_bool(0.3) {
+                    Some("http".to_string())
+                } else {
+                    None
+                },
                 service_info: None,
                 hostname: None,
                 reason: None,
@@ -506,7 +521,11 @@ pub fn generate_report(finding_count: usize) -> ScanReport {
 
 pub fn generate_ip_list(count: usize) -> Vec<IpAddr> {
     (0..count)
-        .map(|i| format!("10.0.{}.{}", (i / 256) % 256, i % 256).parse().unwrap())
+        .map(|i| {
+            format!("10.0.{}.{}", (i / 256) % 256, i % 256)
+                .parse()
+                .unwrap()
+        })
         .collect()
 }
 

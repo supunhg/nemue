@@ -83,14 +83,30 @@ impl Default for PerformanceConfig {
     }
 }
 
-fn default_timing() -> String { "T3".to_string() }
-fn default_scan_type() -> String { "connect".to_string() }
-fn default_rate() -> u32 { 1000 }
-fn default_timeout() -> u64 { 1000 }
-fn default_format() -> String { "json".to_string() }
-fn default_true() -> bool { true }
-fn default_buffer_pool() -> usize { 1000 }
-fn default_concurrent_targets() -> usize { num_cpus::get().max(2) }
+fn default_timing() -> String {
+    "T3".to_string()
+}
+fn default_scan_type() -> String {
+    "connect".to_string()
+}
+fn default_rate() -> u32 {
+    1000
+}
+fn default_timeout() -> u64 {
+    1000
+}
+fn default_format() -> String {
+    "json".to_string()
+}
+fn default_true() -> bool {
+    true
+}
+fn default_buffer_pool() -> usize {
+    1000
+}
+fn default_concurrent_targets() -> usize {
+    num_cpus::get().max(2)
+}
 
 impl NemueConfig {
     /// Load config from default location (~/.config/nemue/config.toml)
@@ -127,8 +143,7 @@ impl NemueConfig {
             std::fs::create_dir_all(parent)?;
         }
         let default_config = Self::default();
-        let toml = toml::to_string_pretty(&default_config)
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+        let toml = toml::to_string_pretty(&default_config).map_err(std::io::Error::other)?;
         std::fs::write(&config_path, toml)
     }
 }

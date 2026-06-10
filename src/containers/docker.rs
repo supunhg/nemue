@@ -290,10 +290,30 @@ impl DockerScanner {
             storage_driver: info_parts.first().unwrap_or(&"").to_string(),
             logging_driver: info_parts.get(1).unwrap_or(&"").to_string(),
             cgroup_driver: info_parts.get(2).unwrap_or(&"").to_string(),
-            live_restore: info_parts.get(3).unwrap_or(&"false").to_string().parse().unwrap_or(false),
-            containers_total: info_parts.get(4).unwrap_or(&"0").to_string().parse().unwrap_or(0),
-            containers_running: info_parts.get(5).unwrap_or(&"0").to_string().parse().unwrap_or(0),
-            images_count: info_parts.get(6).unwrap_or(&"0").to_string().parse().unwrap_or(0),
+            live_restore: info_parts
+                .get(3)
+                .unwrap_or(&"false")
+                .to_string()
+                .parse()
+                .unwrap_or(false),
+            containers_total: info_parts
+                .get(4)
+                .unwrap_or(&"0")
+                .to_string()
+                .parse()
+                .unwrap_or(0),
+            containers_running: info_parts
+                .get(5)
+                .unwrap_or(&"0")
+                .to_string()
+                .parse()
+                .unwrap_or(0),
+            images_count: info_parts
+                .get(6)
+                .unwrap_or(&"0")
+                .to_string()
+                .parse()
+                .unwrap_or(0),
             server_addr: String::new(),
             security_options,
             registries: Vec::new(),
@@ -305,7 +325,11 @@ impl DockerScanner {
 
     /// Enumerate running (and optionally stopped) containers
     pub fn enumerate_containers(&self) -> Vec<DockerContainer> {
-        let all_flag = if self.config.include_stopped { "-a" } else { "" };
+        let all_flag = if self.config.include_stopped {
+            "-a"
+        } else {
+            ""
+        };
 
         let output = Command::new("docker")
             .arg("ps")
@@ -362,8 +386,19 @@ impl DockerScanner {
             .collect();
 
         // Get detailed info for security checks
-        let (privileged, pid_mode, network_mode, ipc_mode, user, restart_policy, memory_limit, cpu_shares, caps_add, caps_drop, env_vars) =
-            self.get_container_security_details(&id);
+        let (
+            privileged,
+            pid_mode,
+            network_mode,
+            ipc_mode,
+            user,
+            restart_policy,
+            memory_limit,
+            cpu_shares,
+            caps_add,
+            caps_drop,
+            env_vars,
+        ) = self.get_container_security_details(&id);
 
         DockerContainer {
             id,
@@ -404,11 +439,7 @@ impl DockerScanner {
                         .unwrap_or("0")
                         .parse()
                         .unwrap_or(0);
-                    let host_port: u16 = host_part
-                        .last()
-                        .unwrap_or(&"0")
-                        .parse()
-                        .unwrap_or(0);
+                    let host_port: u16 = host_part.last().unwrap_or(&"0").parse().unwrap_or(0);
                     let host_ip = if host_part.len() > 1 {
                         host_part[0].to_string()
                     } else {
@@ -430,7 +461,19 @@ impl DockerScanner {
     fn get_container_security_details(
         &self,
         container_id: &str,
-    ) -> (bool, String, String, String, String, String, u64, u64, Vec<String>, Vec<String>, Vec<String>) {
+    ) -> (
+        bool,
+        String,
+        String,
+        String,
+        String,
+        String,
+        u64,
+        u64,
+        Vec<String>,
+        Vec<String>,
+        Vec<String>,
+    ) {
         let inspect_output = Command::new("docker")
             .arg("inspect")
             .arg("--format")
@@ -439,9 +482,17 @@ impl DockerScanner {
             .output();
 
         let default = (
-            false, String::new(), String::new(), String::new(),
-            String::new(), String::new(), 0, 0,
-            Vec::new(), Vec::new(), Vec::new(),
+            false,
+            String::new(),
+            String::new(),
+            String::new(),
+            String::new(),
+            String::new(),
+            0,
+            0,
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
         );
 
         let output = match inspect_output {
@@ -452,7 +503,12 @@ impl DockerScanner {
         let stdout = String::from_utf8_lossy(&output.stdout);
         let parts: Vec<&str> = stdout.trim().splitn(11, '|').collect();
 
-        let privileged = parts.first().unwrap_or(&"false").trim().parse().unwrap_or(false);
+        let privileged = parts
+            .first()
+            .unwrap_or(&"false")
+            .trim()
+            .parse()
+            .unwrap_or(false);
         let pid_mode = parts.get(1).unwrap_or(&"").to_string();
         let network_mode = parts.get(2).unwrap_or(&"").to_string();
         let ipc_mode = parts.get(3).unwrap_or(&"").to_string();
@@ -473,7 +529,19 @@ impl DockerScanner {
             .filter(|s| !s.is_empty())
             .collect();
 
-        (privileged, pid_mode, network_mode, ipc_mode, user, restart_policy, memory_limit, cpu_shares, caps_add, caps_drop, env_vars)
+        (
+            privileged,
+            pid_mode,
+            network_mode,
+            ipc_mode,
+            user,
+            restart_policy,
+            memory_limit,
+            cpu_shares,
+            caps_add,
+            caps_drop,
+            env_vars,
+        )
     }
 
     fn parse_cap_list(s: &str) -> Vec<String> {
@@ -520,11 +588,23 @@ impl DockerScanner {
     fn parse_size(s: &str) -> u64 {
         let s = s.trim();
         if s.ends_with("GB") {
-            (s.trim_end_matches("GB").trim().parse::<f64>().unwrap_or(0.0) * 1_073_741_824.0) as u64
+            (s.trim_end_matches("GB")
+                .trim()
+                .parse::<f64>()
+                .unwrap_or(0.0)
+                * 1_073_741_824.0) as u64
         } else if s.ends_with("MB") {
-            (s.trim_end_matches("MB").trim().parse::<f64>().unwrap_or(0.0) * 1_048_576.0) as u64
+            (s.trim_end_matches("MB")
+                .trim()
+                .parse::<f64>()
+                .unwrap_or(0.0)
+                * 1_048_576.0) as u64
         } else if s.ends_with("kB") {
-            (s.trim_end_matches("kB").trim().parse::<f64>().unwrap_or(0.0) * 1024.0) as u64
+            (s.trim_end_matches("kB")
+                .trim()
+                .parse::<f64>()
+                .unwrap_or(0.0)
+                * 1024.0) as u64
         } else {
             s.trim_end_matches("B").trim().parse::<f64>().unwrap_or(0.0) as u64
         }
@@ -573,7 +653,10 @@ impl DockerScanner {
             .collect()
     }
 
-    fn inspect_network(&self, network_id: &str) -> (bool, bool, String, String, String, Vec<String>, bool) {
+    fn inspect_network(
+        &self,
+        network_id: &str,
+    ) -> (bool, bool, String, String, String, Vec<String>, bool) {
         let output = Command::new("docker")
             .arg("network")
             .arg("inspect")
@@ -584,20 +667,45 @@ impl DockerScanner {
 
         let output = match output {
             Ok(o) if o.status.success() => o,
-            _ => return (false, false, String::new(), String::new(), String::new(), Vec::new(), false),
+            _ => {
+                return (
+                    false,
+                    false,
+                    String::new(),
+                    String::new(),
+                    String::new(),
+                    Vec::new(),
+                    false,
+                )
+            }
         };
 
         let stdout = String::from_utf8_lossy(&output.stdout);
         let parts: Vec<&str> = stdout.trim().splitn(6, '|').collect();
 
         (
-            parts.first().unwrap_or(&"false").trim().parse().unwrap_or(false),
-            parts.get(1).unwrap_or(&"false").trim().parse().unwrap_or(false),
+            parts
+                .first()
+                .unwrap_or(&"false")
+                .trim()
+                .parse()
+                .unwrap_or(false),
+            parts
+                .get(1)
+                .unwrap_or(&"false")
+                .trim()
+                .parse()
+                .unwrap_or(false),
             parts.get(2).unwrap_or(&"").to_string(),
             parts.get(3).unwrap_or(&"").to_string(),
             parts.get(4).unwrap_or(&"").to_string(),
             Vec::new(),
-            parts.get(5).unwrap_or(&"false").trim().parse().unwrap_or(false),
+            parts
+                .get(5)
+                .unwrap_or(&"false")
+                .trim()
+                .parse()
+                .unwrap_or(false),
         )
     }
 
@@ -668,17 +776,30 @@ impl DockerScanner {
             .arg("-u")
             .output()
             .ok()
-            .and_then(|o| String::from_utf8_lossy(&o.stdout).trim().parse::<u32>().ok())
+            .and_then(|o| {
+                String::from_utf8_lossy(&o.stdout)
+                    .trim()
+                    .parse::<u32>()
+                    .ok()
+            })
             .map(|uid| uid == 0)
             .unwrap_or(false);
 
-        if !is_root && !daemon.security_options.iter().any(|s| s.contains("rootlesskit")) {
+        if !is_root
+            && !daemon
+                .security_options
+                .iter()
+                .any(|s| s.contains("rootlesskit"))
+        {
             findings.push(DockerSecurityFinding {
                 title: "Docker daemon not running in rootless mode".to_string(),
-                description: "The Docker daemon runs as root by default, which increases the attack surface.".to_string(),
+                description:
+                    "The Docker daemon runs as root by default, which increases the attack surface."
+                        .to_string(),
                 severity: ContainerSeverity::Medium,
                 category: "daemon".to_string(),
-                recommendation: "Consider using rootless Docker mode to reduce attack surface.".to_string(),
+                recommendation: "Consider using rootless Docker mode to reduce attack surface."
+                    .to_string(),
             });
         }
 
@@ -791,7 +912,14 @@ impl DockerScanner {
         }
 
         // Check for dangerous capabilities
-        let dangerous_caps = ["SYS_ADMIN", "NET_ADMIN", "ALL", "SYS_PTRACE", "SYS_MODULE", "DAC_OVERRIDE"];
+        let dangerous_caps = [
+            "SYS_ADMIN",
+            "NET_ADMIN",
+            "ALL",
+            "SYS_PTRACE",
+            "SYS_MODULE",
+            "DAC_OVERRIDE",
+        ];
         for cap in &container.capabilities_add {
             if dangerous_caps.contains(&cap.as_str()) {
                 findings.push(DockerSecurityFinding {
@@ -808,8 +936,11 @@ impl DockerScanner {
         for mount in &container.mounts {
             let sensitive_paths = ["/", "/etc", "/var/run/docker.sock", "/proc", "/sys", "/dev"];
             for sensitive in &sensitive_paths {
-                if mount.source == *sensitive || mount.source.starts_with(&format!("{}/", sensitive)) {
-                    let severity = if mount.source == "/var/run/docker.sock" || mount.source == "/" {
+                if mount.source == *sensitive
+                    || mount.source.starts_with(&format!("{}/", sensitive))
+                {
+                    let severity = if mount.source == "/var/run/docker.sock" || mount.source == "/"
+                    {
                         ContainerSeverity::Critical
                     } else {
                         ContainerSeverity::High
@@ -841,7 +972,14 @@ impl DockerScanner {
         }
 
         // Check for sensitive environment variables
-        let sensitive_env_patterns = ["PASSWORD", "SECRET", "TOKEN", "API_KEY", "PRIVATE_KEY", "AWS_SECRET"];
+        let sensitive_env_patterns = [
+            "PASSWORD",
+            "SECRET",
+            "TOKEN",
+            "API_KEY",
+            "PRIVATE_KEY",
+            "AWS_SECRET",
+        ];
         for env in &container.env_vars {
             for pattern in &sensitive_env_patterns {
                 if env.to_uppercase().contains(pattern) {
@@ -900,10 +1038,14 @@ impl DockerScanner {
         if !network.internal && network.driver == "bridge" && network.name != "bridge" {
             findings.push(DockerSecurityFinding {
                 title: format!("Network '{}' is not internal", network.name),
-                description: "Non-internal networks have outbound internet access, which may not be needed.".to_string(),
+                description:
+                    "Non-internal networks have outbound internet access, which may not be needed."
+                        .to_string(),
                 severity: ContainerSeverity::Low,
                 category: "network".to_string(),
-                recommendation: "Use --internal flag for networks that don't need external connectivity.".to_string(),
+                recommendation:
+                    "Use --internal flag for networks that don't need external connectivity."
+                        .to_string(),
             });
         }
 
@@ -922,10 +1064,14 @@ impl DockerScanner {
         if volume.driver == "local" && volume.mountpoint.contains(":/") {
             findings.push(DockerSecurityFinding {
                 title: format!("Volume '{}' appears to be an NFS mount", volume.name),
-                description: "NFS mounts can expose data to the network. Ensure NFS is properly secured.".to_string(),
+                description:
+                    "NFS mounts can expose data to the network. Ensure NFS is properly secured."
+                        .to_string(),
                 severity: ContainerSeverity::Low,
                 category: "volume".to_string(),
-                recommendation: "Use Kerberos authentication and limit NFS exports to specific hosts.".to_string(),
+                recommendation:
+                    "Use Kerberos authentication and limit NFS exports to specific hosts."
+                        .to_string(),
             });
         }
 
@@ -1016,7 +1162,9 @@ mod tests {
             ..Default::default()
         };
         let findings = scanner.assess_container_security(&container);
-        assert!(findings.iter().any(|f| f.severity == ContainerSeverity::Critical && f.title.contains("privileged")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == ContainerSeverity::Critical && f.title.contains("privileged")));
     }
 
     #[test]
@@ -1030,7 +1178,9 @@ mod tests {
             ..Default::default()
         };
         let findings = scanner.assess_container_security(&container);
-        assert!(findings.iter().any(|f| f.severity == ContainerSeverity::High && f.title.contains("PID")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == ContainerSeverity::High && f.title.contains("PID")));
     }
 
     #[test]
@@ -1044,7 +1194,9 @@ mod tests {
             ..Default::default()
         };
         let findings = scanner.assess_container_security(&container);
-        assert!(findings.iter().any(|f| f.severity == ContainerSeverity::High && f.title.contains("host network")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == ContainerSeverity::High && f.title.contains("host network")));
     }
 
     #[test]
@@ -1058,7 +1210,9 @@ mod tests {
             ..Default::default()
         };
         let findings = scanner.assess_container_security(&container);
-        assert!(findings.iter().any(|f| f.severity == ContainerSeverity::Medium && f.title.contains("root")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == ContainerSeverity::Medium && f.title.contains("root")));
     }
 
     #[test]
@@ -1072,7 +1226,9 @@ mod tests {
             ..Default::default()
         };
         let findings = scanner.assess_container_security(&container);
-        assert!(findings.iter().any(|f| f.severity == ContainerSeverity::High && f.title.contains("SYS_ADMIN")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == ContainerSeverity::High && f.title.contains("SYS_ADMIN")));
     }
 
     #[test]
@@ -1091,7 +1247,9 @@ mod tests {
             ..Default::default()
         };
         let findings = scanner.assess_container_security(&container);
-        assert!(findings.iter().any(|f| f.severity == ContainerSeverity::Critical && f.title.contains("docker.sock")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == ContainerSeverity::Critical && f.title.contains("docker.sock")));
     }
 
     #[test]
@@ -1105,7 +1263,9 @@ mod tests {
             ..Default::default()
         };
         let findings = scanner.assess_container_security(&container);
-        assert!(findings.iter().any(|f| f.severity == ContainerSeverity::Medium && f.title.contains("sensitive")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == ContainerSeverity::Medium && f.title.contains("sensitive")));
     }
 
     #[test]
@@ -1119,7 +1279,9 @@ mod tests {
             ..Default::default()
         };
         let findings = scanner.assess_container_security(&container);
-        assert!(findings.iter().any(|f| f.severity == ContainerSeverity::Low && f.title.contains("memory")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == ContainerSeverity::Low && f.title.contains("memory")));
     }
 
     #[test]
@@ -1130,7 +1292,9 @@ mod tests {
             ..Default::default()
         };
         let findings = scanner.assess_daemon_security(&daemon);
-        assert!(findings.iter().any(|f| f.severity == ContainerSeverity::High && f.title.contains("Insecure")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == ContainerSeverity::High && f.title.contains("Insecure")));
     }
 
     #[test]
@@ -1141,6 +1305,8 @@ mod tests {
             ..Default::default()
         };
         let findings = scanner.assess_daemon_security(&daemon);
-        assert!(findings.iter().any(|f| f.severity == ContainerSeverity::Medium && f.title.contains("logging")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == ContainerSeverity::Medium && f.title.contains("logging")));
     }
 }

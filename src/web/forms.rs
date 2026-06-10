@@ -61,23 +61,29 @@ impl FormAnalyzer {
     /// Check if form contains sensitive fields (password, credit card, etc.)
     fn contains_sensitive_fields(form: &FormInfo) -> bool {
         let sensitive_patterns = ["password", "passwd", "pwd", "credit", "card", "cvv", "ssn"];
-        
+
         form.inputs.iter().any(|input| {
             sensitive_patterns.iter().any(|pattern| {
-                input.name.to_lowercase().contains(pattern) ||
-                input.input_type.to_lowercase().contains(pattern)
+                input.name.to_lowercase().contains(pattern)
+                    || input.input_type.to_lowercase().contains(pattern)
             })
         })
     }
 
     /// Check if form has CSRF token field
     fn has_csrf_token(form: &FormInfo) -> bool {
-        let csrf_patterns = ["csrf", "token", "_token", "authenticity_token", "csrfmiddlewaretoken"];
-        
+        let csrf_patterns = [
+            "csrf",
+            "token",
+            "_token",
+            "authenticity_token",
+            "csrfmiddlewaretoken",
+        ];
+
         form.inputs.iter().any(|input| {
-            csrf_patterns.iter().any(|pattern| {
-                input.name.to_lowercase().contains(pattern)
-            })
+            csrf_patterns
+                .iter()
+                .any(|pattern| input.name.to_lowercase().contains(pattern))
         })
     }
 
@@ -89,8 +95,8 @@ impl FormAnalyzer {
     /// Check if autocomplete is enabled on password fields
     fn has_autocomplete_on_password(form: &FormInfo) -> bool {
         form.inputs.iter().any(|input| {
-            input.input_type.to_lowercase() == "password" &&
-            input.name.to_lowercase().contains("autocomplete")
+            input.input_type.to_lowercase() == "password"
+                && input.name.to_lowercase().contains("autocomplete")
         })
     }
 
@@ -103,8 +109,8 @@ impl FormAnalyzer {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::FormInput;
+    use super::*;
 
     #[test]
     fn test_contains_sensitive_fields() {
@@ -133,13 +139,11 @@ mod tests {
         let form_with_token = FormInfo {
             action: "/submit".to_string(),
             method: "POST".to_string(),
-            inputs: vec![
-                FormInput {
-                    name: "csrf_token".to_string(),
-                    input_type: "hidden".to_string(),
-                    required: false,
-                },
-            ],
+            inputs: vec![FormInput {
+                name: "csrf_token".to_string(),
+                input_type: "hidden".to_string(),
+                required: false,
+            }],
         };
 
         assert!(FormAnalyzer::has_csrf_token(&form_with_token));
@@ -147,13 +151,11 @@ mod tests {
         let form_without_token = FormInfo {
             action: "/submit".to_string(),
             method: "POST".to_string(),
-            inputs: vec![
-                FormInput {
-                    name: "data".to_string(),
-                    input_type: "text".to_string(),
-                    required: false,
-                },
-            ],
+            inputs: vec![FormInput {
+                name: "data".to_string(),
+                input_type: "text".to_string(),
+                required: false,
+            }],
         };
 
         assert!(!FormAnalyzer::has_csrf_token(&form_without_token));
@@ -164,17 +166,17 @@ mod tests {
         let form = FormInfo {
             action: "/login".to_string(),
             method: "POST".to_string(),
-            inputs: vec![
-                FormInput {
-                    name: "password".to_string(),
-                    input_type: "password".to_string(),
-                    required: true,
-                },
-            ],
+            inputs: vec![FormInput {
+                name: "password".to_string(),
+                input_type: "password".to_string(),
+                required: true,
+            }],
         };
 
         let issues = FormAnalyzer::analyze_security(&form, false);
-        assert!(issues.iter().any(|i| matches!(i, FormSecurityIssue::NoHTTPS)));
+        assert!(issues
+            .iter()
+            .any(|i| matches!(i, FormSecurityIssue::NoHTTPS)));
     }
 
     #[test]
@@ -182,16 +184,16 @@ mod tests {
         let form = FormInfo {
             action: "/submit".to_string(),
             method: "POST".to_string(),
-            inputs: vec![
-                FormInput {
-                    name: "data".to_string(),
-                    input_type: "text".to_string(),
-                    required: false,
-                },
-            ],
+            inputs: vec![FormInput {
+                name: "data".to_string(),
+                input_type: "text".to_string(),
+                required: false,
+            }],
         };
 
         let issues = FormAnalyzer::analyze_security(&form, true);
-        assert!(issues.iter().any(|i| matches!(i, FormSecurityIssue::MissingCSRFProtection)));
+        assert!(issues
+            .iter()
+            .any(|i| matches!(i, FormSecurityIssue::MissingCSRFProtection)));
     }
 }

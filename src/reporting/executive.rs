@@ -1,6 +1,6 @@
 // Executive summary report - focused high-level overview for leadership
 use crate::reporting::{ScanReport, Severity};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExecutiveReport {
@@ -46,7 +46,9 @@ impl ExecutiveReport {
     pub fn from_scan_report(report: &ScanReport) -> Self {
         let overall_status = Self::determine_risk_level(report.executive_summary.risk_score);
 
-        let mut key_findings: Vec<KeyFinding> = report.findings.iter()
+        let mut key_findings: Vec<KeyFinding> = report
+            .findings
+            .iter()
             .filter(|f| matches!(f.severity, Severity::Critical | Severity::High))
             .map(|f| KeyFinding {
                 severity: f.severity,
@@ -57,8 +59,15 @@ impl ExecutiveReport {
             .collect();
         key_findings.sort_by(|a, b| b.severity_order().cmp(&a.severity_order()));
 
-        let top_recommendations: Vec<String> = report.recommendations.iter()
-            .filter(|r| matches!(r.priority, crate::reporting::Priority::Critical | crate::reporting::Priority::High))
+        let top_recommendations: Vec<String> = report
+            .recommendations
+            .iter()
+            .filter(|r| {
+                matches!(
+                    r.priority,
+                    crate::reporting::Priority::Critical | crate::reporting::Priority::High
+                )
+            })
             .take(5)
             .map(|r| format!("[{:?}] {}", r.priority, r.title))
             .collect();
@@ -87,19 +96,28 @@ impl ExecutiveReport {
     }
 
     fn determine_risk_level(score: f64) -> RiskLevel {
-        if score >= 9.0 { RiskLevel::Critical }
-        else if score >= 7.0 { RiskLevel::High }
-        else if score >= 4.0 { RiskLevel::Medium }
-        else if score >= 1.0 { RiskLevel::Low }
-        else { RiskLevel::Acceptable }
+        if score >= 9.0 {
+            RiskLevel::Critical
+        } else if score >= 7.0 {
+            RiskLevel::High
+        } else if score >= 4.0 {
+            RiskLevel::Medium
+        } else if score >= 1.0 {
+            RiskLevel::Low
+        } else {
+            RiskLevel::Acceptable
+        }
     }
 
     fn assess_business_risk(severity: &Severity, cvss: Option<f64>) -> String {
         match severity {
             Severity::Critical => {
                 let score = cvss.unwrap_or(9.0);
-                if score >= 9.5 { "Immediate action required - active exploitation risk".to_string() }
-                else { "Urgent remediation needed within 24-48 hours".to_string() }
+                if score >= 9.5 {
+                    "Immediate action required - active exploitation risk".to_string()
+                } else {
+                    "Urgent remediation needed within 24-48 hours".to_string()
+                }
             }
             Severity::High => "Remediation required within 1-2 weeks".to_string(),
             Severity::Medium => "Schedule remediation within 30 days".to_string(),
@@ -130,16 +148,23 @@ impl ExecutiveReport {
             impact.push_str(&format!("CRITICAL: {} critical vulnerabilities pose immediate risk of data breach or system compromise. ", vuln.critical));
         }
         if vuln.high > 0 {
-            impact.push_str(&format!("{} high-severity issues could lead to unauthorized access. ", vuln.high));
+            impact.push_str(&format!(
+                "{} high-severity issues could lead to unauthorized access. ",
+                vuln.high
+            ));
         }
         if risk >= 7.0 {
             impact.push_str("Overall risk posture is HIGH - executive attention recommended. ");
         }
         if report.compliance.overall_score < 70.0 {
-            impact.push_str(&format!("Compliance at {:.0}% may impact regulatory standing. ", report.compliance.overall_score));
+            impact.push_str(&format!(
+                "Compliance at {:.0}% may impact regulatory standing. ",
+                report.compliance.overall_score
+            ));
         }
         if impact.is_empty() {
-            impact = "Security posture is within acceptable parameters. Continue monitoring.".to_string();
+            impact = "Security posture is within acceptable parameters. Continue monitoring."
+                .to_string();
         }
         impact
     }
@@ -153,12 +178,21 @@ impl ExecutiveReport {
 
         output.push_str(&format!("Overall Status: {:?}\n", self.overall_status));
         output.push_str(&format!("Risk Score:     {:.1}/10\n", self.risk_score));
-        output.push_str(&format!("Compliance:     {:.1}%\n\n", self.compliance_score));
+        output.push_str(&format!(
+            "Compliance:     {:.1}%\n\n",
+            self.compliance_score
+        ));
 
         output.push_str("RISK BREAKDOWN\n");
         output.push_str("──────────────\n");
-        output.push_str(&format!("  Critical:  {:>3}    Hosts Scanned:    {}\n", self.risk_breakdown.critical, self.risk_breakdown.total_hosts_scanned));
-        output.push_str(&format!("  High:      {:>3}    Hosts w/Critical: {}\n", self.risk_breakdown.high, self.risk_breakdown.hosts_with_critical));
+        output.push_str(&format!(
+            "  Critical:  {:>3}    Hosts Scanned:    {}\n",
+            self.risk_breakdown.critical, self.risk_breakdown.total_hosts_scanned
+        ));
+        output.push_str(&format!(
+            "  High:      {:>3}    Hosts w/Critical: {}\n",
+            self.risk_breakdown.high, self.risk_breakdown.hosts_with_critical
+        ));
         output.push_str(&format!("  Medium:    {:>3}\n", self.risk_breakdown.medium));
         output.push_str(&format!("  Low:       {:>3}\n\n", self.risk_breakdown.low));
 
@@ -166,8 +200,13 @@ impl ExecutiveReport {
             output.push_str("KEY FINDINGS\n");
             output.push_str("────────────\n");
             for (i, finding) in self.key_findings.iter().enumerate() {
-                output.push_str(&format!("  {}. [{:?}] {} ({} hosts)\n",
-                    i + 1, finding.severity, finding.title, finding.affected_count));
+                output.push_str(&format!(
+                    "  {}. [{:?}] {} ({} hosts)\n",
+                    i + 1,
+                    finding.severity,
+                    finding.title,
+                    finding.affected_count
+                ));
                 output.push_str(&format!("     Business Risk: {}\n", finding.business_risk));
             }
             output.push('\n');
@@ -295,11 +334,20 @@ mod tests {
 
     #[test]
     fn test_risk_level_determination() {
-        assert_eq!(ExecutiveReport::determine_risk_level(9.5), RiskLevel::Critical);
+        assert_eq!(
+            ExecutiveReport::determine_risk_level(9.5),
+            RiskLevel::Critical
+        );
         assert_eq!(ExecutiveReport::determine_risk_level(7.0), RiskLevel::High);
-        assert_eq!(ExecutiveReport::determine_risk_level(4.0), RiskLevel::Medium);
+        assert_eq!(
+            ExecutiveReport::determine_risk_level(4.0),
+            RiskLevel::Medium
+        );
         assert_eq!(ExecutiveReport::determine_risk_level(1.0), RiskLevel::Low);
-        assert_eq!(ExecutiveReport::determine_risk_level(0.5), RiskLevel::Acceptable);
+        assert_eq!(
+            ExecutiveReport::determine_risk_level(0.5),
+            RiskLevel::Acceptable
+        );
     }
 
     #[test]
@@ -381,16 +429,33 @@ mod tests {
     fn test_acceptable_risk() {
         let report = ReportBuilder::new()
             .metadata(ReportMetadata {
-                scan_id: "s".to_string(), report_id: "r".to_string(),
-                generated_at: Utc::now(), scan_start: Utc::now(), scan_end: Utc::now(),
-                target_count: 5, version: "0.1.0".to_string(),
+                scan_id: "s".to_string(),
+                report_id: "r".to_string(),
+                generated_at: Utc::now(),
+                scan_start: Utc::now(),
+                scan_end: Utc::now(),
+                target_count: 5,
+                version: "0.1.0".to_string(),
             })
             .summary(ExecutiveSummary {
-                total_hosts: 5, hosts_up: 5, total_ports: 500, open_ports: 10,
-                vulnerabilities: VulnerabilitySummary { critical: 0, high: 0, medium: 1, low: 2, info: 0 },
-                risk_score: 0.5, compliance_score: 98.0,
+                total_hosts: 5,
+                hosts_up: 5,
+                total_ports: 500,
+                open_ports: 10,
+                vulnerabilities: VulnerabilitySummary {
+                    critical: 0,
+                    high: 0,
+                    medium: 1,
+                    low: 2,
+                    info: 0,
+                },
+                risk_score: 0.5,
+                compliance_score: 98.0,
             })
-            .compliance(ComplianceStatus { frameworks: vec![], overall_score: 98.0 })
+            .compliance(ComplianceStatus {
+                frameworks: vec![],
+                overall_score: 98.0,
+            })
             .build()
             .unwrap();
 

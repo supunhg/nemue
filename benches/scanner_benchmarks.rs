@@ -1,25 +1,25 @@
 // Performance Benchmarks for Nemue Scanner
 // Run with: cargo bench
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId, Throughput};
+use chrono::Utc;
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use nemue::fingerprint::{OsDetector, OsFamily};
+use nemue::performance::{AtomicFlag, BoundedQueue, LockFreeQueue, MetricsCollector};
+use nemue::reporting::{
+    ComplianceStatus, ExecutiveSummary, Finding, PdfReportGenerator, Priority, Recommendation,
+    ReportBuilder, ReportMetadata, ScanMetrics, ScanReport, ScanSnapshot, Severity,
+    TrendAnalyzer as ReportingTrendAnalyzer, VulnerabilityMetrics as ReportingVulnMetrics,
+    VulnerabilitySummary,
+};
 use nemue::scanner::{PortParser, TargetParser, TimingTemplate};
+use nemue::scanner::{PortState, Protocol, ScanHistory, ScanResult, ScanResults};
 use nemue::script::ScriptArgs;
 use nemue::service::{
-    ServiceDetector, EnhancedServiceDetector, DetectionConfig, IntensityLevel,
-    ProbeDatabase, all_signatures,
+    all_signatures, DetectionConfig, EnhancedServiceDetector, IntensityLevel, ProbeDatabase,
+    ServiceDetector,
 };
-use nemue::fingerprint::{OsDetector, OsFamily};
-use nemue::vuln::{DefaultCredentials, VulnScript, VulnCategory, VulnSeverity, ScriptEngine};
-use nemue::reporting::{
-    ReportBuilder, ReportMetadata, ExecutiveSummary, VulnerabilitySummary,
-    ComplianceStatus, Finding, Severity, Recommendation, Priority, ScanReport,
-    PdfReportGenerator, TrendAnalyzer as ReportingTrendAnalyzer, ScanSnapshot,
-    ScanMetrics, VulnerabilityMetrics as ReportingVulnMetrics,
-};
-use nemue::scanner::{ScanHistory, ScanResults, ScanResult, PortState, Protocol};
-use nemue::performance::{LockFreeQueue, BoundedQueue, AtomicFlag, MetricsCollector};
+use nemue::vuln::{DefaultCredentials, ScriptEngine, VulnCategory, VulnScript, VulnSeverity};
 use std::net::IpAddr;
-use chrono::Utc;
 
 // =============================================================================
 // Port Parsing Benchmarks (expanded)
@@ -52,7 +52,11 @@ fn benchmark_port_parsing(c: &mut Criterion) {
     });
 
     group.bench_function("many_comma_separated", |b| {
-        b.iter(|| PortParser::parse(black_box("21,22,23,25,53,80,110,143,443,993,995,3306,3389,5432,8080,8443")))
+        b.iter(|| {
+            PortParser::parse(black_box(
+                "21,22,23,25,53,80,110,143,443,993,995,3306,3389,5432,8080,8443",
+            ))
+        })
     });
 
     group.bench_function("overlapping_ranges", |b| {
@@ -64,7 +68,9 @@ fn benchmark_port_parsing(c: &mut Criterion) {
     });
 
     group.bench_function("protocol_spec_complex", |b| {
-        b.iter(|| PortParser::parse_protocol_spec(black_box("T:22,80,443,8080 U:53,161,162,631 S:22")))
+        b.iter(|| {
+            PortParser::parse_protocol_spec(black_box("T:22,80,443,8080 U:53,161,162,631 S:22"))
+        })
     });
 
     group.bench_function("filter_by_ratio_09", |b| {
@@ -147,13 +153,9 @@ fn benchmark_target_scaling(c: &mut Criterion) {
 
     for prefix_len in [30, 28, 26, 24].iter() {
         let cidr = format!("192.168.0.0/{}", prefix_len);
-        group.bench_with_input(
-            BenchmarkId::from_parameter(&cidr),
-            &cidr,
-            |b, cidr| {
-                b.iter(|| TargetParser::parse(black_box(cidr)))
-            }
-        );
+        group.bench_with_input(BenchmarkId::from_parameter(&cidr), &cidr, |b, cidr| {
+            b.iter(|| TargetParser::parse(black_box(cidr)))
+        });
     }
 
     group.finish();
@@ -209,15 +211,19 @@ fn benchmark_script_args(c: &mut Criterion) {
     });
 
     group.bench_function("parse_complex", |b| {
-        b.iter(|| ScriptArgs::parse(black_box(
-            "user=admin,pass=test123,timeout=30,url=http://example.com,debug=true"
-        )))
+        b.iter(|| {
+            ScriptArgs::parse(black_box(
+                "user=admin,pass=test123,timeout=30,url=http://example.com,debug=true",
+            ))
+        })
     });
 
     group.bench_function("parse_quoted", |b| {
-        b.iter(|| ScriptArgs::parse(black_box(
-            r#"msg="hello world",url='http://example.com',data="key=value""#
-        )))
+        b.iter(|| {
+            ScriptArgs::parse(black_box(
+                r#"msg="hello world",url='http://example.com',data="key=value""#,
+            ))
+        })
     });
 
     group.bench_function("to_lua_table", |b| {
@@ -230,9 +236,11 @@ fn benchmark_script_args(c: &mut Criterion) {
     });
 
     group.bench_function("parse_many_args", |b| {
-        b.iter(|| ScriptArgs::parse(black_box(
-            "a=1,b=2,c=3,d=4,e=5,f=6,g=7,h=8,i=9,j=10,k=11,l=12"
-        )))
+        b.iter(|| {
+            ScriptArgs::parse(black_box(
+                "a=1,b=2,c=3,d=4,e=5,f=6,g=7,h=8,i=9,j=10,k=11,l=12",
+            ))
+        })
     });
 
     group.finish();
@@ -296,14 +304,10 @@ fn benchmark_port_range_scaling(c: &mut Criterion) {
     let mut group = c.benchmark_group("port_range_scaling");
 
     for size in [10, 100, 1000, 10000].iter() {
-        group.bench_with_input(
-            BenchmarkId::from_parameter(size),
-            size,
-            |b, &size| {
-                let range = format!("1-{}", size);
-                b.iter(|| PortParser::parse(black_box(&range)))
-            }
-        );
+        group.bench_with_input(BenchmarkId::from_parameter(size), size, |b, &size| {
+            let range = format!("1-{}", size);
+            b.iter(|| PortParser::parse(black_box(&range)))
+        });
     }
 
     group.finish();
@@ -323,9 +327,7 @@ fn benchmark_cidr_scaling(c: &mut Criterion) {
     ];
 
     for (name, cidr) in cidrs {
-        group.bench_function(name, |b| {
-            b.iter(|| TargetParser::parse(black_box(cidr)))
-        });
+        group.bench_function(name, |b| b.iter(|| TargetParser::parse(black_box(cidr))));
     }
 
     group.finish();
@@ -392,15 +394,11 @@ fn benchmark_enhanced_detection(c: &mut Criterion) {
 fn benchmark_probe_database(c: &mut Criterion) {
     let mut group = c.benchmark_group("probe_database");
 
-    group.bench_function("probe_db_creation", |b| {
-        b.iter(|| ProbeDatabase::new())
-    });
+    group.bench_function("probe_db_creation", |b| b.iter(|| ProbeDatabase::new()));
 
     let db = ProbeDatabase::new();
 
-    group.bench_function("all_probes", |b| {
-        b.iter(|| db.all_probes().len())
-    });
+    group.bench_function("all_probes", |b| b.iter(|| db.all_probes().len()));
 
     group.bench_function("probes_for_port_http", |b| {
         b.iter(|| db.probes_for_port(black_box(80)).len())
@@ -418,9 +416,7 @@ fn benchmark_probe_database(c: &mut Criterion) {
         b.iter(|| db.probes_for_port(black_box(9999)).len())
     });
 
-    group.bench_function("generic_probes", |b| {
-        b.iter(|| db.generic_probes().len())
-    });
+    group.bench_function("generic_probes", |b| b.iter(|| db.generic_probes().len()));
 
     // Benchmark probes_for_port across many ports
     group.bench_function("probes_for_port_100_ports", |b| {
@@ -440,15 +436,11 @@ fn benchmark_probe_database(c: &mut Criterion) {
 fn benchmark_signatures(c: &mut Criterion) {
     let mut group = c.benchmark_group("signatures");
 
-    group.bench_function("load_all_signatures", |b| {
-        b.iter(|| all_signatures())
-    });
+    group.bench_function("load_all_signatures", |b| b.iter(|| all_signatures()));
 
     let sigs = all_signatures();
     group.throughput(Throughput::Elements(sigs.len() as u64));
-    group.bench_function("signature_count", |b| {
-        b.iter(|| sigs.len())
-    });
+    group.bench_function("signature_count", |b| b.iter(|| sigs.len()));
 
     // Test regex matching against common patterns
     group.bench_function("regex_match_http_server", |b| {
@@ -526,7 +518,11 @@ fn benchmark_os_fingerprinting(c: &mut Criterion) {
             detector.detect(
                 black_box(128),
                 black_box(Some(64240)),
-                black_box(vec!["mss".to_string(), "nop".to_string(), "sackOK".to_string()]),
+                black_box(vec![
+                    "mss".to_string(),
+                    "nop".to_string(),
+                    "sackOK".to_string(),
+                ]),
             )
         })
     });
@@ -538,8 +534,11 @@ fn benchmark_os_fingerprinting(c: &mut Criterion) {
                 black_box(64),
                 black_box(Some(29200)),
                 black_box(vec![
-                    "mss".to_string(), "sackOK".to_string(), "timestamp".to_string(),
-                    "nop".to_string(), "wscale".to_string(),
+                    "mss".to_string(),
+                    "sackOK".to_string(),
+                    "timestamp".to_string(),
+                    "nop".to_string(),
+                    "wscale".to_string(),
                 ]),
                 black_box(Some(12345678)),
                 black_box(Some(7)),
@@ -554,7 +553,9 @@ fn benchmark_os_fingerprinting(c: &mut Criterion) {
                 black_box(128),
                 black_box(Some(64240)),
                 black_box(vec![
-                    "mss".to_string(), "nop".to_string(), "sackOK".to_string(),
+                    "mss".to_string(),
+                    "nop".to_string(),
+                    "sackOK".to_string(),
                 ]),
                 black_box(Some(1000)),
                 black_box(Some(8)),
@@ -569,7 +570,9 @@ fn benchmark_os_fingerprinting(c: &mut Criterion) {
                 black_box(64),
                 black_box(Some(65535)),
                 black_box(vec![
-                    "mss".to_string(), "timestamp".to_string(), "sackOK".to_string(),
+                    "mss".to_string(),
+                    "timestamp".to_string(),
+                    "sackOK".to_string(),
                 ]),
                 black_box(Some(50000)),
                 black_box(None),
@@ -595,9 +598,21 @@ fn benchmark_os_fingerprinting(c: &mut Criterion) {
     group.bench_function("detect_from_multiple_consistent", |b| {
         b.iter(|| {
             detector.detect_from_multiple(black_box(vec![
-                (64, Some(29200), vec!["mss".to_string(), "sackOK".to_string()]),
-                (64, Some(29200), vec!["mss".to_string(), "timestamp".to_string()]),
-                (64, Some(29200), vec!["mss".to_string(), "wscale".to_string()]),
+                (
+                    64,
+                    Some(29200),
+                    vec!["mss".to_string(), "sackOK".to_string()],
+                ),
+                (
+                    64,
+                    Some(29200),
+                    vec!["mss".to_string(), "timestamp".to_string()],
+                ),
+                (
+                    64,
+                    Some(29200),
+                    vec!["mss".to_string(), "wscale".to_string()],
+                ),
             ]))
         })
     });
@@ -613,16 +628,16 @@ fn benchmark_os_fingerprinting(c: &mut Criterion) {
 
     group.bench_function("detect_from_multiple_single", |b| {
         b.iter(|| {
-            detector.detect_from_multiple(black_box(vec![
-                (64, Some(29200), vec!["mss".to_string(), "sackOK".to_string()]),
-            ]))
+            detector.detect_from_multiple(black_box(vec![(
+                64,
+                Some(29200),
+                vec!["mss".to_string(), "sackOK".to_string()],
+            )]))
         })
     });
 
     group.bench_function("detect_from_multiple_empty", |b| {
-        b.iter(|| {
-            detector.detect_from_multiple(black_box(vec![]))
-        })
+        b.iter(|| detector.detect_from_multiple(black_box(vec![])))
     });
 
     // Banner-based OS detection
@@ -648,31 +663,26 @@ fn benchmark_os_fingerprinting(c: &mut Criterion) {
 
     // Passive OS detection
     group.bench_function("detect_passive_http_windows", |b| {
-        b.iter(|| detector.detect_passive(
-            black_box("Server: Microsoft-IIS/10.0"),
-            black_box("http"),
-        ))
+        b.iter(|| {
+            detector.detect_passive(black_box("Server: Microsoft-IIS/10.0"), black_box("http"))
+        })
     });
 
     group.bench_function("detect_passive_ssh_ubuntu", |b| {
-        b.iter(|| detector.detect_passive(
-            black_box("SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.5"),
-            black_box("ssh"),
-        ))
+        b.iter(|| {
+            detector.detect_passive(
+                black_box("SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.5"),
+                black_box("ssh"),
+            )
+        })
     });
 
     group.bench_function("detect_passive_ssh_cisco", |b| {
-        b.iter(|| detector.detect_passive(
-            black_box("SSH-2.0-Cisco-1.25"),
-            black_box("ssh"),
-        ))
+        b.iter(|| detector.detect_passive(black_box("SSH-2.0-Cisco-1.25"), black_box("ssh")))
     });
 
     group.bench_function("detect_passive_no_indicators", |b| {
-        b.iter(|| detector.detect_passive(
-            black_box("some generic banner"),
-            black_box("unknown"),
-        ))
+        b.iter(|| detector.detect_passive(black_box("some generic banner"), black_box("unknown")))
     });
 
     group.finish();
@@ -691,9 +701,7 @@ fn benchmark_vuln_scanning(c: &mut Criterion) {
 
     let cred_db = DefaultCredentials::new();
 
-    group.bench_function("credentials_count", |b| {
-        b.iter(|| cred_db.count())
-    });
+    group.bench_function("credentials_count", |b| b.iter(|| cred_db.count()));
 
     group.bench_function("credentials_service_count", |b| {
         b.iter(|| cred_db.service_count())
@@ -711,9 +719,7 @@ fn benchmark_vuln_scanning(c: &mut Criterion) {
         b.iter(|| cred_db.get_credentials(black_box("nonexistent")))
     });
 
-    group.bench_function("all_credentials", |b| {
-        b.iter(|| cred_db.all_credentials())
-    });
+    group.bench_function("all_credentials", |b| b.iter(|| cred_db.all_credentials()));
 
     // VulnScript matching
     let script = VulnScript::new(
@@ -764,9 +770,7 @@ fn benchmark_vuln_scanning(c: &mut Criterion) {
     });
 
     // Script engine
-    group.bench_function("script_engine_creation", |b| {
-        b.iter(|| ScriptEngine::new())
-    });
+    group.bench_function("script_engine_creation", |b| b.iter(|| ScriptEngine::new()));
 
     let mut engine = ScriptEngine::new();
     for i in 0..20 {
@@ -822,15 +826,22 @@ fn benchmark_vuln_scanning(c: &mut Criterion) {
     // Credential database scaling
     group.bench_function("get_credentials_all_services", |b| {
         b.iter(|| {
-            for svc in &["mysql", "postgresql", "mongodb", "redis", "tomcat", "cisco", "ssh", "ftp"] {
+            for svc in &[
+                "mysql",
+                "postgresql",
+                "mongodb",
+                "redis",
+                "tomcat",
+                "cisco",
+                "ssh",
+                "ftp",
+            ] {
                 let _ = cred_db.get_credentials(black_box(svc));
             }
         })
     });
 
-    group.bench_function("credentials_count_fast", |b| {
-        b.iter(|| cred_db.count())
-    });
+    group.bench_function("credentials_count_fast", |b| b.iter(|| cred_db.count()));
 
     group.bench_function("credentials_service_count_fast", |b| {
         b.iter(|| cred_db.service_count())
@@ -998,9 +1009,19 @@ fn create_large_report(finding_count: usize) -> ScanReport {
                 2 => Priority::Medium,
                 _ => Priority::Low,
             },
-            category: ["Patch", "Configuration", "Authentication", "Encryption", "Monitoring"][i % 5].to_string(),
+            category: [
+                "Patch",
+                "Configuration",
+                "Authentication",
+                "Encryption",
+                "Monitoring",
+            ][i % 5]
+                .to_string(),
             title: format!("Recommendation {}", i),
-            description: format!("Detailed recommendation for improving security posture {}", i),
+            description: format!(
+                "Detailed recommendation for improving security posture {}",
+                i
+            ),
             impact: ["High", "Medium", "Low"][i % 3].to_string(),
             effort: ["Low", "Medium", "High"][i % 3].to_string(),
         });
@@ -1014,21 +1035,13 @@ fn benchmark_report_generation(c: &mut Criterion) {
 
     let report = create_sample_report();
 
-    group.bench_function("report_to_json", |b| {
-        b.iter(|| report.to_json())
-    });
+    group.bench_function("report_to_json", |b| b.iter(|| report.to_json()));
 
-    group.bench_function("report_to_text", |b| {
-        b.iter(|| report.to_text())
-    });
+    group.bench_function("report_to_text", |b| b.iter(|| report.to_text()));
 
-    group.bench_function("report_to_csv", |b| {
-        b.iter(|| report.to_csv())
-    });
+    group.bench_function("report_to_csv", |b| b.iter(|| report.to_csv()));
 
-    group.bench_function("report_to_xml", |b| {
-        b.iter(|| report.to_xml())
-    });
+    group.bench_function("report_to_xml", |b| b.iter(|| report.to_xml()));
 
     group.bench_function("report_to_markdown", |b| {
         b.iter(|| nemue::reporting::MarkdownReportGenerator::generate(black_box(&report)))
@@ -1179,9 +1192,7 @@ fn create_multi_port_results(ports: &[(u16, PortState, Option<&str>)]) -> ScanRe
 fn benchmark_scan_history(c: &mut Criterion) {
     let mut group = c.benchmark_group("scan_history");
 
-    group.bench_function("history_creation", |b| {
-        b.iter(|| ScanHistory::new())
-    });
+    group.bench_function("history_creation", |b| b.iter(|| ScanHistory::new()));
 
     // Add entry benchmark
     group.bench_function("add_entry_single_port", |b| {
@@ -1204,10 +1215,7 @@ fn benchmark_scan_history(c: &mut Criterion) {
         b.iter_batched(
             || ScanHistory::new(),
             |mut history| {
-                history.add_entry(
-                    "192.168.1.1".to_string(),
-                    create_multi_port_results(&ports),
-                )
+                history.add_entry("192.168.1.1".to_string(), create_multi_port_results(&ports))
             },
             criterion::BatchSize::SmallInput,
         )
@@ -1233,25 +1241,17 @@ fn benchmark_scan_history(c: &mut Criterion) {
         b.iter(|| history.get_entry(black_box("nonexistent-id")))
     });
 
-    group.bench_function("get_latest", |b| {
-        b.iter(|| history.get_latest())
-    });
+    group.bench_function("get_latest", |b| b.iter(|| history.get_latest()));
 
-    group.bench_function("get_previous", |b| {
-        b.iter(|| history.get_previous())
-    });
+    group.bench_function("get_previous", |b| b.iter(|| history.get_previous()));
 
     group.bench_function("entries_for_target", |b| {
         b.iter(|| history.entries_for_target(black_box("192.168.1.1")))
     });
 
-    group.bench_function("history_len", |b| {
-        b.iter(|| history.len())
-    });
+    group.bench_function("history_len", |b| b.iter(|| history.len()));
 
-    group.bench_function("history_is_empty", |b| {
-        b.iter(|| history.is_empty())
-    });
+    group.bench_function("history_is_empty", |b| b.iter(|| history.is_empty()));
 
     // Serialization benchmarks
     group.bench_function("serialize_history_json", |b| {
@@ -1584,10 +1584,30 @@ fn benchmark_scan_diff(c: &mut Criterion) {
 
     // Larger diff
     let ports_a: Vec<(u16, PortState, Option<&str>)> = (1..=100)
-        .map(|p| (p, if p % 3 == 0 { PortState::Open } else { PortState::Closed }, Some("http")))
+        .map(|p| {
+            (
+                p,
+                if p % 3 == 0 {
+                    PortState::Open
+                } else {
+                    PortState::Closed
+                },
+                Some("http"),
+            )
+        })
         .collect();
     let ports_b: Vec<(u16, PortState, Option<&str>)> = (1..=100)
-        .map(|p| (p, if p % 2 == 0 { PortState::Open } else { PortState::Filtered }, Some("http")))
+        .map(|p| {
+            (
+                p,
+                if p % 2 == 0 {
+                    PortState::Open
+                } else {
+                    PortState::Filtered
+                },
+                Some("http"),
+            )
+        })
         .collect();
     let large_a = create_multi_port_results(&ports_a);
     let large_b = create_multi_port_results(&ports_b);

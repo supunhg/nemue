@@ -52,8 +52,16 @@ fn test_mcp_tool_descriptions() {
     let tools = nemue::mcp::tools::get_tools();
 
     for tool in &tools {
-        assert!(tool.description.is_some(), "Tool {} has no description", tool.name);
-        assert!(!tool.description.as_ref().unwrap().is_empty(), "Tool {} has empty description", tool.name);
+        assert!(
+            tool.description.is_some(),
+            "Tool {} has no description",
+            tool.name
+        );
+        assert!(
+            !tool.description.as_ref().unwrap().is_empty(),
+            "Tool {} has empty description",
+            tool.name
+        );
     }
 }
 
@@ -62,6 +70,10 @@ fn test_mcp_tool_input_schemas() {
     let tools = nemue::mcp::tools::get_tools();
 
     for tool in &tools {
-        assert!(!tool.input_schema.is_empty(), "Tool {} has empty input schema", tool.name);
+        assert!(
+            !tool.input_schema.is_empty(),
+            "Tool {} has empty input schema",
+            tool.name
+        );
     }
 }

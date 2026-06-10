@@ -1,8 +1,8 @@
-use anyhow::{Result, Context};
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
-use crate::vuln::{VulnResult, VulnSeverity};
+use crate::vuln::VulnResult;
 
 /// GitHub label for issues
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -64,7 +64,10 @@ impl GitHubClient {
             .user_agent("nemue-security-scanner")
             .build()
             .expect("Failed to create HTTP client");
-        Self { config, http_client }
+        Self {
+            config,
+            http_client,
+        }
     }
 
     fn api_url(&self, path: &str) -> String {
@@ -79,7 +82,10 @@ impl GitHubClient {
         let mut labels = self.config.default_labels.clone();
         labels.push("security".to_string());
         labels.push("vulnerability".to_string());
-        labels.push(format!("severity:{}", finding.severity.as_str().to_lowercase()));
+        labels.push(format!(
+            "severity:{}",
+            finding.severity.as_str().to_lowercase()
+        ));
 
         let body = format!(
             "## Security Vulnerability Detected\n\n\
@@ -95,7 +101,11 @@ impl GitHubClient {
             finding.port,
             finding.severity.as_str(),
             finding.script_id,
-            if finding.exploit_available { "Yes" } else { "No" },
+            if finding.exploit_available {
+                "Yes"
+            } else {
+                "No"
+            },
             finding.description,
         );
 
@@ -104,7 +114,10 @@ impl GitHubClient {
         if !finding.cve_ids.is_empty() {
             sections.push_str("### CVE Identifiers\n\n");
             for cve in &finding.cve_ids {
-                sections.push_str(&format!("- [{0}](https://nvd.nist.gov/vuln/detail/{0})\n", cve));
+                sections.push_str(&format!(
+                    "- [{0}](https://nvd.nist.gov/vuln/detail/{0})\n",
+                    cve
+                ));
             }
             sections.push('\n');
         }
@@ -125,7 +138,8 @@ impl GitHubClient {
             sections.push('\n');
         }
 
-        sections.push_str("---\n*This issue was automatically created by Nemue security scanner.*\n");
+        sections
+            .push_str("---\n*This issue was automatically created by Nemue security scanner.*\n");
 
         GitHubIssue {
             number: None,
@@ -193,23 +207,33 @@ impl GitHubClient {
         let url = self.api_url("issues");
         let payload = self.build_create_payload(issue);
 
-        let resp = self.http_client.post(&url)
+        let resp = self
+            .http_client
+            .post(&url)
             .header("Authorization", format!("token {}", self.config.token))
             .header("Accept", "application/vnd.github.v3+json")
             .json(&payload)
-            .send().await
+            .send()
+            .await
             .context("Failed to send create issue request to GitHub")?;
 
         if !resp.status().is_success() {
             let status = resp.status();
             let body = resp.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("GitHub API returned status {}: {}", status, body));
+            return Err(anyhow::anyhow!(
+                "GitHub API returned status {}: {}",
+                status,
+                body
+            ));
         }
 
-        let result: serde_json::Value = resp.json().await
+        let result: serde_json::Value = resp
+            .json()
+            .await
             .context("Failed to parse GitHub create issue response")?;
 
-        result.get("number")
+        result
+            .get("number")
             .and_then(|v| v.as_u64())
             .map(|n| n as u32)
             .ok_or_else(|| anyhow::anyhow!("No issue number in GitHub response"))
@@ -220,17 +244,24 @@ impl GitHubClient {
         let url = self.api_url(&format!("issues/{}", issue_number));
         let payload = self.build_update_payload(issue);
 
-        let resp = self.http_client.patch(&url)
+        let resp = self
+            .http_client
+            .patch(&url)
             .header("Authorization", format!("token {}", self.config.token))
             .header("Accept", "application/vnd.github.v3+json")
             .json(&payload)
-            .send().await
+            .send()
+            .await
             .context("Failed to send update issue request to GitHub")?;
 
         if !resp.status().is_success() {
             let status = resp.status();
             let body = resp.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("GitHub update issue returned status {}: {}", status, body));
+            return Err(anyhow::anyhow!(
+                "GitHub update issue returned status {}: {}",
+                status,
+                body
+            ));
         }
 
         Ok(())
@@ -240,17 +271,24 @@ impl GitHubClient {
     pub async fn add_labels(&self, issue_number: u32, labels: &[String]) -> Result<()> {
         let url = self.api_url(&format!("issues/{}/labels", issue_number));
 
-        let resp = self.http_client.post(&url)
+        let resp = self
+            .http_client
+            .post(&url)
             .header("Authorization", format!("token {}", self.config.token))
             .header("Accept", "application/vnd.github.v3+json")
             .json(&serde_json::json!({ "labels": labels }))
-            .send().await
+            .send()
+            .await
             .context("Failed to add labels to GitHub issue")?;
 
         if !resp.status().is_success() {
             let status = resp.status();
             let body = resp.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("GitHub add labels returned status {}: {}", status, body));
+            return Err(anyhow::anyhow!(
+                "GitHub add labels returned status {}: {}",
+                status,
+                body
+            ));
         }
 
         Ok(())
@@ -264,17 +302,24 @@ impl GitHubClient {
         );
         let payload = self.build_project_card_payload(issue_url);
 
-        let resp = self.http_client.post(&url)
+        let resp = self
+            .http_client
+            .post(&url)
             .header("Authorization", format!("token {}", self.config.token))
             .header("Accept", "application/vnd.github.inertia-preview+json")
             .json(&payload)
-            .send().await
+            .send()
+            .await
             .context("Failed to add issue to GitHub project")?;
 
         if !resp.status().is_success() {
             let status = resp.status();
             let body = resp.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("GitHub project card returned status {}: {}", status, body));
+            return Err(anyhow::anyhow!(
+                "GitHub project card returned status {}: {}",
+                status,
+                body
+            ));
         }
 
         Ok(())
@@ -284,6 +329,7 @@ impl GitHubClient {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::vuln::VulnSeverity;
 
     fn sample_finding() -> VulnResult {
         VulnResult {
@@ -432,10 +478,15 @@ mod tests {
     fn test_build_project_card_payload() {
         let config = sample_config();
         let client = GitHubClient::new(config);
-        let payload = client.build_project_card_payload("https://api.github.com/repos/myorg/security-reports/issues/42");
+        let payload = client.build_project_card_payload(
+            "https://api.github.com/repos/myorg/security-reports/issues/42",
+        );
 
         assert_eq!(payload["content_type"], "Issue");
-        assert!(payload["content_id"].as_str().unwrap().contains("issues/42"));
+        assert!(payload["content_id"]
+            .as_str()
+            .unwrap()
+            .contains("issues/42"));
     }
 
     #[test]

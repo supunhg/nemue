@@ -1,5 +1,5 @@
 // Advanced analytics: risk modeling, trend analysis, statistical analysis, comparative analysis, predictive analysis
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -172,27 +172,23 @@ impl AnalyticsEngine {
                 if total_weight == 0.0 {
                     return 0.0;
                 }
-                factors.iter()
-                    .map(|f| f.weight * f.value)
-                    .sum::<f64>()
-                    / total_weight
+                factors.iter().map(|f| f.weight * f.value).sum::<f64>() / total_weight
             }
             ModelType::Bayesian => {
                 let prior = 0.5;
-                let likelihood: f64 = factors.iter()
-                    .map(|f| f.value * f.weight)
-                    .product();
+                let likelihood: f64 = factors.iter().map(|f| f.value * f.weight).product();
                 (prior * likelihood) / (prior * likelihood + (1.0 - prior) * (1.0 - likelihood))
             }
-            ModelType::MachineLearning => {
-                factors.iter()
-                    .map(|f| f.contribution)
-                    .sum::<f64>()
-            }
+            ModelType::MachineLearning => factors.iter().map(|f| f.contribution).sum::<f64>(),
         }
     }
 
-    pub fn predict_vulnerability(&self, host: &str, service: &str, historical_data: &[f64]) -> VulnerabilityPrediction {
+    pub fn predict_vulnerability(
+        &self,
+        host: &str,
+        service: &str,
+        historical_data: &[f64],
+    ) -> VulnerabilityPrediction {
         let avg_severity = if historical_data.is_empty() {
             5.0
         } else {
@@ -214,7 +210,8 @@ impl AnalyticsEngine {
             },
         ];
 
-        let overall_risk = predicted_vulns.iter()
+        let overall_risk = predicted_vulns
+            .iter()
             .map(|v| v.probability * v.severity)
             .sum::<f64>()
             / predicted_vulns.len() as f64;
@@ -241,7 +238,11 @@ impl AnalyticsEngine {
 
     // --- Trend Analysis ---
 
-    pub fn analyze_trend(&mut self, metric_name: &str, data_points: Vec<TrendDataPoint>) -> &TrendAnalysis {
+    pub fn analyze_trend(
+        &mut self,
+        metric_name: &str,
+        data_points: Vec<TrendDataPoint>,
+    ) -> &TrendAnalysis {
         let n = data_points.len() as f64;
         if n < 2.0 {
             let analysis = TrendAnalysis {
@@ -316,7 +317,11 @@ impl AnalyticsEngine {
 
     // --- Statistical Analysis ---
 
-    pub fn compute_statistics(&mut self, metric_name: &str, values: Vec<f64>) -> &StatisticalSummary {
+    pub fn compute_statistics(
+        &mut self,
+        metric_name: &str,
+        values: Vec<f64>,
+    ) -> &StatisticalSummary {
         let n = values.len();
         if n == 0 {
             let summary = StatisticalSummary {
@@ -340,7 +345,7 @@ impl AnalyticsEngine {
         sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
         let mean = sorted.iter().sum::<f64>() / n as f64;
-        let median = if n % 2 == 0 {
+        let median = if n.is_multiple_of(2) {
             (sorted[n / 2 - 1] + sorted[n / 2]) / 2.0
         } else {
             sorted[n / 2]
@@ -359,10 +364,18 @@ impl AnalyticsEngine {
         let iqr = q3 - q1;
         let lower_bound = q1 - 1.5 * iqr;
         let upper_bound = q3 + 1.5 * iqr;
-        let outliers: Vec<f64> = sorted.iter().filter(|&&v| v < lower_bound || v > upper_bound).copied().collect();
+        let outliers: Vec<f64> = sorted
+            .iter()
+            .filter(|&&v| v < lower_bound || v > upper_bound)
+            .copied()
+            .collect();
 
         let skewness = if std_dev > 0.0 {
-            sorted.iter().map(|v| ((v - mean) / std_dev).powi(3)).sum::<f64>() / n as f64
+            sorted
+                .iter()
+                .map(|v| ((v - mean) / std_dev).powi(3))
+                .sum::<f64>()
+                / n as f64
         } else {
             0.0
         };
@@ -428,7 +441,11 @@ impl AnalyticsEngine {
             }
         }
 
-        let overall_change = if metric_count > 0 { total_change / metric_count as f64 } else { 0.0 };
+        let overall_change = if metric_count > 0 {
+            total_change / metric_count as f64
+        } else {
+            0.0
+        };
 
         let recommendation = if overall_change < -10.0 {
             "Significant improvement detected. Continue current strategies.".to_string()
@@ -488,19 +505,40 @@ impl AnalyticsEngine {
             coefficients.push(if ss_xx > 0.0 { ss_xy / ss_xx } else { 0.0 });
         }
 
-        let intercept = target_mean - coefficients.iter().enumerate().map(|(j, &c)| {
-            let x_mean: f64 = feature_values.iter().map(|row| row[j]).sum::<f64>() / n;
-            c * x_mean
-        }).sum::<f64>();
+        let intercept = target_mean
+            - coefficients
+                .iter()
+                .enumerate()
+                .map(|(j, &c)| {
+                    let x_mean: f64 = feature_values.iter().map(|row| row[j]).sum::<f64>() / n;
+                    c * x_mean
+                })
+                .sum::<f64>();
 
-        let ss_res: f64 = target_values.iter().enumerate().map(|(i, &actual)| {
-            let predicted = intercept + coefficients.iter().enumerate().map(|(j, &c)| c * feature_values[i][j]).sum::<f64>();
-            (actual - predicted).powi(2)
-        }).sum();
+        let ss_res: f64 = target_values
+            .iter()
+            .enumerate()
+            .map(|(i, &actual)| {
+                let predicted = intercept
+                    + coefficients
+                        .iter()
+                        .enumerate()
+                        .map(|(j, &c)| c * feature_values[i][j])
+                        .sum::<f64>();
+                (actual - predicted).powi(2)
+            })
+            .sum();
 
-        let ss_tot: f64 = target_values.iter().map(|&v| (v - target_mean).powi(2)).sum();
+        let ss_tot: f64 = target_values
+            .iter()
+            .map(|&v| (v - target_mean).powi(2))
+            .sum();
 
-        let r_squared = if ss_tot > 0.0 { 1.0 - ss_res / ss_tot } else { 0.0 };
+        let r_squared = if ss_tot > 0.0 {
+            1.0 - ss_res / ss_tot
+        } else {
+            0.0
+        };
 
         PredictiveModel {
             model_name: "Linear Regression".to_string(),
@@ -513,7 +551,13 @@ impl AnalyticsEngine {
     }
 
     pub fn predict_with_model(model: &PredictiveModel, feature_values: &[f64]) -> f64 {
-        model.intercept + model.coefficients.iter().zip(feature_values.iter()).map(|(c, x)| c * x).sum::<f64>()
+        model.intercept
+            + model
+                .coefficients
+                .iter()
+                .zip(feature_values.iter())
+                .map(|(c, x)| c * x)
+                .sum::<f64>()
     }
 }
 
@@ -533,9 +577,24 @@ mod tests {
     fn test_weighted_score_calculation() {
         let engine = AnalyticsEngine::new(ModelType::WeightedScore);
         let factors = vec![
-            RiskFactor { name: "Severity".to_string(), weight: 0.5, value: 8.0, contribution: 0.0 },
-            RiskFactor { name: "Exploitability".to_string(), weight: 0.3, value: 6.0, contribution: 0.0 },
-            RiskFactor { name: "Impact".to_string(), weight: 0.2, value: 9.0, contribution: 0.0 },
+            RiskFactor {
+                name: "Severity".to_string(),
+                weight: 0.5,
+                value: 8.0,
+                contribution: 0.0,
+            },
+            RiskFactor {
+                name: "Exploitability".to_string(),
+                weight: 0.3,
+                value: 6.0,
+                contribution: 0.0,
+            },
+            RiskFactor {
+                name: "Impact".to_string(),
+                weight: 0.2,
+                value: 9.0,
+                contribution: 0.0,
+            },
         ];
         let score = engine.calculate_risk_score(&factors);
         assert!(score > 0.0 && score <= 10.0);
@@ -544,9 +603,12 @@ mod tests {
     #[test]
     fn test_bayesian_calculation() {
         let engine = AnalyticsEngine::new(ModelType::Bayesian);
-        let factors = vec![
-            RiskFactor { name: "Factor1".to_string(), weight: 0.6, value: 0.8, contribution: 0.0 },
-        ];
+        let factors = vec![RiskFactor {
+            name: "Factor1".to_string(),
+            weight: 0.6,
+            value: 0.8,
+            contribution: 0.0,
+        }];
         let score = engine.calculate_risk_score(&factors);
         assert!(score >= 0.0 && score <= 1.0);
     }
@@ -594,7 +656,12 @@ mod tests {
 
     #[test]
     fn test_risk_factor() {
-        let factor = RiskFactor { name: "Test".to_string(), weight: 0.5, value: 8.0, contribution: 4.0 };
+        let factor = RiskFactor {
+            name: "Test".to_string(),
+            weight: 0.5,
+            value: 8.0,
+            contribution: 4.0,
+        };
         assert_eq!(factor.weight, 0.5);
         assert_eq!(factor.value, 8.0);
     }
@@ -622,10 +689,12 @@ mod tests {
     #[test]
     fn test_trend_analysis_increasing() {
         let mut engine = AnalyticsEngine::new(ModelType::WeightedScore);
-        let points: Vec<TrendDataPoint> = (0..10).map(|i| TrendDataPoint {
-            timestamp: format!("2024-{:02}", i + 1),
-            value: 5.0 + i as f64 * 0.5,
-        }).collect();
+        let points: Vec<TrendDataPoint> = (0..10)
+            .map(|i| TrendDataPoint {
+                timestamp: format!("2024-{:02}", i + 1),
+                value: 5.0 + i as f64 * 0.5,
+            })
+            .collect();
 
         let analysis = engine.analyze_trend("risk_score", points);
         assert_eq!(analysis.trend_direction, AnalysisTrendDirection::Increasing);
@@ -637,10 +706,12 @@ mod tests {
     #[test]
     fn test_trend_analysis_decreasing() {
         let mut engine = AnalyticsEngine::new(ModelType::WeightedScore);
-        let points: Vec<TrendDataPoint> = (0..10).map(|i| TrendDataPoint {
-            timestamp: format!("2024-{:02}", i + 1),
-            value: 10.0 - i as f64 * 0.5,
-        }).collect();
+        let points: Vec<TrendDataPoint> = (0..10)
+            .map(|i| TrendDataPoint {
+                timestamp: format!("2024-{:02}", i + 1),
+                value: 10.0 - i as f64 * 0.5,
+            })
+            .collect();
 
         let analysis = engine.analyze_trend("vulns", points);
         assert_eq!(analysis.trend_direction, AnalysisTrendDirection::Decreasing);
@@ -650,10 +721,12 @@ mod tests {
     #[test]
     fn test_trend_analysis_stable() {
         let mut engine = AnalyticsEngine::new(ModelType::WeightedScore);
-        let points: Vec<TrendDataPoint> = (0..10).map(|i| TrendDataPoint {
-            timestamp: format!("2024-{:02}", i + 1),
-            value: 5.0 + (i as f64 * 0.001),
-        }).collect();
+        let points: Vec<TrendDataPoint> = (0..10)
+            .map(|i| TrendDataPoint {
+                timestamp: format!("2024-{:02}", i + 1),
+                value: 5.0 + (i as f64 * 0.001),
+            })
+            .collect();
 
         let analysis = engine.analyze_trend("metric", points);
         assert_eq!(analysis.trend_direction, AnalysisTrendDirection::Stable);
@@ -662,7 +735,10 @@ mod tests {
     #[test]
     fn test_trend_insufficient_data() {
         let mut engine = AnalyticsEngine::new(ModelType::WeightedScore);
-        let points = vec![TrendDataPoint { timestamp: "2024-01".to_string(), value: 5.0 }];
+        let points = vec![TrendDataPoint {
+            timestamp: "2024-01".to_string(),
+            value: 5.0,
+        }];
         let analysis = engine.analyze_trend("metric", points);
         assert_eq!(analysis.trend_direction, AnalysisTrendDirection::Stable);
         assert_eq!(analysis.forecast.len(), 0);
@@ -741,7 +817,14 @@ mod tests {
         let mut current = HashMap::new();
         current.insert("risk_score".to_string(), 8.0);
 
-        let result = engine.compare_periods("Before vs After", "Before", "After", &baseline, &current, 5.0);
+        let result = engine.compare_periods(
+            "Before vs After",
+            "Before",
+            "After",
+            &baseline,
+            &current,
+            5.0,
+        );
         assert!(result.overall_change_percent > 0.0);
         assert!(result.recommendation.contains("degraded"));
     }
@@ -758,8 +841,16 @@ mod tests {
         current.insert("big_change".to_string(), 150.0);
 
         let result = engine.compare_periods("Test", "Base", "Current", &baseline, &current, 10.0);
-        let small = result.metrics.iter().find(|m| m.name == "small_change").unwrap();
-        let big = result.metrics.iter().find(|m| m.name == "big_change").unwrap();
+        let small = result
+            .metrics
+            .iter()
+            .find(|m| m.name == "small_change")
+            .unwrap();
+        let big = result
+            .metrics
+            .iter()
+            .find(|m| m.name == "big_change")
+            .unwrap();
         assert!(!small.significant);
         assert!(big.significant);
     }
@@ -769,12 +860,11 @@ mod tests {
     #[test]
     fn test_predictive_model_simple() {
         let features = vec!["open_ports".to_string()];
-        let feature_values = vec![
-            vec![10.0], vec![20.0], vec![30.0], vec![40.0], vec![50.0],
-        ];
+        let feature_values = vec![vec![10.0], vec![20.0], vec![30.0], vec![40.0], vec![50.0]];
         let target_values = vec![5.0, 7.0, 9.0, 11.0, 13.0];
 
-        let model = AnalyticsEngine::build_predictive_model(features, &feature_values, &target_values);
+        let model =
+            AnalyticsEngine::build_predictive_model(features, &feature_values, &target_values);
         assert!(model.r_squared > 0.9);
         assert_eq!(model.coefficients.len(), 1);
         assert_eq!(model.training_samples, 5);
@@ -786,7 +876,8 @@ mod tests {
         let feature_values = vec![vec![1.0], vec![2.0], vec![3.0], vec![4.0], vec![5.0]];
         let target_values = vec![2.0, 4.0, 6.0, 8.0, 10.0];
 
-        let model = AnalyticsEngine::build_predictive_model(features, &feature_values, &target_values);
+        let model =
+            AnalyticsEngine::build_predictive_model(features, &feature_values, &target_values);
         let prediction = AnalyticsEngine::predict_with_model(&model, &[6.0]);
         assert!((prediction - 12.0).abs() < 1.0);
     }
@@ -806,7 +897,13 @@ mod tests {
 
     #[test]
     fn test_trend_directions() {
-        assert_ne!(AnalysisTrendDirection::Increasing, AnalysisTrendDirection::Decreasing);
-        assert_ne!(AnalysisTrendDirection::Stable, AnalysisTrendDirection::Volatile);
+        assert_ne!(
+            AnalysisTrendDirection::Increasing,
+            AnalysisTrendDirection::Decreasing
+        );
+        assert_ne!(
+            AnalysisTrendDirection::Stable,
+            AnalysisTrendDirection::Volatile
+        );
     }
 }

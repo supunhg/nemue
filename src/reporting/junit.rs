@@ -39,7 +39,8 @@ impl JunitReportGenerator {
 
         let mut xml = format!(
             "  <testsuite name=\"Vulnerability Summary\" tests=\"{}\" failures=\"{}\">\n",
-            total, vuln.critical + vuln.high + vuln.medium
+            total,
+            vuln.critical + vuln.high + vuln.medium
         );
 
         for _ in 0..vuln.critical {
@@ -48,7 +49,9 @@ impl JunitReportGenerator {
             xml.push_str("    </testcase>\n");
         }
         for _ in 0..vuln.high {
-            xml.push_str("    <testcase name=\"High Vulnerability\" classname=\"vulnerabilities.high\">\n");
+            xml.push_str(
+                "    <testcase name=\"High Vulnerability\" classname=\"vulnerabilities.high\">\n",
+            );
             xml.push_str("      <failure message=\"High severity vulnerability detected\" type=\"high\" />\n");
             xml.push_str("    </testcase>\n");
         }
@@ -58,10 +61,14 @@ impl JunitReportGenerator {
             xml.push_str("    </testcase>\n");
         }
         for _ in 0..vuln.low {
-            xml.push_str("    <testcase name=\"Low Vulnerability\" classname=\"vulnerabilities.low\" />\n");
+            xml.push_str(
+                "    <testcase name=\"Low Vulnerability\" classname=\"vulnerabilities.low\" />\n",
+            );
         }
         for _ in 0..vuln.info {
-            xml.push_str("    <testcase name=\"Info Finding\" classname=\"vulnerabilities.info\">\n");
+            xml.push_str(
+                "    <testcase name=\"Info Finding\" classname=\"vulnerabilities.info\">\n",
+            );
             xml.push_str("      <skipped message=\"Informational finding\" />\n");
             xml.push_str("    </testcase>\n");
         }
@@ -78,31 +85,46 @@ impl JunitReportGenerator {
         let mut xml = format!(
             "  <testsuite name=\"Security Findings\" tests=\"{}\" failures=\"{}\">\n",
             report.findings.len(),
-            report.findings.iter().filter(|f| matches!(f.severity, Severity::Critical | Severity::High | Severity::Medium)).count()
+            report
+                .findings
+                .iter()
+                .filter(|f| matches!(
+                    f.severity,
+                    Severity::Critical | Severity::High | Severity::Medium
+                ))
+                .count()
         );
 
         for finding in &report.findings {
             let classname = format!("findings.{}", finding.id);
             xml.push_str(&format!(
                 "    <testcase name=\"{}\" classname=\"{}\" time=\"0\">\n",
-                Self::esc(&finding.title), Self::esc(&classname)
+                Self::esc(&finding.title),
+                Self::esc(&classname)
             ));
 
             match finding.severity {
                 Severity::Critical | Severity::High | Severity::Medium => {
                     xml.push_str(&format!(
                         "      <failure message=\"{}\" type=\"{:?}\">\n",
-                        Self::esc(&finding.title), finding.severity
+                        Self::esc(&finding.title),
+                        finding.severity
                     ));
                     xml.push_str(&format!("        {}\n", Self::esc(&finding.description)));
-                    xml.push_str(&format!("        Affected hosts: {}\n", finding.affected_hosts.join(", ")));
+                    xml.push_str(&format!(
+                        "        Affected hosts: {}\n",
+                        finding.affected_hosts.join(", ")
+                    ));
                     if let Some(cvss) = finding.cvss_score {
                         xml.push_str(&format!("        CVSS: {:.1}\n", cvss));
                     }
                     if !finding.cve_ids.is_empty() {
                         xml.push_str(&format!("        CVEs: {}\n", finding.cve_ids.join(", ")));
                     }
-                    xml.push_str(&format!("        Remediation: {}\n", Self::esc(&finding.remediation)));
+                    xml.push_str(&format!(
+                        "        Remediation: {}\n",
+                        Self::esc(&finding.remediation)
+                    ));
                     xml.push_str("      </failure>\n");
                 }
                 Severity::Low => {}
@@ -122,8 +144,18 @@ impl JunitReportGenerator {
             return String::new();
         }
 
-        let total: usize = report.compliance.frameworks.iter().map(|f| f.controls_total).sum();
-        let failing: usize = report.compliance.frameworks.iter().map(|f| f.controls_failing).sum();
+        let total: usize = report
+            .compliance
+            .frameworks
+            .iter()
+            .map(|f| f.controls_total)
+            .sum();
+        let failing: usize = report
+            .compliance
+            .frameworks
+            .iter()
+            .map(|f| f.controls_failing)
+            .sum();
 
         let mut xml = format!(
             "  <testsuite name=\"Compliance\" tests=\"{}\" failures=\"{}\">\n",
@@ -135,7 +167,9 @@ impl JunitReportGenerator {
                 let passing = i < fw.controls_passing;
                 xml.push_str(&format!(
                     "    <testcase name=\"{} Control {}\" classname=\"compliance.{}\">\n",
-                    Self::esc(&fw.name), i + 1, Self::esc(&fw.name)
+                    Self::esc(&fw.name),
+                    i + 1,
+                    Self::esc(&fw.name)
                 ));
                 if !passing {
                     xml.push_str(&format!(
@@ -152,11 +186,16 @@ impl JunitReportGenerator {
     }
 
     fn scan_duration_secs(report: &ScanReport) -> i64 {
-        (report.metadata.scan_end - report.metadata.scan_start).num_seconds().max(0)
+        (report.metadata.scan_end - report.metadata.scan_start)
+            .num_seconds()
+            .max(0)
     }
 
     fn esc(s: &str) -> String {
-        s.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;").replace('"', "&quot;")
+        s.replace('&', "&amp;")
+            .replace('<', "&lt;")
+            .replace('>', "&gt;")
+            .replace('"', "&quot;")
     }
 }
 
@@ -183,7 +222,11 @@ mod tests {
                 total_ports: 1000,
                 open_ports: 45,
                 vulnerabilities: VulnerabilitySummary {
-                    critical: 1, high: 2, medium: 1, low: 1, info: 1,
+                    critical: 1,
+                    high: 2,
+                    medium: 1,
+                    low: 1,
+                    info: 1,
                 },
                 risk_score: 7.5,
                 compliance_score: 75.0,
@@ -261,16 +304,33 @@ mod tests {
     fn test_junit_escaping() {
         let report = ReportBuilder::new()
             .metadata(ReportMetadata {
-                scan_id: "s".to_string(), report_id: "r".to_string(),
-                generated_at: Utc::now(), scan_start: Utc::now(), scan_end: Utc::now(),
-                target_count: 0, version: "0.1.0".to_string(),
+                scan_id: "s".to_string(),
+                report_id: "r".to_string(),
+                generated_at: Utc::now(),
+                scan_start: Utc::now(),
+                scan_end: Utc::now(),
+                target_count: 0,
+                version: "0.1.0".to_string(),
             })
             .summary(ExecutiveSummary {
-                total_hosts: 0, hosts_up: 0, total_ports: 0, open_ports: 0,
-                vulnerabilities: VulnerabilitySummary { critical: 0, high: 0, medium: 0, low: 0, info: 0 },
-                risk_score: 0.0, compliance_score: 0.0,
+                total_hosts: 0,
+                hosts_up: 0,
+                total_ports: 0,
+                open_ports: 0,
+                vulnerabilities: VulnerabilitySummary {
+                    critical: 0,
+                    high: 0,
+                    medium: 0,
+                    low: 0,
+                    info: 0,
+                },
+                risk_score: 0.0,
+                compliance_score: 0.0,
             })
-            .compliance(ComplianceStatus { frameworks: vec![], overall_score: 0.0 })
+            .compliance(ComplianceStatus {
+                frameworks: vec![],
+                overall_score: 0.0,
+            })
             .add_finding(Finding {
                 id: "f-001".to_string(),
                 severity: Severity::High,
@@ -293,16 +353,33 @@ mod tests {
     fn test_junit_empty_report() {
         let report = ReportBuilder::new()
             .metadata(ReportMetadata {
-                scan_id: "s".to_string(), report_id: "r".to_string(),
-                generated_at: Utc::now(), scan_start: Utc::now(), scan_end: Utc::now(),
-                target_count: 0, version: "0.1.0".to_string(),
+                scan_id: "s".to_string(),
+                report_id: "r".to_string(),
+                generated_at: Utc::now(),
+                scan_start: Utc::now(),
+                scan_end: Utc::now(),
+                target_count: 0,
+                version: "0.1.0".to_string(),
             })
             .summary(ExecutiveSummary {
-                total_hosts: 0, hosts_up: 0, total_ports: 0, open_ports: 0,
-                vulnerabilities: VulnerabilitySummary { critical: 0, high: 0, medium: 0, low: 0, info: 0 },
-                risk_score: 0.0, compliance_score: 0.0,
+                total_hosts: 0,
+                hosts_up: 0,
+                total_ports: 0,
+                open_ports: 0,
+                vulnerabilities: VulnerabilitySummary {
+                    critical: 0,
+                    high: 0,
+                    medium: 0,
+                    low: 0,
+                    info: 0,
+                },
+                risk_score: 0.0,
+                compliance_score: 0.0,
             })
-            .compliance(ComplianceStatus { frameworks: vec![], overall_score: 0.0 })
+            .compliance(ComplianceStatus {
+                frameworks: vec![],
+                overall_score: 0.0,
+            })
             .build()
             .unwrap();
         let xml = JunitReportGenerator::generate(&report);

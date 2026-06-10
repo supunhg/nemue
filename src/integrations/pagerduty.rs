@@ -1,4 +1,4 @@
-use anyhow::{Result, Context};
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
@@ -107,7 +107,10 @@ impl PagerDutyClient {
             .timeout(Duration::from_secs(30))
             .build()
             .expect("Failed to create HTTP client");
-        Self { config, http_client }
+        Self {
+            config,
+            http_client,
+        }
     }
 
     /// Create a PagerDuty incident from a vulnerability finding
@@ -120,8 +123,14 @@ impl PagerDutyClient {
 
         let dedup_key = format!(
             "nemue-{}-{}-{}-{}",
-            finding.script_id, finding.target, finding.port,
-            finding.cve_ids.first().map(|s| s.as_str()).unwrap_or("no-cve")
+            finding.script_id,
+            finding.target,
+            finding.port,
+            finding
+                .cve_ids
+                .first()
+                .map(|s| s.as_str())
+                .unwrap_or("no-cve")
         );
 
         let details = serde_json::json!({
@@ -139,7 +148,10 @@ impl PagerDutyClient {
             id: None,
             title: format!(
                 "[{}] Security Vulnerability: {} on {}:{}",
-                finding.severity.as_str(), finding.script_id, finding.target, finding.port
+                finding.severity.as_str(),
+                finding.script_id,
+                finding.target,
+                finding.port
             ),
             description: finding.description.clone(),
             severity,
@@ -232,22 +244,32 @@ impl PagerDutyClient {
         let url = "https://events.pagerduty.com/v2/enqueue";
         let payload = self.build_trigger_payload(incident);
 
-        let resp = self.http_client.post(url)
+        let resp = self
+            .http_client
+            .post(url)
             .header("Content-Type", "application/json")
             .json(&payload)
-            .send().await
+            .send()
+            .await
             .context("Failed to send trigger to PagerDuty Events API")?;
 
         if !resp.status().is_success() {
             let status = resp.status();
             let body = resp.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("PagerDuty Events API returned status {}: {}", status, body));
+            return Err(anyhow::anyhow!(
+                "PagerDuty Events API returned status {}: {}",
+                status,
+                body
+            ));
         }
 
-        let result: serde_json::Value = resp.json().await
+        let result: serde_json::Value = resp
+            .json()
+            .await
             .context("Failed to parse PagerDuty Events API response")?;
 
-        result.get("dedup_key")
+        result
+            .get("dedup_key")
             .and_then(|v| v.as_str())
             .map(|s| s.to_string())
             .ok_or_else(|| anyhow::anyhow!("No dedup_key in PagerDuty response"))
@@ -258,16 +280,23 @@ impl PagerDutyClient {
         let url = "https://events.pagerduty.com/v2/enqueue";
         let payload = self.build_acknowledge_payload(dedup_key);
 
-        let resp = self.http_client.post(url)
+        let resp = self
+            .http_client
+            .post(url)
             .header("Content-Type", "application/json")
             .json(&payload)
-            .send().await
+            .send()
+            .await
             .context("Failed to acknowledge PagerDuty incident")?;
 
         if !resp.status().is_success() {
             let status = resp.status();
             let body = resp.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("PagerDuty acknowledge returned status {}: {}", status, body));
+            return Err(anyhow::anyhow!(
+                "PagerDuty acknowledge returned status {}: {}",
+                status,
+                body
+            ));
         }
 
         Ok(())
@@ -278,16 +307,23 @@ impl PagerDutyClient {
         let url = "https://events.pagerduty.com/v2/enqueue";
         let payload = self.build_resolve_payload(dedup_key);
 
-        let resp = self.http_client.post(url)
+        let resp = self
+            .http_client
+            .post(url)
             .header("Content-Type", "application/json")
             .json(&payload)
-            .send().await
+            .send()
+            .await
             .context("Failed to resolve PagerDuty incident")?;
 
         if !resp.status().is_success() {
             let status = resp.status();
             let body = resp.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("PagerDuty resolve returned status {}: {}", status, body));
+            return Err(anyhow::anyhow!(
+                "PagerDuty resolve returned status {}: {}",
+                status,
+                body
+            ));
         }
 
         Ok(())
@@ -328,11 +364,26 @@ mod tests {
 
     #[test]
     fn test_severity_from_vuln() {
-        assert_eq!(PagerDutySeverity::from_severity(&VulnSeverity::Critical), PagerDutySeverity::Critical);
-        assert_eq!(PagerDutySeverity::from_severity(&VulnSeverity::High), PagerDutySeverity::Error);
-        assert_eq!(PagerDutySeverity::from_severity(&VulnSeverity::Medium), PagerDutySeverity::Warning);
-        assert_eq!(PagerDutySeverity::from_severity(&VulnSeverity::Low), PagerDutySeverity::Info);
-        assert_eq!(PagerDutySeverity::from_severity(&VulnSeverity::Info), PagerDutySeverity::Info);
+        assert_eq!(
+            PagerDutySeverity::from_severity(&VulnSeverity::Critical),
+            PagerDutySeverity::Critical
+        );
+        assert_eq!(
+            PagerDutySeverity::from_severity(&VulnSeverity::High),
+            PagerDutySeverity::Error
+        );
+        assert_eq!(
+            PagerDutySeverity::from_severity(&VulnSeverity::Medium),
+            PagerDutySeverity::Warning
+        );
+        assert_eq!(
+            PagerDutySeverity::from_severity(&VulnSeverity::Low),
+            PagerDutySeverity::Info
+        );
+        assert_eq!(
+            PagerDutySeverity::from_severity(&VulnSeverity::Info),
+            PagerDutySeverity::Info
+        );
     }
 
     #[test]
@@ -350,9 +401,16 @@ mod tests {
         assert_eq!(incident.severity, PagerDutySeverity::Critical);
         assert_eq!(incident.urgency, "high");
         assert_eq!(incident.service_id, "service-789");
-        assert_eq!(incident.escalation_policy_id, Some("policy-abc".to_string()));
+        assert_eq!(
+            incident.escalation_policy_id,
+            Some("policy-abc".to_string())
+        );
         assert!(incident.dedup_key.is_some());
-        assert!(incident.dedup_key.as_ref().unwrap().starts_with("nemue-log4shell-check-"));
+        assert!(incident
+            .dedup_key
+            .as_ref()
+            .unwrap()
+            .starts_with("nemue-log4shell-check-"));
     }
 
     #[test]
@@ -367,7 +425,10 @@ mod tests {
         assert_eq!(incident.details["port"], 8080);
         assert_eq!(incident.details["severity"], "CRITICAL");
         assert_eq!(incident.details["exploit_available"], true);
-        assert!(incident.details["cve_ids"].as_array().unwrap().contains(&serde_json::json!("CVE-2021-44228")));
+        assert!(incident.details["cve_ids"]
+            .as_array()
+            .unwrap()
+            .contains(&serde_json::json!("CVE-2021-44228")));
     }
 
     #[test]
@@ -383,7 +444,10 @@ mod tests {
         assert_eq!(payload["payload"]["severity"], "critical");
         assert_eq!(payload["payload"]["source"], "nemue-security-scanner");
         assert_eq!(payload["payload"]["component"], "vulnerability-scanner");
-        assert!(payload["dedup_key"].as_str().unwrap().contains("log4shell-check"));
+        assert!(payload["dedup_key"]
+            .as_str()
+            .unwrap()
+            .contains("log4shell-check"));
     }
 
     #[test]
@@ -434,9 +498,14 @@ mod tests {
             script_id: "script-a".to_string(),
             target: "1.1.1.1".to_string(),
             port: 80,
-            vulnerable: true, severity: VulnSeverity::High, cve_ids: vec!["CVE-2024-0001".to_string()],
-            description: "Test".to_string(), evidence: None, remediation: None,
-            references: vec![], exploit_available: false,
+            vulnerable: true,
+            severity: VulnSeverity::High,
+            cve_ids: vec!["CVE-2024-0001".to_string()],
+            description: "Test".to_string(),
+            evidence: None,
+            remediation: None,
+            references: vec![],
+            exploit_available: false,
         };
         let finding2 = VulnResult {
             script_id: "script-b".to_string(),
@@ -483,6 +552,9 @@ mod tests {
         let deserialized: PagerDutyConfig = serde_json::from_str(&json).unwrap();
         assert_eq!(deserialized.routing_key, config.routing_key);
         assert_eq!(deserialized.service_id, config.service_id);
-        assert_eq!(deserialized.escalation_policy_id, config.escalation_policy_id);
+        assert_eq!(
+            deserialized.escalation_policy_id,
+            config.escalation_policy_id
+        );
     }
 }

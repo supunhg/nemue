@@ -6,7 +6,7 @@ pub struct SarifReportGenerator;
 
 impl SarifReportGenerator {
     pub fn generate(report: &ScanReport) -> String {
-        let mut sarif = serde_json::json!({
+        let sarif = serde_json::json!({
             "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
             "version": "2.1.0",
             "runs": [{
@@ -38,46 +38,54 @@ impl SarifReportGenerator {
     }
 
     fn build_rules(report: &ScanReport) -> Vec<serde_json::Value> {
-        report.findings.iter().map(|f| {
-            serde_json::json!({
-                "id": f.id,
-                "name": f.title,
-                "shortDescription": { "text": f.title },
-                "fullDescription": { "text": f.description },
-                "help": { "text": f.remediation },
-                "defaultConfiguration": {
-                    "level": Self::severity_to_level(&f.severity),
-                },
-                "properties": {
-                    "tags": Self::build_tags(f),
-                }
-            })
-        }).collect()
-    }
-
-    fn build_results(report: &ScanReport) -> Vec<serde_json::Value> {
-        report.findings.iter().flat_map(|f| {
-            f.affected_hosts.iter().map(move |host| {
+        report
+            .findings
+            .iter()
+            .map(|f| {
                 serde_json::json!({
-                    "ruleId": f.id,
-                    "level": Self::severity_to_level(&f.severity),
-                    "message": { "text": format!("{}: {}", f.title, f.description) },
-                    "locations": [{
-                        "physicalLocation": {
-                            "artifactLocation": { "uri": host },
-                        },
-                        "logicalLocations": [{ "name": host }],
-                    }],
-                    "partialFingerprints": {
-                        "primaryLocationLineHash": f.id,
+                    "id": f.id,
+                    "name": f.title,
+                    "shortDescription": { "text": f.title },
+                    "fullDescription": { "text": f.description },
+                    "help": { "text": f.remediation },
+                    "defaultConfiguration": {
+                        "level": Self::severity_to_level(&f.severity),
                     },
                     "properties": {
-                        "cvssScore": f.cvss_score,
-                        "cveIds": f.cve_ids,
+                        "tags": Self::build_tags(f),
                     }
                 })
             })
-        }).collect()
+            .collect()
+    }
+
+    fn build_results(report: &ScanReport) -> Vec<serde_json::Value> {
+        report
+            .findings
+            .iter()
+            .flat_map(|f| {
+                f.affected_hosts.iter().map(move |host| {
+                    serde_json::json!({
+                        "ruleId": f.id,
+                        "level": Self::severity_to_level(&f.severity),
+                        "message": { "text": format!("{}: {}", f.title, f.description) },
+                        "locations": [{
+                            "physicalLocation": {
+                                "artifactLocation": { "uri": host },
+                            },
+                            "logicalLocations": [{ "name": host }],
+                        }],
+                        "partialFingerprints": {
+                            "primaryLocationLineHash": f.id,
+                        },
+                        "properties": {
+                            "cvssScore": f.cvss_score,
+                            "cveIds": f.cve_ids,
+                        }
+                    })
+                })
+            })
+            .collect()
     }
 
     fn severity_to_level(severity: &Severity) -> &'static str {
@@ -95,10 +103,15 @@ impl SarifReportGenerator {
             tags.push(cve.clone());
         }
         if let Some(cvss) = finding.cvss_score {
-            if cvss >= 9.0 { tags.push("security/critical".to_string()); }
-            else if cvss >= 7.0 { tags.push("security/high".to_string()); }
-            else if cvss >= 4.0 { tags.push("security/medium".to_string()); }
-            else { tags.push("security/low".to_string()); }
+            if cvss >= 9.0 {
+                tags.push("security/critical".to_string());
+            } else if cvss >= 7.0 {
+                tags.push("security/high".to_string());
+            } else if cvss >= 4.0 {
+                tags.push("security/medium".to_string());
+            } else {
+                tags.push("security/low".to_string());
+            }
         }
         tags
     }
@@ -127,12 +140,19 @@ mod tests {
                 total_ports: 1000,
                 open_ports: 45,
                 vulnerabilities: VulnerabilitySummary {
-                    critical: 2, high: 5, medium: 10, low: 8, info: 3,
+                    critical: 2,
+                    high: 5,
+                    medium: 10,
+                    low: 8,
+                    info: 3,
                 },
                 risk_score: 7.5,
                 compliance_score: 75.0,
             })
-            .compliance(ComplianceStatus { frameworks: vec![], overall_score: 75.0 })
+            .compliance(ComplianceStatus {
+                frameworks: vec![],
+                overall_score: 75.0,
+            })
             .add_finding(Finding {
                 id: "f-001".to_string(),
                 severity: Severity::Critical,
@@ -160,7 +180,8 @@ mod tests {
     #[test]
     fn test_sarif_schema() {
         let report = sample_report();
-        let json: serde_json::Value = serde_json::from_str(&SarifReportGenerator::generate(&report)).unwrap();
+        let json: serde_json::Value =
+            serde_json::from_str(&SarifReportGenerator::generate(&report)).unwrap();
         assert_eq!(json["version"], "2.1.0");
         assert!(json["$schema"].as_str().unwrap().contains("sarif-schema"));
     }
@@ -168,7 +189,8 @@ mod tests {
     #[test]
     fn test_sarif_tool_info() {
         let report = sample_report();
-        let json: serde_json::Value = serde_json::from_str(&SarifReportGenerator::generate(&report)).unwrap();
+        let json: serde_json::Value =
+            serde_json::from_str(&SarifReportGenerator::generate(&report)).unwrap();
         let driver = &json["runs"][0]["tool"]["driver"];
         assert_eq!(driver["name"], "Nemue");
         assert_eq!(driver["version"], "0.1.0");
@@ -177,8 +199,11 @@ mod tests {
     #[test]
     fn test_sarif_rules() {
         let report = sample_report();
-        let json: serde_json::Value = serde_json::from_str(&SarifReportGenerator::generate(&report)).unwrap();
-        let rules = json["runs"][0]["tool"]["driver"]["rules"].as_array().unwrap();
+        let json: serde_json::Value =
+            serde_json::from_str(&SarifReportGenerator::generate(&report)).unwrap();
+        let rules = json["runs"][0]["tool"]["driver"]["rules"]
+            .as_array()
+            .unwrap();
         assert_eq!(rules.len(), 2);
         assert_eq!(rules[0]["id"], "f-001");
         assert_eq!(rules[0]["defaultConfiguration"]["level"], "error");
@@ -187,7 +212,8 @@ mod tests {
     #[test]
     fn test_sarif_results() {
         let report = sample_report();
-        let json: serde_json::Value = serde_json::from_str(&SarifReportGenerator::generate(&report)).unwrap();
+        let json: serde_json::Value =
+            serde_json::from_str(&SarifReportGenerator::generate(&report)).unwrap();
         let results = json["runs"][0]["results"].as_array().unwrap();
         assert_eq!(results.len(), 3); // 2 hosts for f-001 + 1 host for f-002
     }
@@ -195,7 +221,8 @@ mod tests {
     #[test]
     fn test_sarif_invocation() {
         let report = sample_report();
-        let json: serde_json::Value = serde_json::from_str(&SarifReportGenerator::generate(&report)).unwrap();
+        let json: serde_json::Value =
+            serde_json::from_str(&SarifReportGenerator::generate(&report)).unwrap();
         let inv = &json["runs"][0]["invocations"][0];
         assert_eq!(inv["executionSuccessful"], true);
     }
@@ -203,7 +230,8 @@ mod tests {
     #[test]
     fn test_sarif_properties() {
         let report = sample_report();
-        let json: serde_json::Value = serde_json::from_str(&SarifReportGenerator::generate(&report)).unwrap();
+        let json: serde_json::Value =
+            serde_json::from_str(&SarifReportGenerator::generate(&report)).unwrap();
         let props = &json["runs"][0]["properties"];
         assert_eq!(props["scanId"], "scan-001");
         assert_eq!(props["riskScore"], 7.5);
@@ -211,11 +239,26 @@ mod tests {
 
     #[test]
     fn test_sarif_severity_mapping() {
-        assert_eq!(SarifReportGenerator::severity_to_level(&Severity::Critical), "error");
-        assert_eq!(SarifReportGenerator::severity_to_level(&Severity::High), "error");
-        assert_eq!(SarifReportGenerator::severity_to_level(&Severity::Medium), "warning");
-        assert_eq!(SarifReportGenerator::severity_to_level(&Severity::Low), "note");
-        assert_eq!(SarifReportGenerator::severity_to_level(&Severity::Info), "none");
+        assert_eq!(
+            SarifReportGenerator::severity_to_level(&Severity::Critical),
+            "error"
+        );
+        assert_eq!(
+            SarifReportGenerator::severity_to_level(&Severity::High),
+            "error"
+        );
+        assert_eq!(
+            SarifReportGenerator::severity_to_level(&Severity::Medium),
+            "warning"
+        );
+        assert_eq!(
+            SarifReportGenerator::severity_to_level(&Severity::Low),
+            "note"
+        );
+        assert_eq!(
+            SarifReportGenerator::severity_to_level(&Severity::Info),
+            "none"
+        );
     }
 
     #[test]
@@ -240,19 +283,37 @@ mod tests {
     fn test_sarif_empty_report() {
         let report = ReportBuilder::new()
             .metadata(ReportMetadata {
-                scan_id: "s".to_string(), report_id: "r".to_string(),
-                generated_at: Utc::now(), scan_start: Utc::now(), scan_end: Utc::now(),
-                target_count: 0, version: "0.1.0".to_string(),
+                scan_id: "s".to_string(),
+                report_id: "r".to_string(),
+                generated_at: Utc::now(),
+                scan_start: Utc::now(),
+                scan_end: Utc::now(),
+                target_count: 0,
+                version: "0.1.0".to_string(),
             })
             .summary(ExecutiveSummary {
-                total_hosts: 0, hosts_up: 0, total_ports: 0, open_ports: 0,
-                vulnerabilities: VulnerabilitySummary { critical: 0, high: 0, medium: 0, low: 0, info: 0 },
-                risk_score: 0.0, compliance_score: 0.0,
+                total_hosts: 0,
+                hosts_up: 0,
+                total_ports: 0,
+                open_ports: 0,
+                vulnerabilities: VulnerabilitySummary {
+                    critical: 0,
+                    high: 0,
+                    medium: 0,
+                    low: 0,
+                    info: 0,
+                },
+                risk_score: 0.0,
+                compliance_score: 0.0,
             })
-            .compliance(ComplianceStatus { frameworks: vec![], overall_score: 0.0 })
+            .compliance(ComplianceStatus {
+                frameworks: vec![],
+                overall_score: 0.0,
+            })
             .build()
             .unwrap();
-        let json: serde_json::Value = serde_json::from_str(&SarifReportGenerator::generate(&report)).unwrap();
+        let json: serde_json::Value =
+            serde_json::from_str(&SarifReportGenerator::generate(&report)).unwrap();
         assert_eq!(json["runs"][0]["results"].as_array().unwrap().len(), 0);
     }
 }

@@ -1,14 +1,15 @@
+#![allow(dead_code)]
 use anyhow::{anyhow, Result};
+use pnet::datalink::{self, NetworkInterface};
+use pnet::packet::arp::{ArpHardwareTypes, ArpOperations, MutableArpPacket};
+use pnet::packet::ethernet::{EtherTypes, MutableEthernetPacket};
+use pnet::packet::Packet;
+use pnet::util::MacAddr;
+use serde::{Deserialize, Serialize};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::time::Duration;
 use tokio::net::TcpStream;
 use tokio::time::timeout;
-use serde::{Deserialize, Serialize};
-use pnet::datalink::{self, NetworkInterface};
-use pnet::packet::Packet;
-use pnet::packet::arp::{ArpHardwareTypes, ArpOperations, MutableArpPacket};
-use pnet::packet::ethernet::{EtherTypes, MutableEthernetPacket};
-use pnet::util::MacAddr;
 
 /// Host discovery methods matching nmap's -P options
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -197,13 +198,9 @@ impl ArpDiscovery {
 
     /// Find the default network interface for ARP scanning
     fn find_default_interface() -> Option<NetworkInterface> {
-        datalink::interfaces()
-            .into_iter()
-            .find(|iface| {
-                !iface.is_loopback()
-                    && iface.is_up()
-                    && iface.ips.iter().any(|ip| ip.is_ipv4())
-            })
+        datalink::interfaces().into_iter().find(|iface| {
+            !iface.is_loopback() && iface.is_up() && iface.ips.iter().any(|ip| ip.is_ipv4())
+        })
     }
 
     /// Check if an IP is on the local network
@@ -214,7 +211,7 @@ impl ArpDiscovery {
                     let target_u32 = u32::from(target);
                     let iface_u32 = u32::from(iface_ip);
                     let mask_u32 = u32::from(mask);
-                    
+
                     if (target_u32 & mask_u32) == (iface_u32 & mask_u32) {
                         return true;
                     }
@@ -238,8 +235,12 @@ impl ArpDiscovery {
         }
 
         // Get source MAC and IP
-        let source_mac = iface.mac.ok_or_else(|| anyhow!("Interface has no MAC address"))?;
-        let source_ip = iface.ips.iter()
+        let source_mac = iface
+            .mac
+            .ok_or_else(|| anyhow!("Interface has no MAC address"))?;
+        let source_ip = iface
+            .ips
+            .iter()
             .find_map(|ip| {
                 if let IpAddr::V4(ipv4) = ip.ip() {
                     Some(ipv4)
@@ -319,9 +320,7 @@ impl ArpDiscovery {
         let start_u32 = network_u32 + 1;
         let end_u32 = broadcast_u32 - 1;
 
-        let targets: Vec<Ipv4Addr> = (start_u32..=end_u32)
-            .map(|ip| Ipv4Addr::from(ip))
-            .collect();
+        let targets: Vec<Ipv4Addr> = (start_u32..=end_u32).map(Ipv4Addr::from).collect();
 
         stream::iter(targets)
             .map(|target| async move {
@@ -467,7 +466,11 @@ impl HostDiscovery {
 
         for method in &self.config.methods {
             match self.probe_with_method(target, *method).await {
-                Ok(ProbeResult::Response { rtt, mac, vendor: vendor_info }) => {
+                Ok(ProbeResult::Response {
+                    rtt,
+                    mac,
+                    vendor: vendor_info,
+                }) => {
                     responding_methods.push(*method);
                     if let Some(rtt) = rtt {
                         if let Some(current_min) = min_rtt {
@@ -559,21 +562,17 @@ impl HostDiscovery {
     }
 
     /// TCP-based ping (SYN or ACK) with improved implementation
-    async fn tcp_ping(
-        &self,
-        target: IpAddr,
-        _method: DiscoveryMethod,
-    ) -> Result<ProbeResult> {
+    async fn tcp_ping(&self, target: IpAddr, _method: DiscoveryMethod) -> Result<ProbeResult> {
         let start = std::time::Instant::now();
 
         // Try each configured port
         for &port in &self.config.tcp_ports {
             let addr = SocketAddr::new(target, port);
-            
+
             // Use TCP connect with retries
             for attempt in 0..=self.config.retries {
                 let connect_timeout = self.config.timeout / (attempt as u32 + 1);
-                
+
                 if let Ok(Ok(_stream)) = timeout(connect_timeout, TcpStream::connect(addr)).await {
                     let rtt = start.elapsed().as_millis() as u64;
                     return Ok(ProbeResult::Response {
@@ -608,13 +607,15 @@ impl HostDiscovery {
         };
 
         let socket = UdpSocket::bind(local_addr).await?;
-        socket.connect(SocketAddr::new(target, self.config.udp_ports[0])).await?;
+        socket
+            .connect(SocketAddr::new(target, self.config.udp_ports[0]))
+            .await?;
 
         // Send UDP packets to multiple ports
         for &port in &self.config.udp_ports {
             let addr = SocketAddr::new(target, port);
             socket.connect(addr).await?;
-            
+
             // Send empty UDP packet
             let _ = socket.send(&[]).await;
 
@@ -667,7 +668,7 @@ impl HostDiscovery {
         if let IpAddr::V6(ipv6_addr) = target {
             // ICMPv6 implementation requires raw sockets
             // For now, use TCP fallback as ICMPv6 requires raw sockets
-            // 
+            //
             // ICMPv6 Echo Request:
             // - Type: 128 (Echo Request)
             // - Code: 0
@@ -675,7 +676,7 @@ impl HostDiscovery {
             //
             // This is similar to IPv4 ICMP echo but with different type codes
             // and must use IPv6 headers
-            
+
             self.tcp_fallback_ping(IpAddr::V6(ipv6_addr)).await
         } else {
             Err(anyhow!("ICMPv6 echo ping requires IPv6 address"))
@@ -700,7 +701,7 @@ impl HostDiscovery {
             // - ICMPv6 header (8 bytes): Type=135, Code=0
             // - Target Address (16 bytes): IPv6 address being queried
             // - Options: Source Link-Layer Address (8 bytes)
-            
+
             self.tcp_fallback_ping(IpAddr::V6(ipv6_addr)).await
         } else {
             Err(anyhow!("IPv6 neighbor discovery requires IPv6 address"))
@@ -805,9 +806,18 @@ mod tests {
     #[test]
     fn test_ipv6_discovery_methods() {
         assert_eq!(DiscoveryMethod::Icmpv6EchoPing.to_nmap_flag(), "-PE6");
-        assert_eq!(DiscoveryMethod::Ipv6NeighborDiscovery.to_nmap_flag(), "-PN6");
-        assert_eq!(DiscoveryMethod::Icmpv6EchoPing.to_string(), "ICMPv6 Echo Ping");
-        assert_eq!(DiscoveryMethod::Ipv6NeighborDiscovery.to_string(), "IPv6 Neighbor Discovery");
+        assert_eq!(
+            DiscoveryMethod::Ipv6NeighborDiscovery.to_nmap_flag(),
+            "-PN6"
+        );
+        assert_eq!(
+            DiscoveryMethod::Icmpv6EchoPing.to_string(),
+            "ICMPv6 Echo Ping"
+        );
+        assert_eq!(
+            DiscoveryMethod::Ipv6NeighborDiscovery.to_string(),
+            "IPv6 Neighbor Discovery"
+        );
     }
 
     #[test]
@@ -835,7 +845,7 @@ mod tests {
 
         let scanner = HostDiscovery::with_config(config);
         let target: IpAddr = "::1".parse().unwrap();
-        
+
         let result = scanner.discover(target).await;
         // Result depends on network configuration
         assert!(result.is_ok());
@@ -845,7 +855,7 @@ mod tests {
     async fn test_ipv6_neighbor_discovery_method() {
         let scanner = HostDiscovery::new();
         let target: IpAddr = "::1".parse().unwrap();
-        
+
         // Test that the method is called correctly for IPv6
         let result = scanner.discover(target).await;
         // May fail without raw socket access, but shouldn't panic
@@ -884,7 +894,7 @@ mod tests {
     async fn test_no_ping_discovery() {
         let scanner = HostDiscovery::no_ping();
         let target: IpAddr = "8.8.8.8".parse().unwrap();
-        
+
         let result = scanner.discover(target).await.unwrap();
         assert_eq!(result.target, target);
         assert!(result.is_up); // No ping assumes all hosts are up
@@ -896,7 +906,7 @@ mod tests {
     async fn test_list_scan_discovery() {
         let scanner = HostDiscovery::list_only();
         let target: IpAddr = "192.168.1.1".parse().unwrap();
-        
+
         let result = scanner.discover(target).await.unwrap();
         assert_eq!(result.target, target);
         assert!(!result.is_up); // List scan doesn't mark as up
@@ -909,10 +919,10 @@ mod tests {
         let mut config = DiscoveryConfig::default();
         config.methods = vec![DiscoveryMethod::TcpSynPing];
         config.tcp_ports = vec![22, 80, 443]; // Common ports
-        
+
         let scanner = HostDiscovery::with_config(config);
         let target: IpAddr = "127.0.0.1".parse().unwrap();
-        
+
         let result = scanner.discover(target).await.unwrap();
         // Result depends on what's running on localhost
         assert_eq!(result.target, target);
@@ -933,7 +943,7 @@ mod tests {
 
         let json = serde_json::to_string(&result).unwrap();
         let deserialized: DiscoveryResult = serde_json::from_str(&json).unwrap();
-        
+
         assert_eq!(deserialized.target, result.target);
         assert_eq!(deserialized.is_up, result.is_up);
         assert_eq!(deserialized.rtt_ms, result.rtt_ms);
@@ -953,7 +963,7 @@ mod tests {
 
         let results = scanner.discover_batch(targets).await;
         assert_eq!(results.len(), 3);
-        
+
         // With no-ping, all should be marked as up
         for result in results {
             assert!(result.is_up);
@@ -992,7 +1002,7 @@ mod tests {
     #[test]
     fn test_is_local_network() {
         use ipnetwork::IpNetwork;
-        
+
         let iface = NetworkInterface {
             name: "eth0".to_string(),
             index: 1,
@@ -1001,10 +1011,10 @@ mod tests {
             flags: 0,
             description: String::new(),
         };
-        
+
         let local_ip = Ipv4Addr::new(192, 168, 1, 1);
         let remote_ip = Ipv4Addr::new(10, 0, 0, 1);
-        
+
         assert!(ArpDiscovery::is_local_network(local_ip, &iface));
         assert!(!ArpDiscovery::is_local_network(remote_ip, &iface));
     }

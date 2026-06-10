@@ -1,7 +1,7 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::net::IpAddr;
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScanRequest {
@@ -23,34 +23,26 @@ pub struct ScanRequest {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
+#[derive(Default)]
 pub enum ScanType {
+    #[default]
     Tcp,
     Udp,
     Syn,
     Connect,
 }
 
-impl Default for ScanType {
-    fn default() -> Self {
-        ScanType::Tcp
-    }
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
+#[derive(Default)]
 pub enum TimingTemplate {
     Paranoid,
     Sneaky,
     Polite,
+    #[default]
     Normal,
     Aggressive,
     Insane,
-}
-
-impl Default for TimingTemplate {
-    fn default() -> Self {
-        TimingTemplate::Normal
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -238,7 +230,9 @@ pub struct RegisterWebhookRequest {
     pub events: Vec<String>,
 }
 
-fn default_max_retries() -> u32 { 3 }
+fn default_max_retries() -> u32 {
+    3
+}
 
 /// Registered webhook info (without secrets)
 #[derive(Debug, Clone, Serialize, Deserialize)]

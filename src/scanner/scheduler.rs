@@ -228,10 +228,7 @@ impl ScanScheduler {
     }
 
     pub fn due_scans(&self, now: DateTime<Utc>) -> Vec<&ScheduledScan> {
-        self.scans
-            .iter()
-            .filter(|s| s.is_due(now))
-            .collect()
+        self.scans.iter().filter(|s| s.is_due(now)).collect()
     }
 
     pub fn ready_to_run(&self, now: DateTime<Utc>) -> Vec<&ScheduledScan> {
@@ -283,7 +280,7 @@ impl ScanScheduler {
 
     pub fn by_priority(&self) -> Vec<&ScheduledScan> {
         let mut scans: Vec<&ScheduledScan> = self.scans.iter().collect();
-        scans.sort_by(|a, b| a.priority.cmp(&b.priority));
+        scans.sort_by_key(|a| a.priority);
         scans
     }
 
@@ -369,8 +366,8 @@ mod tests {
     #[test]
     fn test_recurring_scan_resets_to_pending() {
         let now = Utc::now();
-        let mut scan = ScheduledScan::new("daily", "10.0.0.1", now)
-            .with_recurrence(Recurrence::Daily);
+        let mut scan =
+            ScheduledScan::new("daily", "10.0.0.1", now).with_recurrence(Recurrence::Daily);
 
         scan.mark_running();
         scan.mark_completed();
@@ -393,8 +390,8 @@ mod tests {
     #[test]
     fn test_failed_scan_with_recurring() {
         let now = Utc::now();
-        let mut scan = ScheduledScan::new("fail", "10.0.0.1", now)
-            .with_recurrence(Recurrence::Hourly);
+        let mut scan =
+            ScheduledScan::new("fail", "10.0.0.1", now).with_recurrence(Recurrence::Hourly);
 
         scan.mark_running();
         scan.mark_failed("connection timeout");
@@ -406,8 +403,7 @@ mod tests {
     #[test]
     fn test_compute_next_run_hourly() {
         let base = Utc::now();
-        let scan = ScheduledScan::new("t", "t", base)
-            .with_recurrence(Recurrence::Hourly);
+        let scan = ScheduledScan::new("t", "t", base).with_recurrence(Recurrence::Hourly);
         let next = scan.compute_next_run().unwrap();
         assert_eq!(next, base + ChronoDuration::hours(1));
     }
@@ -415,8 +411,7 @@ mod tests {
     #[test]
     fn test_compute_next_run_daily() {
         let base = Utc::now();
-        let scan = ScheduledScan::new("t", "t", base)
-            .with_recurrence(Recurrence::Daily);
+        let scan = ScheduledScan::new("t", "t", base).with_recurrence(Recurrence::Daily);
         let next = scan.compute_next_run().unwrap();
         assert_eq!(next, base + ChronoDuration::days(1));
     }
@@ -424,8 +419,7 @@ mod tests {
     #[test]
     fn test_compute_next_run_weekly() {
         let base = Utc::now();
-        let scan = ScheduledScan::new("t", "t", base)
-            .with_recurrence(Recurrence::Weekly);
+        let scan = ScheduledScan::new("t", "t", base).with_recurrence(Recurrence::Weekly);
         let next = scan.compute_next_run().unwrap();
         assert_eq!(next, base + ChronoDuration::weeks(1));
     }
@@ -517,10 +511,7 @@ mod tests {
         let now = Utc::now();
 
         let dep_id = sched.schedule(ScheduledScan::new("dep", "10.0.0.1", now));
-        sched.schedule(
-            ScheduledScan::new("dependent", "10.0.0.2", now)
-                .with_dependency(&dep_id),
-        );
+        sched.schedule(ScheduledScan::new("dependent", "10.0.0.2", now).with_dependency(&dep_id));
 
         // Before dep completes, dependent should not be ready
         let ready = sched.ready_to_run(now);
@@ -558,12 +549,10 @@ mod tests {
 
         sched.schedule(ScheduledScan::new("once", "10.0.0.1", now));
         sched.schedule(
-            ScheduledScan::new("daily", "10.0.0.2", now)
-                .with_recurrence(Recurrence::Daily),
+            ScheduledScan::new("daily", "10.0.0.2", now).with_recurrence(Recurrence::Daily),
         );
         sched.schedule(
-            ScheduledScan::new("weekly", "10.0.0.3", now)
-                .with_recurrence(Recurrence::Weekly),
+            ScheduledScan::new("weekly", "10.0.0.3", now).with_recurrence(Recurrence::Weekly),
         );
 
         let recurring = sched.recurring_scans();
@@ -626,8 +615,7 @@ mod tests {
             .unwrap()
             .and_local_timezone(Utc)
             .unwrap();
-        let scan = ScheduledScan::new("t", "t", base)
-            .with_recurrence(Recurrence::Monthly);
+        let scan = ScheduledScan::new("t", "t", base).with_recurrence(Recurrence::Monthly);
         let next = scan.compute_next_run().unwrap();
         assert_eq!(next.month(), 2);
         assert_eq!(next.day(), 15);
@@ -639,8 +627,7 @@ mod tests {
             .unwrap()
             .and_local_timezone(Utc)
             .unwrap();
-        let scan_dec = ScheduledScan::new("t", "t", dec)
-            .with_recurrence(Recurrence::Monthly);
+        let scan_dec = ScheduledScan::new("t", "t", dec).with_recurrence(Recurrence::Monthly);
         let next_dec = scan_dec.compute_next_run().unwrap();
         assert_eq!(next_dec.year(), 2025);
         assert_eq!(next_dec.month(), 1);

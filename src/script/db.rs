@@ -3,8 +3,8 @@
 
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
 use std::fs;
+use std::path::{Path, PathBuf};
 
 /// Script metadata stored in database
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -39,10 +39,10 @@ impl ScriptDatabase {
     pub fn load<P: AsRef<Path>>(path: P) -> Result<Self> {
         let content = fs::read_to_string(path.as_ref())
             .map_err(|e| anyhow!("Failed to read script database: {}", e))?;
-        
+
         let db: Self = serde_json::from_str(&content)
             .map_err(|e| anyhow!("Failed to parse script database: {}", e))?;
-        
+
         Ok(db)
     }
 
@@ -50,19 +50,21 @@ impl ScriptDatabase {
     pub fn save<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         let json = serde_json::to_string_pretty(self)
             .map_err(|e| anyhow!("Failed to serialize database: {}", e))?;
-        
-        fs::write(path.as_ref(), json)
-            .map_err(|e| anyhow!("Failed to write database: {}", e))?;
-        
+
+        fs::write(path.as_ref(), json).map_err(|e| anyhow!("Failed to write database: {}", e))?;
+
         Ok(())
     }
 
     /// Update database by scanning script directories
     pub fn update<P: AsRef<Path>>(&mut self, script_dir: P) -> Result<usize> {
         let script_dir = script_dir.as_ref();
-        
+
         if !script_dir.exists() {
-            return Err(anyhow!("Script directory not found: {}", script_dir.display()));
+            return Err(anyhow!(
+                "Script directory not found: {}",
+                script_dir.display()
+            ));
         }
 
         let mut new_scripts = Vec::new();
@@ -78,7 +80,12 @@ impl ScriptDatabase {
     }
 
     /// Recursively scan directory for script files
-    fn scan_directory(&self, dir: &Path, scripts: &mut Vec<ScriptMetadata>, count: &mut usize) -> Result<()> {
+    fn scan_directory(
+        &self,
+        dir: &Path,
+        scripts: &mut Vec<ScriptMetadata>,
+        count: &mut usize,
+    ) -> Result<()> {
         for entry in fs::read_dir(dir)? {
             let entry = entry?;
             let path = entry.path();
@@ -99,13 +106,14 @@ impl ScriptDatabase {
     /// Parse script file to extract metadata
     fn parse_script_file(&self, path: &Path) -> Result<ScriptMetadata> {
         let content = fs::read_to_string(path)?;
-        
+
         // Extract metadata from Lua comments and globals
-        let mut name = path.file_stem()
+        let mut name = path
+            .file_stem()
             .and_then(|s| s.to_str())
             .unwrap_or("unknown")
             .to_string();
-        
+
         let mut description = String::new();
         let mut author = String::new();
         let mut categories = Vec::new();
@@ -113,7 +121,7 @@ impl ScriptDatabase {
         // Simple parsing - look for Lua global assignments
         for line in content.lines() {
             let line = line.trim();
-            
+
             if line.starts_with("name") && line.contains('=') {
                 name = Self::extract_string_value(line);
             } else if line.starts_with("description") && line.contains('=') {
@@ -144,8 +152,7 @@ impl ScriptDatabase {
         if let Some(eq_pos) = line.find('=') {
             let value = line[eq_pos + 1..].trim();
             // Remove quotes
-            value.trim_matches(|c| c == '"' || c == '\'')
-                .to_string()
+            value.trim_matches(|c| c == '"' || c == '\'').to_string()
         } else {
             String::new()
         }
@@ -191,7 +198,8 @@ impl ScriptDatabase {
 
     /// Get all categories
     pub fn categories(&self) -> Vec<String> {
-        let mut categories: Vec<String> = self.scripts
+        let mut categories: Vec<String> = self
+            .scripts
             .iter()
             .flat_map(|s| s.categories.clone())
             .collect();
@@ -243,7 +251,7 @@ mod tests {
     fn test_parse_script_file() -> Result<()> {
         let temp_dir = TempDir::new()?;
         let script_path = temp_dir.path().join("test.lua");
-        
+
         let script_content = r#"
 name = "http-vuln-check"
 description = "Checks for HTTP vulnerabilities"
@@ -254,7 +262,7 @@ function action(args)
     return "OK"
 end
 "#;
-        
+
         let mut file = fs::File::create(&script_path)?;
         file.write_all(script_content.as_bytes())?;
         drop(file);
@@ -273,7 +281,7 @@ end
     #[test]
     fn test_update_database() -> Result<()> {
         let temp_dir = TempDir::new()?;
-        
+
         // Create test script
         let script_path = temp_dir.path().join("test.lua");
         let mut file = fs::File::create(&script_path)?;
@@ -293,7 +301,7 @@ end
     fn test_find_script() -> Result<()> {
         let temp_dir = TempDir::new()?;
         let script_path = temp_dir.path().join("findme.lua");
-        
+
         let mut file = fs::File::create(&script_path)?;
         file.write_all(b"name = \"findme\"\ndescription = \"Find this\"")?;
         drop(file);
@@ -314,7 +322,7 @@ end
     #[test]
     fn test_by_category() -> Result<()> {
         let temp_dir = TempDir::new()?;
-        
+
         // Create two scripts with different categories
         let script1 = temp_dir.path().join("http-script.lua");
         let mut file = fs::File::create(&script1)?;

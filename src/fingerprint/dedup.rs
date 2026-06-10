@@ -1,6 +1,6 @@
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::net::IpAddr;
-use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq, Serialize, Deserialize)]
 pub struct ResultKey {
@@ -35,7 +35,7 @@ impl<T: Clone + Send + Sync> ResultDeduplicator<T> {
 
     pub fn add(&mut self, key: ResultKey, data: T) -> bool {
         self.total_processed += 1;
-        
+
         if self.seen.contains_key(&key) {
             self.duplicates_removed += 1;
             if let Some(entry) = self.seen.get_mut(&key) {
@@ -44,7 +44,7 @@ impl<T: Clone + Send + Sync> ResultDeduplicator<T> {
             }
             return false;
         }
-        
+
         let entry = DeduplicatedResult {
             key: key.clone(),
             data,
@@ -52,7 +52,7 @@ impl<T: Clone + Send + Sync> ResultDeduplicator<T> {
             first_seen: 0,
             last_seen: 0,
         };
-        
+
         self.seen.insert(key, entry);
         true
     }
@@ -137,7 +137,7 @@ impl ScanDeduplicator {
 
     pub fn record_open(&mut self, target: IpAddr, port: u16) -> bool {
         self.stats.total_scans += 1;
-        let ports = self.open_ports.entry(target).or_insert_with(|| HashSet::new());
+        let ports = self.open_ports.entry(target).or_default();
         if ports.insert(port) {
             self.stats.unique_results += 1;
             true
@@ -149,7 +149,7 @@ impl ScanDeduplicator {
 
     pub fn record_closed(&mut self, target: IpAddr, port: u16) -> bool {
         self.stats.total_scans += 1;
-        let ports = self.closed_ports.entry(target).or_insert_with(|| HashSet::new());
+        let ports = self.closed_ports.entry(target).or_default();
         if ports.insert(port) {
             self.stats.unique_results += 1;
             true
@@ -161,7 +161,7 @@ impl ScanDeduplicator {
 
     pub fn record_filtered(&mut self, target: IpAddr, port: u16) -> bool {
         self.stats.total_scans += 1;
-        let ports = self.filtered_ports.entry(target).or_insert_with(|| HashSet::new());
+        let ports = self.filtered_ports.entry(target).or_default();
         if ports.insert(port) {
             self.stats.unique_results += 1;
             true
@@ -172,15 +172,21 @@ impl ScanDeduplicator {
     }
 
     pub fn is_open(&self, target: &IpAddr, port: &u16) -> bool {
-        self.open_ports.get(target).map_or(false, |ports| ports.contains(port))
+        self.open_ports
+            .get(target)
+            .is_some_and(|ports| ports.contains(port))
     }
 
     pub fn is_closed(&self, target: &IpAddr, port: &u16) -> bool {
-        self.closed_ports.get(target).map_or(false, |ports| ports.contains(port))
+        self.closed_ports
+            .get(target)
+            .is_some_and(|ports| ports.contains(port))
     }
 
     pub fn is_filtered(&self, target: &IpAddr, port: &u16) -> bool {
-        self.filtered_ports.get(target).map_or(false, |ports| ports.contains(port))
+        self.filtered_ports
+            .get(target)
+            .is_some_and(|ports| ports.contains(port))
     }
 
     pub fn open_ports(&self, target: &IpAddr) -> Vec<u16> {
@@ -229,7 +235,7 @@ mod tests {
             port: 80,
             protocol: "tcp".to_string(),
         };
-        
+
         assert!(dedup.add(key.clone(), "open".to_string()));
         assert!(!dedup.add(key.clone(), "open".to_string()));
         assert_eq!(dedup.len(), 1);
@@ -249,11 +255,11 @@ mod tests {
             port: 443,
             protocol: "tcp".to_string(),
         };
-        
+
         dedup.add(key1.clone(), "open".to_string());
         dedup.add(key1.clone(), "open".to_string());
         dedup.add(key2.clone(), "open".to_string());
-        
+
         assert_eq!(dedup.len(), 2);
         assert_eq!(dedup.total_processed(), 3);
         assert_eq!(dedup.duplicates_removed(), 1);
@@ -263,15 +269,15 @@ mod tests {
     fn test_scan_dedup() {
         let mut dedup = ScanDeduplicator::new();
         let target: IpAddr = "127.0.0.1".parse().unwrap();
-        
+
         assert!(dedup.record_open(target, 80));
         assert!(!dedup.record_open(target, 80));
         assert!(dedup.record_open(target, 443));
-        
+
         assert!(dedup.is_open(&target, &80));
         assert!(dedup.is_open(&target, &443));
         assert!(!dedup.is_open(&target, &8080));
-        
+
         let ports = dedup.open_ports(&target);
         assert_eq!(ports, vec![80, 443]);
     }
@@ -280,12 +286,12 @@ mod tests {
     fn test_scan_dedup_stats() {
         let mut dedup = ScanDeduplicator::new();
         let target: IpAddr = "127.0.0.1".parse().unwrap();
-        
+
         dedup.record_open(target, 80);
         dedup.record_open(target, 80);
         dedup.record_closed(target, 443);
         dedup.record_filtered(target, 8080);
-        
+
         let stats = dedup.stats();
         assert_eq!(stats.total_scans, 4);
         assert_eq!(stats.unique_results, 3);
@@ -297,10 +303,10 @@ mod tests {
         let mut dedup = ScanDeduplicator::new();
         let target1: IpAddr = "127.0.0.1".parse().unwrap();
         let target2: IpAddr = "192.168.1.1".parse().unwrap();
-        
+
         dedup.record_open(target1, 80);
         dedup.record_open(target2, 443);
-        
+
         let targets = dedup.all_targets();
         assert_eq!(targets.len(), 2);
     }
@@ -313,10 +319,10 @@ mod tests {
             port: 80,
             protocol: "tcp".to_string(),
         };
-        
+
         dedup.add(key, "open".to_string());
         assert_eq!(dedup.len(), 1);
-        
+
         dedup.clear();
         assert_eq!(dedup.len(), 0);
         assert_eq!(dedup.total_processed(), 0);

@@ -91,46 +91,53 @@ impl PredictiveEngine {
         let mut vuln_patterns = HashMap::new();
 
         // SSH vulnerability patterns
-        vuln_patterns.insert("ssh".to_string(), vec![
-            VulnPattern {
-                pattern: "OpenSSH".to_string(),
-                vuln_type: "Authentication bypass".to_string(),
-                cve_prefix: "CVE-2023-".to_string(),
-                confidence_base: 0.3,
-            },
-            VulnPattern {
-                pattern: "SSH-1".to_string(),
-                vuln_type: "Protocol weakness".to_string(),
-                cve_prefix: "CVE-1999-".to_string(),
-                confidence_base: 0.8,
-            },
-        ]);
+        vuln_patterns.insert(
+            "ssh".to_string(),
+            vec![
+                VulnPattern {
+                    pattern: "OpenSSH".to_string(),
+                    vuln_type: "Authentication bypass".to_string(),
+                    cve_prefix: "CVE-2023-".to_string(),
+                    confidence_base: 0.3,
+                },
+                VulnPattern {
+                    pattern: "SSH-1".to_string(),
+                    vuln_type: "Protocol weakness".to_string(),
+                    cve_prefix: "CVE-1999-".to_string(),
+                    confidence_base: 0.8,
+                },
+            ],
+        );
 
         // HTTP vulnerability patterns
-        vuln_patterns.insert("http".to_string(), vec![
-            VulnPattern {
-                pattern: "Apache/2.2".to_string(),
-                vuln_type: "Multiple vulnerabilities".to_string(),
-                cve_prefix: "CVE-2021-".to_string(),
-                confidence_base: 0.7,
-            },
-            VulnPattern {
-                pattern: "nginx/1.0".to_string(),
-                vuln_type: "Buffer overflow".to_string(),
-                cve_prefix: "CVE-2022-".to_string(),
-                confidence_base: 0.6,
-            },
-        ]);
+        vuln_patterns.insert(
+            "http".to_string(),
+            vec![
+                VulnPattern {
+                    pattern: "Apache/2.2".to_string(),
+                    vuln_type: "Multiple vulnerabilities".to_string(),
+                    cve_prefix: "CVE-2021-".to_string(),
+                    confidence_base: 0.7,
+                },
+                VulnPattern {
+                    pattern: "nginx/1.0".to_string(),
+                    vuln_type: "Buffer overflow".to_string(),
+                    cve_prefix: "CVE-2022-".to_string(),
+                    confidence_base: 0.6,
+                },
+            ],
+        );
 
         // SMB vulnerability patterns
-        vuln_patterns.insert("smb".to_string(), vec![
-            VulnPattern {
+        vuln_patterns.insert(
+            "smb".to_string(),
+            vec![VulnPattern {
                 pattern: "SMBv1".to_string(),
                 vuln_type: "Remote code execution".to_string(),
                 cve_prefix: "CVE-2017-".to_string(),
                 confidence_base: 0.9,
-            },
-        ]);
+            }],
+        );
 
         let attack_vectors = vec![
             AttackVectorTemplate {
@@ -195,32 +202,44 @@ impl PredictiveEngine {
         let mut version_fingerprints = HashMap::new();
 
         // SSH version fingerprints
-        version_fingerprints.insert("ssh".to_string(), vec![
-            VersionFingerprint {
-                version: "OpenSSH_8.9".to_string(),
-                indicators: vec!["SSH-2.0-OpenSSH_8.9".to_string()],
-                weight: 0.9,
-            },
-            VersionFingerprint {
-                version: "OpenSSH_7.4".to_string(),
-                indicators: vec!["SSH-2.0-OpenSSH_7.4".to_string()],
-                weight: 0.8,
-            },
-        ]);
+        version_fingerprints.insert(
+            "ssh".to_string(),
+            vec![
+                VersionFingerprint {
+                    version: "OpenSSH_8.9".to_string(),
+                    indicators: vec!["SSH-2.0-OpenSSH_8.9".to_string()],
+                    weight: 0.9,
+                },
+                VersionFingerprint {
+                    version: "OpenSSH_7.4".to_string(),
+                    indicators: vec!["SSH-2.0-OpenSSH_7.4".to_string()],
+                    weight: 0.8,
+                },
+            ],
+        );
 
         // HTTP version fingerprints
-        version_fingerprints.insert("http".to_string(), vec![
-            VersionFingerprint {
-                version: "Apache/2.4.54".to_string(),
-                indicators: vec!["Apache/2.4.54".to_string(), "Server: Apache/2.4.54".to_string()],
-                weight: 0.85,
-            },
-            VersionFingerprint {
-                version: "nginx/1.22.1".to_string(),
-                indicators: vec!["nginx/1.22.1".to_string(), "Server: nginx/1.22.1".to_string()],
-                weight: 0.85,
-            },
-        ]);
+        version_fingerprints.insert(
+            "http".to_string(),
+            vec![
+                VersionFingerprint {
+                    version: "Apache/2.4.54".to_string(),
+                    indicators: vec![
+                        "Apache/2.4.54".to_string(),
+                        "Server: Apache/2.4.54".to_string(),
+                    ],
+                    weight: 0.85,
+                },
+                VersionFingerprint {
+                    version: "nginx/1.22.1".to_string(),
+                    indicators: vec![
+                        "nginx/1.22.1".to_string(),
+                        "Server: nginx/1.22.1".to_string(),
+                    ],
+                    weight: 0.85,
+                },
+            ],
+        );
 
         Self {
             vuln_patterns,
@@ -230,7 +249,11 @@ impl PredictiveEngine {
     }
 
     /// Predict likely vulnerabilities for a service
-    pub fn predict_vulnerabilities(&self, service: &str, banner: Option<&str>) -> Vec<VulnPrediction> {
+    pub fn predict_vulnerabilities(
+        &self,
+        service: &str,
+        banner: Option<&str>,
+    ) -> Vec<VulnPrediction> {
         let service_lower = service.to_lowercase();
         let mut predictions = Vec::new();
 
@@ -294,7 +317,8 @@ impl PredictiveEngine {
                 .collect();
 
             if !matching_services.is_empty() {
-                let likelihood = template.base_likelihood * (matching_services.len() as f64 / services.len() as f64).min(1.0);
+                let likelihood = template.base_likelihood
+                    * (matching_services.len() as f64 / services.len() as f64).min(1.0);
 
                 vectors.push(AttackVector {
                     name: template.name.clone(),
@@ -315,14 +339,20 @@ impl PredictiveEngine {
         vectors.sort_by(|a, b| {
             let risk_a = a.likelihood * a.impact;
             let risk_b = b.likelihood * b.impact;
-            risk_b.partial_cmp(&risk_a).unwrap_or(std::cmp::Ordering::Equal)
+            risk_b
+                .partial_cmp(&risk_a)
+                .unwrap_or(std::cmp::Ordering::Equal)
         });
 
         vectors
     }
 
     /// Predict service version from banner
-    pub fn predict_service_version(&self, service: &str, banner: &str) -> Option<VersionPrediction> {
+    pub fn predict_service_version(
+        &self,
+        service: &str,
+        banner: &str,
+    ) -> Option<VersionPrediction> {
         let service_lower = service.to_lowercase();
 
         if let Some(fingerprints) = self.version_fingerprints.get(&service_lower) {
@@ -386,7 +416,10 @@ impl PredictiveEngine {
                     .push(fp.clone());
             }
 
-            if fp_lower.contains("linux") || fp_lower.contains("ubuntu") || fp_lower.contains("debian") {
+            if fp_lower.contains("linux")
+                || fp_lower.contains("ubuntu")
+                || fp_lower.contains("debian")
+            {
                 let entry = os_scores.entry("Linux".to_string()).or_insert(0.0);
                 *entry += 0.6;
                 os_evidence
@@ -423,11 +456,7 @@ impl PredictiveEngine {
                 predicted_version: os.clone(),
                 confidence: score.min(1.0),
                 evidence: os_evidence.get(os).cloned().unwrap_or_default(),
-                alternatives: os_scores
-                    .keys()
-                    .filter(|k| *k != os)
-                    .cloned()
-                    .collect(),
+                alternatives: os_scores.keys().filter(|k| *k != os).cloned().collect(),
             })
     }
 }
@@ -442,7 +471,9 @@ mod tests {
         let predictions = engine.predict_vulnerabilities("ssh", Some("SSH-2.0-OpenSSH_8.9"));
 
         assert!(!predictions.is_empty());
-        assert!(predictions.iter().any(|p| p.vuln_type.contains("Authentication")));
+        assert!(predictions
+            .iter()
+            .any(|p| p.vuln_type.contains("Authentication")));
     }
 
     #[test]
@@ -466,11 +497,7 @@ mod tests {
     #[test]
     fn test_predict_attack_vectors() {
         let engine = PredictiveEngine::new();
-        let services = vec![
-            "ssh".to_string(),
-            "http".to_string(),
-            "ftp".to_string(),
-        ];
+        let services = vec!["ssh".to_string(), "http".to_string(), "ftp".to_string()];
 
         let vectors = engine.predict_attack_vectors(&services);
         assert!(!vectors.is_empty());
@@ -512,10 +539,7 @@ mod tests {
     #[test]
     fn test_predict_os_version_linux() {
         let engine = PredictiveEngine::new();
-        let fingerprints = vec![
-            "Linux 5.15.0".to_string(),
-            "Ubuntu 22.04".to_string(),
-        ];
+        let fingerprints = vec!["Linux 5.15.0".to_string(), "Ubuntu 22.04".to_string()];
 
         let prediction = engine.predict_os_version(&fingerprints);
         assert!(prediction.is_some());

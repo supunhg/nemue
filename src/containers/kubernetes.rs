@@ -406,11 +406,18 @@ impl KubernetesScanner {
 
     fn get_resource_count(&self, resource: &str) -> u64 {
         let mut cmd = self.kubectl_cmd();
-        cmd.arg("get").arg(resource).arg("--all-namespaces").arg("-o").arg("json");
+        cmd.arg("get")
+            .arg(resource)
+            .arg("--all-namespaces")
+            .arg("-o")
+            .arg("json");
         cmd.output()
             .ok()
             .and_then(|o| serde_json::from_slice::<serde_json::Value>(&o.stdout).ok())
-            .and_then(|v| v.get("items").and_then(|i| i.as_array().map(|a| a.len() as u64)))
+            .and_then(|v| {
+                v.get("items")
+                    .and_then(|i| i.as_array().map(|a| a.len() as u64))
+            })
             .unwrap_or(0)
     }
 
@@ -439,7 +446,10 @@ impl KubernetesScanner {
             None => return Vec::new(),
         };
 
-        items.iter().filter_map(|item| self.parse_pod(item)).collect()
+        items
+            .iter()
+            .filter_map(|item| self.parse_pod(item))
+            .collect()
     }
 
     fn parse_pod(&self, item: &serde_json::Value) -> Option<KubePod> {
@@ -472,9 +482,18 @@ impl KubernetesScanner {
             .unwrap_or("default")
             .to_string();
 
-        let host_network = spec.get("hostNetwork").and_then(|b| b.as_bool()).unwrap_or(false);
-        let host_pid = spec.get("hostPID").and_then(|b| b.as_bool()).unwrap_or(false);
-        let host_ipc = spec.get("hostIPC").and_then(|b| b.as_bool()).unwrap_or(false);
+        let host_network = spec
+            .get("hostNetwork")
+            .and_then(|b| b.as_bool())
+            .unwrap_or(false);
+        let host_pid = spec
+            .get("hostPID")
+            .and_then(|b| b.as_bool())
+            .unwrap_or(false);
+        let host_ipc = spec
+            .get("hostIPC")
+            .and_then(|b| b.as_bool())
+            .unwrap_or(false);
 
         // Parse security context
         let pod_sc = spec.get("securityContext");
@@ -567,37 +586,80 @@ impl KubernetesScanner {
             .and_then(|p| p.as_array())
             .map(|arr| {
                 arr.iter()
-                    .filter_map(|p| p.get("containerPort").and_then(|c| c.as_u64()).map(|c| c as u16))
+                    .filter_map(|p| {
+                        p.get("containerPort")
+                            .and_then(|c| c.as_u64())
+                            .map(|c| c as u16)
+                    })
                     .collect()
             })
             .unwrap_or_default();
 
         // Parse resources
-        let resources = item.get("resources").map(|r| ContainerResources {
-            cpu_request: r.get("requests").and_then(|req| req.get("cpu")).and_then(|c| c.as_str()).map(String::from),
-            cpu_limit: r.get("limits").and_then(|lim| lim.get("cpu")).and_then(|c| c.as_str()).map(String::from),
-            memory_request: r.get("requests").and_then(|req| req.get("memory")).and_then(|m| m.as_str()).map(String::from),
-            memory_limit: r.get("limits").and_then(|lim| lim.get("memory")).and_then(|m| m.as_str()).map(String::from),
-        }).unwrap_or_default();
+        let resources = item
+            .get("resources")
+            .map(|r| ContainerResources {
+                cpu_request: r
+                    .get("requests")
+                    .and_then(|req| req.get("cpu"))
+                    .and_then(|c| c.as_str())
+                    .map(String::from),
+                cpu_limit: r
+                    .get("limits")
+                    .and_then(|lim| lim.get("cpu"))
+                    .and_then(|c| c.as_str())
+                    .map(String::from),
+                memory_request: r
+                    .get("requests")
+                    .and_then(|req| req.get("memory"))
+                    .and_then(|m| m.as_str())
+                    .map(String::from),
+                memory_limit: r
+                    .get("limits")
+                    .and_then(|lim| lim.get("memory"))
+                    .and_then(|m| m.as_str())
+                    .map(String::from),
+            })
+            .unwrap_or_default();
 
         // Parse security context
         let sc = item.get("securityContext");
         let security_context = ContainerSecurityContext {
-            privileged: sc.and_then(|s| s.get("privileged")).and_then(|b| b.as_bool()).unwrap_or(false),
-            run_as_non_root: sc.and_then(|s| s.get("runAsNonRoot")).and_then(|b| b.as_bool()).unwrap_or(false),
-            read_only_root_fs: sc.and_then(|s| s.get("readOnlyRootFilesystem")).and_then(|b| b.as_bool()).unwrap_or(false),
-            allow_privilege_escalation: sc.and_then(|s| s.get("allowPrivilegeEscalation")).and_then(|b| b.as_bool()).unwrap_or(true),
+            privileged: sc
+                .and_then(|s| s.get("privileged"))
+                .and_then(|b| b.as_bool())
+                .unwrap_or(false),
+            run_as_non_root: sc
+                .and_then(|s| s.get("runAsNonRoot"))
+                .and_then(|b| b.as_bool())
+                .unwrap_or(false),
+            read_only_root_fs: sc
+                .and_then(|s| s.get("readOnlyRootFilesystem"))
+                .and_then(|b| b.as_bool())
+                .unwrap_or(false),
+            allow_privilege_escalation: sc
+                .and_then(|s| s.get("allowPrivilegeEscalation"))
+                .and_then(|b| b.as_bool())
+                .unwrap_or(true),
             capabilities_add: sc
                 .and_then(|s| s.get("capabilities"))
                 .and_then(|c| c.get("add"))
                 .and_then(|a| a.as_array())
-                .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+                .map(|arr| {
+                    arr.iter()
+                        .filter_map(|v| v.as_str().map(String::from))
+                        .collect()
+                })
                 .unwrap_or_default(),
             capabilities_drop: sc
                 .and_then(|s| s.get("capabilities"))
                 .and_then(|c| c.get("drop"))
                 .and_then(|a| a.as_array())
-                .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+                .map(|arr| {
+                    arr.iter()
+                        .filter_map(|v| v.as_str().map(String::from))
+                        .collect()
+                })
                 .unwrap_or_default(),
         };
 
@@ -635,7 +697,11 @@ impl KubernetesScanner {
 
         // Determine volume type
         let (volume_type, host_path) = if item.get("hostPath").is_some() {
-            let hp = item.get("hostPath").and_then(|h| h.get("path")).and_then(|p| p.as_str()).unwrap_or("");
+            let hp = item
+                .get("hostPath")
+                .and_then(|h| h.get("path"))
+                .and_then(|p| p.as_str())
+                .unwrap_or("");
             ("hostPath".to_string(), Some(hp.to_string()))
         } else if item.get("configMap").is_some() {
             ("configMap".to_string(), None)
@@ -680,7 +746,11 @@ impl KubernetesScanner {
 
         json.get("items")
             .and_then(|i| i.as_array())
-            .map(|arr| arr.iter().filter_map(|item| self.parse_service(item)).collect())
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|item| self.parse_service(item))
+                    .collect()
+            })
             .unwrap_or_default()
     }
 
@@ -689,15 +759,31 @@ impl KubernetesScanner {
         let spec = item.get("spec")?;
 
         let name = metadata.get("name")?.as_str()?.to_string();
-        let namespace = metadata.get("namespace").and_then(|n| n.as_str()).unwrap_or("default").to_string();
+        let namespace = metadata
+            .get("namespace")
+            .and_then(|n| n.as_str())
+            .unwrap_or("default")
+            .to_string();
 
-        let service_type = spec.get("type").and_then(|t| t.as_str()).unwrap_or("ClusterIP").to_string();
-        let cluster_ip = spec.get("clusterIP").and_then(|c| c.as_str()).unwrap_or("").to_string();
+        let service_type = spec
+            .get("type")
+            .and_then(|t| t.as_str())
+            .unwrap_or("ClusterIP")
+            .to_string();
+        let cluster_ip = spec
+            .get("clusterIP")
+            .and_then(|c| c.as_str())
+            .unwrap_or("")
+            .to_string();
 
         let external_ips: Vec<String> = spec
             .get("externalIPs")
             .and_then(|e| e.as_array())
-            .map(|arr| arr.iter().filter_map(|ip| ip.as_str().map(String::from)).collect())
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|ip| ip.as_str().map(String::from))
+                    .collect()
+            })
             .unwrap_or_default();
 
         let ports: Vec<ServicePort> = spec
@@ -706,10 +792,19 @@ impl KubernetesScanner {
             .map(|arr| {
                 arr.iter()
                     .map(|p| ServicePort {
-                        name: p.get("name").and_then(|n| n.as_str()).unwrap_or("").to_string(),
+                        name: p
+                            .get("name")
+                            .and_then(|n| n.as_str())
+                            .unwrap_or("")
+                            .to_string(),
                         port: p.get("port").and_then(|p| p.as_u64()).unwrap_or(0) as u16,
-                        target_port: p.get("targetPort").and_then(|t| t.as_u64()).unwrap_or(0) as u16,
-                        protocol: p.get("protocol").and_then(|p| p.as_str()).unwrap_or("TCP").to_string(),
+                        target_port: p.get("targetPort").and_then(|t| t.as_u64()).unwrap_or(0)
+                            as u16,
+                        protocol: p
+                            .get("protocol")
+                            .and_then(|p| p.as_str())
+                            .unwrap_or("TCP")
+                            .to_string(),
                         node_port: p.get("nodePort").and_then(|n| n.as_u64()).map(|n| n as u16),
                     })
                     .collect()
@@ -770,7 +865,11 @@ impl KubernetesScanner {
 
         json.get("items")
             .and_then(|i| i.as_array())
-            .map(|arr| arr.iter().filter_map(|item| self.parse_deployment(item)).collect())
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|item| self.parse_deployment(item))
+                    .collect()
+            })
             .unwrap_or_default()
     }
 
@@ -780,10 +879,17 @@ impl KubernetesScanner {
         let status = item.get("status")?;
 
         let name = metadata.get("name")?.as_str()?.to_string();
-        let namespace = metadata.get("namespace").and_then(|n| n.as_str()).unwrap_or("default").to_string();
+        let namespace = metadata
+            .get("namespace")
+            .and_then(|n| n.as_str())
+            .unwrap_or("default")
+            .to_string();
 
         let replicas = spec.get("replicas").and_then(|r| r.as_u64()).unwrap_or(1) as u32;
-        let ready_replicas = status.get("readyReplicas").and_then(|r| r.as_u64()).unwrap_or(0) as u32;
+        let ready_replicas = status
+            .get("readyReplicas")
+            .and_then(|r| r.as_u64())
+            .unwrap_or(0) as u32;
 
         let strategy = spec
             .get("strategy")
@@ -900,7 +1006,11 @@ impl KubernetesScanner {
 
     fn get_roles(&self) -> Vec<KubeRole> {
         let mut cmd = self.kubectl_cmd();
-        cmd.arg("get").arg("roles").arg("--all-namespaces").arg("-o").arg("json");
+        cmd.arg("get")
+            .arg("roles")
+            .arg("--all-namespaces")
+            .arg("-o")
+            .arg("json");
 
         let output = match cmd.output() {
             Ok(o) if o.status.success() => o,
@@ -919,9 +1029,17 @@ impl KubernetesScanner {
                     .filter_map(|item| {
                         let metadata = item.get("metadata")?;
                         let name = metadata.get("name")?.as_str()?.to_string();
-                        let namespace = metadata.get("namespace").and_then(|n| n.as_str()).unwrap_or("default").to_string();
+                        let namespace = metadata
+                            .get("namespace")
+                            .and_then(|n| n.as_str())
+                            .unwrap_or("default")
+                            .to_string();
                         let rules = Self::parse_rules(item.get("rules")?);
-                        Some(KubeRole { name, namespace, rules })
+                        Some(KubeRole {
+                            name,
+                            namespace,
+                            rules,
+                        })
                     })
                     .collect()
             })
@@ -937,22 +1055,38 @@ impl KubernetesScanner {
                         api_groups: rule
                             .get("apiGroups")
                             .and_then(|a| a.as_array())
-                            .map(|a| a.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+                            .map(|a| {
+                                a.iter()
+                                    .filter_map(|v| v.as_str().map(String::from))
+                                    .collect()
+                            })
                             .unwrap_or_default(),
                         resources: rule
                             .get("resources")
                             .and_then(|r| r.as_array())
-                            .map(|a| a.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+                            .map(|a| {
+                                a.iter()
+                                    .filter_map(|v| v.as_str().map(String::from))
+                                    .collect()
+                            })
                             .unwrap_or_default(),
                         verbs: rule
                             .get("verbs")
                             .and_then(|v| v.as_array())
-                            .map(|a| a.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+                            .map(|a| {
+                                a.iter()
+                                    .filter_map(|v| v.as_str().map(String::from))
+                                    .collect()
+                            })
                             .unwrap_or_default(),
                         resource_names: rule
                             .get("resourceNames")
                             .and_then(|r| r.as_array())
-                            .map(|a| a.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+                            .map(|a| {
+                                a.iter()
+                                    .filter_map(|v| v.as_str().map(String::from))
+                                    .collect()
+                            })
                             .unwrap_or_default(),
                     })
                     .collect()
@@ -962,7 +1096,11 @@ impl KubernetesScanner {
 
     fn get_role_bindings(&self) -> Vec<KubeRoleBinding> {
         let mut cmd = self.kubectl_cmd();
-        cmd.arg("get").arg("rolebindings").arg("--all-namespaces").arg("-o").arg("json");
+        cmd.arg("get")
+            .arg("rolebindings")
+            .arg("--all-namespaces")
+            .arg("-o")
+            .arg("json");
 
         let output = match cmd.output() {
             Ok(o) if o.status.success() => o,
@@ -981,7 +1119,11 @@ impl KubernetesScanner {
                     .filter_map(|item| {
                         let metadata = item.get("metadata")?;
                         let name = metadata.get("name")?.as_str()?.to_string();
-                        let namespace = metadata.get("namespace").and_then(|n| n.as_str()).unwrap_or("default").to_string();
+                        let namespace = metadata
+                            .get("namespace")
+                            .and_then(|n| n.as_str())
+                            .unwrap_or("default")
+                            .to_string();
                         let role_ref = item
                             .get("roleRef")
                             .and_then(|r| r.get("name"))
@@ -1015,7 +1157,11 @@ impl KubernetesScanner {
 
     fn get_service_accounts(&self) -> Vec<KubeServiceAccount> {
         let mut cmd = self.kubectl_cmd();
-        cmd.arg("get").arg("serviceaccounts").arg("--all-namespaces").arg("-o").arg("json");
+        cmd.arg("get")
+            .arg("serviceaccounts")
+            .arg("--all-namespaces")
+            .arg("-o")
+            .arg("json");
 
         let output = match cmd.output() {
             Ok(o) if o.status.success() => o,
@@ -1034,7 +1180,11 @@ impl KubernetesScanner {
                     .filter_map(|item| {
                         let metadata = item.get("metadata")?;
                         let name = metadata.get("name")?.as_str()?.to_string();
-                        let namespace = metadata.get("namespace").and_then(|n| n.as_str()).unwrap_or("default").to_string();
+                        let namespace = metadata
+                            .get("namespace")
+                            .and_then(|n| n.as_str())
+                            .unwrap_or("default")
+                            .to_string();
                         let automount = item
                             .get("automountServiceAccountToken")
                             .and_then(|b| b.as_bool())
@@ -1094,7 +1244,8 @@ impl KubernetesScanner {
         }
 
         // Check for service accounts with automount
-        let sa_with_automount: Vec<&KubeServiceAccount> = assessment.service_accounts
+        let sa_with_automount: Vec<&KubeServiceAccount> = assessment
+            .service_accounts
             .iter()
             .filter(|sa| sa.automount_token)
             .collect();
@@ -1113,7 +1264,8 @@ impl KubernetesScanner {
         for role in &assessment.roles {
             for rule in &role.rules {
                 if rule.resources.contains(&"secrets".to_string())
-                    && (rule.verbs.contains(&"get".to_string()) || rule.verbs.contains(&"*".to_string()))
+                    && (rule.verbs.contains(&"get".to_string())
+                        || rule.verbs.contains(&"*".to_string()))
                 {
                     findings.push(RbacFinding {
                         title: format!("Role '{}' in namespace '{}' can read secrets", role.name, role.namespace),
@@ -1154,7 +1306,7 @@ impl KubernetesScanner {
                 findings.push(KubeSecurityFinding {
                     title: rbac_finding.title.clone(),
                     description: rbac_finding.description.clone(),
-                    severity: rbac_finding.severity.clone(),
+                    severity: rbac_finding.severity,
                     category: "rbac".to_string(),
                     namespace: String::new(),
                     resource: rbac_finding.subject.clone(),
@@ -1184,8 +1336,12 @@ impl KubernetesScanner {
 
         if pod.host_pid {
             findings.push(KubeSecurityFinding {
-                title: format!("Pod '{}' in '{}' shares host PID namespace", pod.name, pod.namespace),
-                description: "Pods with hostPID can see and signal all processes on the host.".to_string(),
+                title: format!(
+                    "Pod '{}' in '{}' shares host PID namespace",
+                    pod.name, pod.namespace
+                ),
+                description: "Pods with hostPID can see and signal all processes on the host."
+                    .to_string(),
                 severity: ContainerSeverity::High,
                 category: "pod".to_string(),
                 namespace: pod.namespace.clone(),
@@ -1250,12 +1406,14 @@ impl KubernetesScanner {
             if container.resources.cpu_limit.is_none() {
                 findings.push(KubeSecurityFinding {
                     title: format!("Container '{}' has no CPU limit", container.name),
-                    description: "Containers without CPU limits can monopolize node resources.".to_string(),
+                    description: "Containers without CPU limits can monopolize node resources."
+                        .to_string(),
                     severity: ContainerSeverity::Low,
                     category: "container".to_string(),
                     namespace: pod.namespace.clone(),
                     resource: format!("{}/{}", pod.name, container.name),
-                    recommendation: "Set CPU limits in the container resources specification.".to_string(),
+                    recommendation: "Set CPU limits in the container resources specification."
+                        .to_string(),
                 });
             }
 
@@ -1314,13 +1472,22 @@ impl KubernetesScanner {
                     _ => ContainerSeverity::Medium,
                 };
                 findings.push(KubeSecurityFinding {
-                    title: format!("Pod '{}' mounts host path: {:?}", pod.name, volume.host_path),
-                    description: format!("Host path volume '{}' mounts {} from the host.", volume.name, volume.host_path.as_deref().unwrap_or("unknown")),
+                    title: format!(
+                        "Pod '{}' mounts host path: {:?}",
+                        pod.name, volume.host_path
+                    ),
+                    description: format!(
+                        "Host path volume '{}' mounts {} from the host.",
+                        volume.name,
+                        volume.host_path.as_deref().unwrap_or("unknown")
+                    ),
                     severity,
                     category: "volume".to_string(),
                     namespace: pod.namespace.clone(),
                     resource: pod.name.clone(),
-                    recommendation: "Use PersistentVolumeClaims or emptyDir instead of hostPath mounts.".to_string(),
+                    recommendation:
+                        "Use PersistentVolumeClaims or emptyDir instead of hostPath mounts."
+                            .to_string(),
                 });
             }
         }
@@ -1443,7 +1610,9 @@ mod tests {
             ..Default::default()
         };
         let findings = scanner.assess_pod_security(&pod);
-        assert!(findings.iter().any(|f| f.severity == ContainerSeverity::Critical && f.title.contains("privileged")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == ContainerSeverity::Critical && f.title.contains("privileged")));
     }
 
     #[test]
@@ -1456,7 +1625,9 @@ mod tests {
             ..Default::default()
         };
         let findings = scanner.assess_pod_security(&pod);
-        assert!(findings.iter().any(|f| f.severity == ContainerSeverity::High && f.title.contains("network")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == ContainerSeverity::High && f.title.contains("network")));
     }
 
     #[test]
@@ -1469,7 +1640,9 @@ mod tests {
             ..Default::default()
         };
         let findings = scanner.assess_pod_security(&pod);
-        assert!(findings.iter().any(|f| f.severity == ContainerSeverity::High && f.title.contains("PID")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == ContainerSeverity::High && f.title.contains("PID")));
     }
 
     #[test]
@@ -1482,7 +1655,10 @@ mod tests {
             ..Default::default()
         };
         let findings = scanner.assess_pod_security(&pod);
-        assert!(findings.iter().any(|f| f.severity == ContainerSeverity::Low && f.title.contains("default service account")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == ContainerSeverity::Low
+                && f.title.contains("default service account")));
     }
 
     #[test]
@@ -1501,7 +1677,9 @@ mod tests {
             ..Default::default()
         };
         let findings = scanner.assess_pod_security(&pod);
-        assert!(findings.iter().any(|f| f.severity == ContainerSeverity::Critical && f.title.contains("host path")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == ContainerSeverity::Critical && f.title.contains("host path")));
     }
 
     #[test]
@@ -1514,7 +1692,9 @@ mod tests {
             ..Default::default()
         };
         let findings = scanner.assess_service_security(&service);
-        assert!(findings.iter().any(|f| f.severity == ContainerSeverity::Medium && f.title.contains("NodePort")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == ContainerSeverity::Medium && f.title.contains("NodePort")));
     }
 
     #[test]
@@ -1527,7 +1707,9 @@ mod tests {
             ..Default::default()
         };
         let findings = scanner.assess_service_security(&service);
-        assert!(findings.iter().any(|f| f.severity == ContainerSeverity::Low && f.title.contains("LoadBalancer")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == ContainerSeverity::Low && f.title.contains("LoadBalancer")));
     }
 
     #[test]
@@ -1547,7 +1729,9 @@ mod tests {
             ..Default::default()
         };
         let findings = scanner.assess_pod_security(&pod);
-        assert!(findings.iter().any(|f| f.severity == ContainerSeverity::Medium && f.title.contains("memory limit")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == ContainerSeverity::Medium && f.title.contains("memory limit")));
     }
 
     #[test]
@@ -1564,7 +1748,9 @@ mod tests {
             ..Default::default()
         };
         let findings = scanner.assess_pod_security(&pod);
-        assert!(findings.iter().any(|f| f.severity == ContainerSeverity::Low && f.title.contains("latest")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == ContainerSeverity::Low && f.title.contains("latest")));
     }
 
     #[test]
@@ -1580,7 +1766,9 @@ mod tests {
             ..Default::default()
         };
         let findings = scanner.assess_deployment_security(&deployment);
-        assert!(findings.iter().any(|f| f.severity == ContainerSeverity::Low && f.title.contains("auto-mounts")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == ContainerSeverity::Low && f.title.contains("auto-mounts")));
     }
 
     #[test]
@@ -1600,7 +1788,10 @@ mod tests {
             ..Default::default()
         };
         let findings = scanner.assess_pod_security(&pod);
-        assert!(findings.iter().any(|f| f.severity == ContainerSeverity::Medium && f.title.contains("privilege escalation")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == ContainerSeverity::Medium
+                && f.title.contains("privilege escalation")));
     }
 
     #[test]
@@ -1620,7 +1811,9 @@ mod tests {
             ..Default::default()
         };
         let findings = scanner.assess_pod_security(&pod);
-        assert!(findings.iter().any(|f| f.severity == ContainerSeverity::Low && f.title.contains("writable root")));
+        assert!(findings
+            .iter()
+            .any(|f| f.severity == ContainerSeverity::Low && f.title.contains("writable root")));
     }
 
     #[test]

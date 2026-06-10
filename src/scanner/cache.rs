@@ -1,4 +1,3 @@
-use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -149,7 +148,8 @@ impl ScanCache {
     }
 
     pub async fn put(&self, key: CacheKey, results: ScanResults) {
-        self.put_with_ttl(key, results, self.config.default_ttl).await;
+        self.put_with_ttl(key, results, self.config.default_ttl)
+            .await;
     }
 
     pub async fn put_with_ttl(&self, key: CacheKey, results: ScanResults, ttl: Duration) {
@@ -192,9 +192,7 @@ impl ScanCache {
         let mut entries = self.entries.write().await;
         let count = entries.len() as u64;
         entries.clear();
-        self.stats
-            .invalidations
-            .fetch_add(count, Ordering::Relaxed);
+        self.stats.invalidations.fetch_add(count, Ordering::Relaxed);
     }
 
     pub async fn invalidate_target(&self, target: &str) -> usize {
@@ -230,10 +228,7 @@ impl ScanCache {
 
     pub async fn contains(&self, key: &CacheKey) -> bool {
         let entries = self.entries.read().await;
-        entries
-            .get(key)
-            .map(|e| !e.is_expired())
-            .unwrap_or(false)
+        entries.get(key).map(|e| !e.is_expired()).unwrap_or(false)
     }
 
     pub async fn cleanup(&self) -> usize {
@@ -404,24 +399,15 @@ mod tests {
         });
 
         cache
-            .put(
-                CacheKey::new("host1", "80", "syn"),
-                create_test_results(80),
-            )
+            .put(CacheKey::new("host1", "80", "syn"), create_test_results(80))
             .await;
         tokio::time::sleep(Duration::from_millis(10)).await;
         cache
-            .put(
-                CacheKey::new("host2", "80", "syn"),
-                create_test_results(80),
-            )
+            .put(CacheKey::new("host2", "80", "syn"), create_test_results(80))
             .await;
         tokio::time::sleep(Duration::from_millis(10)).await;
         cache
-            .put(
-                CacheKey::new("host3", "80", "syn"),
-                create_test_results(80),
-            )
+            .put(CacheKey::new("host3", "80", "syn"), create_test_results(80))
             .await;
 
         assert!(cache.len().await <= 2);
@@ -463,16 +449,10 @@ mod tests {
         });
 
         cache
-            .put(
-                CacheKey::new("host1", "80", "syn"),
-                create_test_results(80),
-            )
+            .put(CacheKey::new("host1", "80", "syn"), create_test_results(80))
             .await;
         cache
-            .put(
-                CacheKey::new("host2", "80", "syn"),
-                create_test_results(80),
-            )
+            .put(CacheKey::new("host2", "80", "syn"), create_test_results(80))
             .await;
 
         tokio::time::sleep(Duration::from_millis(100)).await;

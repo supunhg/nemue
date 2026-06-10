@@ -103,11 +103,9 @@ impl Condition {
                 let b: f64 = self.value.parse().unwrap_or(0.0);
                 a < b
             }
-            ConditionOperator::Regex => {
-                regex::Regex::new(&self.value)
-                    .map(|re| re.is_match(actual))
-                    .unwrap_or(false)
-            }
+            ConditionOperator::Regex => regex::Regex::new(&self.value)
+                .map(|re| re.is_match(actual))
+                .unwrap_or(false),
         }
     }
 }
@@ -325,20 +323,32 @@ impl Playbook {
     }
 
     pub fn completed_steps(&self) -> usize {
-        self.steps.iter().filter(|s| s.status == StepStatus::Completed).count()
+        self.steps
+            .iter()
+            .filter(|s| s.status == StepStatus::Completed)
+            .count()
     }
 
     pub fn failed_steps(&self) -> usize {
-        self.steps.iter().filter(|s| s.status == StepStatus::Failed).count()
+        self.steps
+            .iter()
+            .filter(|s| s.status == StepStatus::Failed)
+            .count()
     }
 
     pub fn pending_steps(&self) -> usize {
-        self.steps.iter().filter(|s| s.status == StepStatus::Pending).count()
+        self.steps
+            .iter()
+            .filter(|s| s.status == StepStatus::Pending)
+            .count()
     }
 
     pub fn is_complete(&self) -> bool {
         self.steps.iter().all(|s| {
-            matches!(s.status, StepStatus::Completed | StepStatus::Failed | StepStatus::Skipped)
+            matches!(
+                s.status,
+                StepStatus::Completed | StepStatus::Failed | StepStatus::Skipped
+            )
         })
     }
 
@@ -346,7 +356,13 @@ impl Playbook {
         if self.steps.is_empty() {
             return 0.0;
         }
-        let done = self.completed_steps() + self.failed_steps() + self.steps.iter().filter(|s| s.status == StepStatus::Skipped).count();
+        let done = self.completed_steps()
+            + self.failed_steps()
+            + self
+                .steps
+                .iter()
+                .filter(|s| s.status == StepStatus::Skipped)
+                .count();
         done as f64 / self.steps.len() as f64
     }
 
@@ -470,7 +486,8 @@ impl PlaybookTemplate {
     }
 
     pub fn with_variable(mut self, key: &str, value: &str) -> Self {
-        self.default_variables.insert(key.to_string(), value.to_string());
+        self.default_variables
+            .insert(key.to_string(), value.to_string());
         self
     }
 
@@ -551,7 +568,12 @@ impl PlaybookLibrary {
         self.playbooks.remove(id)
     }
 
-    pub fn create_from_template(&mut self, template_name: &str, playbook_name: &str, target: &str) -> Option<String> {
+    pub fn create_from_template(
+        &mut self,
+        template_name: &str,
+        playbook_name: &str,
+        target: &str,
+    ) -> Option<String> {
         let template = self.templates.get(template_name)?.clone();
         let playbook = template.instantiate(playbook_name, target);
         let id = playbook.id.clone();
@@ -619,9 +641,13 @@ impl PlaybookLibrary {
                     .with_template("comprehensive"),
             )
             .with_step_template(
-                StepTemplate::new("db-service-scan", "connect", "1433,1521,3306,5432,6379,27017")
-                    .with_description("Check database services")
-                    .with_template("comprehensive-db"),
+                StepTemplate::new(
+                    "db-service-scan",
+                    "connect",
+                    "1433,1521,3306,5432,6379,27017",
+                )
+                .with_description("Check database services")
+                .with_template("comprehensive-db"),
             ),
         );
     }
@@ -665,7 +691,9 @@ impl PlaybookBuilder {
     }
 
     pub fn variable(mut self, key: &str, value: &str) -> Self {
-        self.playbook.variables.insert(key.to_string(), value.to_string());
+        self.playbook
+            .variables
+            .insert(key.to_string(), value.to_string());
         self
     }
 
@@ -763,8 +791,9 @@ mod tests {
         let step_no_cond = PlaybookStep::new("no-cond", "connect", "10.0.0.1");
         assert!(step_no_cond.should_execute(&context));
 
-        let step_with_cond = PlaybookStep::new("with-cond", "connect", "10.0.0.1")
-            .with_condition(Condition::new("skip_step", ConditionOperator::Equals, "false"));
+        let step_with_cond = PlaybookStep::new("with-cond", "connect", "10.0.0.1").with_condition(
+            Condition::new("skip_step", ConditionOperator::Equals, "false"),
+        );
         assert!(!step_with_cond.should_execute(&context));
     }
 
@@ -895,7 +924,10 @@ mod tests {
     #[test]
     fn test_playbook_category_display() {
         assert_eq!(PlaybookCategory::Recon.to_string(), "recon");
-        assert_eq!(PlaybookCategory::VulnAssessment.to_string(), "vuln_assessment");
+        assert_eq!(
+            PlaybookCategory::VulnAssessment.to_string(),
+            "vuln_assessment"
+        );
         assert_eq!(PlaybookCategory::Compliance.to_string(), "compliance");
         assert_eq!(PlaybookCategory::Incident.to_string(), "incident");
         assert_eq!(PlaybookCategory::Custom.to_string(), "custom");

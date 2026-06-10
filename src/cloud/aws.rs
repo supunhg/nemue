@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -47,7 +48,10 @@ pub enum S3PublicAccess {
 
 impl S3PublicAccess {
     pub fn is_public(&self) -> bool {
-        matches!(self, S3PublicAccess::PublicRead | S3PublicAccess::PublicReadWrite)
+        matches!(
+            self,
+            S3PublicAccess::PublicRead | S3PublicAccess::PublicReadWrite
+        )
     }
 
     pub fn severity_label(&self) -> &str {
@@ -204,15 +208,37 @@ impl AwsScanReport {
     }
 
     pub fn critical_count(&self) -> usize {
-        self.iam_findings.iter().filter(|f| f.severity == "CRITICAL").count()
-            + self.sg_findings.iter().filter(|f| f.severity == "CRITICAL").count()
-            + self.cloudtrail_findings.iter().filter(|f| f.severity == "CRITICAL").count()
+        self.iam_findings
+            .iter()
+            .filter(|f| f.severity == "CRITICAL")
+            .count()
+            + self
+                .sg_findings
+                .iter()
+                .filter(|f| f.severity == "CRITICAL")
+                .count()
+            + self
+                .cloudtrail_findings
+                .iter()
+                .filter(|f| f.severity == "CRITICAL")
+                .count()
     }
 
     pub fn high_count(&self) -> usize {
-        self.iam_findings.iter().filter(|f| f.severity == "HIGH").count()
-            + self.sg_findings.iter().filter(|f| f.severity == "HIGH").count()
-            + self.cloudtrail_findings.iter().filter(|f| f.severity == "HIGH").count()
+        self.iam_findings
+            .iter()
+            .filter(|f| f.severity == "HIGH")
+            .count()
+            + self
+                .sg_findings
+                .iter()
+                .filter(|f| f.severity == "HIGH")
+                .count()
+            + self
+                .cloudtrail_findings
+                .iter()
+                .filter(|f| f.severity == "HIGH")
+                .count()
     }
 }
 
@@ -225,13 +251,27 @@ impl AwsScanner {
         Self { config }
     }
 
-    pub fn analyze_s3_bucket(bucket_name: &str, public_acl: bool, encrypted: bool, versioning: bool, logging: bool) -> S3Bucket {
+    pub fn analyze_s3_bucket(
+        bucket_name: &str,
+        public_acl: bool,
+        encrypted: bool,
+        versioning: bool,
+        logging: bool,
+    ) -> S3Bucket {
         S3Bucket {
             name: bucket_name.to_string(),
             region: None,
             creation_date: None,
-            public_access: if public_acl { S3PublicAccess::PublicRead } else { S3PublicAccess::Private },
-            encryption: if encrypted { S3EncryptionStatus::SseS3 } else { S3EncryptionStatus::None },
+            public_access: if public_acl {
+                S3PublicAccess::PublicRead
+            } else {
+                S3PublicAccess::Private
+            },
+            encryption: if encrypted {
+                S3EncryptionStatus::SseS3
+            } else {
+                S3EncryptionStatus::None
+            },
             versioning,
             logging,
             tags: HashMap::new(),
@@ -257,7 +297,10 @@ impl AwsScanner {
                     finding_type: IamFindingType::UnusedCredentials,
                     resource: username.to_string(),
                     severity: "MEDIUM".to_string(),
-                    description: format!("IAM user '{}' has not been used in {} days", username, days_since_last_use),
+                    description: format!(
+                        "IAM user '{}' has not been used in {} days",
+                        username, days_since_last_use
+                    ),
                     recommendation: "Remove or deactivate unused IAM credentials".to_string(),
                 });
             }
@@ -276,7 +319,14 @@ impl AwsScanner {
         findings
     }
 
-    pub fn check_password_policy(min_length: u32, require_symbols: bool, require_numbers: bool, require_uppercase: bool, require_lowercase: bool, max_age: u32) -> Vec<IamFinding> {
+    pub fn check_password_policy(
+        min_length: u32,
+        require_symbols: bool,
+        require_numbers: bool,
+        require_uppercase: bool,
+        require_lowercase: bool,
+        max_age: u32,
+    ) -> Vec<IamFinding> {
         let mut findings = Vec::new();
 
         if min_length < 14 {
@@ -284,8 +334,12 @@ impl AwsScanner {
                 finding_type: IamFindingType::PasswordPolicyWeak,
                 resource: "account-password-policy".to_string(),
                 severity: "MEDIUM".to_string(),
-                description: format!("Password minimum length is {}, should be at least 14", min_length),
-                recommendation: "Increase minimum password length to 14 or more characters".to_string(),
+                description: format!(
+                    "Password minimum length is {}, should be at least 14",
+                    min_length
+                ),
+                recommendation: "Increase minimum password length to 14 or more characters"
+                    .to_string(),
             });
         }
 
@@ -334,7 +388,10 @@ impl AwsScanner {
                 finding_type: IamFindingType::PasswordPolicyWeak,
                 resource: "account-password-policy".to_string(),
                 severity: "MEDIUM".to_string(),
-                description: format!("Password maximum age is {} days, should be 90 or less", max_age),
+                description: format!(
+                    "Password maximum age is {} days, should be 90 or less",
+                    max_age
+                ),
                 recommendation: "Set maximum password age to 90 days or less".to_string(),
             });
         }
@@ -360,15 +417,21 @@ impl AwsScanner {
                 finding_type: IamFindingType::RootUserUsage,
                 resource: "root".to_string(),
                 severity: "CRITICAL".to_string(),
-                description: format!("Root account has {} active access key(s)", access_keys_count),
-                recommendation: "Delete root account access keys and use IAM users instead".to_string(),
+                description: format!(
+                    "Root account has {} active access key(s)",
+                    access_keys_count
+                ),
+                recommendation: "Delete root account access keys and use IAM users instead"
+                    .to_string(),
             });
         }
 
         findings
     }
 
-    pub fn analyze_security_groups(groups: &[(&str, &str, Option<&str>, &[(u16, u16, &str, &str)])]) -> Vec<SecurityGroupFinding> {
+    pub fn analyze_security_groups(
+        groups: &[(&str, &str, Option<&str>, &[(u16, u16, &str, &str)])],
+    ) -> Vec<SecurityGroupFinding> {
         let mut findings = Vec::new();
 
         for &(group_id, group_name, vpc_id, rules) in groups {
@@ -386,7 +449,11 @@ impl AwsScanner {
                         SecurityGroupFindingType::OpenToWorld
                     };
 
-                    let severity = if matches!(finding_type, SecurityGroupFindingType::UnrestrictedSsh | SecurityGroupFindingType::UnrestrictedRdp) {
+                    let severity = if matches!(
+                        finding_type,
+                        SecurityGroupFindingType::UnrestrictedSsh
+                            | SecurityGroupFindingType::UnrestrictedRdp
+                    ) {
                         "CRITICAL"
                     } else {
                         "HIGH"
@@ -397,7 +464,10 @@ impl AwsScanner {
                         group_name: group_name.to_string(),
                         vpc_id: vpc_id.map(|s| s.to_string()),
                         finding_type,
-                        rule_description: format!("Port {}/{} open to {}", port_from, port_to, source),
+                        rule_description: format!(
+                            "Port {}/{} open to {}",
+                            port_from, port_to, source
+                        ),
                         port_range: format!("{}-{}", port_from, port_to),
                         protocol: protocol.to_string(),
                         source: source.to_string(),
@@ -410,10 +480,20 @@ impl AwsScanner {
         findings
     }
 
-    pub fn analyze_cloudtrail(trails: &[(&str, bool, bool, bool, bool, bool)]) -> Vec<CloudTrailFinding> {
+    pub fn analyze_cloudtrail(
+        trails: &[(&str, bool, bool, bool, bool, bool)],
+    ) -> Vec<CloudTrailFinding> {
         let mut findings = Vec::new();
 
-        for &(trail_name, is_multi_region, is_logging, has_validation, has_encryption, has_s3_logging) in trails {
+        for &(
+            trail_name,
+            is_multi_region,
+            is_logging,
+            has_validation,
+            has_encryption,
+            has_s3_logging,
+        ) in trails
+        {
             if !is_logging {
                 findings.push(CloudTrailFinding {
                     trail_name: trail_name.to_string(),
@@ -429,8 +509,13 @@ impl AwsScanner {
                     trail_name: trail_name.to_string(),
                     finding_type: CloudTrailFindingType::MultiRegionNotEnabled,
                     severity: "MEDIUM".to_string(),
-                    description: format!("CloudTrail '{}' is not configured for multi-region", trail_name),
-                    recommendation: "Enable multi-region logging to capture events across all regions".to_string(),
+                    description: format!(
+                        "CloudTrail '{}' is not configured for multi-region",
+                        trail_name
+                    ),
+                    recommendation:
+                        "Enable multi-region logging to capture events across all regions"
+                            .to_string(),
                 });
             }
 
@@ -439,8 +524,12 @@ impl AwsScanner {
                     trail_name: trail_name.to_string(),
                     finding_type: CloudTrailFindingType::NoLogFileValidation,
                     severity: "MEDIUM".to_string(),
-                    description: format!("CloudTrail '{}' does not have log file validation enabled", trail_name),
-                    recommendation: "Enable log file validation to ensure log integrity".to_string(),
+                    description: format!(
+                        "CloudTrail '{}' does not have log file validation enabled",
+                        trail_name
+                    ),
+                    recommendation: "Enable log file validation to ensure log integrity"
+                        .to_string(),
                 });
             }
 
@@ -459,8 +548,12 @@ impl AwsScanner {
                     trail_name: trail_name.to_string(),
                     finding_type: CloudTrailFindingType::NoS3AccessLogging,
                     severity: "LOW".to_string(),
-                    description: format!("S3 bucket for CloudTrail '{}' does not have access logging enabled", trail_name),
-                    recommendation: "Enable S3 access logging for the CloudTrail bucket".to_string(),
+                    description: format!(
+                        "S3 bucket for CloudTrail '{}' does not have access logging enabled",
+                        trail_name
+                    ),
+                    recommendation: "Enable S3 access logging for the CloudTrail bucket"
+                        .to_string(),
                 });
             }
         }
@@ -511,27 +604,29 @@ mod tests {
 
     #[test]
     fn test_iam_findings_unused_credentials() {
-        let users = vec![
-            ("olduser", true, false, 120, false),
-        ];
+        let users = vec![("olduser", true, false, 120, false)];
         let findings = AwsScanner::check_iam_misconfigs(&users);
-        assert!(findings.iter().any(|f| f.finding_type == IamFindingType::UnusedCredentials));
+        assert!(findings
+            .iter()
+            .any(|f| f.finding_type == IamFindingType::UnusedCredentials));
     }
 
     #[test]
     fn test_iam_findings_admin_access() {
-        let users = vec![
-            ("admin-user", true, true, 5, true),
-        ];
+        let users = vec![("admin-user", true, true, 5, true)];
         let findings = AwsScanner::check_iam_misconfigs(&users);
-        assert!(findings.iter().any(|f| f.finding_type == IamFindingType::OverlyPermissivePolicy));
+        assert!(findings
+            .iter()
+            .any(|f| f.finding_type == IamFindingType::OverlyPermissivePolicy));
     }
 
     #[test]
     fn test_password_policy_weak() {
         let findings = AwsScanner::check_password_policy(8, false, false, false, false, 180);
         assert!(findings.len() >= 3);
-        assert!(findings.iter().any(|f| f.finding_type == IamFindingType::PasswordPolicyWeak));
+        assert!(findings
+            .iter()
+            .any(|f| f.finding_type == IamFindingType::PasswordPolicyWeak));
     }
 
     #[test]
@@ -555,56 +650,69 @@ mod tests {
 
     #[test]
     fn test_security_group_ssh_open() {
-        let groups = vec![
-            ("sg-123", "web-sg", Some("vpc-abc"), &[(22, 22, "tcp", "0.0.0.0/0")][..]),
-        ];
+        let groups = vec![(
+            "sg-123",
+            "web-sg",
+            Some("vpc-abc"),
+            &[(22, 22, "tcp", "0.0.0.0/0")][..],
+        )];
         let findings = AwsScanner::analyze_security_groups(&groups);
         assert_eq!(findings.len(), 1);
-        assert_eq!(findings[0].finding_type, SecurityGroupFindingType::UnrestrictedSsh);
+        assert_eq!(
+            findings[0].finding_type,
+            SecurityGroupFindingType::UnrestrictedSsh
+        );
         assert_eq!(findings[0].severity, "CRITICAL");
     }
 
     #[test]
     fn test_security_group_rdp_open() {
-        let groups = vec![
-            ("sg-456", "rdp-sg", Some("vpc-abc"), &[(3389, 3389, "tcp", "0.0.0.0/0")][..]),
-        ];
+        let groups = vec![(
+            "sg-456",
+            "rdp-sg",
+            Some("vpc-abc"),
+            &[(3389, 3389, "tcp", "0.0.0.0/0")][..],
+        )];
         let findings = AwsScanner::analyze_security_groups(&groups);
-        assert_eq!(findings[0].finding_type, SecurityGroupFindingType::UnrestrictedRdp);
+        assert_eq!(
+            findings[0].finding_type,
+            SecurityGroupFindingType::UnrestrictedRdp
+        );
     }
 
     #[test]
     fn test_security_group_private() {
-        let groups = vec![
-            ("sg-789", "internal-sg", Some("vpc-abc"), &[(8080, 8080, "tcp", "10.0.0.0/8")][..]),
-        ];
+        let groups = vec![(
+            "sg-789",
+            "internal-sg",
+            Some("vpc-abc"),
+            &[(8080, 8080, "tcp", "10.0.0.0/8")][..],
+        )];
         let findings = AwsScanner::analyze_security_groups(&groups);
         assert_eq!(findings.len(), 0);
     }
 
     #[test]
     fn test_cloudtrail_not_logging() {
-        let trails = vec![
-            ("main-trail", true, false, true, true, true),
-        ];
+        let trails = vec![("main-trail", true, false, true, true, true)];
         let findings = AwsScanner::analyze_cloudtrail(&trails);
-        assert!(findings.iter().any(|f| f.finding_type == CloudTrailFindingType::NotEnabled));
+        assert!(findings
+            .iter()
+            .any(|f| f.finding_type == CloudTrailFindingType::NotEnabled));
     }
 
     #[test]
     fn test_cloudtrail_no_validation() {
-        let trails = vec![
-            ("main-trail", true, true, false, true, true),
-        ];
+        let trails = vec![("main-trail", true, true, false, true, true)];
         let findings = AwsScanner::analyze_cloudtrail(&trails);
-        assert!(findings.iter().any(|f| f.finding_type == CloudTrailFindingType::NoLogFileValidation));
+        assert!(findings
+            .iter()
+            .any(|f| f.finding_type == CloudTrailFindingType::NoLogFileValidation));
     }
 
     #[test]
     fn test_cloudtrail_full_audit() {
-        let trails = vec![
-            ("main-trail", true, true, true, true, true),
-        ];
+        let trails = vec![("main-trail", true, true, true, true, true)];
         let findings = AwsScanner::analyze_cloudtrail(&trails);
         assert_eq!(findings.len(), 0);
     }
@@ -615,12 +723,32 @@ mod tests {
             config: AwsConfig::default(),
             buckets: vec![],
             iam_findings: vec![
-                IamFinding { finding_type: IamFindingType::NoMfa, resource: "u1".into(), severity: "CRITICAL".into(), description: "".into(), recommendation: "".into() },
-                IamFinding { finding_type: IamFindingType::NoMfa, resource: "u2".into(), severity: "HIGH".into(), description: "".into(), recommendation: "".into() },
+                IamFinding {
+                    finding_type: IamFindingType::NoMfa,
+                    resource: "u1".into(),
+                    severity: "CRITICAL".into(),
+                    description: "".into(),
+                    recommendation: "".into(),
+                },
+                IamFinding {
+                    finding_type: IamFindingType::NoMfa,
+                    resource: "u2".into(),
+                    severity: "HIGH".into(),
+                    description: "".into(),
+                    recommendation: "".into(),
+                },
             ],
-            sg_findings: vec![
-                SecurityGroupFinding { group_id: "sg1".into(), group_name: "".into(), vpc_id: None, finding_type: SecurityGroupFindingType::OpenToWorld, rule_description: "".into(), port_range: "".into(), protocol: "".into(), source: "".into(), severity: "HIGH".into() },
-            ],
+            sg_findings: vec![SecurityGroupFinding {
+                group_id: "sg1".into(),
+                group_name: "".into(),
+                vpc_id: None,
+                finding_type: SecurityGroupFindingType::OpenToWorld,
+                rule_description: "".into(),
+                port_range: "".into(),
+                protocol: "".into(),
+                source: "".into(),
+                severity: "HIGH".into(),
+            }],
             cloudtrail_findings: vec![],
             scan_timestamp: "2024-01-01T00:00:00Z".into(),
         };

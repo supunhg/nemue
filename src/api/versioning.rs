@@ -1,6 +1,6 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use chrono::{DateTime, Utc};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
@@ -157,11 +157,17 @@ impl VersionNegotiator {
     pub fn get_response_headers(&self, version: &ApiVersion) -> HashMap<String, String> {
         let mut headers = HashMap::new();
         headers.insert("X-API-Version".to_string(), version.as_str().to_string());
-        headers.insert("X-API-Current-Version".to_string(), self.config.current.as_str().to_string());
+        headers.insert(
+            "X-API-Current-Version".to_string(),
+            self.config.current.as_str().to_string(),
+        );
 
         if let Some(info) = self.config.get_deprecation_info(version) {
             headers.insert("X-API-Deprecated".to_string(), "true".to_string());
-            headers.insert("X-API-Deprecation-Message".to_string(), info.message.clone());
+            headers.insert(
+                "X-API-Deprecation-Message".to_string(),
+                info.message.clone(),
+            );
             if let Some(sunset) = info.sunset_at {
                 headers.insert("X-API-Sunset-Date".to_string(), sunset.to_rfc3339());
             }
@@ -201,14 +207,22 @@ impl VersionInfo {
     pub fn from_config(config: &VersionConfig) -> Self {
         Self {
             current: config.current.as_str().to_string(),
-            supported: config.supported.iter().map(|v| v.as_str().to_string()).collect(),
-            deprecated: config.deprecated.iter().map(|d| DeprecatedVersionInfo {
-                version: d.version.as_str().to_string(),
-                deprecated_at: d.deprecated_at.to_rfc3339(),
-                sunset_at: d.sunset_at.map(|dt| dt.to_rfc3339()),
-                message: d.message.clone(),
-                migration_guide: d.migration_guide.clone(),
-            }).collect(),
+            supported: config
+                .supported
+                .iter()
+                .map(|v| v.as_str().to_string())
+                .collect(),
+            deprecated: config
+                .deprecated
+                .iter()
+                .map(|d| DeprecatedVersionInfo {
+                    version: d.version.as_str().to_string(),
+                    deprecated_at: d.deprecated_at.to_rfc3339(),
+                    sunset_at: d.sunset_at.map(|dt| dt.to_rfc3339()),
+                    message: d.message.clone(),
+                    migration_guide: d.migration_guide.clone(),
+                })
+                .collect(),
             default_version: config.default_version.as_str().to_string(),
         }
     }
@@ -335,15 +349,23 @@ mod tests {
     #[test]
     fn test_negotiate_from_header() {
         let negotiator = VersionNegotiator::default();
-        assert_eq!(negotiator.negotiate_from_header("v1").unwrap(), ApiVersion::V1);
-        assert_eq!(negotiator.negotiate_from_header("v2").unwrap(), ApiVersion::V2);
+        assert_eq!(
+            negotiator.negotiate_from_header("v1").unwrap(),
+            ApiVersion::V1
+        );
+        assert_eq!(
+            negotiator.negotiate_from_header("v2").unwrap(),
+            ApiVersion::V2
+        );
         assert!(negotiator.negotiate_from_header("v3").is_err());
     }
 
     #[test]
     fn test_negotiate_from_query() {
         let negotiator = VersionNegotiator::default();
-        let version = negotiator.negotiate_from_query("api_version=v1&other=123").unwrap();
+        let version = negotiator
+            .negotiate_from_query("api_version=v1&other=123")
+            .unwrap();
         assert_eq!(version, ApiVersion::V1);
     }
 
@@ -407,20 +429,27 @@ mod tests {
 
     #[test]
     fn test_version_error_is_error() {
-        let err: Box<dyn std::error::Error> = Box::new(VersionError::InvalidVersion("test".to_string()));
+        let err: Box<dyn std::error::Error> =
+            Box::new(VersionError::InvalidVersion("test".to_string()));
         assert!(err.to_string().contains("Invalid version"));
     }
 
     #[test]
     fn test_negotiate_from_path_exact_v1() {
         let negotiator = VersionNegotiator::default();
-        assert_eq!(negotiator.negotiate_from_path("/api/v1").unwrap(), ApiVersion::V1);
+        assert_eq!(
+            negotiator.negotiate_from_path("/api/v1").unwrap(),
+            ApiVersion::V1
+        );
     }
 
     #[test]
     fn test_negotiate_from_path_exact_v2() {
         let negotiator = VersionNegotiator::default();
-        assert_eq!(negotiator.negotiate_from_path("/api/v2").unwrap(), ApiVersion::V2);
+        assert_eq!(
+            negotiator.negotiate_from_path("/api/v2").unwrap(),
+            ApiVersion::V2
+        );
     }
 
     #[test]

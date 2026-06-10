@@ -1,5 +1,5 @@
 // Template engine for custom report generation
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
@@ -32,12 +32,18 @@ pub enum ContentType {
     Custom(String),
 }
 
+impl Default for TemplateEngine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TemplateEngine {
     pub fn new() -> Self {
         let mut engine = Self {
             templates: HashMap::new(),
         };
-        
+
         engine.add_template(Self::executive_template());
         engine.add_template(Self::technical_template());
         engine.add_template(Self::compliance_template());
@@ -201,7 +207,8 @@ impl TemplateEngine {
     pub fn compliance_audit_template() -> ReportTemplate {
         ReportTemplate {
             name: "Compliance Audit".to_string(),
-            description: "Formal compliance audit report with control evidence and gaps".to_string(),
+            description: "Formal compliance audit report with control evidence and gaps"
+                .to_string(),
             sections: vec![
                 TemplateSection {
                     title: "Audit Scope & Methodology".to_string(),
@@ -240,7 +247,8 @@ impl TemplateEngine {
     pub fn penetration_test_template() -> ReportTemplate {
         ReportTemplate {
             name: "Penetration Test".to_string(),
-            description: "Penetration test findings with exploitation details and attack paths".to_string(),
+            description: "Penetration test findings with exploitation details and attack paths"
+                .to_string(),
             sections: vec![
                 TemplateSection {
                     title: "Executive Overview".to_string(),
@@ -279,7 +287,8 @@ impl TemplateEngine {
     pub fn vulnerability_assessment_template() -> ReportTemplate {
         ReportTemplate {
             name: "Vulnerability Assessment".to_string(),
-            description: "Focused vulnerability assessment with CVSS scoring and prioritization".to_string(),
+            description: "Focused vulnerability assessment with CVSS scoring and prioritization"
+                .to_string(),
             sections: vec![
                 TemplateSection {
                     title: "Assessment Summary".to_string(),
@@ -350,7 +359,7 @@ mod tests {
         let engine = TemplateEngine::new();
         let template = engine.get_template("Executive Summary");
         assert!(template.is_some());
-        
+
         let template = template.unwrap();
         assert_eq!(template.name, "Executive Summary");
         assert_eq!(template.sections.len(), 4);
@@ -385,14 +394,12 @@ mod tests {
         let custom_template = ReportTemplate {
             name: "Custom Template".to_string(),
             description: "A custom template".to_string(),
-            sections: vec![
-                TemplateSection {
-                    title: "Custom Section".to_string(),
-                    content_type: ContentType::Custom("custom".to_string()),
-                    filters: vec![],
-                    sort_by: None,
-                },
-            ],
+            sections: vec![TemplateSection {
+                title: "Custom Section".to_string(),
+                content_type: ContentType::Custom("custom".to_string()),
+                filters: vec![],
+                sort_by: None,
+            }],
         };
 
         engine.add_template(custom_template);
@@ -420,7 +427,10 @@ mod tests {
         assert_eq!(template.sections[1].content_type, ContentType::Metrics);
         assert_eq!(template.sections[2].content_type, ContentType::Findings);
         assert_eq!(template.sections[4].content_type, ContentType::Compliance);
-        assert_eq!(template.sections[5].content_type, ContentType::Recommendations);
+        assert_eq!(
+            template.sections[5].content_type,
+            ContentType::Recommendations
+        );
     }
 
     #[test]
