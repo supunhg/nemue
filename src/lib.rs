@@ -22,3 +22,5 @@ pub mod automation;
 pub mod ml;
 pub mod containers;
 pub mod wireless;
+pub mod iot;
+pub mod mobile;

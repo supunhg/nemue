@@ -9,7 +9,6 @@ use pnet::packet::Packet;
 use pnet::packet::arp::{ArpHardwareTypes, ArpOperations, MutableArpPacket};
 use pnet::packet::ethernet::{EtherTypes, MutableEthernetPacket};
 use pnet::util::MacAddr;
-use std::collections::HashMap;
 
 /// Host discovery methods matching nmap's -P options
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -563,7 +562,7 @@ impl HostDiscovery {
     async fn tcp_ping(
         &self,
         target: IpAddr,
-        method: DiscoveryMethod,
+        _method: DiscoveryMethod,
     ) -> Result<ProbeResult> {
         let start = std::time::Instant::now();
 

@@ -4,7 +4,6 @@ use std::net::IpAddr;
 
 use crate::scanner::diff::compare_scans;
 use crate::scanner::history::{HistoryEntry, ScanHistory};
-use crate::scanner::PortState;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrendReport {
@@ -370,7 +369,7 @@ fn format_service_opt(service: &Option<String>, version: &Option<String>) -> Str
 mod tests {
     use super::*;
     use crate::scanner::history::ScanHistory;
-    use crate::scanner::{Protocol, ScanResult, ScanResults};
+    use crate::scanner::{PortState, Protocol, ScanResult, ScanResults};
 
     fn create_results(port: u16, state: PortState, service: Option<&str>) -> ScanResults {
         ScanResults {

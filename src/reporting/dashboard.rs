@@ -1,7 +1,6 @@
 // Dashboard with real-time scan monitoring, live statistics, interactive charts, and drill-down
 use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc, Duration};
-use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Dashboard {

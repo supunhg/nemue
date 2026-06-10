@@ -2,11 +2,10 @@ use anyhow::{anyhow, Result};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::net::IpAddr;
 use std::path::Path;
 use uuid::Uuid;
 
-use crate::scanner::{PortState, ScanResult, ScanResults};
+use crate::scanner::{PortState, ScanResults};
 
 const DEFAULT_MAX_ENTRIES: usize = 100;
 
@@ -176,7 +175,8 @@ fn default_history_path() -> Result<std::path::PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::scanner::{Protocol, ScanResults};
+    use crate::scanner::{Protocol, ScanResult, ScanResults};
+    use std::net::IpAddr;
 
     fn create_test_results(port: u16, state: PortState) -> ScanResults {
         ScanResults {

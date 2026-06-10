@@ -223,7 +223,7 @@ fn hex_val(b: u8) -> Result<u8> {
 }
 
 fn parse_match_line(line: &str) -> Result<NmapMatch> {
-    let (is_soft, rest) = if line.starts_with("softmatch ") {
+    let (_is_soft, rest) = if line.starts_with("softmatch ") {
         (true, line.strip_prefix("softmatch ").unwrap())
     } else {
         (false, line.strip_prefix("match ").unwrap())
@@ -274,7 +274,7 @@ fn parse_match_pattern(s: &str) -> Result<(String, bool, bool)> {
     Ok((pattern.to_string(), case_insensitive, dot_all))
 }
 
-fn find_closing_delimiter(s: &str, start: usize, open: char, close: char) -> Result<usize> {
+fn find_closing_delimiter(s: &str, start: usize, _open: char, close: char) -> Result<usize> {
     let bytes = s.as_bytes();
     let mut i = start;
     while i < bytes.len() {

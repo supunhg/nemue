@@ -330,7 +330,7 @@ impl Traceroute {
                 // When destination is reached, it sends SYN-ACK or RST
                 
                 match TcpStream::connect(dest).await {
-                    Ok(stream) => {
+                    Ok(_stream) => {
                         // Connection successful - this is the destination
                         Ok::<_, String>((target, true))
                     }

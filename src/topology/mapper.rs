@@ -287,7 +287,7 @@ impl NetworkMapper {
         let has_https = ports.contains(&443);
         let has_ssh = ports.contains(&22);
         let has_telnet = ports.contains(&23);
-        let has_smtp = ports.contains(&25);
+        let _has_smtp = ports.contains(&25);
         let has_dns = ports.contains(&53);
         let has_dhcp = ports.contains(&67) || ports.contains(&68);
         let has_snmp = ports.contains(&161);

@@ -1,9 +1,8 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::net::IpAddr;
 use uuid::Uuid;
 
-use crate::scanner::{PortState, Protocol, ScanResult, ScanResults};
+use crate::scanner::{PortState, ScanResults};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScanGroup {
@@ -316,6 +315,7 @@ impl Default for GroupManager {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::scanner::{IpAddr, PortState, Protocol, ScanResult, ScanResults};
 
     fn create_test_scan_results(port: u16, state: PortState) -> ScanResults {
         ScanResults {

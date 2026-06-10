@@ -307,7 +307,7 @@ impl ModbusScanner {
             let num_objects = response[11] as usize;
             let mut offset = objects_start;
 
-            for i in 0..num_objects {
+            for _i in 0..num_objects {
                 if offset + 2 >= n {
                     break;
                 }

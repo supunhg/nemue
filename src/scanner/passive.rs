@@ -3,10 +3,9 @@
 
 use std::net::IpAddr;
 use std::collections::HashMap;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 use chrono::{DateTime, Utc};
 use serde::{Serialize, Deserialize};
-use tokio::sync::mpsc;
 use std::sync::{Arc, Mutex};
 
 /// Passive discovery configuration
