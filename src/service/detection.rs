@@ -477,6 +477,128 @@ impl ServiceDetector {
             });
         }
 
+        // SSH detection (before generic probes)
+        if banner_lower.contains("ssh-") {
+            let version = self.extract_ssh_version(banner);
+            let extra_info = self.extract_ssh_extra(banner);
+            let protocol = self.extract_ssh_protocol(banner);
+            let mut os_hint = self.detect_os_hint(banner);
+            if os_hint.is_none() {
+                if let Some(ref extra) = extra_info {
+                    os_hint = self.detect_os_hint(extra);
+                }
+            }
+            let product = Some("OpenSSH".to_string());
+            let cpe = self.generate_cpe("ssh", product.as_deref(), version.as_deref());
+            let extra_display = match (extra_info, protocol) {
+                (Some(e), Some(p)) => Some(format!("{}; {}", p, e)),
+                (Some(e), None) => Some(e),
+                (None, Some(p)) => Some(p),
+                (None, None) => None,
+            };
+            return Some(ServiceInfo {
+                port,
+                protocol: "tcp".to_string(),
+                service: "ssh".to_string(),
+                product,
+                version,
+                extra_info: extra_display,
+                banner: Some(banner.trim().to_string()),
+                confidence: 95,
+                service_family: Some("remote-access".to_string()),
+                os_hint,
+                cpe,
+            });
+        }
+
+        // HTTP detection (before generic probes)
+        if banner_lower.contains("http/") {
+            let version = self.extract_server_version(banner).or_else(|| self.extract_version(banner));
+            let mut product = self.extract_server(banner);
+            let extra_info = self.extract_server_extra(banner);
+            let mut os_hint = self.detect_os_hint(banner);
+
+            if product.is_none() {
+                if let Some((powered_by, powered_ver)) = self.extract_x_powered_by(banner) {
+                    product = Some(powered_by);
+                    return Some(ServiceInfo {
+                        port,
+                        protocol: "tcp".to_string(),
+                        service: "http".to_string(),
+                        product,
+                        version: powered_ver,
+                        extra_info,
+                        banner: Some(banner.trim().to_string()),
+                        confidence: 85,
+                        service_family: Some("web".to_string()),
+                        os_hint,
+                        cpe: None,
+                    });
+                }
+            }
+
+            if let Some(ref p) = product {
+                if p.eq_ignore_ascii_case("apache") {
+                    product = Some("Apache httpd".to_string());
+                }
+            }
+
+            let cpe = self.generate_cpe("http", product.as_deref(), version.as_deref());
+            return Some(ServiceInfo {
+                port,
+                protocol: "tcp".to_string(),
+                service: "http".to_string(),
+                product,
+                version,
+                extra_info,
+                banner: Some(banner.trim().to_string()),
+                confidence: 85,
+                service_family: Some("web".to_string()),
+                os_hint,
+                cpe,
+            });
+        }
+
+        // FTP detection (before generic probes)
+        if banner_lower.starts_with("220") && (port == 21 || self.extract_ftp_product(banner).is_some()) {
+            let product = self.extract_ftp_product(banner);
+            let version = self.extract_ftp_version(banner);
+            let cpe = self.generate_cpe("ftp", product.as_deref(), version.as_deref());
+            return Some(ServiceInfo {
+                port,
+                protocol: "tcp".to_string(),
+                service: "ftp".to_string(),
+                product,
+                version,
+                extra_info: None,
+                banner: Some(banner.trim().to_string()),
+                confidence: 85,
+                service_family: Some("file-transfer".to_string()),
+                os_hint: self.detect_os_hint(banner),
+                cpe,
+            });
+        }
+
+        // SMTP detection (before generic probes)
+        if banner_lower.starts_with("220") {
+            let product = self.extract_smtp_product(banner);
+            let extra_info = self.extract_smtp_extra(banner);
+            let cpe = self.generate_cpe("smtp", product.as_deref(), None);
+            return Some(ServiceInfo {
+                port,
+                protocol: "tcp".to_string(),
+                service: "smtp".to_string(),
+                product,
+                version: None,
+                extra_info,
+                banner: Some(banner.trim().to_string()),
+                confidence: 80,
+                service_family: Some("mail".to_string()),
+                os_hint: self.detect_os_hint(banner),
+                cpe,
+            });
+        }
+
         // Check against compiled signatures (regex-based matching)
         let banner_bytes = banner.as_bytes();
         let mut best_match: Option<ServiceInfo> = None;
@@ -554,62 +676,6 @@ impl ServiceDetector {
                     });
                 }
             }
-        }
-
-        // Check for common patterns
-        if banner_lower.contains("http/") {
-            let version = self.extract_version(banner);
-            let product = self.extract_server(banner);
-            let cpe = self.generate_cpe("http", product.as_deref(), version.as_deref());
-            return Some(ServiceInfo {
-                port,
-                protocol: "tcp".to_string(),
-                service: "http".to_string(),
-                product,
-                version,
-                extra_info: None,
-                banner: Some(banner.trim().to_string()),
-                confidence: 85,
-                service_family: Some("web".to_string()),
-                os_hint: self.detect_os_hint(banner),
-                cpe,
-            });
-        }
-
-        if banner_lower.contains("ssh-") {
-            let version = self.extract_ssh_version(banner);
-            let cpe = self.generate_cpe("ssh", Some("OpenSSH"), version.as_deref());
-            return Some(ServiceInfo {
-                port,
-                protocol: "tcp".to_string(),
-                service: "ssh".to_string(),
-                product: Some("OpenSSH".to_string()),
-                version,
-                extra_info: None,
-                banner: Some(banner.trim().to_string()),
-                confidence: 95,
-                service_family: Some("remote-access".to_string()),
-                os_hint: self.detect_os_hint(banner),
-                cpe,
-            });
-        }
-
-        if banner_lower.starts_with("220") {
-            let service = if port == 21 { "ftp" } else { "smtp" };
-            let service_family = if port == 21 { "file-transfer" } else { "mail" };
-            return Some(ServiceInfo {
-                port,
-                protocol: "tcp".to_string(),
-                service: service.to_string(),
-                product: None,
-                version: None,
-                extra_info: None,
-                banner: Some(banner.trim().to_string()),
-                confidence: 75,
-                service_family: Some(service_family.to_string()),
-                os_hint: None,
-                cpe: None,
-            });
         }
 
         // BGP detection
@@ -959,12 +1025,34 @@ impl ServiceDetector {
     }
 
     fn extract_version(&self, banner: &str) -> Option<String> {
-        // Simple version extraction (could be enhanced)
-        for word in banner.split_whitespace() {
-            if word.contains('/') {
-                let parts: Vec<&str> = word.split('/').collect();
-                if parts.len() == 2 && parts[1].chars().any(|c| c.is_numeric()) {
-                    return Some(parts[1].to_string());
+        for line in banner.lines() {
+            let line = line.trim();
+            // Pattern: word/X.Y.Z (e.g., "Apache/2.4.7", "nginx/1.18.0")
+            for word in line.split_whitespace() {
+                if word.contains('/') {
+                    let parts: Vec<&str> = word.splitn(2, '/').collect();
+                    if parts.len() == 2 {
+                        let ver = parts[1].trim_matches(|c: char| !c.is_alphanumeric() && c != '.' && c != '-' && c != '_');
+                        if ver.chars().any(|c| c.is_numeric()) && ver.len() < 64 {
+                            return Some(ver.to_string());
+                        }
+                    }
+                }
+                // Pattern: word version X.Y.Z (e.g., "Postfix version 3.6.4")
+                if word.eq_ignore_ascii_case("version") {
+                    let rest = line[line.find(word).unwrap() + word.len()..].trim();
+                    if let Some(v) = rest.split_whitespace().next() {
+                        if v.chars().any(|c| c.is_numeric()) && v.len() < 64 {
+                            return Some(v.to_string());
+                        }
+                    }
+                }
+                // Pattern: word vX.Y.Z (e.g., "ProFTPD v1.3.5e")
+                if word.starts_with('v') && word.len() > 1 {
+                    let ver = &word[1..];
+                    if ver.chars().next().map_or(false, |c| c.is_numeric()) && ver.len() < 64 {
+                        return Some(ver.to_string());
+                    }
                 }
             }
         }
@@ -973,18 +1061,191 @@ impl ServiceDetector {
 
     fn extract_server(&self, banner: &str) -> Option<String> {
         if let Some(server_line) = banner.lines().find(|l| l.to_lowercase().starts_with("server:")) {
-            let server = server_line.split(':').nth(1)?.trim();
-            return Some(server.split('/').next()?.to_string());
+            let server = server_line.splitn(2, ':').nth(1)?.trim();
+            // "Apache/2.4.7 (Ubuntu)" -> "Apache"
+            if let Some(name) = server.split('/').next() {
+                let name = name.trim();
+                if !name.is_empty() {
+                    return Some(name.to_string());
+                }
+            }
+            // "nginx" (no version)
+            if !server.contains('/') {
+                let name = server.split('(').next().unwrap_or(server).trim();
+                if !name.is_empty() {
+                    return Some(name.to_string());
+                }
+            }
+        }
+        None
+    }
+
+    fn extract_server_version(&self, banner: &str) -> Option<String> {
+        if let Some(server_line) = banner.lines().find(|l| l.to_lowercase().starts_with("server:")) {
+            let server = server_line.splitn(2, ':').nth(1)?.trim();
+            // "Apache/2.4.7 (Ubuntu)" -> "2.4.7"
+            if server.contains('/') {
+                let after_slash = server.splitn(2, '/').nth(1)?.trim();
+                let ver = after_slash.split_whitespace().next()
+                    .unwrap_or(after_slash)
+                    .trim_matches(|c: char| !c.is_alphanumeric() && c != '.' && c != '-' && c != '_');
+                if ver.chars().any(|c| c.is_numeric()) {
+                    return Some(ver.to_string());
+                }
+            }
+        }
+        None
+    }
+
+    fn extract_server_extra(&self, banner: &str) -> Option<String> {
+        if let Some(server_line) = banner.lines().find(|l| l.to_lowercase().starts_with("server:")) {
+            let server = server_line.splitn(2, ':').nth(1)?.trim();
+            // "Apache/2.4.7 (Ubuntu)" -> "Ubuntu"
+            if let Some(start) = server.find('(') {
+                if let Some(end) = server[start..].find(')') {
+                    let extra = server[start + 1..start + end].trim();
+                    if !extra.is_empty() {
+                        return Some(extra.to_string());
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    fn extract_x_powered_by(&self, banner: &str) -> Option<(String, Option<String>)> {
+        if let Some(line) = banner.lines().find(|l| l.to_lowercase().starts_with("x-powered-by:")) {
+            let value = line.splitn(2, ':').nth(1)?.trim();
+            // "PHP/7.4.3" -> ("PHP", Some("7.4.3"))
+            if let Some(idx) = value.find('/') {
+                let product = value[..idx].trim().to_string();
+                let ver = value[idx + 1..].trim();
+                let ver = if ver.chars().any(|c| c.is_numeric()) {
+                    Some(ver.to_string())
+                } else {
+                    None
+                };
+                return Some((product, ver));
+            }
+            // "Express" (no version)
+            if !value.is_empty() {
+                return Some((value.to_string(), None));
+            }
         }
         None
     }
 
     fn extract_ssh_version(&self, banner: &str) -> Option<String> {
         if let Some(ssh_line) = banner.lines().find(|l| l.starts_with("SSH-")) {
-            // Format: SSH-2.0-OpenSSH_8.2p1
-            let parts: Vec<&str> = ssh_line.split('-').collect();
-            if parts.len() >= 3 {
-                return Some(parts[2].split('_').nth(1)?.to_string());
+            // Format: SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.5
+            // or: SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.1
+            let after_proto = ssh_line.splitn(3, '-').nth(2)?;
+            // after_proto = "OpenSSH_8.2p1 Ubuntu-4ubuntu0.5"
+            let parts: Vec<&str> = after_proto.splitn(2, |c: char| c == '_' || c == ' ').collect();
+            if parts.len() >= 2 {
+                let version_part = parts[1];
+                // version_part = "8.2p1 Ubuntu-4ubuntu0.5" or "8.2p1"
+                let ver = version_part.split_whitespace().next().unwrap_or(version_part);
+                return Some(ver.to_string());
+            }
+            // Fallback: try to find version in the line
+            if let Some(idx) = after_proto.find('_') {
+                let rest = &after_proto[idx + 1..];
+                let ver = rest.split_whitespace().next().unwrap_or(rest);
+                if ver.chars().any(|c| c.is_numeric()) {
+                    return Some(ver.to_string());
+                }
+            }
+        }
+        None
+    }
+
+    fn extract_ssh_extra(&self, banner: &str) -> Option<String> {
+        if let Some(ssh_line) = banner.lines().find(|l| l.starts_with("SSH-")) {
+            // Format: SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.5
+            let after_proto = ssh_line.splitn(3, '-').nth(2)?;
+            // Find the version part (after underscore), then take the rest
+            if let Some(idx) = after_proto.find('_') {
+                let rest = &after_proto[idx + 1..];
+                // rest = "8.2p1 Ubuntu-4ubuntu0.5"
+                if let Some(space_idx) = rest.find(' ') {
+                    let extra = rest[space_idx + 1..].trim();
+                    if !extra.is_empty() {
+                        return Some(extra.to_string());
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    fn extract_ssh_protocol(&self, banner: &str) -> Option<String> {
+        if let Some(ssh_line) = banner.lines().find(|l| l.starts_with("SSH-")) {
+            // Format: SSH-2.0-...
+            let parts: Vec<&str> = ssh_line.splitn(3, '-').collect();
+            if parts.len() >= 2 {
+                let proto = parts[1];
+                if !proto.is_empty() {
+                    return Some(format!("SSH-{}", proto));
+                }
+            }
+        }
+        None
+    }
+
+    fn extract_ftp_version(&self, banner: &str) -> Option<String> {
+        // Pattern: 220 ProFTPD 1.3.5e Server
+        // Pattern: 220 vsFTPd 3.0.3
+        // Pattern: 220 FileZilla Server 0.9.60
+        let line = banner.lines().find(|l| l.starts_with("220"))?;
+        let content = line.strip_prefix("220").unwrap_or(line).trim();
+        for server_name in &["ProFTPD", "vsFTPd", "FileZilla Server", "FileZilla", "Pure-FTPd", "WU-FTPD", "NcFTP", "Serv-U"] {
+            if let Some(idx) = content.find(server_name) {
+                let rest = &content[idx + server_name.len()..].trim();
+                if let Some(word) = rest.split_whitespace().next() {
+                    if word.chars().any(|c| c.is_numeric()) {
+                        return Some(word.to_string());
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    fn extract_ftp_product(&self, banner: &str) -> Option<String> {
+        let line = banner.lines().find(|l| l.starts_with("220"))?;
+        let content = line.strip_prefix("220").unwrap_or(line).trim();
+        for server_name in &["ProFTPD", "vsFTPd", "FileZilla Server", "FileZilla", "Pure-FTPd", "WU-FTPD", "NcFTP", "Serv-U"] {
+            if content.contains(server_name) {
+                return Some(server_name.to_string());
+            }
+        }
+        None
+    }
+
+    fn extract_smtp_product(&self, banner: &str) -> Option<String> {
+        let line = banner.lines().find(|l| l.starts_with("220"))?;
+        let content = line.strip_prefix("220").unwrap_or(line).trim();
+        // Pattern: 220 mail.example.com ESMTP Postfix (Ubuntu)
+        // Pattern: 220 mail.example.com ESMTP Sendmail
+        // Pattern: 220 mail.example.com Microsoft ESMTP MAIL Service
+        for server_name in &["Postfix", "Sendmail", "Exim", "Microsoft ESMTP", "Exchange", "Dovecot", "qmail"] {
+            if content.contains(server_name) {
+                return Some(server_name.to_string());
+            }
+        }
+        None
+    }
+
+    fn extract_smtp_extra(&self, banner: &str) -> Option<String> {
+        let line = banner.lines().find(|l| l.starts_with("220"))?;
+        // Extract parenthetical info: (Ubuntu), (Debian), etc.
+        if let Some(start) = line.find('(') {
+            if let Some(end) = line[start..].find(')') {
+                let extra = line[start + 1..start + end].trim();
+                if !extra.is_empty() {
+                    return Some(extra.to_string());
+                }
             }
         }
         None
@@ -1374,5 +1635,138 @@ mod tests {
         let info = detector.detect_by_port(445, None);
         assert_eq!(info.service, "microsoft-ds");
         assert_eq!(info.os_hint, Some("Windows".to_string()));
+    }
+
+    #[test]
+    fn test_extract_ssh_version_with_extra() {
+        let detector = ServiceDetector::new(1000);
+        let banner = "SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.1";
+        
+        assert_eq!(detector.extract_ssh_version(banner), Some("8.9p1".to_string()));
+        assert_eq!(detector.extract_ssh_extra(banner), Some("Ubuntu-3ubuntu0.1".to_string()));
+        assert_eq!(detector.extract_ssh_protocol(banner), Some("SSH-2.0".to_string()));
+    }
+
+    #[test]
+    fn test_extract_ssh_version_no_extra() {
+        let detector = ServiceDetector::new(1000);
+        let banner = "SSH-2.0-OpenSSH_8.2p1";
+        
+        assert_eq!(detector.extract_ssh_version(banner), Some("8.2p1".to_string()));
+        assert_eq!(detector.extract_ssh_extra(banner), None);
+        assert_eq!(detector.extract_ssh_protocol(banner), Some("SSH-2.0".to_string()));
+    }
+
+    #[test]
+    fn test_analyze_ssh_banner_with_extra() {
+        let detector = ServiceDetector::new(1000);
+        let banner = "SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.1";
+        
+        let info = detector.analyze_banner(22, banner).unwrap();
+        assert_eq!(info.service, "ssh");
+        assert_eq!(info.product, Some("OpenSSH".to_string()));
+        assert_eq!(info.version, Some("8.9p1".to_string()));
+        assert_eq!(info.extra_info, Some("SSH-2.0; Ubuntu-3ubuntu0.1".to_string()));
+        assert_eq!(info.os_hint, Some("Linux".to_string()));
+    }
+
+    #[test]
+    fn test_extract_server_version() {
+        let detector = ServiceDetector::new(1000);
+        let banner = "HTTP/1.1 200 OK\r\nServer: Apache/2.4.7 (Ubuntu)\r\n";
+        
+        assert_eq!(detector.extract_server(banner), Some("Apache".to_string()));
+        assert_eq!(detector.extract_server_version(banner), Some("2.4.7".to_string()));
+        assert_eq!(detector.extract_server_extra(banner), Some("Ubuntu".to_string()));
+    }
+
+    #[test]
+    fn test_extract_server_nginx() {
+        let detector = ServiceDetector::new(1000);
+        let banner = "HTTP/1.1 200 OK\r\nServer: nginx/1.18.0 (Ubuntu)\r\n";
+        
+        assert_eq!(detector.extract_server(banner), Some("nginx".to_string()));
+        assert_eq!(detector.extract_server_version(banner), Some("1.18.0".to_string()));
+        assert_eq!(detector.extract_server_extra(banner), Some("Ubuntu".to_string()));
+    }
+
+    #[test]
+    fn test_extract_x_powered_by() {
+        let detector = ServiceDetector::new(1000);
+        let banner = "HTTP/1.1 200 OK\r\nX-Powered-By: PHP/7.4.3\r\n";
+        
+        let result = detector.extract_x_powered_by(banner);
+        assert_eq!(result, Some(("PHP".to_string(), Some("7.4.3".to_string()))));
+    }
+
+    #[test]
+    fn test_analyze_http_apache_banner() {
+        let detector = ServiceDetector::new(1000);
+        let banner = "HTTP/1.1 200 OK\r\nServer: Apache/2.4.7 (Ubuntu)\r\n";
+        
+        let info = detector.analyze_banner(80, banner).unwrap();
+        assert_eq!(info.service, "http");
+        assert_eq!(info.product, Some("Apache httpd".to_string()));
+        assert_eq!(info.version, Some("2.4.7".to_string()));
+        assert_eq!(info.extra_info, Some("Ubuntu".to_string()));
+        assert_eq!(info.os_hint, Some("Linux".to_string()));
+    }
+
+    #[test]
+    fn test_extract_ftp_version() {
+        let detector = ServiceDetector::new(1000);
+        let banner = "220 ProFTPD 1.3.5e Server";
+        
+        assert_eq!(detector.extract_ftp_product(banner), Some("ProFTPD".to_string()));
+        assert_eq!(detector.extract_ftp_version(banner), Some("1.3.5e".to_string()));
+    }
+
+    #[test]
+    fn test_analyze_ftp_banner() {
+        let detector = ServiceDetector::new(1000);
+        let banner = "220 ProFTPD 1.3.5e Server";
+        
+        let info = detector.analyze_banner(21, banner).unwrap();
+        assert_eq!(info.service, "ftp");
+        assert_eq!(info.product, Some("ProFTPD".to_string()));
+        assert_eq!(info.version, Some("1.3.5e".to_string()));
+    }
+
+    #[test]
+    fn test_extract_smtp_product() {
+        let detector = ServiceDetector::new(1000);
+        let banner = "220 mail.example.com ESMTP Postfix (Ubuntu)";
+        
+        assert_eq!(detector.extract_smtp_product(banner), Some("Postfix".to_string()));
+        assert_eq!(detector.extract_smtp_extra(banner), Some("Ubuntu".to_string()));
+    }
+
+    #[test]
+    fn test_analyze_smtp_banner() {
+        let detector = ServiceDetector::new(1000);
+        let banner = "220 mail.example.com ESMTP Postfix (Ubuntu)";
+        
+        let info = detector.analyze_banner(25, banner).unwrap();
+        assert_eq!(info.service, "smtp");
+        assert_eq!(info.product, Some("Postfix".to_string()));
+        assert_eq!(info.extra_info, Some("Ubuntu".to_string()));
+    }
+
+    #[test]
+    fn test_extract_version_word_version_pattern() {
+        let detector = ServiceDetector::new(1000);
+        assert_eq!(detector.extract_version("Postfix version 3.6.4"), Some("3.6.4".to_string()));
+    }
+
+    #[test]
+    fn test_extract_version_v_prefix_pattern() {
+        let detector = ServiceDetector::new(1000);
+        assert_eq!(detector.extract_version("ProFTPD v1.3.5e Server"), Some("1.3.5e".to_string()));
+    }
+
+    #[test]
+    fn test_extract_version_slash_pattern() {
+        let detector = ServiceDetector::new(1000);
+        assert_eq!(detector.extract_version("Apache/2.4.7 (Ubuntu)"), Some("2.4.7".to_string()));
     }
 }

@@ -149,13 +149,13 @@ enum Commands {
         #[arg(long)]
         top_ports: Option<usize>,
 
-        /// Show closed ports (hidden by default)
-        #[arg(short = 'c', long)]
-        show_closed: bool,
-
-        /// Show filtered ports (hidden by default)
+        /// Hide filtered ports (shown by default like Nmap)
         #[arg(short = 'F', long)]
-        show_filtered: bool,
+        hide_filtered: bool,
+
+        /// Hide closed ports (shown by default)
+        #[arg(short = 'c', long)]
+        hide_closed: bool,
 
         /// Output file path
         #[arg(short, long)]
@@ -348,8 +348,8 @@ async fn main() -> Result<()> {
             packet_trace,
             reason,
             top_ports,
-            show_closed,
-            show_filtered,
+            hide_closed,
+            hide_filtered,
             output,
             format,
             verbose,
@@ -722,12 +722,12 @@ async fn main() -> Result<()> {
                 std::fs::write(&output_path, &output_data)?;
                 
                 // Still show results on console
-                display.print_results_filtered(&results, show_closed, show_filtered);
+                display.print_results_filtered(&results, !hide_closed, !hide_filtered);
                 
                 println!("💾 Results saved to: {}", output_path);
             } else {
                 // Just display to console
-                display.print_results_filtered(&results, show_closed, show_filtered);
+                display.print_results_filtered(&results, !hide_closed, !hide_filtered);
             }
 
             // Show reason codes if --reason flag is set
@@ -750,7 +750,7 @@ async fn main() -> Result<()> {
                         nemue::scanner::PortState::OpenFiltered => "open|filtered",
                         nemue::scanner::PortState::Unknown => "unknown",
                     };
-                    if show_closed || r.state == nemue::scanner::PortState::Open {
+                    if !hide_closed || r.state == nemue::scanner::PortState::Open {
                         println!("  {}/{}: {} ({})", r.port, r.protocol, state_str, reason_str);
                     }
                 }
