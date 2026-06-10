@@ -1790,6 +1790,383 @@ pub fn game_media_signatures() -> Vec<MatchPattern> {
     ]
 }
 
+/// Get additional web server and framework signatures
+pub fn web_server_framework_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Apache modules
+        m("http", r"Server: Apache/(\d+\.\d+\.\d+).*mod_security", "Apache mod_security", Some("$1")),
+        m("http", r"Server: Apache.*mod_security", "Apache mod_security", None),
+        m("http", r"Server: Apache.*mod_jk", "Apache mod_jk", None),
+        m("http", r"Server: Apache.*mod_python", "Apache mod_python", None),
+        m("http", r"Server: Apache.*mod_perl", "Apache mod_perl", None),
+        m("http", r"Server: Apache.*mod_wsgi", "Apache mod_wsgi", None),
+        m("http", r"Server: Apache.*mod_ssl", "Apache mod_ssl", None),
+        m("http", r"Server: Apache.*mod_fastcgi", "Apache mod_fastcgi", None),
+        m("http", r"Server: Apache.*mod_fcgid", "Apache mod_fcgid", None),
+        m("http", r"Server: Apache.*mod_dav", "Apache mod_dav", None),
+        m("http", r"Server: Apache.*mod_proxy", "Apache mod_proxy", None),
+        m("http", r"Server: Apache.*mod_pagespeed", "Apache mod_pagespeed", None),
+
+        // Nginx modules
+        m("http", r"Server: nginx.*njs", "nginx njs", None),
+        m("http", r"Server: nginx.*mod_waf", "nginx mod_waf", None),
+        m("http", r"Server: nginx.*VestaCP", "nginx (VestaCP)", None),
+        m("http", r"Server: nginx.*Plesk", "nginx (Plesk)", None),
+        m("http", r"Server: nginx.*cPanel", "nginx (cPanel)", None),
+        m("http", r"Server: nginx.*BoringSSL", "nginx (BoringSSL)", None),
+        m("http", r"Server: nginx.*quic", "nginx (QUIC)", None),
+
+        // More IIS versions
+        m("http", r"Server: Microsoft-IIS/10\.0", "Microsoft IIS 10.0", None),
+        m("http", r"Server: Microsoft-IIS/8\.5", "Microsoft IIS 8.5", None),
+        m("http", r"Server: Microsoft-IIS/8\.0", "Microsoft IIS 8.0", None),
+        m("http", r"Server: Microsoft-IIS/7\.5", "Microsoft IIS 7.5", None),
+        m("http", r"Server: Microsoft-IIS/7\.0", "Microsoft IIS 7.0", None),
+        m("http", r"Server: Microsoft-IIS/6\.0", "Microsoft IIS 6.0", None),
+
+        // Application servers
+        m("http", r"Server: WildFly/(\d+)", "WildFly", Some("$1")),
+        m("http", r"Server: GlassFish Server (\d+\.\d+)", "GlassFish", Some("$1")),
+        m("http", r"Server: WebSphere Application Server", "IBM WebSphere", None),
+        m("http", r"Server: IBM_HTTP_Server", "IBM HTTP Server", None),
+        m("http", r"Server: Oracle-Application-Server", "Oracle App Server", None),
+        m("http", r"Server: Oracle-HTTP-Server", "Oracle HTTP Server", None),
+        m("http", r"Server: JBoss-EAP", "JBoss EAP", None),
+        m("http", r"Server: JBoss-Web", "JBoss Web", None),
+        m("http", r"Server: Apache Tomcat/(\d+)", "Apache Tomcat", Some("$1")),
+        m("http", r"Server: Tomcat", "Apache Tomcat", None),
+
+        // Python frameworks
+        m("http", r"Server: Django/(\d+\.\d+)", "Django", Some("$1")),
+        m("http", r"Server: Django", "Django", None),
+        m("http", r"X-Powered-By: Django", "Django", None),
+        m("http", r"Server: Flask/(\d+\.\d+)", "Flask", Some("$1")),
+        m("http", r"Server: FastAPI", "FastAPI", None),
+        m("http", r"X-Powered-By: FastAPI", "FastAPI", None),
+        m("http", r"Server: uvicorn", "uvicorn", None),
+        m("http", r"Server: Gunicorn/(\d+\.\d+\.\d+)", "Gunicorn", Some("$1")),
+        m("http", r"Server: Waitress", "Waitress", None),
+        m("http", r"Server: Daphne", "Daphne", None),
+
+        // Node.js frameworks
+        m("http", r"X-Powered-By: Express", "Express.js", None),
+        m("http", r"X-Powered-By: Koa", "Koa", None),
+        m("http", r"X-Powered-By: Hapi", "Hapi", None),
+        m("http", r"X-Powered-By: NestJS", "NestJS", None),
+        m("http", r"Server: Fastify/(\d+\.\d+)", "Fastify", Some("$1")),
+        m("http", r"X-Powered-By: Fastify", "Fastify", None),
+        m("http", r"X-Powered-By: Loopback", "LoopBack", None),
+        m("http", r"X-Powered-By: Sails", "Sails.js", None),
+        m("http", r"X-Powered-By: Adonis", "AdonisJS", None),
+        m("http", r"X-Powered-By: Feathers", "FeathersJS", None),
+
+        // Ruby frameworks
+        m("http", r"Server: Puma (\d+\.\d+\.\d+)", "Puma", Some("$1")),
+        m("http", r"Server: Puma", "Puma", None),
+        m("http", r"Server: Thin (\d+\.\d+\.\d+)", "Thin", Some("$1")),
+        m("http", r"Server: Unicorn (\d+\.\d+\.\d+)", "Unicorn", Some("$1")),
+        m("http", r"Server: Passenger (\d+\.\d+\.\d+)", "Passenger", Some("$1")),
+        m("http", r"X-Powered-By: Phusion Passenger", "Phusion Passenger", None),
+        m("http", r"Server: Phusion Passenger", "Phusion Passenger", None),
+        m("http", r"X-Powered-By: Rack", "Rack", None),
+        m("http", r"X-Powered-By: Sinatra", "Sinatra", None),
+        m("http", r"Server: Sinatra", "Sinatra", None),
+        m("http", r"X-Powered-By: Grape", "Grape", None),
+
+        // PHP frameworks
+        m("http", r"X-Powered-By: Laravel", "Laravel", None),
+        m("http", r"laravel_session", "Laravel", None),
+        m("http", r"X-Powered-By: Symfony", "Symfony", None),
+        m("http", r"X-Powered-By: CodeIgniter", "CodeIgniter", None),
+        m("http", r"X-Powered-By: CakePHP", "CakePHP", None),
+        m("http", r"X-Powered-By: Zend", "Zend Framework", None),
+        m("http", r"X-Powered-By: Laminas", "Laminas", None),
+        m("http", r"X-Powered-By: Yii", "Yii", None),
+        m("http", r"X-Powered-By: Slim", "Slim Framework", None),
+        m("http", r"X-Powered-By: Lumen", "Lumen", None),
+        m("http", r"X-Powered-By: Drupal", "Drupal", None),
+        m("http", r"X-Powered-By: WordPress", "WordPress", None),
+        m("http", r"X-Powered-By: Magento", "Magento", None),
+
+        // Go frameworks
+        m("http", r"Server: Gin", "Gin", None),
+        m("http", r"Server: Echo", "Echo", None),
+        m("http", r"Server: Fiber", "Fiber", None),
+        m("http", r"Server: Buffalo", "Buffalo", None),
+
+        // Rust frameworks
+        m("http", r"Server: Actix", "Actix Web", None),
+        m("http", r"Server: Actix-Web", "Actix Web", None),
+        m("http", r"Server: Rocket", "Rocket", None),
+        m("http", r"Server: Axum", "Axum", None),
+        m("http", r"Server: Warp", "Warp", None),
+
+        // Java frameworks
+        m("http", r"X-Powered-By: Spring", "Spring Framework", None),
+        m("http", r"X-Powered-By: Spring Boot", "Spring Boot", None),
+        m("http", r"X-Powered-By: Dropwizard", "Dropwizard", None),
+        m("http", r"Server: Dropwizard", "Dropwizard", None),
+
+        // .NET frameworks
+        m("http", r"X-Powered-By: ASP\.NET Core", "ASP.NET Core", None),
+        m("http", r"Server: Kestrel", "Kestrel", None),
+        m("http", r"X-Powered-By: Nancy", "Nancy", None),
+    ]
+}
+
+/// Get additional database signatures
+pub fn database_more_signatures() -> Vec<MatchPattern> {
+    vec![
+        // MySQL variants
+        m("mysql", r"(\d+\.\d+\.\d+)-MariaDB-.*Ubuntu", "MariaDB (Ubuntu)", Some("$1")),
+        m("mysql", r"(\d+\.\d+\.\d+)-MariaDB-.*Debian", "MariaDB (Debian)", Some("$1")),
+        m("mysql", r"(\d+\.\d+\.\d+)-MariaDB-.*CentOS", "MariaDB (CentOS)", Some("$1")),
+        m("mysql", r"(\d+\.\d+\.\d+)-MariaDB", "MariaDB", Some("$1")),
+        m("mysql", r"(\d+\.\d+\.\d+)-MySQL", "MySQL", Some("$1")),
+        m("mysql", r"(\d+\.\d+\.\d+)-cll-lve", "MySQL (CloudLinux)", Some("$1")),
+        m("mysql", r"Percona Server", "Percona Server", None),
+        m("mysql", r"(\d+\.\d+\.\d+)-percona", "Percona Server", Some("$1")),
+        m("mysql", r"Aurora", "Amazon Aurora", None),
+
+        // PostgreSQL variants
+        m("postgres", r"PostgreSQL (\d+\.\d+\.\d+)", "PostgreSQL", Some("$1")),
+        m("postgres", r"PostgreSQL (\d+\.\d+)", "PostgreSQL", Some("$1")),
+        m("postgres", r"EnterpriseDB", "EnterpriseDB", None),
+        m("postgres", r"Citus", "Citus", None),
+        m("postgres", r"Greenplum", "Greenplum", None),
+        m("postgres", r"YugabyteDB", "YugabyteDB", None),
+
+        // MongoDB versions
+        m("mongodb", r"MongoDB (\d+\.\d+\.\d+)", "MongoDB", Some("$1")),
+        m("mongodb", r"MongoDB (\d+\.\d+)", "MongoDB", Some("$1")),
+        m("mongodb", r"mongod", "MongoDB", None),
+        m("mongodb", r"mongos", "MongoDB Router", None),
+        m("mongodb", r"MongoDB shell version", "MongoDB Shell", None),
+        m("mongodb", r"Percona Server for MongoDB", "Percona MongoDB", None),
+
+        // Redis versions
+        m("redis", r"redis_version:(\d+\.\d+\.\d+)", "Redis", Some("$1")),
+        m("redis", r"redis_version:(\d+\.\d+)", "Redis", Some("$1")),
+        m("redis", r"Redis server v=(\d+\.\d+\.\d+)", "Redis", Some("$1")),
+        m("redis", r"redis_version:(\d+\.\d+\.\d+).*valkey", "Valkey", Some("$1")),
+        m("redis", r"KeyDB", "KeyDB", None),
+
+        // Elasticsearch versions
+        m("elasticsearch", r"elasticsearch/(\d+\.\d+\.\d+)", "Elasticsearch", Some("$1")),
+        m("elasticsearch", r"elasticsearch/(\d+\.\d+)", "Elasticsearch", Some("$1")),
+        m("elasticsearch", r"cluster_name.*elasticsearch", "Elasticsearch", None),
+        m("elasticsearch", r"OpenSearch", "OpenSearch", None),
+        m("elasticsearch", r"opensearch/(\d+\.\d+\.\d+)", "OpenSearch", Some("$1")),
+
+        // Cassandra versions
+        m("cassandra", r"Cassandra (\d+\.\d+\.\d+)", "Apache Cassandra", Some("$1")),
+        m("cassandra", r"Cassandra (\d+\.\d+)", "Apache Cassandra", Some("$1")),
+        m("cassandra", r"Scylla (\d+\.\d+\.\d+)", "ScyllaDB", Some("$1")),
+
+        // CouchDB versions
+        m("couchdb", r"CouchDB/(\d+\.\d+\.\d+)", "CouchDB", Some("$1")),
+        m("couchdb", r"CouchDB/(\d+\.\d+)", "CouchDB", Some("$1")),
+        m("couchdb", r"couchdb/(\d+\.\d+\.\d+)", "CouchDB", Some("$1")),
+        m("couchdb", r"CouchDB", "CouchDB", None),
+    ]
+}
+
+/// Get additional mail server signatures
+pub fn mail_more_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Exchange versions
+        m("smtp", r"220.*Microsoft ESMTP MAIL Service.*Version: (\d+)", "Microsoft Exchange", Some("$1")),
+        m("smtp", r"220.*Exchange Server (\d+)", "Microsoft Exchange", Some("$1")),
+        m("imap", r"Microsoft Exchange IMAP4", "Microsoft Exchange IMAP", None),
+        m("pop3", r"Microsoft Exchange POP3", "Microsoft Exchange POP3", None),
+        m("imap", r"Exchange Server (\d+)", "Microsoft Exchange IMAP", Some("$1")),
+        m("pop3", r"Exchange Server (\d+)", "Microsoft Exchange POP3", Some("$1")),
+
+        // Postfix variants
+        m("smtp", r"220.*Postfix \((\d+\.\d+\.\d+)\)", "Postfix", Some("$1")),
+        m("smtp", r"220.*Postfix \((\d+\.\d+)\)", "Postfix", Some("$1")),
+        m("smtp", r"220.*Postfix.*Ubuntu", "Postfix (Ubuntu)", None),
+        m("smtp", r"220.*Postfix.*Debian", "Postfix (Debian)", None),
+        m("smtp", r"220.*Postfix.*RHEL", "Postfix (RHEL)", None),
+        m("smtp", r"220.*Postfix.*CentOS", "Postfix (CentOS)", None),
+        m("smtp", r"220.*Postfix.*Amazon", "Postfix (Amazon Linux)", None),
+
+        // Exim variants
+        m("smtp", r"220.*Exim (\d+\.\d+\.\d+)", "Exim", Some("$1")),
+        m("smtp", r"220.*Exim (\d+\.\d+)", "Exim", Some("$1")),
+        m("smtp", r"220.*ESMTP Exim (\d+\.\d+)", "Exim", Some("$1")),
+        m("smtp", r"220.*Exim.*Debian", "Exim (Debian)", None),
+        m("smtp", r"220.*Exim.*cPanel", "Exim (cPanel)", None),
+        m("smtp", r"220.*Exim.*WHM", "Exim (WHM/cPanel)", None),
+
+        // Dovecot variants
+        m("imap", r"Dovecot (\d+\.\d+\.\d+)", "Dovecot", Some("$1")),
+        m("imap", r"Dovecot (\d+\.\d+)", "Dovecot", Some("$1")),
+        m("imap", r"Dovecot \(Ubuntu\)", "Dovecot (Ubuntu)", None),
+        m("imap", r"Dovecot \(Debian\)", "Dovecot (Debian)", None),
+        m("pop3", r"Dovecot (\d+\.\d+\.\d+)", "Dovecot POP3", Some("$1")),
+        m("pop3", r"Dovecot (\d+\.\d+)", "Dovecot POP3", Some("$1")),
+        m("imap", r"Dovecot-ee", "Dovecot Enterprise", None),
+
+        // Courier variants
+        m("imap", r"Courier-IMAP (\d+\.\d+)", "Courier IMAP", Some("$1")),
+        m("pop3", r"Courier Mail Server", "Courier POP3", None),
+
+        // Cyrus variants
+        m("imap", r"Cyrus IMAP (\d+\.\d+\.\d+)", "Cyrus IMAP", Some("$1")),
+        m("imap", r"Cyrus IMAP (\d+\.\d+)", "Cyrus IMAP", Some("$1")),
+        m("imap", r"Cyrus", "Cyrus IMAP", None),
+        m("pop3", r"Cyrus POP3", "Cyrus POP3", None),
+
+        // Zimbra
+        m("smtp", r"220.*Zimbra (\d+)", "Zimbra", Some("$1")),
+        m("imap", r"Zimbra", "Zimbra IMAP", None),
+        m("pop3", r"Zimbra", "Zimbra POP3", None),
+    ]
+}
+
+/// Get additional network equipment signatures
+pub fn network_more_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Cisco IOS versions
+        m("telnet", r"Cisco IOS Software", "Cisco IOS", None),
+        m("telnet", r"Cisco IOS XE", "Cisco IOS XE", None),
+        m("telnet", r"Cisco NX-OS", "Cisco NX-OS", None),
+        m("telnet", r"Cisco ASA", "Cisco ASA", None),
+        m("telnet", r"Cisco Adaptive Security", "Cisco ASA", None),
+        m("ssh", r"SSH-2.0-Cisco-.*NX-OS", "Cisco NX-OS", None),
+        m("ssh", r"SSH-2.0-Cisco-.*ASA", "Cisco ASA", None),
+        m("ssh", r"SSH-2.0-Cisco-.*IOS", "Cisco IOS", None),
+        m("http", r"Server: cisco-IOS", "Cisco IOS HTTP", None),
+
+        // Juniper Junos versions
+        m("ssh", r"SSH-2.0-Junos", "Juniper Junos", None),
+        m("ssh", r"SSH-2.0-JUNOS", "Juniper Junos", None),
+        m("telnet", r"Juniper Networks.*Junos", "Juniper Junos", None),
+        m("telnet", r"JUNOS (\d+\.\d+)", "Juniper Junos", Some("$1")),
+        m("http", r"Server: Juniper", "Juniper", None),
+        m("https", r"Juniper", "Juniper", None),
+
+        // Fortinet FortiOS versions
+        m("ssh", r"SSH-2.0-Fortinet", "Fortinet FortiOS", None),
+        m("ssh", r"SSH-2.0-FortiOS", "Fortinet FortiOS", None),
+        m("telnet", r"Fortinet", "Fortinet FortiOS", None),
+        m("https", r"FortiGate", "Fortinet FortiGate", None),
+        m("https", r"FortiOS", "Fortinet FortiOS", None),
+        m("http", r"Server: Fortinet", "Fortinet", None),
+        m("https", r"FORTINET", "Fortinet FortiOS", None),
+
+        // Palo Alto PAN-OS versions
+        m("ssh", r"SSH-2.0-Palo Alto", "Palo Alto PAN-OS", None),
+        m("ssh", r"SSH-2.0-PAN-OS", "Palo Alto PAN-OS", None),
+        m("https", r"Palo Alto Networks", "Palo Alto PAN-OS", None),
+        m("http", r"Server: PanWeb Server", "Palo Alto PAN-OS", None),
+        m("https", r"GlobalProtect Portal", "Palo Alto GlobalProtect", None),
+
+        // Arista EOS versions
+        m("ssh", r"SSH-2.0-Arista", "Arista EOS", None),
+        m("telnet", r"Arista", "Arista EOS", None),
+
+        // Dell Networking OS versions
+        m("ssh", r"SSH-2.0-Dell", "Dell Networking OS", None),
+        m("telnet", r"Dell Networking", "Dell Networking OS", None),
+        m("telnet", r"Dell EMC", "Dell EMC Networking", None),
+        m("telnet", r"OS10", "Dell EMC OS10", None),
+
+        // HPE/Aruba versions
+        m("ssh", r"SSH-2.0-HP", "HP ProCurve", None),
+        m("ssh", r"SSH-2.0-HPE", "HPE", None),
+        m("ssh", r"SSH-2.0-ArubaOS", "ArubaOS", None),
+        m("telnet", r"ArubaOS", "ArubaOS", None),
+        m("telnet", r"HP ProCurve", "HP ProCurve", None),
+
+        // Huawei VRP versions
+        m("ssh", r"SSH-2.0-SSH_.*VRP", "Huawei VRP", None),
+        m("telnet", r"Huawei Versatile Routing Platform", "Huawei VRP", None),
+        m("telnet", r"VRP.*Huawei", "Huawei VRP", None),
+
+        // MikroTik RouterOS versions
+        m("ssh", r"SSH-2.0-ROSSSH", "MikroTik RouterOS", None),
+        m("telnet", r"MikroTik", "MikroTik RouterOS", None),
+        m("http", r"RouterOS", "MikroTik RouterOS", None),
+        m("http", r"MikroTik", "MikroTik RouterOS", None),
+    ]
+}
+
+/// Get additional IoT device signatures
+pub fn iot_more_signatures() -> Vec<MatchPattern> {
+    vec![
+        // Camera vendors
+        m("http", r"Server: GeoHttpServer", "GeoVision Camera", None),
+        m("http", r"Server: IQinVision", "IQeye Camera", None),
+        m("http", r"Server: MOBOTIX", "MOBOTIX Camera", None),
+        m("http", r"MOBOTIX", "MOBOTIX Camera", None),
+        m("http", r"Server: Vivotek", "Vivotek Camera", None),
+        m("http", r"Server: TRASSIR", "TRASSIR DVR", None),
+        m("http", r"Server: Avigilon", "Avigilon Camera", None),
+        m("http", r"Server: Arecont Vision", "Arecont Vision Camera", None),
+        m("http", r"Server: FLIR", "FLIR Camera", None),
+        m("http", r"FLIR Systems", "FLIR Camera", None),
+        m("http", r"Server: Hanwha", "Hanwha Camera", None),
+        m("http", r"Samsung.*Camera", "Samsung Camera", None),
+        m("http", r"Server: Pelco", "Pelco Camera", None),
+        m("http", r"Server: Panasonic", "Panasonic Camera", None),
+        m("rtsp", r"GeoVision", "GeoVision Camera", None),
+        m("rtsp", r"MOBOTIX", "MOBOTIX Camera", None),
+        m("rtsp", r"FLIR", "FLIR Camera", None),
+        m("rtsp", r"Hanwha", "Hanwha Camera", None),
+
+        // Router vendors
+        m("http", r"Server: httpd/.*ASUS", "ASUS Router", None),
+        m("http", r"ASUS.*Router", "ASUS Router", None),
+        m("http", r"Server: Netgear", "Netgear Router", None),
+        m("http", r"NETGEAR.*Router", "Netgear Router", None),
+        m("http", r"Server: TP-LINK", "TP-Link Router", None),
+        m("http", r"TP-LINK.*Router", "TP-Link Router", None),
+        m("http", r"Server: Linksys", "Linksys Router", None),
+        m("http", r"Linksys.*Router", "Linksys Router", None),
+        m("http", r"Server: D-Link", "D-Link Router", None),
+        m("http", r"D-Link.*Router", "D-Link Router", None),
+        m("http", r"Server: DrayTek", "DrayTek Router", None),
+        m("http", r"DrayTek.*Vigor", "DrayTek Vigor", None),
+        m("http", r"Server: Zyxel", "Zyxel Router", None),
+        m("http", r"ZyXEL.*Router", "Zyxel Router", None),
+        m("http", r"Server: Ruckus", "Ruckus", None),
+        m("http", r"Ruckus Wireless", "Ruckus", None),
+
+        // Embedded devices
+        m("http", r"Server: GoAhead-Webs", "GoAhead Web Server", None),
+        m("http", r"Server: mini_httpd", "mini_httpd", None),
+        m("http", r"Server: thttpd", "thttpd", None),
+        m("http", r"Server: Boa", "Boa HTTP Server", None),
+        m("http", r"Server: Allegro", "Allegro RomPager", None),
+        m("http", r"Server: RomPager", "Allegro RomPager", None),
+        m("http", r"Server: Virata-EmWeb", "Virata-EmWeb", None),
+        m("http", r"Server: Embedthis", "Embedthis HTTP", None),
+        m("http", r"Server: lighttpd", "lighttpd", None),
+        m("http", r"Server: BusyBox", "BusyBox httpd", None),
+        m("http", r"Server: Mongoose", "Mongoose HTTP", None),
+        m("http", r"Server: lwIP", "lwIP HTTP", None),
+        m("http", r"Server: ZLIB", "ZLIB HTTP", None),
+
+        // Smart home
+        m("http", r"Philips Hue", "Philips Hue", None),
+        m("http", r"Server: Hue", "Philips Hue", None),
+        m("http", r"Sonos", "Sonos", None),
+        m("http", r"Server: Sonos", "Sonos", None),
+        m("http", r"Nest", "Google Nest", None),
+        m("http", r"ecobee", "Ecobee", None),
+
+        // Printers extra
+        m("http", r"Server: HP HTTP", "HP Printer", None),
+        m("http", r"HP Color LaserJet", "HP Color LaserJet", None),
+        m("http", r"KONICA MINOLTA", "Konica Minolta Printer", None),
+        m("http", r"SHARP MX", "Sharp MX Printer", None),
+        m("http", r"OKI Data", "OKI Printer", None),
+        m("http", r"Server: DELL", "Dell Printer", None),
+    ]
+}
+
 /// Get all signatures combined
 pub fn all_signatures() -> Vec<MatchPattern> {
     let mut sigs = Vec::new();
@@ -1824,6 +2201,11 @@ pub fn all_signatures() -> Vec<MatchPattern> {
     sigs.extend(devops_signatures());
     sigs.extend(iot_extended_signatures());
     sigs.extend(game_media_signatures());
+    sigs.extend(web_server_framework_signatures());
+    sigs.extend(database_more_signatures());
+    sigs.extend(mail_more_signatures());
+    sigs.extend(network_more_signatures());
+    sigs.extend(iot_more_signatures());
     sigs
 }
 
@@ -1858,7 +2240,7 @@ mod tests {
     #[test]
     fn test_all_signatures_count() {
         let sigs = all_signatures();
-        assert!(sigs.len() >= 500, "Expected at least 500 total signatures, got {}", sigs.len());
+        assert!(sigs.len() >= 750, "Expected at least 750 total signatures, got {}", sigs.len());
     }
 
     #[test]
