@@ -40,3 +40,6 @@ graphify-out/
 
 # Session files
 session-*.md
+
+# Local-only anchor file (for resuming development)
+ANCHOR.md
