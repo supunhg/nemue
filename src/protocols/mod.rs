@@ -10,3 +10,5 @@ pub mod modbus;
 pub mod dnp3;
 pub mod bacnet;
 pub mod ethernet_ip;
+pub mod snmp;
+pub mod ldap;

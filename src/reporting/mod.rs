@@ -13,6 +13,10 @@ pub mod markdown;
 pub mod custom;
 pub mod executive;
 pub mod xml_report;
+pub mod sarif;
+pub mod junit;
+pub mod cyclonedx;
+pub mod spdx;
 
 pub use compliance::{
     ComplianceMapper, Framework, Control, ControlTest, CheckType,
@@ -49,6 +53,10 @@ pub use markdown::MarkdownReportGenerator;
 pub use custom::{ReportCustomization, Branding, CustomSeverity, CustomSection, SectionContent, ChartType, CustomRecommendation};
 pub use executive::ExecutiveReport;
 pub use xml_report::XmlReportGenerator;
+pub use sarif::SarifReportGenerator;
+pub use junit::JunitReportGenerator;
+pub use cyclonedx::CycloneDxReportGenerator;
+pub use spdx::SpdxReportGenerator;
 
 use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc};
