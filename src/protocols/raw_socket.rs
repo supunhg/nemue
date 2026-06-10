@@ -292,7 +292,8 @@ impl RawSocket {
             _ => return Err(anyhow!("Failed to create raw socket")),
         };
 
-        let _ = tx.send_to(packet, None)
+        let _ = tx
+            .send_to(packet, None)
             .ok_or_else(|| anyhow!("Failed to send packet"))?;
 
         Ok(())
